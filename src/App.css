@@ -94,8 +94,14 @@ body {
   position: relative;
 }
 
-/* Drag border now scoped ONLY to the scrollable chat room (<main>) */
-main.drag-active::after {
+.chatroom-shell { position:relative; flex:1 1 0; display:flex; flex-direction:column; min-height:0; }
+.chatroom-overlays { position:absolute; left:0; right:0; bottom:8px; height:0; pointer-events:none; }
+.chatroom-overlays .typing-bubble { position:absolute; left:12px; bottom:0; }
+.chatroom-overlays .scroll-btn-wrapper { position:absolute; left:50%; transform:translateX(-50%); bottom:0; pointer-events:auto; }
+.chatroom-overlays .scroll-to-bottom-btn { position:relative; }
+
+/* Drag border now scoped to wrapper so it matches visible frame */
+.chatroom-wrapper.drag-active::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -108,7 +114,7 @@ main.drag-active::after {
   will-change: box-shadow, border-color;
 }
 
-main.drag-active.drag-ready::after {
+.chatroom-wrapper.drag-active.drag-ready::after {
   border-color: var(--primary-color);
   background: radial-gradient(circle at 50% 50%, rgba(13,138,188,0.10), rgba(13,138,188,0));
   animation: dragBorderPulse 1.25s cubic-bezier(.4,0,.2,1) infinite; /* continuous pulse while hovering image */
@@ -121,16 +127,30 @@ main.drag-active.drag-ready::after {
   100% { box-shadow: 0 0 4px rgba(13,138,188,0.30), 0 0 14px rgba(13,138,188,0.10); border-color: var(--primary-color); }
 }
 
-main {
-  /* Enhanced drag & drop border effect */
-  flex: 1;
+.chatroom-wrapper {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* allow sibling (ChatInput) to remain visible */
+}
+
+.chatroom-wrapper main {
+  flex: 1 1 0;
   padding: 10px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  position: relative; /* needed for the scoped drag border pseudo-element */
+  position: relative;
+  min-height: 0; /* prevent content from forcing parent taller than available */
 }
+
+/* Disable scrolling while dragging */
+.chatroom-wrapper.drag-active main { overflow: hidden; }
+
+/* Ensure chat input area never shrinks below its intrinsic height */
+.chat-input-area { flex-shrink: 0; }
 
 form {
   background-color: var(--bg-form);
@@ -317,6 +337,11 @@ img {
 
 .status-indicator.offline {
   background-color: #9E9E9E;
+}
+
+.status-indicator.away {
+  background-color: #FFC107;
+  box-shadow: 0 0 6px rgba(255, 193, 7, 0.55);
 }
 
 /* Reaction Styles */
@@ -677,8 +702,10 @@ img {
 .user-menu-display { font-size: 0.9rem; font-weight: 600; display: block; line-height: 1.2; }
 .user-menu-email { font-size: 0.7rem; opacity: 0.7; display: block; line-height: 1.2; word-break: break-all; }
 .user-menu-actions { display: flex; flex-direction: column; gap: 6px; }
-.user-menu-item { background: var(--bg-light); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 8px; font-size: 0.7rem; cursor: not-allowed; opacity: 0.55; text-align: left; }
-.user-menu-item:not(:disabled):hover { background: var(--primary-color); color: #fff; }
+.user-menu-item { background: var(--bg-light); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 8px; font-size: 0.7rem; text-align: left; transition: background .18s ease, color .18s ease, opacity .18s ease; }
+.user-menu-item[disabled] { cursor: not-allowed; opacity: .55; }
+.user-menu-item.actionable { cursor: pointer; opacity: .85; }
+.user-menu-item.actionable:hover { background: var(--primary-color); color: #fff; opacity: 1; }
 .user-menu-signout .sign-out { width: 100%; justify-content: center; font-size: 0.75rem; }
 
 @media (hover: hover) {
@@ -1206,7 +1233,7 @@ img {
   opacity: 0;
   transition: opacity 0.22s ease, transform 0.28s ease;
   border: 3px dashed var(--border-color); /* subtle dashed */
-  z-index: 1500;
+  z-index: 2100;
   box-shadow: 0 8px 22px rgba(0,0,0,0.4), 0 0 14px rgba(255,120,120,0.15);
 }
 
@@ -1302,8 +1329,8 @@ img {
   box-shadow: none;
 }
 
-/* Blur messages (not the overlay / border) while dragging */
-main.drag-active { filter: blur(2px); }
+/* Blur messages (not overlay/border) while dragging */
+.chatroom-wrapper.drag-active main { filter: blur(2px); }
 
 /* Overlay sits above blurred messages but inside chat section; created in component */
 .drag-overlay {
@@ -1341,3 +1368,76 @@ main.drag-active { filter: blur(2px); }
   60% { transform: translate(-50%, -50%) scale(1.06); opacity: 1; }
   100% { transform: translate(-50%, -50%) scale(1); }
 }
+
+/* Scroll to bottom / New messages indicator */
+.scroll-to-bottom-btn {
+  position: sticky; /* Changed from absolute to sticky */
+  bottom: 0px;
+  right: 16px;
+  align-self: center;
+  background: var(--bg-light);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  opacity: .9;
+  backdrop-filter: blur(4px);
+  transition: background .25s ease, color .25s ease, transform .25s ease, opacity .25s ease;
+  z-index: 120;
+}
+.scroll-to-bottom-btn:hover {
+  background: var(--primary-color);
+  color: #fff;
+  opacity: 1;
+  transform: translateY(-2px);
+}
+.scroll-to-bottom-btn:active { transform: translateY(0); }
+.scroll-to-bottom-btn.new {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+  animation: newMsgPulse 2s ease-in-out infinite;
+}
+@keyframes newMsgPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(11,147,246,0.35), 0 0 16px rgba(11,147,246,0.15); }
+  50% { box-shadow: 0 0 14px rgba(11,147,246,0.75), 0 0 30px rgba(11,147,246,0.30); }
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
+/* Top sentinel for loading older messages */
+.load-older-sentinel {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0 10px;
+  position: relative;
+  min-height: 24px;
+}
+.loading-older {
+  font-size: 11px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  background: var(--bg-light);
+  padding: 4px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  animation: olderFade 1.4s ease-in-out infinite;
+}
+@keyframes olderFade { 0%,100% { opacity: .35; } 50% { opacity: 1; } }

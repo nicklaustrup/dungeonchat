@@ -10,7 +10,8 @@ const firebaseConfig = {
   projectId: "superchat-58b43",
   storageBucket: "superchat-58b43.firebasestorage.app",
   messagingSenderId: "131619204399",
-  appId: "1:131619204399:web:3cf92be0cd8c606ea245da"
+  appId: "1:131619204399:web:3cf92be0cd8c606ea245da",
+  databaseURL: "https://superchat-58b43-default-rtdb.firebaseio.com"
 };
 
 const app = initializeApp(firebaseConfig);

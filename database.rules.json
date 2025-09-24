@@ -1,0 +1,12 @@
+\"presence\": {
+  \"$uid\": {
+    \".read\": \"auth != null\",
+    \".write\": \"auth != null && auth.uid === $uid\"
+  }
+},
+\"typing\": {
+  \"$uid\": {
+    \".read\": \"auth != null\",
+    \".write\": \"auth != null && auth.uid === $uid\"
+  }
+}

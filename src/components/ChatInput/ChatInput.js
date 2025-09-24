@@ -1,9 +1,10 @@
 import React from 'react';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { ref as databaseRef, set as rtdbSet, serverTimestamp as rtdbServerTimestamp } from 'firebase/database';
+import { ref as databaseRef, set as rtdbSet, serverTimestamp as rtdbServerTimestamp, update as rtdbUpdate } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '../../services/FirebaseContext';
 import { playNotificationSound } from '../../utils/sound';
+import { getFallbackAvatar } from '../../utils/avatar';
 
 function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, selectedImage, setSelectedImage, imagePreview, setImagePreview, uploading, setUploading }) {
   const { auth, firestore, rtdb, storage } = useFirebase();
@@ -64,12 +65,13 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
     setUploading(true);
     try {
       const { uid, photoURL, displayName } = auth.currentUser;
+      // Do NOT persist fallback URL, only actual photoURL (or null)
       const imageURL = await uploadImage(selectedImage);
       await addDoc(messagesRef, {
         imageURL,
         createdAt: serverTimestamp(),
         uid,
-        photoURL: photoURL || `https://ui-avatars.com/api/?name=${displayName || uid}&background=0d8abc&color=fff&size=40`,
+        photoURL: photoURL || null,
         displayName: getDisplayName ? getDisplayName(uid, displayName) : (displayName || 'Anonymous'),
         reactions: {},
         type: 'image'
@@ -88,27 +90,34 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
   const handleInputChange = (e) => {
     setFormValue(e.target.value);
     if (auth.currentUser) {
-      const userTypingRef = databaseRef(rtdb, `typing/${auth.currentUser.uid}`);
+      const uid = auth.currentUser.uid;
+      const userTypingRef = databaseRef(rtdb, `typing/${uid}`);
       rtdbSet(userTypingRef, {
         typing: e.target.value.length > 0,
         displayName: auth.currentUser.displayName || 'Anonymous',
         timestamp: rtdbServerTimestamp()
       });
+      // Refresh presence lastSeen & keep online true
+      const presenceRef = databaseRef(rtdb, `presence/${uid}`);
+      rtdbUpdate(presenceRef, { online: true, lastSeen: Date.now() });
     }
   };
 
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!auth.currentUser) return;
-    const { uid, photoURL, displayName } = auth.currentUser;
+  const { uid, photoURL, displayName } = auth.currentUser;
     const userTypingRef = databaseRef(rtdb, `typing/${uid}`);
     rtdbSet(userTypingRef, { typing: false, displayName: displayName || 'Anonymous' });
+    // Refresh presence on send
+    const presenceRef = databaseRef(rtdb, `presence/${uid}`);
+    rtdbUpdate(presenceRef, { online: true, lastSeen: Date.now() }).catch(()=>{});
 
     const messageData = {
       text: formValue,
       createdAt: serverTimestamp(),
       uid,
-      photoURL: photoURL || `https://ui-avatars.com/api/?name=${displayName || uid}&background=0d8abc&color=fff&size=40`,
+  photoURL: photoURL || null,
       displayName: getDisplayName ? getDisplayName(uid, displayName) : (displayName || 'Anonymous'),
       reactions: {}
     };

@@ -1,13 +1,28 @@
 import React from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { ref as databaseRef, onValue } from 'firebase/database';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useFirebase } from '../../services/FirebaseContext';
+import { getFallbackAvatar } from '../../utils/avatar';
+import { usePresence } from '../../services/PresenceContext';
 
 function ChatMessage(props) {
     const { firestore, auth, rtdb } = useFirebase();
     const { text, uid, photoURL, reactions = {}, id, createdAt, imageURL, type, displayName, replyTo } = props.message;
-    const { searchTerm, getDisplayName, onReply, isReplyTarget } = props;
-    const [userOnline, setUserOnline] = React.useState(false);
+    const { searchTerm, getDisplayName, onReply, isReplyTarget, onViewProfile } = props;
+    const presence = usePresence(uid);
+    const isTyping = !!presence.typing;
+    const presenceState = isTyping ? 'online' : presence.state; // typing overrides away state label visually
+    const presenceTitle = (() => {
+        const labelMap = { online: 'Online', away: 'Away', offline: 'Offline' };
+        const label = labelMap[presenceState] || 'Offline';
+        const ts = presence.lastSeen;
+        if (!ts) return label;
+        const diff = Date.now() - ts;
+        const mins = Math.floor(diff/60000);
+        let rel;
+        if (mins < 1) rel = 'just now'; else if (mins < 60) rel = `${mins}m ago`; else { const h=Math.floor(mins/60); if (h<24) rel = `${h}h ago`; else rel = `${Math.floor(h/24)}d ago`; }
+        if (isTyping) return `Typing… (was ${label}, last active ${rel})`;
+        return `${label} (last active ${rel})`;
+    })();
     const [showFullImage, setShowFullImage] = React.useState(false);
 
     const messageId = id || props.message.documentId || props.message._id || `temp_${uid}_${createdAt?.seconds || Date.now()}`;
@@ -19,7 +34,8 @@ function ChatMessage(props) {
 
     const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
     const userName = getDisplayName ? getDisplayName(uid, displayName) : (displayName || 'Anonymous');
-    const defaultAvatar = `https://ui-avatars.com/api/?name=${userName}&background=0d8abc&color=fff&size=40`;
+    const fallbackAvatar = React.useMemo(() => getFallbackAvatar({ uid, displayName: userName, size: 40 }), [uid, userName]);
+    const avatarSrc = photoURL || fallbackAvatar;
 
     const formatTimestamp = (timestamp) => {
         if (!timestamp) return '';
@@ -38,25 +54,39 @@ function ChatMessage(props) {
         return date.toLocaleDateString();
     };
 
-    const highlightText = (text, searchTerm) => {
-        if (!searchTerm || !text) return text;
-        const regex = new RegExp(`(${searchTerm})`, 'gi');
-        const parts = text.split(regex);
-        return parts.map((part, index) => 
-            regex.test(part) ? <mark key={index} className="search-highlight">{part}</mark> : part
-        );
+    const handleViewProfileClick = async () => {
+        if (onViewProfile) {
+            // Construct a basic user object from the message
+            let profileUser = {
+                uid,
+                displayName: userName,
+                photoURL: photoURL || fallbackAvatar,
+                // email is not available on the message object by default
+            };
+
+            // If we are viewing our own profile, we can add the email from the auth object
+            if (uid === auth.currentUser?.uid) {
+                profileUser.email = auth.currentUser.email;
+            } else {
+                // For other users, we can try to fetch more info if we store it somewhere,
+                // for example, in a 'users' collection. For now, we'll just use what we have.
+                // This is a good place for a future enhancement.
+            }
+            
+            onViewProfile(profileUser);
+        }
     };
 
-    React.useEffect(() => {
-        if (uid) {
-            const userPresenceRef = databaseRef(rtdb, `presence/${uid}`);
-            const unsubscribe = onValue(userPresenceRef, (snapshot) => {
-                const data = snapshot.val();
-                setUserOnline(data?.online || false);
-            });
-            return () => unsubscribe();
-        }
-    }, [uid, rtdb]);
+    const highlightText = React.useCallback((raw, term) => {
+        if (!term || !raw) return raw;
+        // Escape regex special chars in term
+        const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escaped})`, 'gi');
+        const parts = raw.split(regex);
+        return parts.map((part, i) => (regex.test(part) ? <mark key={i} className="search-highlight">{part}</mark> : part));
+    }, []);
+
+    // Presence handled by shared hook to prevent duplicate listeners
 
     const addReaction = async (emoji) => {
         if (!messageId || !auth.currentUser) return;
@@ -88,7 +118,7 @@ function ChatMessage(props) {
         }
     };
 
-    const reactionEmojis = ['👍', '❤️', '😂', '😮', '😢', '😡'];
+    const reactionEmojis = React.useMemo(() => ['👍', '❤️', '😂', '😮', '😢', '😡'], []);
 
     const handleNavigateToRepliedMessage = () => {
         if (!replyTo?.id) return;
@@ -114,18 +144,38 @@ function ChatMessage(props) {
     };
 
     return (
-        <div className={`message ${messageClass} ${isReplyTarget ? 'reply-target' : ''}`} data-message-id={messageId}>
+        <div
+            className={`message ${messageClass} ${isReplyTarget ? 'reply-target' : ''}`}
+            data-message-id={messageId}
+            role="article"
+            aria-label={`Message from ${userName}${isReplyTarget ? ' (reply target)' : ''}`}
+        >
             <div className="avatar-container">
-                <img 
-                    src={photoURL || defaultAvatar} 
-                    alt="User avatar"
-                    onError={(e) => { e.target.src = defaultAvatar; }}
+                <img
+                    src={avatarSrc}
+                    alt={userName ? `${userName}'s avatar` : 'User avatar'}
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                        if (e.target.dataset.fallbackApplied === 'true') return;
+                        e.target.src = fallbackAvatar;
+                        e.target.dataset.fallbackApplied = 'true';
+                    }}
                 />
-                <div className={`status-indicator ${userOnline ? 'online' : 'offline'}`}></div>
+                <div className={`status-indicator ${presenceState}`} title={presenceTitle} aria-label={presenceTitle}></div>
             </div>
             <div className="message-content">
                 <div className="message-header">
-                    <div className="message-username">{userName}</div>
+                    <div
+                        className="message-username"
+                        onClick={handleViewProfileClick}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleViewProfileClick(); }}
+                        style={{cursor: 'pointer'}}
+                        title={`View ${userName}'s profile`}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`View profile for ${userName}`}
+                    >{userName}</div>
                     <div className="message-timestamp">{formatTimestamp(createdAt)}</div>
                 </div>
                 
@@ -147,20 +197,27 @@ function ChatMessage(props) {
                 {type === 'image' && imageURL && (
                     <>
                         <div className="message-image">
-                            <img 
-                                src={imageURL} 
-                                alt="Shared content" 
+                            <img
+                                src={imageURL}
+                                alt="Shared image"
                                 onClick={() => setShowFullImage(true)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => { if (e.key === 'Enter') setShowFullImage(true); }}
+                                aria-label="Open image in modal"
+                                loading="lazy"
+                                decoding="async"
                             />
                         </div>
                         
                         {showFullImage && (
-                            <div className="image-modal" onClick={() => setShowFullImage(false)}>
+                            <div className="image-modal" onClick={() => setShowFullImage(false)} role="dialog" aria-modal="true" aria-label="Image preview">
                                 <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
                                     <img src={imageURL} alt="Full size view" />
                                     <button 
                                         className="image-modal-close"
                                         onClick={() => setShowFullImage(false)}
+                                        aria-label="Close image preview"
                                     >
                                         ✕
                                     </button>
@@ -180,10 +237,15 @@ function ChatMessage(props) {
                             const hasUserReacted = isArray ? userIds.includes(auth.currentUser?.uid) : false;
                             
                             return (
-                                <span 
-                                    key={emoji} 
+                                <span
+                                    key={emoji}
                                     className={`reaction ${hasUserReacted ? 'reacted' : ''}`}
                                     onClick={() => addReaction(emoji)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') addReaction(emoji); }}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-pressed={hasUserReacted}
+                                    aria-label={`${emoji} reaction, ${count} user${count !== 1 ? 's' : ''}. ${hasUserReacted ? 'You reacted.' : 'Activate to toggle your reaction.'}`}
                                     title={`${count} reaction${count !== 1 ? 's' : ''}`}
                                 >
                                     {emoji} {count}
@@ -195,11 +257,12 @@ function ChatMessage(props) {
                 
                 <div className="reaction-buttons">
                     {reactionEmojis.map(emoji => (
-                        <button 
-                            key={emoji} 
-                            className="reaction-btn" 
+                        <button
+                            key={emoji}
+                            className="reaction-btn"
                             onClick={() => addReaction(emoji)}
                             title={`React with ${emoji}`}
+                            aria-label={`React to message with ${emoji}`}
                         >
                             {emoji}
                         </button>
