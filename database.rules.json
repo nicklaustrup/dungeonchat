@@ -1,12 +1,14 @@
-\"presence\": {
-  \"$uid\": {
-    \".read\": \"auth != null\",
-    \".write\": \"auth != null && auth.uid === $uid\"
-  }
-},
-\"typing\": {
-  \"$uid\": {
-    \".read\": \"auth != null\",
-    \".write\": \"auth != null && auth.uid === $uid\"
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "presence": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "typing": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
   }
 }

@@ -1,14 +1,59 @@
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
+// Adds fade / slide in-out animation. Keeps the button mounted during exit
+// so the disappear animation can play before removal.
 function ScrollToBottomButton({ visible, hasNew, newCount, onClick }) {
-  if (!visible) return null;
+  const btnRef = useRef(null); // ref must be declared before effects using it
+  const transitioningOut = useRef(false);
+  const [render, setRender] = useState(visible); // controls mounting
+  const [show, setShow] = useState(false); // controls visible vs hiding class
+
+  useEffect(() => {
+    if (visible) {
+      // If becoming visible, ensure rendered then next frame mark show
+      if (!render) setRender(true);
+      requestAnimationFrame(() => setShow(true));
+      transitioningOut.current = false;
+    } else if (render) {
+      // Trigger hide animation
+      setShow(false);
+      transitioningOut.current = true;
+    }
+  }, [visible, render]);
+
+  const handleTransitionEnd = (e) => {
+    if (e.propertyName === 'opacity' && transitioningOut.current && !show) {
+      setRender(false); // unmount after fade-out completes
+      transitioningOut.current = false;
+    }
+  };
+
+  // If we are about to hide and the button is focused, shift focus to the log region to avoid aria-hidden focus conflict
+  useEffect(() => {
+    if (!visible && document.activeElement === btnRef.current) {
+      const log = document.querySelector('[role="log"]');
+      if (log) log.focus?.();
+    }
+  }, [visible]);
+
+  if (!render) return null;
+
   const label = hasNew ? `${newCount} new message${newCount > 1 ? 's' : ''}` : 'Scroll to bottom';
+  const classes = [
+    'scroll-to-bottom-btn',
+    show ? 'is-visible' : 'is-hiding',
+    hasNew && show ? 'new' : ''
+  ].filter(Boolean).join(' ');
+
   return (
     <button
+      ref={btnRef}
       type="button"
-      className={`scroll-to-bottom-btn ${hasNew ? 'new' : ''}`}
+      className={classes}
       onClick={onClick}
+      onTransitionEnd={handleTransitionEnd}
       aria-label={hasNew ? 'Scroll to latest new messages' : 'Scroll to bottom'}
+      tabIndex={show ? 0 : -1}
     >
       {label}
     </button>

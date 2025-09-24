@@ -68,6 +68,7 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
         aria-live="polite"
         aria-relevant="additions"
         aria-label="Chat messages"
+        tabIndex={-1}
       >
 
         <MessageList
@@ -79,7 +80,7 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
           showTyping={false}
           typingUsers={[]}
           topSentinel={hasMore ? (
-            <div ref={sentinelRef} className="load-older-sentinel">
+            <div ref={sentinelRef} className="load-older-sentinel" style={{ height: '2px' }}>
               {loadingOlder && <span className="loading-older">Loading older messages…</span>}
             </div>
           ) : null}

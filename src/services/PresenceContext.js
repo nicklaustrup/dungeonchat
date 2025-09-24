@@ -93,30 +93,29 @@ export function PresenceProvider({ children, awayAfterSeconds: propAway = 300 })
     return () => clearInterval(interval);
   }, [awayAfterSeconds]);
 
-  const getPresence = (uid) => {
-    if (!uid) return { state: 'offline', lastSeen: 0, online: false };
-    // If entry missing and we have rtdb, attempt lazy subscription (in case root read denied)
-    if (!presenceMap.has(uid) && rtdb && !perUserPresenceSubs.current.has(uid)) {
+  const ensureSubscribed = (uid) => {
+    if (!uid || !rtdb) return;
+    if (!perUserPresenceSubs.current.has(uid)) {
       const pRef = databaseRef(rtdb, `presence/${uid}`);
       const off = onValue(pRef, snap => {
         const data = snap.val();
         if (!data) return;
         setPresenceMap(prev => {
           const next = new Map(prev);
-            const rawLast = data.lastSeen;
-            const lastSeen = typeof rawLast === 'number' ? rawLast : (rawLast?.toMillis?.() || 0);
-            const now = Date.now();
-            const ageSec = (now - lastSeen)/1000;
-            let state = 'offline';
-            if (data.online) state = ageSec > awayAfterSeconds ? 'away' : 'online';
-            else if (ageSec < awayAfterSeconds) state = 'away';
-            next.set(uid, { state, lastSeen, online: !!data.online });
+          const rawLast = data.lastSeen;
+          const lastSeen = typeof rawLast === 'number' ? rawLast : (rawLast?.toMillis?.() || 0);
+          const now = Date.now();
+          const ageSec = (now - lastSeen)/1000;
+          let state = 'offline';
+          if (data.online) state = ageSec > awayAfterSeconds ? 'away' : 'online';
+          else if (ageSec < awayAfterSeconds) state = 'away';
+          next.set(uid, { state, lastSeen, online: !!data.online });
           return next;
         });
-      }, { onlyOnce: false });
+      });
       perUserPresenceSubs.current.set(uid, off);
     }
-    if (!typingMap.has(uid) && rtdb && !perUserTypingSubs.current.has(uid)) {
+    if (!perUserTypingSubs.current.has(uid)) {
       const tRef = databaseRef(rtdb, `typing/${uid}`);
       const offT = onValue(tRef, snap => {
         const data = snap.val();
@@ -128,6 +127,10 @@ export function PresenceProvider({ children, awayAfterSeconds: propAway = 300 })
       });
       perUserTypingSubs.current.set(uid, offT);
     }
+  };
+
+  const getPresence = (uid) => {
+    if (!uid) return { state: 'offline', lastSeen: 0, online: false };
     const base = presenceMap.get(uid) || (auth?.currentUser?.uid === uid ? { state: 'online', lastSeen: Date.now(), online: true } : { state: 'offline', lastSeen: 0, online: false });
     if (typingMap.has(uid)) {
       return { ...base, state: 'online', typing: true };
@@ -136,7 +139,7 @@ export function PresenceProvider({ children, awayAfterSeconds: propAway = 300 })
   };
 
   return (
-    <PresenceContext.Provider value={{ presenceMap, getPresence, awayAfterSeconds, typingMap }}>
+  <PresenceContext.Provider value={{ presenceMap, getPresence, ensureSubscribed, awayAfterSeconds, typingMap }}>
       {children}
     </PresenceContext.Provider>
   );
@@ -145,7 +148,10 @@ export function PresenceProvider({ children, awayAfterSeconds: propAway = 300 })
 export function usePresence(uid) {
   const ctx = useContext(PresenceContext);
   if (!ctx) throw new Error('usePresence must be used within PresenceProvider');
-  return ctx.getPresence(uid);
+  const { ensureSubscribed, getPresence } = ctx;
+  // Subscribe lazily after first render
+  React.useEffect(() => { if (uid) ensureSubscribed(uid); }, [uid, ensureSubscribed]);
+  return getPresence(uid);
 }
 
 export function usePresenceMeta() {

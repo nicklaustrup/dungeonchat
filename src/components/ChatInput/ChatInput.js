@@ -3,10 +3,10 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { ref as databaseRef, set as rtdbSet, serverTimestamp as rtdbServerTimestamp, update as rtdbUpdate } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '../../services/FirebaseContext';
-import { playNotificationSound } from '../../utils/sound';
+import { playNotificationSound, playTypingSound } from '../../utils/sound';
 import { getFallbackAvatar } from '../../utils/avatar';
 
-function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, selectedImage, setSelectedImage, imagePreview, setImagePreview, uploading, setUploading }) {
+function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, selectedImage, setSelectedImage, imagePreview, setImagePreview, uploading, setUploading, forceScrollBottom }) {
   const { auth, firestore, rtdb, storage } = useFirebase();
   const [formValue, setFormValue] = React.useState('');
   // image + uploading state lifted to parent (ChatPage)
@@ -101,6 +101,18 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
       const presenceRef = databaseRef(rtdb, `presence/${uid}`);
       rtdbUpdate(presenceRef, { online: true, lastSeen: Date.now() });
     }
+    // Play a subtle self typing tap only when transitioning from empty -> has content
+    if (soundEnabled && formValue.length === 0 && e.target.value.length === 1) {
+  playTypingSound(true, { self: true, withReverb: true });
+  ChatInput._lastSelfTap = Date.now();
+    } else if (soundEnabled && e.target.value.length > 1) {
+      // Throttle further self taps every ~6 seconds to avoid annoyance
+      const now = Date.now();
+      if (!ChatInput._lastSelfTap || now - ChatInput._lastSelfTap > 6000) {
+        playTypingSound(true, { self: true, withReverb: true });
+        ChatInput._lastSelfTap = now;
+      }
+    }
   };
 
   const sendMessage = async (e) => {
@@ -131,6 +143,7 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
     }
     try {
       await addDoc(messagesRef, messageData);
+  // message sent
     } catch (error) {
       console.error('❌ Error sending message:', error);
       alert(`Failed to send message: ${error.message}`);
@@ -141,7 +154,8 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
     setImagePreview(null);
     setUploading(false);
     setReplyingTo(null);
-    if (soundEnabled) playNotificationSound(true);
+    if (soundEnabled) { playNotificationSound(true); }
+    if (forceScrollBottom) { setTimeout(() => forceScrollBottom(), 10); }
   };
 
   return (

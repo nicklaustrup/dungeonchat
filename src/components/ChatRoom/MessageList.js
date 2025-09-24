@@ -25,7 +25,7 @@ function MessageList({
 
   return (
     <>
-      {topSentinel}
+  {topSentinel}
       {messages && messages.map(m => (
         <ChatMessage
           key={m.id}
@@ -37,7 +37,7 @@ function MessageList({
         />
       ))}
       {showTyping && <TypingIndicator users={typingUsers} />}
-      <span ref={bottomAnchorRef}></span>
+  <span ref={bottomAnchorRef} style={{ display: 'block', height: '1px' }}></span>
     </>
   );
 }

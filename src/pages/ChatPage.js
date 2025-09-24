@@ -3,6 +3,7 @@ import React from 'react';
 import { ref as databaseRef, onDisconnect as rtdbOnDisconnect, set as rtdbSet, serverTimestamp as rtdbServerTimestamp, update as rtdbUpdate } from 'firebase/database';
 import { useFirebase } from '../services/FirebaseContext';
 import ChatHeader from '../components/ChatHeader/ChatHeader';
+import { ensureAudioReady } from '../utils/sound';
 import ChatRoom from '../components/ChatRoom/ChatRoom';
 import ChatInput from '../components/ChatInput/ChatInput';
 import SignIn from '../components/SignIn/SignIn';
@@ -78,6 +79,8 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
     document.body.className = isDarkTheme ? 'dark-theme' : 'light-theme';
   }, [isDarkTheme]);
 
+  // Removed eager audio init to prevent autoplay warnings; context unlock handled on first gesture.
+
   const toggleTheme = () => setIsDarkTheme(!isDarkTheme);
   const toggleSound = () => setSoundEnabled(!soundEnabled);
 
@@ -125,7 +128,7 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
               onScrollMeta={setScrollMeta}
             />
             <div className="chatroom-overlays">
-              <TypingBubble />
+              <TypingBubble soundEnabled={soundEnabled} />
               <div className="scroll-btn-wrapper">
                 <ScrollToBottomButton
                   visible={scrollMeta.visible || scrollMeta.hasNew}
@@ -147,6 +150,7 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
               setImagePreview={setImagePreview}
               uploading={uploading}
               setUploading={setUploading}
+              forceScrollBottom={() => scrollMeta.scrollToBottom && scrollMeta.scrollToBottom('auto')}
             />
           </>
         ) : (
