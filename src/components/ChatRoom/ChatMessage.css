@@ -1,7 +1,7 @@
 /* Contextual menu */
 :root {
 	--message-left-col-width: 40px; /* reduced width for avatar + time column */
-	--message-horizontal-gap: 8px; /* tighter horizontal gap */
+	--message-horizontal-gap: 14px; /* tighter horizontal gap */
 }
 .message-menu-wrapper { position: relative; display: inline-block; }
 .message-menu-trigger { font-weight: 600; }
@@ -28,7 +28,7 @@
 .light-theme .menu-item-icon { color:#444; }
 :root:not(.light-theme) .menu-item-icon { color:rgba(255,255,255,0.65); }
 .deleted-message { font-style:italic; opacity:.6; }
-.edited-label { font-size:10px; opacity:.7; }
+.edited-label { font-size:10px; opacity:.7; vertical-align: baseline;}
 .edit-container textarea { width:100%; min-height:60px; resize:vertical; background:var(--bg-light); color:var(--text-color); border:1px solid var(--border-color); border-radius:8px; padding:6px 8px; font-family:inherit; font-size:13px; }
 .edit-actions { display:flex; gap:6px; margin-top:6px; }
 .save-edit-btn, .cancel-edit-btn { background:var(--bg-secondary); border:1px solid var(--border-color); padding:4px 10px; border-radius:6px; font-size:12px; cursor:pointer; }
@@ -45,7 +45,7 @@
 .delete-modal-actions .danger { background:#ff4d4f; border-color:#ff4d4f; color:#fff; }
 .delete-modal-actions .danger:hover { background:#ff2d2f; }
 /* Message layout */
-.message { display:flex; align-items:flex-start; margin:6px 0 0px; position:relative; gap:var(--message-horizontal-gap); width:100%; padding:1px 8px; border-radius:8px; transition:background .22s ease, box-shadow .22s ease; }
+.message { display:flex; align-items:flex-start; margin:6px 0 0px; position:relative; gap:var(--message-horizontal-gap); width:100%; padding:1px; border-radius:8px; transition:background .22s ease, box-shadow .22s ease; }
 .message-inner { display:flex; flex-direction:column; width:100%; min-width:0; }
 .message-top-row { display:flex; gap:var(--message-horizontal-gap); align-items:flex-start; margin:0 0 2px; }
 .message-top-row .avatar-spacer { width:var(--message-left-col-width); flex:0 0 var(--message-left-col-width); }
@@ -87,16 +87,16 @@ body.chat-menu-open .reaction-buttons:not(.force-visible) { opacity:0 !important
 .light-theme .quote-reply-btn { color:#111; }
 /* inline reply context */
 .inline-reply-context { display:flex; align-items:center; gap:4px; margin:0 0 2px; font-size:0.72rem; font-weight:500; opacity:.85; max-width:100%; }
-.inline-reply-context .irc-glyph { font-size:0.75rem; opacity:.6; display:inline-flex; align-items:center; justify-content:center; width:14px; }
+.inline-reply-context .irc-glyph { font-size:1rem; opacity:.6; display:inline-flex; align-items:center; justify-content:center; width:14px; }
 .light-theme .inline-reply-context .irc-glyph { color:#000; opacity:.55; }
-.inline-reply-context .irc-glyph { color:#fff; }
-.inline-reply-context .irc-avatar img { width:18px; height:18px; border-radius:50%; object-fit:cover; display:block; }
-.inline-reply-context .irc-name { background:none; border:none; padding:0; margin:0; font:inherit; font-size:0.74rem; font-weight:600; cursor:pointer; color:var(--primary-color); }
+.inline-reply-context .irc-glyph { color:#fff;}
+.inline-reply-context .irc-avatar img { width:14px; height:14px; object-fit:cover; display:block; }
+.inline-reply-context .irc-name { background:none; border:none; padding:0; margin:0; font:inherit; font-size:0.74rem; font-weight:650; cursor:pointer; color:var(--text-color); }
 .inline-reply-context .irc-name:hover { text-decoration:underline; }
-.inline-reply-context .irc-text { max-width:50%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:0.66rem; opacity:.7; cursor:pointer; }
-.inline-reply-context .irc-text:hover { opacity:.95; text-decoration:underline; }
+.inline-reply-context .irc-text { max-width:50%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11.84px; opacity:.9; cursor:pointer;}
+.inline-reply-context .irc-text:hover { opacity:.95; text-decoration:none;}
 .message-header { display:flex; align-items:baseline; gap:8px; }
-.message-username { font-weight:600; font-size:0.95rem; }
+.message-username { font-weight:600; font-size:0.95rem; color:#ffffff;}
 .message-timestamp { font-size:11px; color:var(--text-secondary); }
 /* Status indicator adjustments: scale down 20% and shift inward 30% */
 .avatar-container .status-indicator { transform:scale(0.8); transform-origin:center; bottom:calc(1px - 5%); right:calc(1px - 5%); }
@@ -134,4 +134,9 @@ body.chat-menu-open .reaction-buttons:not(.force-visible) { opacity:0 !important
 .date-divider-label { font-size:12px; padding:2px 12px; color:#fff; letter-spacing:.5px; }
 .light-theme .date-divider::before, .light-theme .date-divider::after { background:rgba(0,0,0,0.25); }
 .light-theme .date-divider-label { color:#222; }
-
+.flip-horizontal {
+  transform: scaleX(-1);
+}
+.rotate-180 {
+  transform: rotate(180deg);
+}

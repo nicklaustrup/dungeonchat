@@ -5,6 +5,7 @@ import './ChatMessage.css';
 import { useFirebase } from '../../services/FirebaseContext';
 import { getFallbackAvatar } from '../../utils/avatar';
 import { usePresence } from '../../services/PresenceContext';
+import EmojiMenu from '../../components/ChatInput/EmojiMenu';
 
 function ChatMessage(props) {
     const { firestore, auth, rtdb } = useFirebase();
@@ -197,8 +198,17 @@ function ChatMessage(props) {
         setMenuOpen(false);
     };
 
-    const handleAddReactionFull = () => {
-        // Placeholder for future full emoji picker
+    const handleAddReactionFull = (e) => {
+        const target = e?.currentTarget;
+        let anchorRect = null;
+        if (target) anchorRect = target.getBoundingClientRect();
+        EmojiMenu.open({
+            anchorRect,
+            onSelect: (emojiData) => {
+                if (emojiData?.emoji) addReaction(emojiData.emoji);
+            }
+        });
+        // keep menu open? optional: currently we close for clarity
         setMenuOpen(false);
     };
 
@@ -426,6 +436,8 @@ function ChatMessage(props) {
                             </p>
                         )
                     )}
+
+                    {/* Message Reactions */}
                     {Object.keys(reactions).length > 0 && (
                         <div className="message-reactions">
                             {Object.entries(reactions).map(([emoji, userIds]) => {
@@ -448,6 +460,8 @@ function ChatMessage(props) {
                             })}
                         </div>
                     )}
+
+                    {/* Reaction Bar */}
                     <div className={`reaction-buttons ${menuOpen ? 'force-visible' : ''}`}>
                         {reactionEmojis.map(emoji => (
                             <button key={emoji} className="reaction-btn" data-tip={`React ${emoji}`} onClick={() => addReaction(emoji)} aria-label={`React to message with ${emoji}`}>{emoji}</button>
@@ -481,6 +495,8 @@ function ChatMessage(props) {
                         )}
                     </div>
                 </div>
+
+                {/* Delete Confirmation Modal */}
                 {showDeleteConfirm && (
                     <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-label="Confirm delete" onMouseDown={(e) => { e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); }}>
                         <div className="delete-modal" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
@@ -545,6 +561,7 @@ function ChatMessage(props) {
                                 >
                                     {(replyTo.text ? replyTo.text : (replyTo.type === 'image' ? 'Image' : '')) || ''}
                                 </span>
+                                <span className="irc-glyph rotate-180" aria-hidden="true">❝</span>
                             </div>
                         </div>
                     </div>
@@ -644,14 +661,14 @@ function ChatMessage(props) {
                         )}
                         <div className={`reaction-buttons ${menuOpen ? 'force-visible' : ''}`}>
                             {reactionEmojis.map(emoji => (
-                                <button key={emoji} className="reaction-btn" onClick={() => addReaction(emoji)} title={`React with ${emoji}`} aria-label={`React to message with ${emoji}`}>{emoji}</button>
+                                <button key={emoji} className="reaction-btn" onClick={() => addReaction(emoji)} data-tip="Click to react" aria-label={`React to message with ${emoji}`}>{emoji}</button>
                             ))}
-                            {onReply && <button className="reply-btn quote-reply-btn" onClick={() => onReply(props.message)} title="Reply (quote message)" aria-label="Reply to this message">❝</button>}
+                            {onReply && <button className="reply-btn quote-reply-btn" onClick={() => onReply(props.message)} data-tip="Reply" aria-label="Reply to this message">❝</button>}
                             {!deleted && (
                                 <div className="message-menu-wrapper" ref={menuRef}>
                                     <button className="reply-btn message-menu-trigger" data-tip="Options" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>…</button>
                                     {menuOpen && createPortal(
-                                        <div ref={menuPanelRef} className={`message-menu open mode-${menuMode} ${menuReady ? 'ready' : 'measuring'}`} role="menu" aria-label="Message options" onMouseDown={(e) => e.stopPropagation()} style={menuStyle}>
+                                        <div ref={menuPanelRef} data-tip="More" className={`message-menu open mode-${menuMode} ${menuReady ? 'ready' : 'measuring'}`} role="menu" aria-label="Message options" onMouseDown={(e) => e.stopPropagation()} style={menuStyle}>
                                             <div className="menu-reactions-row" role="group" aria-label="Quick reactions">
                                                 {quickMenuEmojis.map(r => (
                                                     <button key={r} className="menu-reaction-btn" onClick={() => { addReaction(r); setMenuOpen(false); }} title={`React ${r}`} aria-label={`React with ${r}`}>{r}</button>

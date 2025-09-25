@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
 import { PresenceProvider } from './services/PresenceContext';
+import { EmojiMenuProvider } from './components/ChatInput/EmojiMenu';
 import ChatPage from './pages/ChatPage';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
   return (
     <PresenceProvider awayAfterSeconds={awayAfterSeconds}>
       <ChatPage awayAfterSeconds={awayAfterSeconds} setAwayAfterSeconds={setAwayAfterSeconds} />
+      <EmojiMenuProvider />
     </PresenceProvider>
   );
 }
