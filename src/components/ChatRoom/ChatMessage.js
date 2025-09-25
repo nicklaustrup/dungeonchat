@@ -9,7 +9,7 @@ import { usePresence } from '../../services/PresenceContext';
 function ChatMessage(props) {
     const { firestore, auth, rtdb } = useFirebase();
     const { text, uid, photoURL, reactions = {}, id, createdAt, imageURL, type, displayName, replyTo, editedAt, deleted } = props.message;
-    const { searchTerm, getDisplayName, onReply, isReplyTarget, onViewProfile } = props;
+    const { searchTerm, getDisplayName, onReply, isReplyTarget, onViewProfile, showMeta = true } = props;
     const presence = usePresence(uid);
     const isTyping = !!presence.typing;
     const presenceState = isTyping ? 'online' : presence.state; // typing overrides away state label visually
@@ -125,8 +125,9 @@ function ChatMessage(props) {
         }
     };
 
-    const reactionEmojis = React.useMemo(() => ['👍', '❤️', '😂', '😮', '😢', '😡'], []);
-    const quickMenuEmojis = React.useMemo(() => ['👍', '❤️', '😂', '😮'], []);
+    // Reduced reaction set per new design (only thumbs up, heart, laugh)
+    const reactionEmojis = React.useMemo(() => ['👍', '❤️', '😂'], []);
+    const quickMenuEmojis = React.useMemo(() => ['👍', '❤️', '😂'], []);
 
     const formatFullTimestamp = (timestamp) => {
         if (!timestamp) return '';
@@ -346,57 +347,110 @@ function ChatMessage(props) {
         }
     };
 
+    const rootClasses = [
+        'message',
+        messageClass,
+        isReplyTarget ? 'reply-target' : '',
+        replyTo ? 'has-inline-reply' : '',
+        showMeta ? 'with-meta' : 'no-meta'
+    ].filter(Boolean).join(' ');
+
     return (
         <div
-            className={`message ${messageClass} ${isReplyTarget ? 'reply-target' : ''}`}
+            className={rootClasses}
             data-message-id={messageId}
             role="article"
             aria-label={`Message from ${userName}${isReplyTarget ? ' (reply target)' : ''}`}
         >
-            <div className="avatar-container" role="button" tabIndex={0} title={`View ${userName}'s profile`} aria-label={`View ${userName}'s profile`} onClick={handleViewProfileClick} onKeyDown={(e)=>{ if(e.key==='Enter') handleViewProfileClick(); }}>
-                <img
-                    src={avatarSrc}
-                    alt={userName ? `${userName}'s avatar` : 'User avatar'}
-                    loading="lazy"
-                    decoding="async"
-                    className="message-avatar"
-                    onError={(e) => {
-                        if (e.target.dataset.fallbackApplied === 'true') return;
-                        e.target.src = fallbackAvatar;
-                        e.target.dataset.fallbackApplied = 'true';
-                    }}
-                />
-                <div className={`status-indicator ${presenceState}`} title={presenceTitle} aria-label={presenceTitle}></div>
-            </div>
+            {showMeta && (
+              <div className="avatar-container" role="button" tabIndex={0} title={`View ${userName}'s profile`} aria-label={`View ${userName}'s profile`} onClick={handleViewProfileClick} onKeyDown={(e)=>{ if(e.key==='Enter') handleViewProfileClick(); }}>
+                  <img
+                      src={avatarSrc}
+                      alt={userName ? `${userName}'s avatar` : 'User avatar'}
+                      loading="lazy"
+                      decoding="async"
+                      className="message-avatar"
+                      onError={(e) => {
+                          if (e.target.dataset.fallbackApplied === 'true') return;
+                          e.target.src = fallbackAvatar;
+                          e.target.dataset.fallbackApplied = 'true';
+                      }}
+                  />
+                  <div className={`status-indicator ${presenceState}`} title={presenceTitle} aria-label={presenceTitle}></div>
+              </div>
+            )}
             <div className="message-content">
-                <div className="message-header">
-                    <div
-                        className="message-username"
-                        onClick={handleViewProfileClick}
-                        onKeyDown={(e) => { if (e.key === 'Enter') handleViewProfileClick(); }}
-                        style={{cursor: 'pointer'}}
-                        title={`View ${userName}'s profile`}
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`View profile for ${userName}`}
-                    >{userName}</div>
-                    <div className="message-timestamp">{formatTimestamp(createdAt)}</div>
-                </div>
+                                {/* Reply-to context now sits above header (avatar + name + truncated text) */}
+                                {replyTo && (
+                    <div className="inline-reply-context" aria-label={`Replying to ${replyTo.displayName || 'user'}`}> 
+                        <span className="irc-glyph" aria-hidden="true">❝</span>
+                                                <div
+                                                    className="irc-avatar"
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={handleViewProfileClick}
+                                                    onKeyDown={(e)=>{ if(e.key==='Enter') handleViewProfileClick(); }}
+                                                    title={`View ${replyTo.displayName || 'user'} profile`}
+                                                >
+                                                        <img
+                                                            src={replyTo.photoURL || getFallbackAvatar({ uid: replyTo.uid || 'x', displayName: replyTo.displayName, size: 24 })}
+                                                            alt={replyTo.displayName ? `${replyTo.displayName} avatar` : 'User avatar'}
+                                                        />
+                                                </div>
+                                                <button className="irc-name" onClick={handleViewProfileClick} title={`View ${replyTo.displayName || 'user'} profile`}>
+                                                    {replyTo.displayName || 'Unknown'}
+                                                </button>
+                                                <span
+                                                    className="irc-text"
+                                                    role={replyTo.id ? 'link' : undefined}
+                                                    tabIndex={replyTo.id ? 0 : -1}
+                                                    onClick={() => {
+                                                        if (!replyTo.id) return;
+                                                        const selector = `[data-message-id="${replyTo.id}"]`;
+                                                        const targetEl = document.querySelector(selector);
+                                                        if (targetEl) {
+                                                            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                            // Flash animation for feedback
+                                                            targetEl.classList.add('reply-flash');
+                                                            // If it wasn't already a reply-target, temporarily add & remove after 3s
+                                                            let addedTemp = false;
+                                                            if (!targetEl.classList.contains('reply-target')) {
+                                                                targetEl.classList.add('reply-target');
+                                                                addedTemp = true;
+                                                            }
+                                                            setTimeout(()=>{ targetEl.classList.remove('reply-flash'); }, 600);
+                                                            if (addedTemp) {
+                                                                setTimeout(()=>{ targetEl.classList.remove('reply-target'); }, 3000);
+                                                            }
+                                                        }
+                                                    }}
+                                                    onKeyDown={(e)=>{ if(e.key==='Enter') e.currentTarget.click(); }}
+                                                    title={replyTo.text || (replyTo.type==='image' ? 'Image' : '')}
+                                                >
+                                                    {(replyTo.text ? replyTo.text : (replyTo.type === 'image' ? 'Image' : '')) || ''}
+                                                </span>
+                                        </div>
+                                )}
+                                {showMeta && (
+                                    <div className="message-header">
+                                            <div
+                                                    className="message-username"
+                                                    onClick={handleViewProfileClick}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter') handleViewProfileClick(); }}
+                                                    style={{cursor: 'pointer'}}
+                                                    title={`View ${userName}'s profile`}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    aria-label={`View profile for ${userName}`}
+                                            >{userName}</div>
+                                            <div className="message-timestamp">{formatTimestamp(createdAt)}</div>
+                                    </div>
+                                )}
+                                {!showMeta && (
+                                    <div className="hover-time" title={formatTimestamp(createdAt)} aria-hidden="true">{formatTimestamp(createdAt).split(', ')[1]}</div>
+                                )}
                 
-                {replyTo && (
-                    <div 
-                        className="reply-indicator" 
-                        onClick={handleNavigateToRepliedMessage}
-                        style={{ cursor: replyTo.id ? 'pointer' : 'default' }}
-                        aria-label="Jump to replied message"
-                        title="Jump to replied message"
-                    >
-                        <span className="reply-icon">↳</span>
-                        <span className="reply-text">
-                            Replying to: {replyTo.text ? replyTo.text.substring(0, 50) + (replyTo.text.length > 50 ? '...' : '') : (replyTo.type === 'image' ? 'an image' : 'original message')}
-                        </span>
-                    </div>
-                )}
+                {/* Old inline reply indicator removed per new design */}
                 
                 {type === 'image' && imageURL && (
                     <>

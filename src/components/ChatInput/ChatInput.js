@@ -202,9 +202,10 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
         </div>
       )}
       {replyingTo && (
-        <div className="reply-preview">
-          <div 
-            className="reply-preview-content"
+        <div className="reply-preview compact">
+          <button
+            type="button"
+            className="reply-preview-label only"
             onClick={() => {
               if (!replyingTo.id) return;
               const selector = `[data-message-id="${replyingTo.id}"]`;
@@ -213,29 +214,23 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
                 targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 if (!targetEl.classList.contains('reply-target')) {
                   targetEl.classList.add('reply-target');
-                  setTimeout(() => {
-                    targetEl.classList.remove('reply-target');
-                  }, 3000);
+                  setTimeout(()=> targetEl.classList.remove('reply-target'), 3000);
                 }
               }
             }}
-            style={{ cursor: replyingTo.id ? 'pointer' : 'default' }}
-            title="Jump to original message"
-            aria-label="Jump to original message"
+            aria-label={`Jump to original message from ${replyingTo.displayName}`}
+            title={`Jump to original message from ${replyingTo.displayName}`}
           >
-            <span className="reply-preview-label">Replying to {replyingTo.displayName}:</span>
-            <span className="reply-preview-text">
-              {replyingTo.text || (replyingTo.type === 'image' ? '📷 Image' : 'Message')}
-            </span>
-          </div>
+            Replying to {replyingTo.displayName}
+          </button>
           <button
-            className="reply-preview-close"
+            className="reply-preview-close tiny"
             onClick={() => setReplyingTo(null)}
             type="button"
             aria-label="Cancel reply"
             title="Cancel reply"
           >
-            ✕
+            <span aria-hidden>×</span>
           </button>
         </div>
       )}

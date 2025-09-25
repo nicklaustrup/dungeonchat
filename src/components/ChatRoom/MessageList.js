@@ -30,6 +30,7 @@ function MessageList({
   };
 
   let lastDateKey = null;
+  let prevUid = null;
 
   return (
     <>
@@ -48,6 +49,9 @@ function MessageList({
             showDivider = false;
           }
         }
+        // Determine if this message should show meta (avatar/name/timestamp)
+  const baseShowMeta = showDivider || prevUid !== m.uid;
+  const showMeta = baseShowMeta || !!m.replyTo; // always show meta if quoting another message
         const content = (
           <ChatMessage
             key={m.id}
@@ -56,6 +60,7 @@ function MessageList({
             onReply={onReply}
             isReplyTarget={replyingToId && m.id === replyingToId}
             onViewProfile={onViewProfile}
+            showMeta={showMeta}
           />
         );
         const elements = [];
@@ -67,6 +72,7 @@ function MessageList({
             );
         }
         if (dateKey) lastDateKey = dateKey;
+        prevUid = m.uid;
         elements.push(content);
         return elements;
       })}
