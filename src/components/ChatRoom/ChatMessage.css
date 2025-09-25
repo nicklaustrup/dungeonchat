@@ -46,6 +46,11 @@
 .delete-modal-actions .danger:hover { background:#ff2d2f; }
 /* Message layout */
 .message { display:flex; align-items:flex-start; margin:6px 0 0px; position:relative; gap:var(--message-horizontal-gap); width:100%; padding:1px 8px; border-radius:8px; transition:background .22s ease, box-shadow .22s ease; }
+.message-inner { display:flex; flex-direction:column; width:100%; min-width:0; }
+.message-top-row { display:flex; gap:var(--message-horizontal-gap); align-items:flex-start; margin:0 0 2px; }
+.message-top-row .avatar-spacer { width:var(--message-left-col-width); flex:0 0 var(--message-left-col-width); }
+.message-top-row .reply-contexts { display:flex; flex-direction:column; gap:2px; flex:1 1 auto; min-width:0; }
+.message-main-row { display:flex; gap:var(--message-horizontal-gap); align-items:flex-start; width:100%; min-width:0; }
 .message.no-meta { margin:0; padding-top:0; padding-bottom:0; }
 .message.no-meta .time-col { width:var(--message-left-col-width); flex:0 0 var(--message-left-col-width); display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--text-secondary); opacity:0; transition:opacity .15s ease; line-height:1; margin-top:7px; }
 .message.no-meta:hover .time-col { opacity:1; }
@@ -94,7 +99,7 @@ body.chat-menu-open .reaction-buttons:not(.force-visible) { opacity:0 !important
 .message-username { font-weight:600; font-size:0.95rem; }
 .message-timestamp { font-size:11px; color:var(--text-secondary); }
 /* Status indicator adjustments: scale down 20% and shift inward 30% */
-.avatar-container .status-indicator { transform:scale(0.8); transform-origin:center; bottom:calc(2px + 30%); right:calc(2px + 30%); }
+.avatar-container .status-indicator { transform:scale(0.8); transform-origin:center; bottom:calc(1px - 5%); right:calc(1px - 5%); }
 
 /* Instant tooltips for reaction / action buttons */
 .reaction-buttons .reaction-btn[data-tip],

@@ -19,9 +19,9 @@ function ChatMessage(props) {
         const ts = presence.lastSeen;
         if (!ts) return label;
         const diff = Date.now() - ts;
-        const mins = Math.floor(diff/60000);
+        const mins = Math.floor(diff / 60000);
         let rel;
-        if (mins < 1) rel = 'just now'; else if (mins < 60) rel = `${mins}m ago`; else { const h=Math.floor(mins/60); if (h<24) rel = `${h}h ago`; else rel = `${Math.floor(h/24)}d ago`; }
+        if (mins < 1) rel = 'just now'; else if (mins < 60) rel = `${mins}m ago`; else { const h = Math.floor(mins / 60); if (h < 24) rel = `${h}h ago`; else rel = `${Math.floor(h / 24)}d ago`; }
         if (isTyping) return `Typing… (was ${label}, last active ${rel})`;
         return `${label} (last active ${rel})`;
     })();
@@ -52,13 +52,13 @@ function ChatMessage(props) {
         if (!timestamp) return '';
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
         // Build parts manually to avoid locale comma separators
-        const mm = String(date.getMonth()+1).padStart(2,'0');
-        const dd = String(date.getDate()).padStart(2,'0');
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
         const yyyy = date.getFullYear();
         let hrs = date.getHours();
         const ampm = hrs >= 12 ? 'PM' : 'AM';
         hrs = hrs % 12; if (hrs === 0) hrs = 12;
-        const mins = String(date.getMinutes()).padStart(2,'0');
+        const mins = String(date.getMinutes()).padStart(2, '0');
         return `${mm}/${dd}/${yyyy} ${hrs}:${mins} ${ampm}`;
     };
     const formatTimeOnly = (timestamp) => {
@@ -67,7 +67,7 @@ function ChatMessage(props) {
         let hrs = date.getHours();
         const ampm = hrs >= 12 ? 'PM' : 'AM';
         hrs = hrs % 12; if (hrs === 0) hrs = 12;
-        const mins = String(date.getMinutes()).padStart(2,'0');
+        const mins = String(date.getMinutes()).padStart(2, '0');
         return `${hrs}:${mins} ${ampm}`;
     };
 
@@ -89,7 +89,7 @@ function ChatMessage(props) {
                 // for example, in a 'users' collection. For now, we'll just use what we have.
                 // This is a good place for a future enhancement.
             }
-            
+
             onViewProfile(profileUser);
         }
     };
@@ -107,18 +107,18 @@ function ChatMessage(props) {
 
     const addReaction = async (emoji) => {
         if (!messageId || !auth.currentUser) return;
-        
+
         const messageRef = doc(firestore, 'messages', messageId);
         const currentReactions = { ...reactions };
-        
+
         if (!currentReactions[emoji]) {
             currentReactions[emoji] = [];
         } else if (typeof currentReactions[emoji] === 'number') {
             currentReactions[emoji] = [];
         }
-        
+
         const userIndex = currentReactions[emoji].indexOf(auth.currentUser.uid);
-        
+
         if (userIndex > -1) {
             currentReactions[emoji].splice(userIndex, 1);
             if (currentReactions[emoji].length === 0) {
@@ -127,7 +127,7 @@ function ChatMessage(props) {
         } else {
             currentReactions[emoji].push(auth.currentUser.uid);
         }
-        
+
         try {
             await updateDoc(messageRef, { reactions: currentReactions });
         } catch (error) {
@@ -459,7 +459,7 @@ function ChatMessage(props) {
                             <div className="message-menu-wrapper" ref={menuRef}>
                                 <button className="reply-btn message-menu-trigger" data-tip="Options" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>…</button>
                                 {menuOpen && createPortal(
-                                    <div ref={menuPanelRef} className={`message-menu open mode-${menuMode} ${menuReady ? 'ready' : 'measuring'}`} role="menu" aria-label="Message options" onMouseDown={(e)=>e.stopPropagation()} style={menuStyle}>
+                                    <div ref={menuPanelRef} className={`message-menu open mode-${menuMode} ${menuReady ? 'ready' : 'measuring'}`} role="menu" aria-label="Message options" onMouseDown={(e) => e.stopPropagation()} style={menuStyle}>
                                         <div className="menu-reactions-row" role="group" aria-label="Quick reactions">
                                             {quickMenuEmojis.map(r => (
                                                 <button key={r} className="menu-reaction-btn" data-tip={`React ${r}`} onClick={() => { addReaction(r); setMenuOpen(false); }} aria-label={`React with ${r}`}>{r}</button>
@@ -482,8 +482,8 @@ function ChatMessage(props) {
                     </div>
                 </div>
                 {showDeleteConfirm && (
-                    <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-label="Confirm delete" onMouseDown={(e)=>{ e.stopPropagation(); }} onClick={(e)=>{ e.stopPropagation(); }}>
-                        <div className="delete-modal" onMouseDown={(e)=>e.stopPropagation()} onClick={(e)=>e.stopPropagation()}>
+                    <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-label="Confirm delete" onMouseDown={(e) => { e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); }}>
+                        <div className="delete-modal" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
                             <h4>Delete message?</h4>
                             <p className="no-bg">This action cannot be undone.</p>
                             <div className="delete-modal-actions">
@@ -491,7 +491,7 @@ function ChatMessage(props) {
                                 <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
                             </div>
                         </div>
-                        <div className="delete-modal-backdrop-click-capture" onMouseDown={(e)=>{ e.stopPropagation(); setShowDeleteConfirm(false); }} />
+                        <div className="delete-modal-backdrop-click-capture" onMouseDown={(e) => { e.stopPropagation(); setShowDeleteConfirm(false); }} />
                     </div>
                 )}
             </div>
@@ -499,278 +499,193 @@ function ChatMessage(props) {
     }
 
     return (
-        <div
-            className={rootClasses}
-            data-message-id={messageId}
-            role="article"
-            aria-label={`Message from ${userName}${isReplyTarget ? ' (reply target)' : ''}`}
-        >
-            {showMeta && (
-              <div className="avatar-container" role="button" tabIndex={0} title={`View ${userName}'s profile`} aria-label={`View ${userName}'s profile`} onClick={handleViewProfileClick} onKeyDown={(e)=>{ if(e.key==='Enter') handleViewProfileClick(); }}>
-                  <img
-                      src={avatarSrc}
-                      alt={userName ? `${userName}'s avatar` : 'User avatar'}
-                      loading="lazy"
-                      decoding="async"
-                      className="message-avatar"
-                      onError={(e) => {
-                          if (e.target.dataset.fallbackApplied === 'true') return;
-                          e.target.src = fallbackAvatar;
-                          e.target.dataset.fallbackApplied = 'true';
-                      }}
-                  />
-                  <div className={`status-indicator ${presenceState}`} title={presenceTitle} aria-label={presenceTitle}></div>
-              </div>
-            )}
-            <div className="message-content">
-                                {/* Reply-to context now sits above header (avatar + name + truncated text) */}
-                                {replyTo && (
-                    <div className="inline-reply-context" aria-label={`Replying to ${replyTo.displayName || 'user'}`}> 
-                        <span className="irc-glyph" aria-hidden="true">❝</span>
-                                                <div
-                                                    className="irc-avatar"
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onClick={handleViewProfileClick}
-                                                    onKeyDown={(e)=>{ if(e.key==='Enter') handleViewProfileClick(); }}
-                                                    title={`View ${replyTo.displayName || 'user'} profile`}
-                                                >
-                                                        <img
-                                                            src={replyTo.photoURL || getFallbackAvatar({ uid: replyTo.uid || 'x', displayName: replyTo.displayName, size: 24 })}
-                                                            alt={replyTo.displayName ? `${replyTo.displayName} avatar` : 'User avatar'}
-                                                        />
-                                                </div>
-                                                <button className="irc-name" onClick={handleViewProfileClick} title={`View ${replyTo.displayName || 'user'} profile`}>
-                                                    {replyTo.displayName || 'Unknown'}
-                                                </button>
-                                                <span
-                                                    className="irc-text"
-                                                    role={replyTo.id ? 'link' : undefined}
-                                                    tabIndex={replyTo.id ? 0 : -1}
-                                                    onClick={() => {
-                                                        if (!replyTo.id) return;
-                                                        const selector = `[data-message-id="${replyTo.id}"]`;
-                                                        const targetEl = document.querySelector(selector);
-                                                        if (targetEl) {
-                                                            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                                            // Flash animation for feedback
-                                                            targetEl.classList.add('reply-flash');
-                                                            // If it wasn't already a reply-target, temporarily add & remove after 3s
-                                                            let addedTemp = false;
-                                                            if (!targetEl.classList.contains('reply-target')) {
-                                                                targetEl.classList.add('reply-target');
-                                                                addedTemp = true;
-                                                            }
-                                                            setTimeout(()=>{ targetEl.classList.remove('reply-flash'); }, 600);
-                                                            if (addedTemp) {
-                                                                setTimeout(()=>{ targetEl.classList.remove('reply-target'); }, 3000);
-                                                            }
-                                                        }
-                                                    }}
-                                                    onKeyDown={(e)=>{ if(e.key==='Enter') e.currentTarget.click(); }}
-                                                    title={replyTo.text || (replyTo.type==='image' ? 'Image' : '')}
-                                                >
-                                                    {(replyTo.text ? replyTo.text : (replyTo.type === 'image' ? 'Image' : '')) || ''}
-                                                </span>
-                                        </div>
-                                )}
-                                {showMeta && (
-                                    <div className="message-header">
-                                            <div
-                                                    className="message-username"
-                                                    onClick={handleViewProfileClick}
-                                                    onKeyDown={(e) => { if (e.key === 'Enter') handleViewProfileClick(); }}
-                                                    style={{cursor: 'pointer'}}
-                                                    title={`View ${userName}'s profile`}
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    aria-label={`View profile for ${userName}`}
-                                            >{userName}</div>
-                                            <div className="message-timestamp">{formatTimestamp(createdAt)}</div>
-                                    </div>
-                                )}
-                                {!showMeta && (
-                                    <div className="hover-time" title={formatTimestamp(createdAt)} aria-hidden="true">{formatTimestamp(createdAt).split(', ')[1]}</div>
-                                )}
-                
-                {/* Old inline reply indicator removed per new design */}
-                
-                {type === 'image' && imageURL && (
-                    <>
-                        <div className="message-image">
-                            <img
-                                src={imageURL}
-                                alt="Shared image"
-                                onClick={() => setShowFullImage(true)}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => { if (e.key === 'Enter') setShowFullImage(true); }}
-                                aria-label="Open image in modal"
-                                loading="lazy"
-                                decoding="async"
-                            />
-                        </div>
-                        
-                        {showFullImage && (
-                            <div className="image-modal" onClick={() => setShowFullImage(false)} role="dialog" aria-modal="true" aria-label="Image preview">
-                                <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
-                                    <img src={imageURL} alt="Full size view" />
-                                    <button 
-                                        className="image-modal-close"
-                                        onClick={() => setShowFullImage(false)}
-                                        aria-label="Close image preview"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </>
-                )}
-                
-                {deleted && (
-                    <p className="deleted-message" aria-label="Message deleted">This message was deleted.</p>
-                )}
-                {!deleted && (
-                    <>
-                        {isEditing ? (
-                            <div className="edit-container">
-                                <textarea
-                                    value={editText}
-                                    onChange={(e) => setEditText(e.target.value)}
-                                    onKeyDown={onEditKeyDown}
-                                    aria-label="Edit message text"
-                                    autoFocus
-                                />
-                                <div className="edit-actions">
-                                    <button onClick={saveEdit} aria-label="Save edit" className="save-edit-btn">Save</button>
-                                    <button onClick={cancelEditing} aria-label="Cancel edit" className="cancel-edit-btn">Cancel</button>
-                                </div>
-                            </div>
-                        ) : (
-                            text && (
-                                <p>
-                                    {highlightText(text, searchTerm)}{' '}
-                                    {editedAt && (
-                                        <sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>
-                                    )}
-                                </p>
-                            )
-                        )}
-                    </>
-                )}
-                
-                {Object.keys(reactions).length > 0 && (
-                    <div className="message-reactions">
-                        {Object.entries(reactions).map(([emoji, userIds]) => {
-                            const isArray = Array.isArray(userIds);
-                            const count = isArray ? userIds.length : (typeof userIds === 'number' ? userIds : 0);
-                            const hasUserReacted = isArray ? userIds.includes(auth.currentUser?.uid) : false;
-                            
-                            return (
-                                <span
-                                    key={emoji}
-                                    className={`reaction ${hasUserReacted ? 'reacted' : ''}`}
-                                    onClick={() => addReaction(emoji)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') addReaction(emoji); }}
+        <div className={rootClasses} data-message-id={messageId} role="article" aria-label={`Message from ${userName}${isReplyTarget ? ' (reply target)' : ''}`}>            
+            <div className="message-inner">
+                {replyTo && showMeta && (
+                    <div className="message-top-row" aria-label={`Replying to ${replyTo.displayName || 'user'}`}>
+                        <div className="avatar-spacer" aria-hidden="true" />
+                        <div className="reply-contexts">
+                            <div className="inline-reply-context">
+                                <span className="irc-glyph" aria-hidden="true">❝</span>
+                                <div
+                                    className="irc-avatar"
                                     role="button"
                                     tabIndex={0}
-                                    aria-pressed={hasUserReacted}
-                                    aria-label={`${emoji} reaction, ${count} user${count !== 1 ? 's' : ''}. ${hasUserReacted ? 'You reacted.' : 'Activate to toggle your reaction.'}`}
-                                    title={`${count} reaction${count !== 1 ? 's' : ''}`}
+                                    onClick={handleViewProfileClick}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') handleViewProfileClick(); }}
+                                    title={`View ${replyTo.displayName || 'user'} profile`}
                                 >
-                                    {emoji} {count}
+                                    <img
+                                        src={replyTo.photoURL || getFallbackAvatar({ uid: replyTo.uid || 'x', displayName: replyTo.displayName, size: 24 })}
+                                        alt={replyTo.displayName ? `${replyTo.displayName} avatar` : 'User avatar'}
+                                    />
+                                </div>
+                                <button className="irc-name" onClick={handleViewProfileClick} title={`View ${replyTo.displayName || 'user'} profile`}>
+                                    {replyTo.displayName || 'Unknown'}
+                                </button>
+                                <span
+                                    className="irc-text"
+                                    role={replyTo.id ? 'link' : undefined}
+                                    tabIndex={replyTo.id ? 0 : -1}
+                                    onClick={() => {
+                                        if (!replyTo.id) return;
+                                        const selector = `[data-message-id="${replyTo.id}"]`;
+                                        const targetEl = document.querySelector(selector);
+                                        if (targetEl) {
+                                            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            targetEl.classList.add('reply-flash');
+                                            let addedTemp = false;
+                                            if (!targetEl.classList.contains('reply-target')) { targetEl.classList.add('reply-target'); addedTemp = true; }
+                                            setTimeout(() => { targetEl.classList.remove('reply-flash'); }, 600);
+                                            if (addedTemp) setTimeout(() => { targetEl.classList.remove('reply-target'); }, 3000);
+                                        }
+                                    }}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.click(); }}
+                                    title={replyTo.text || (replyTo.type === 'image' ? 'Image' : '')}
+                                >
+                                    {(replyTo.text ? replyTo.text : (replyTo.type === 'image' ? 'Image' : '')) || ''}
                                 </span>
-                            );
-                        })}
+                            </div>
+                        </div>
                     </div>
                 )}
-                
-                <div className={`reaction-buttons ${menuOpen ? 'force-visible' : ''}`}>
-                    {reactionEmojis.map(emoji => (
-                        <button
-                            key={emoji}
-                            className="reaction-btn"
-                            onClick={() => addReaction(emoji)}
-                            title={`React with ${emoji}`}
-                            aria-label={`React to message with ${emoji}`}
-                        >
-                            {emoji}
-                        </button>
-                    ))}
-                    {onReply && (
-                        <button
-                            className="reply-btn quote-reply-btn"
-                            onClick={() => onReply(props.message)}
-                            title="Reply (quote message)"
-                            aria-label="Reply to this message"
-                        >
-                            ❝
-                        </button>
+                <div className="message-main-row">
+                    {showMeta && (
+                        <div className="avatar-container" role="button" tabIndex={0} title={`View ${userName}'s profile`} aria-label={`View ${userName}'s profile`} onClick={handleViewProfileClick} onKeyDown={(e) => { if (e.key === 'Enter') handleViewProfileClick(); }}>
+                            <img
+                                src={avatarSrc}
+                                alt={userName ? `${userName}'s avatar` : 'User avatar'}
+                                loading="lazy"
+                                decoding="async"
+                                className="message-avatar"
+                                onError={(e) => {
+                                    if (e.target.dataset.fallbackApplied === 'true') return;
+                                    e.target.src = fallbackAvatar;
+                                    e.target.dataset.fallbackApplied = 'true';
+                                }}
+                            />
+                            <div className={`status-indicator ${presenceState}`} title={presenceTitle} aria-label={presenceTitle}></div>
+                        </div>
                     )}
-                    {!deleted && (
-                        <div className="message-menu-wrapper" ref={menuRef}>
-                            <button
-                                className="reply-btn message-menu-trigger"
-                                data-tip="Options"
-                                aria-haspopup="true"
-                                aria-expanded={menuOpen}
-                                onClick={() => setMenuOpen(o => !o)}
-                            >
-                                …
-                            </button>
-                            {menuOpen && createPortal(
+                    <div className="message-content">
+                        {showMeta && (
+                            <div className="message-header">
                                 <div
-                                    ref={menuPanelRef}
-                                    className={`message-menu open mode-${menuMode} ${menuReady ? 'ready' : 'measuring'}`}
-                                    role="menu"
-                                    aria-label="Message options"
-                                    onMouseDown={(e)=>e.stopPropagation()}
-                                    style={menuStyle}
-                                >
-                                    <div className="menu-reactions-row" role="group" aria-label="Quick reactions">
-                                        {quickMenuEmojis.map(r => (
-                                            <button
-                                              key={r}
-                                              className="menu-reaction-btn"
-                                              onClick={() => { addReaction(r); /* keep menu open for multi-react? choose close */ setMenuOpen(false); }}
-                                              title={`React ${r}`}
-                                              aria-label={`React with ${r}`}
-                                            >{r}</button>
-                                        ))}
+                                    className="message-username"
+                                    onClick={handleViewProfileClick}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') handleViewProfileClick(); }}
+                                    style={{ cursor: 'pointer' }}
+                                    title={`View ${userName}'s profile`}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label={`View profile for ${userName}`}
+                                >{userName}</div>
+                                <div className="message-timestamp">{formatTimestamp(createdAt)}</div>
+                            </div>
+                        )}
+                        {!showMeta && (
+                            <div className="hover-time" title={formatTimestamp(createdAt)} aria-hidden="true">{formatTimestamp(createdAt).split(', ')[1]}</div>
+                        )}
+                        {type === 'image' && imageURL && (
+                            <>
+                                <div className="message-image">
+                                    <img
+                                        src={imageURL}
+                                        alt="Shared image"
+                                        onClick={() => setShowFullImage(true)}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') setShowFullImage(true); }}
+                                        aria-label="Open image in modal"
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
+                                </div>
+                                {showFullImage && (
+                                    <div className="image-modal" onClick={() => setShowFullImage(false)} role="dialog" aria-modal="true" aria-label="Image preview">
+                                        <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+                                            <img src={imageURL} alt="Full size view" />
+                                            <button className="image-modal-close" onClick={() => setShowFullImage(false)} aria-label="Close image preview">✕</button>
+                                        </div>
                                     </div>
-                                    <div className="menu-divider" />
-                                    <button role="menuitem" className="menu-item" onClick={handleAddReactionFull}>Add Reaction<span className="menu-item-icon" aria-hidden>+</span></button>
-                                    {onReply && <button role="menuitem" className="menu-item" onClick={() => { onReply(props.message); setMenuOpen(false); }}>Reply<span className="menu-item-icon" aria-hidden>↩</span></button>}
-                                    <button role="menuitem" className="menu-item" onClick={handleCopyText} disabled={!text}>Copy Text<span className="menu-item-icon" aria-hidden>⧉</span></button>
-                                    {uid === auth.currentUser?.uid && type !== 'image' && (
-                                        <button role="menuitem" onClick={startEditing} className="menu-item">Edit<span className="menu-item-icon" aria-hidden>✎</span></button>
-                                    )}
-                                    {uid === auth.currentUser?.uid && (
-                                        <button role="menuitem" onClick={() => setShowDeleteConfirm(true)} className="menu-item delete-item">Delete<span className="menu-item-icon" aria-hidden>⌫</span></button>
-                                    )}
-                                </div>, document.body)
-                            }
+                                )}
+                            </>
+                        )}
+                        {deleted && <p className="deleted-message" aria-label="Message deleted">This message was deleted.</p>}
+                        {!deleted && (
+                            isEditing ? (
+                                <div className="edit-container">
+                                    <textarea value={editText} onChange={(e) => setEditText(e.target.value)} onKeyDown={onEditKeyDown} aria-label="Edit message text" autoFocus />
+                                    <div className="edit-actions">
+                                        <button onClick={saveEdit} aria-label="Save edit" className="save-edit-btn">Save</button>
+                                        <button onClick={cancelEditing} aria-label="Cancel edit" className="cancel-edit-btn">Cancel</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                text && (
+                                    <p>
+                                        {highlightText(text, searchTerm)}{' '}
+                                        {editedAt && (<sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>)}
+                                    </p>
+                                )
+                            )
+                        )}
+                        {Object.keys(reactions).length > 0 && (
+                            <div className="message-reactions">
+                                {Object.entries(reactions).map(([emoji, userIds]) => {
+                                    const isArray = Array.isArray(userIds);
+                                    const count = isArray ? userIds.length : (typeof userIds === 'number' ? userIds : 0);
+                                    const hasUserReacted = isArray ? userIds.includes(auth.currentUser?.uid) : false;
+                                    return (
+                                        <span key={emoji} className={`reaction ${hasUserReacted ? 'reacted' : ''}`} onClick={() => addReaction(emoji)} onKeyDown={(e) => { if (e.key === 'Enter') addReaction(emoji); }} role="button" tabIndex={0} aria-pressed={hasUserReacted} aria-label={`${emoji} reaction, ${count} user${count !== 1 ? 's' : ''}. ${hasUserReacted ? 'You reacted.' : 'Activate to toggle your reaction.'}`}>{emoji} {count}</span>
+                                    );
+                                })}
+                            </div>
+                        )}
+                        <div className={`reaction-buttons ${menuOpen ? 'force-visible' : ''}`}>
+                            {reactionEmojis.map(emoji => (
+                                <button key={emoji} className="reaction-btn" onClick={() => addReaction(emoji)} title={`React with ${emoji}`} aria-label={`React to message with ${emoji}`}>{emoji}</button>
+                            ))}
+                            {onReply && <button className="reply-btn quote-reply-btn" onClick={() => onReply(props.message)} title="Reply (quote message)" aria-label="Reply to this message">❝</button>}
+                            {!deleted && (
+                                <div className="message-menu-wrapper" ref={menuRef}>
+                                    <button className="reply-btn message-menu-trigger" data-tip="Options" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>…</button>
+                                    {menuOpen && createPortal(
+                                        <div ref={menuPanelRef} className={`message-menu open mode-${menuMode} ${menuReady ? 'ready' : 'measuring'}`} role="menu" aria-label="Message options" onMouseDown={(e) => e.stopPropagation()} style={menuStyle}>
+                                            <div className="menu-reactions-row" role="group" aria-label="Quick reactions">
+                                                {quickMenuEmojis.map(r => (
+                                                    <button key={r} className="menu-reaction-btn" onClick={() => { addReaction(r); setMenuOpen(false); }} title={`React ${r}`} aria-label={`React with ${r}`}>{r}</button>
+                                                ))}
+                                            </div>
+                                            <div className="menu-divider" />
+                                            <button role="menuitem" className="menu-item" onClick={handleAddReactionFull}>Add Reaction<span className="menu-item-icon" aria-hidden>+</span></button>
+                                            {onReply && <button role="menuitem" className="menu-item" onClick={() => { onReply(props.message); setMenuOpen(false); }}>Reply<span className="menu-item-icon" aria-hidden>↩</span></button>}
+                                            <button role="menuitem" className="menu-item" onClick={handleCopyText} disabled={!text}>Copy Text<span className="menu-item-icon" aria-hidden>⧉</span></button>
+                                            {uid === auth.currentUser?.uid && type !== 'image' && <button role="menuitem" onClick={startEditing} className="menu-item">Edit<span className="menu-item-icon" aria-hidden>✎</span></button>}
+                                            {uid === auth.currentUser?.uid && <button role="menuitem" onClick={() => setShowDeleteConfirm(true)} className="menu-item delete-item">Delete<span className="menu-item-icon" aria-hidden>⌫</span></button>}
+                                        </div>, document.body)
+                                    }
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    {showDeleteConfirm && (
+                        <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-label="Confirm delete" onMouseDown={(e) => { e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); }}>
+                            <div className="delete-modal" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+                                <h4>Delete message?</h4>
+                                <p className="no-bg">This action cannot be undone.</p>
+                                <div className="delete-modal-actions">
+                                    <button className="danger" onClick={handleDelete} autoFocus>Delete</button>
+                                    <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+                                </div>
+                            </div>
+                            <div className="delete-modal-backdrop-click-capture" onMouseDown={(e) => { e.stopPropagation(); setShowDeleteConfirm(false); }} />
                         </div>
                     )}
                 </div>
             </div>
-            {showDeleteConfirm && (
-                <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-label="Confirm delete" onMouseDown={(e)=>{ e.stopPropagation(); }} onClick={(e)=>{ e.stopPropagation(); }}>
-                    <div className="delete-modal" onMouseDown={(e)=>e.stopPropagation()} onClick={(e)=>e.stopPropagation()}>
-                        <h4>Delete message?</h4>
-                        <p className="no-bg">This action cannot be undone.</p>
-                        <div className="delete-modal-actions">
-                            <button className="danger" onClick={handleDelete} autoFocus>Delete</button>
-                            <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
-                        </div>
-                    </div>
-                    {/* Clicking outside modal (overlay background) closes only the delete modal */}
-                    <div className="delete-modal-backdrop-click-capture" onMouseDown={(e)=>{ e.stopPropagation(); setShowDeleteConfirm(false); }} />
-                </div>
-            )}
         </div>
-    )
+    );
 }
 
 export default ChatMessage;
