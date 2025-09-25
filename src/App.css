@@ -1,40 +1,40 @@
 /* Theme Variables */
 :root {
-  --bg-primary: #282c34;
-  --bg-secondary: rgb(40, 37, 53);
-  --bg-light: rgb(50, 47, 63);
-  --bg-header: #181717;
-  --bg-form: rgb(24, 23, 23);
-  --bg-input: rgb(58, 58, 58);
-  --text-primary: white;
-  --text-color: white;
-  --text-secondary: rgba(255, 255, 255, 0.5);
+  --bg-primary: #1e1f21; /* charcoal */
+  --bg-secondary: #242628; /* surfaces */
+  --bg-light: #2d3033; /* cards/panels */
+  --bg-header: #1a1b1d;
+  --bg-form: #27292b;
+  --bg-input: #303337;
+  --text-primary: #ffffff;
+  --text-color: #ffffff;
+  --text-secondary: rgba(255,255,255,0.55);
   --message-sent: #0b93f6;
-  --message-received: #e5e5ea;
-  --message-received-text: black;
+  --message-received: #0b93f6; /* no difference now but retained for future */
+  --message-received-text: #ffffff;
   --primary-color: #0b93f6;
   --primary-dark: #0a82e0;
-  --secondary-color: #666;
-  --border-color: rgba(255, 255, 255, 0.2);
+  --secondary-color: #888;
+  --border-color: rgba(255,255,255,0.18);
 }
 
 .light-theme {
-  --bg-primary: #f5f5f5;
+  --bg-primary: #fafafa;
   --bg-secondary: #ffffff;
-  --bg-light: #f8f9fa;
+  --bg-light: #f0f2f4;
   --bg-header: #ffffff;
-  --bg-form: #f0f0f0;
+  --bg-form: #ffffff;
   --bg-input: #ffffff;
-  --text-primary: #333333;
-  --text-color: #333333;
-  --text-secondary: rgba(0, 0, 0, 0.6);
+  --text-primary: #1e1f21;
+  --text-color: #1e1f21;
+  --text-secondary: rgba(0,0,0,0.55);
   --message-sent: #0b93f6;
-  --message-received: #e5e5ea;
-  --message-received-text: black;
+  --message-received: #0b93f6;
+  --message-received-text: #1e1f21;
   --primary-color: #0b93f6;
   --primary-dark: #0a82e0;
-  --secondary-color: #999;
-  --border-color: rgba(0, 0, 0, 0.2);
+  --secondary-color: #666;
+  --border-color: rgba(0,0,0,0.15);
 }
 
 body {
@@ -150,7 +150,7 @@ body {
 .chatroom-wrapper.drag-active main { overflow: hidden; }
 
 /* Ensure chat input area never shrinks below its intrinsic height */
-.chat-input-area { flex-shrink: 0; }
+.chat-input-area { flex-shrink: 0; position: relative; z-index: 100; }
 
 form {
   background-color: var(--bg-form);
@@ -252,62 +252,7 @@ p {
 
 /* --- KEY CHANGES START HERE --- */
 
-.message {
-  display: flex;
-  align-items: flex-end;
-  margin-bottom: 8px;
-  position: relative;
-  transition: background-color 0.3s ease;
-  gap: 10px; /* Add space between avatar and content block */
-}
-
-.message-content {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  /* REMOVED max-width from here */
-}
-
-.sent {
-  flex-direction: row-reverse;
-}
-
-.sent .message-content {
-  align-items: flex-end; /* Align content (bubble, reactions) to the right */
-}
-
-.received .message-content {
-  align-items: flex-start; /* Align content to the left */
-}
-
-/* --- KEY CHANGES END HERE --- */
-
-.message.reply-target {
-  background-color: rgba(255, 255, 0, 0.1);
-  border-left: 4px solid #ffeb3b;
-  padding: 8px;
-  border-radius: 8px;
-}
-
-.message:hover .reaction-buttons {
-  opacity: 1;
-}
-
-.sent p {
-  color: white;
-  background: #0b93f6;
-}
-
-.received p {
-  background: #e5e5ea;
-  color: black;
-}
-
-.avatar-container {
-  position: relative;
-  display: inline-block;
-  /* margin-top: 24px; */ /* REMOVED: No longer needed with flex-end alignment */
-}
+/* Message & reaction styles moved to ChatMessage.css */
 
 img {
   width: 40px;
@@ -345,97 +290,7 @@ img {
 }
 
 /* Reaction Styles */
-.message-reactions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px; /* Removed overlap; provide spacing under bubble */
-  position: relative;
-  z-index: 1;
-}
-
-.reaction {
-  background-color: rgba(255, 255, 255, 0.06); /* Slightly visible for other users */
-  border: 1px solid rgba(255, 255, 255, 0.25); /* Clearer border */
-  border-radius: 12px;
-  padding: 2px 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.18s ease, transform 0.18s ease;
-  will-change: transform;
-  transform-origin: center center;
-}
-
-/* Initial pop + settle to larger size (forwards keeps scale), then subtle shake */
-@keyframes reactionPop {
-  0% { transform: scale(1); }
-  55% { transform: scale(2.5); }
-  100% { transform: scale(1.5); }
-}
-
-@keyframes reactionShake {
-  0%,100% { transform: scale(1.5) translateX(0) rotate(0deg); }
-  12% { transform: scale(1.5) translateX(-1px) rotate(-2deg); }
-  24% { transform: scale(1.5) translateX(1px) rotate(2deg); }
-  36% { transform: scale(1.5) translateX(-1px) rotate(-2deg); }
-  48% { transform: scale(1.5) translateX(1px) rotate(2deg); }
-  60% { transform: scale(1.5) translateX(-1px) rotate(-1.5deg); }
-  72% { transform: scale(1.5) translateX(1px) rotate(1.5deg); }
-  84% { transform: scale(1.5) translateX(-1px) rotate(-1deg); }
-}
-
-.reaction:hover {
-  background-color: rgba(255, 255, 255, 0.18);
-  transform: scale(1.08);
-}
-
-.reaction.reacted {
-  background-color: #25a5ff; /* Lightened blue distinct from sent bubble */
-  border-color: #6ec1ff; /* Border for contrast */
-  color: white;
-  font-weight: bold;
-}
-
-.reaction.reacted:hover {
-  background-color: #37afff;
-  border-color: #90d3ff;
-}
-
-.reaction-buttons {
-  display: flex;
-  gap: 2px;
-  position: absolute;
-  bottom: -26px; /* Lower the hover reaction bar so it no longer overlaps bubble */
-  left: 10px;
-  background: rgba(0,0,0,0.1);
-  padding: 2px 5px;
-  border-radius: 15px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.sent .reaction-buttons {
-  left: auto;
-  right: 10px;
-}
-
-.reaction-btn {
-  background: none;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  transition: background-color 0.18s ease, transform 0.18s ease;
-  color: inherit;
-  will-change: transform;
-  transform-origin: center center;
-}
-
-.reaction-btn:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  animation: reactionPop 0.22s ease-out forwards, reactionShake 1.1s ease-in-out 0.22s infinite;
-}
+/* Reaction styles moved to ChatMessage.css */
 
 /* Typing Indicator Styles */
 .typing-indicator {
@@ -966,173 +821,6 @@ img {
   border-top: none;
 }
 
-/* Image Upload and Sharing */
-.message-form {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 20px;
-  background: var(--bg-light);
-  border-top: 1px solid var(--border-color);
-}
-
-.message-input {
-  flex: 1;
-  border: 2px solid var(--border-color);
-  border-radius: 25px;
-  padding: 12px 20px;
-  font-size: 16px;
-  background: var(--bg-primary);
-  color: var(--text-color);
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.message-input:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 10px rgba(13, 138, 188, 0.3);
-}
-
-.image-upload-btn {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 45px;
-  height: 45px;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  text-decoration: none;
-}
-
-.image-upload-btn:hover {
-  background: var(--primary-dark);
-  transform: scale(1.1);
-}
-
-.send-btn {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 45px;
-  height: 45px;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.send-btn:hover:not(:disabled) {
-  background: var(--primary-dark);
-  transform: scale(1.1);
-}
-
-.send-btn:disabled {
-  background: var(--secondary-color);
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.drop-zone {
-  min-height: 60px;
-  border: 2px dashed var(--border-color);
-  margin: 10px 20px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  font-style: italic;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.drop-zone:hover {
-  border-color: var(--primary-color);
-  background: var(--bg-light);
-}
-
-.drop-zone.has-image {
-  display: none;
-}
-
-.image-preview-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.image-preview {
-  background: var(--bg-primary);
-  border-radius: 15px;
-  padding: 20px;
-  max-width: 90vw;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-}
-
-.image-preview img {
-  max-width: 100%;
-  max-height: 60vh;
-  object-fit: contain;
-  border-radius: 10px;
-}
-
-.image-preview-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.send-image-btn, .cancel-image-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.send-image-btn {
-  background: var(--primary-color);
-  color: white;
-}
-
-.send-image-btn:hover:not(:disabled) {
-  background: var(--primary-dark);
-}
-
-.send-image-btn:disabled {
-  background: var(--secondary-color);
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.cancel-image-btn {
-  background: var(--secondary-color);
-  color: white;
-}
-
-.cancel-image-btn:hover {
-  background: #dc3545;
-}
 
 .message-image {
   margin: 5px 0;

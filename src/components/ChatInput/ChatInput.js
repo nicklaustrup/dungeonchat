@@ -3,12 +3,14 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { ref as databaseRef, set as rtdbSet, serverTimestamp as rtdbServerTimestamp, update as rtdbUpdate } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '../../services/FirebaseContext';
+import './ChatInput.css';
 import { playNotificationSound, playTypingSound } from '../../utils/sound';
 import { getFallbackAvatar } from '../../utils/avatar';
 
 function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, selectedImage, setSelectedImage, imagePreview, setImagePreview, uploading, setUploading, forceScrollBottom }) {
   const { auth, firestore, rtdb, storage } = useFirebase();
   const [formValue, setFormValue] = React.useState('');
+  const inputRef = React.useRef(null);
   // image + uploading state lifted to parent (ChatPage)
 
   const messagesRef = collection(firestore, 'messages');
@@ -158,6 +160,23 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
     if (forceScrollBottom) { setTimeout(() => forceScrollBottom(), 10); }
   };
 
+  React.useEffect(() => {
+    const prefillHandler = (e) => {
+      if (!e.detail || !e.detail.text) return;
+      setFormValue(e.detail.text);
+      if (inputRef.current) {
+        inputRef.current.focus();
+        // Move caret to end
+        const val = e.detail.text;
+        requestAnimationFrame(() => {
+          inputRef.current.selectionStart = inputRef.current.selectionEnd = val.length;
+        });
+      }
+    };
+    document.addEventListener('chat:prefill', prefillHandler);
+    return () => document.removeEventListener('chat:prefill', prefillHandler);
+  }, []);
+
   return (
     <div className="chat-input-area">
       {imagePreview && (
@@ -223,6 +242,7 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
       <form onSubmit={sendMessage} className="message-form">
         <div className="message-input-wrapper">
           <input
+            ref={inputRef}
             value={formValue}
             onChange={handleInputChange}
             placeholder="Say something nice"

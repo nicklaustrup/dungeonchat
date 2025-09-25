@@ -1,9 +1,0 @@
-.presence-legend { display:flex; gap:12px; font-size:12px; opacity:0.75; padding:4px 8px; }
-.presence-legend .legend-item { display:flex; align-items:center; gap:4px; }
-.presence-legend .dot { width:10px; height:10px; border-radius:50%; display:inline-block; border:1px solid #fff3; }
-.presence-legend .dot.online { background:#4CAF50; }
-.presence-legend .dot.away { background:#FFC107; }
-.presence-legend .dot.offline { background:#9E9E9E; }
-.presence-legend .dot.typing { background:#42a5f5; box-shadow:0 0 0 0 rgba(66,165,245,0.7); animation: typingPulse 1.4s infinite; }
-@keyframes typingPulse { 0% { box-shadow:0 0 0 0 rgba(66,165,245,0.7);} 70% { box-shadow:0 0 0 8px rgba(66,165,245,0);} 100% { box-shadow:0 0 0 0 rgba(66,165,245,0);} }
-.presence-legend .typing-indicator { font-style:italic; }

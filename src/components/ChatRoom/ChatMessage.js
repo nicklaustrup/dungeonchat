@@ -1,12 +1,14 @@
 import React from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { createPortal } from 'react-dom';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import './ChatMessage.css';
 import { useFirebase } from '../../services/FirebaseContext';
 import { getFallbackAvatar } from '../../utils/avatar';
 import { usePresence } from '../../services/PresenceContext';
 
 function ChatMessage(props) {
     const { firestore, auth, rtdb } = useFirebase();
-    const { text, uid, photoURL, reactions = {}, id, createdAt, imageURL, type, displayName, replyTo } = props.message;
+    const { text, uid, photoURL, reactions = {}, id, createdAt, imageURL, type, displayName, replyTo, editedAt, deleted } = props.message;
     const { searchTerm, getDisplayName, onReply, isReplyTarget, onViewProfile } = props;
     const presence = usePresence(uid);
     const isTyping = !!presence.typing;
@@ -24,6 +26,15 @@ function ChatMessage(props) {
         return `${label} (last active ${rel})`;
     })();
     const [showFullImage, setShowFullImage] = React.useState(false);
+    const [menuOpen, setMenuOpen] = React.useState(false);
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [editText, setEditText] = React.useState(text || '');
+    const menuRef = React.useRef(null); // wrapper with trigger
+    const menuPanelRef = React.useRef(null); // actual menu panel
+    const [menuMode, setMenuMode] = React.useState('down'); // 'down' | 'up' | 'middle' | 'side'
+    const [menuStyle, setMenuStyle] = React.useState({}); // { top,left }
+    const [menuReady, setMenuReady] = React.useState(false); // avoid flash before positioned
+    const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
     const messageId = id || props.message.documentId || props.message._id || `temp_${uid}_${createdAt?.seconds || Date.now()}`;
 
@@ -40,18 +51,14 @@ function ChatMessage(props) {
     const formatTimestamp = (timestamp) => {
         if (!timestamp) return '';
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
-
-        if (diffMins < 1) return 'Just now';
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffHours < 24) return `${diffHours}h ago`;
-        if (diffDays < 7) return `${diffDays}d ago`;
-        
-        return date.toLocaleDateString();
+        return date.toLocaleString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
     };
 
     const handleViewProfileClick = async () => {
@@ -119,6 +126,202 @@ function ChatMessage(props) {
     };
 
     const reactionEmojis = React.useMemo(() => ['👍', '❤️', '😂', '😮', '😢', '😡'], []);
+    const quickMenuEmojis = React.useMemo(() => ['👍', '❤️', '😂', '😮'], []);
+
+    const formatFullTimestamp = (timestamp) => {
+        if (!timestamp) return '';
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleString();
+    };
+
+    const startEditing = () => {
+        setEditText(text || '');
+        setIsEditing(true);
+        setMenuOpen(false);
+    };
+
+    const cancelEditing = () => {
+        setIsEditing(false);
+        setEditText(text || '');
+    };
+
+    const saveEdit = async () => {
+        if (!messageId || !auth.currentUser || editText.trim() === '' || editText === text) {
+            setIsEditing(false);
+            return;
+        }
+        try {
+            const messageRef = doc(firestore, 'messages', messageId);
+            await updateDoc(messageRef, { text: editText.trim(), editedAt: serverTimestamp() });
+        } catch (e) {
+            console.error('❌ Error editing message:', e);
+        } finally {
+            setIsEditing(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!messageId || !auth.currentUser) return;
+        try {
+            const messageRef = doc(firestore, 'messages', messageId);
+            await updateDoc(messageRef, {
+                text: '-deleted-',
+                deleted: true,
+                imageURL: null,
+                editedAt: serverTimestamp()
+            });
+        } catch (e) {
+            console.error('❌ Error soft-deleting message:', e);
+        } finally {
+            setShowDeleteConfirm(false);
+            setMenuOpen(false);
+        }
+    };
+
+    const handleCopyText = async () => {
+        if (text) {
+            try { await navigator.clipboard.writeText(text); } catch (e) { console.error('❌ Clipboard copy failed:', e); }
+            document.dispatchEvent(new CustomEvent('chat:prefill', { detail: { text } }));
+        }
+        setMenuOpen(false);
+    };
+
+    const handleAddReactionFull = () => {
+        // Placeholder for future full emoji picker
+        setMenuOpen(false);
+    };
+
+    // Toggle a body class so other messages suppress their hover reaction bars while any menu is open
+    React.useEffect(() => {
+        if (menuOpen) {
+            document.body.classList.add('chat-menu-open');
+        } else {
+            // Only remove if no other menus are currently open (defensive)
+            const stillOpen = document.querySelector('.message-menu.open');
+            if (!stillOpen) document.body.classList.remove('chat-menu-open');
+        }
+        return () => {
+            // Cleanup on unmount
+            const stillOpen = document.querySelector('.message-menu.open');
+            if (!stillOpen) document.body.classList.remove('chat-menu-open');
+        };
+    }, [menuOpen]);
+
+    // Close menu on outside click / escape (robust & cleans up)
+    React.useEffect(() => {
+        if (!menuOpen) return;
+        const onPointerDown = (e) => {
+            if (showDeleteConfirm) return; // keep menu if confirmation displayed
+            const wrap = menuRef.current;
+            const panel = menuPanelRef.current;
+            const insideTrigger = wrap && wrap.contains(e.target);
+            const insidePanel = panel && panel.contains(e.target);
+            if (insideTrigger || insidePanel) return; // clicks inside menu system
+            setMenuOpen(false);
+        };
+        const onKey = (e) => { if (e.key === 'Escape') setMenuOpen(false); };
+        document.addEventListener('pointerdown', onPointerDown, true);
+        document.addEventListener('keydown', onKey, true);
+        return () => {
+            document.removeEventListener('pointerdown', onPointerDown, true);
+            document.removeEventListener('keydown', onKey, true);
+        };
+    }, [menuOpen, showDeleteConfirm]);
+    // Position menu fixed relative to viewport with up/down/middle mode
+    const computeMenuPosition = React.useCallback(() => {
+        if (!menuOpen) return;
+        const wrapper = menuRef.current;
+        const panel = menuPanelRef.current;
+        if (!wrapper || !panel) return;
+        const triggerBtn = wrapper.querySelector('.message-menu-trigger');
+        const triggerRect = triggerBtn ? triggerBtn.getBoundingClientRect() : wrapper.getBoundingClientRect();
+        const messageEl = wrapper.closest('.message');
+        const messageRect = messageEl ? messageEl.getBoundingClientRect() : triggerRect;
+        // Force reflow to ensure dimensions (offset* may be 0 on first frame)
+        const panelHeight = panel.offsetHeight || panel.scrollHeight || 200;
+        const panelWidth = panel.offsetWidth || 240;
+        const viewportW = window.innerWidth;
+        const viewportH = window.innerHeight;
+
+        // Try side placement first (to the right of the message block)
+        const sideGap = 8;
+        let sideLeft = messageRect.right + sideGap;
+        const sideFits = (sideLeft + panelWidth + 8) <= viewportW; // 8px right gutter
+        let mode = 'down';
+        let top;
+        if (sideFits) {
+            mode = 'side';
+            top = Math.min(Math.max(messageRect.top, 8), Math.max(8, viewportH - panelHeight - 8));
+            setMenuMode(mode);
+            setMenuStyle({ top: Math.round(top), left: Math.round(sideLeft) });
+            setMenuReady(true);
+            return;
+        }
+
+        // Fallback to vertical placement logic
+        const spaceAbove = triggerRect.top;
+        const spaceBelow = viewportH - triggerRect.bottom;
+        const needed = panelHeight + 16;
+        if (spaceBelow >= needed) mode = 'down'; else if (spaceAbove >= needed) mode = 'up'; else mode = 'middle';
+        if (mode === 'down') top = triggerRect.bottom + 4; else if (mode === 'up') top = Math.max(8, triggerRect.top - panelHeight - 4); else top = Math.max(8, (viewportH - panelHeight) / 2);
+        let left = triggerRect.right - panelWidth;
+        left = Math.min(left, viewportW - panelWidth - 8);
+        left = Math.max(8, left);
+        setMenuMode(mode);
+        setMenuStyle(prev => {
+            const next = { top: Math.round(top), left: Math.round(left) };
+            if (prev.top === next.top && prev.left === next.left) return prev;
+            return next;
+        });
+        setMenuReady(true);
+    }, [menuOpen]);
+
+    // Fallback: if positioning somehow doesn't run, set a safe default after 120ms
+    React.useEffect(() => {
+        if (!menuOpen) return;
+        const t = setTimeout(() => {
+            setMenuReady(r => {
+                if (!r) {
+                    setMenuMode('down');
+                    setMenuStyle(s => ({ top: s.top ?? 100, left: s.left ?? 100 }));
+                    return true;
+                }
+                return r;
+            });
+        }, 120);
+        return () => clearTimeout(t);
+    }, [menuOpen]);
+
+    // Ensure position after panel actually mounts (handles reopen case)
+    React.useLayoutEffect(() => {
+        if (!menuOpen) return;
+        setMenuReady(false); // reset before measuring
+        const raf = requestAnimationFrame(() => computeMenuPosition());
+        return () => cancelAnimationFrame(raf);
+    }, [menuOpen, computeMenuPosition]);
+
+    React.useEffect(() => {
+        if (!menuOpen) return;
+        const raf = requestAnimationFrame(computeMenuPosition);
+        window.addEventListener('resize', computeMenuPosition);
+        window.addEventListener('scroll', computeMenuPosition, true);
+        return () => {
+            cancelAnimationFrame(raf);
+            window.removeEventListener('resize', computeMenuPosition);
+            window.removeEventListener('scroll', computeMenuPosition, true);
+        };
+    }, [menuOpen, computeMenuPosition]);
+
+    // Keyboard save / cancel
+    const onEditKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            saveEdit();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelEditing();
+        }
+    };
 
     const handleNavigateToRepliedMessage = () => {
         if (!replyTo?.id) return;
@@ -150,12 +353,13 @@ function ChatMessage(props) {
             role="article"
             aria-label={`Message from ${userName}${isReplyTarget ? ' (reply target)' : ''}`}
         >
-            <div className="avatar-container">
+            <div className="avatar-container" role="button" tabIndex={0} title={`View ${userName}'s profile`} aria-label={`View ${userName}'s profile`} onClick={handleViewProfileClick} onKeyDown={(e)=>{ if(e.key==='Enter') handleViewProfileClick(); }}>
                 <img
                     src={avatarSrc}
                     alt={userName ? `${userName}'s avatar` : 'User avatar'}
                     loading="lazy"
                     decoding="async"
+                    className="message-avatar"
                     onError={(e) => {
                         if (e.target.dataset.fallbackApplied === 'true') return;
                         e.target.src = fallbackAvatar;
@@ -227,7 +431,37 @@ function ChatMessage(props) {
                     </>
                 )}
                 
-                {text && <p>{highlightText(text, searchTerm)}</p>}
+                {deleted && (
+                    <p className="deleted-message" aria-label="Message deleted">This message was deleted.</p>
+                )}
+                {!deleted && (
+                    <>
+                        {isEditing ? (
+                            <div className="edit-container">
+                                <textarea
+                                    value={editText}
+                                    onChange={(e) => setEditText(e.target.value)}
+                                    onKeyDown={onEditKeyDown}
+                                    aria-label="Edit message text"
+                                    autoFocus
+                                />
+                                <div className="edit-actions">
+                                    <button onClick={saveEdit} aria-label="Save edit" className="save-edit-btn">Save</button>
+                                    <button onClick={cancelEditing} aria-label="Cancel edit" className="cancel-edit-btn">Cancel</button>
+                                </div>
+                            </div>
+                        ) : (
+                            text && (
+                                <p>
+                                    {highlightText(text, searchTerm)}{' '}
+                                    {editedAt && (
+                                        <sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>
+                                    )}
+                                </p>
+                            )
+                        )}
+                    </>
+                )}
                 
                 {Object.keys(reactions).length > 0 && (
                     <div className="message-reactions">
@@ -255,7 +489,7 @@ function ChatMessage(props) {
                     </div>
                 )}
                 
-                <div className="reaction-buttons">
+                <div className={`reaction-buttons ${menuOpen ? 'force-visible' : ''}`}>
                     {reactionEmojis.map(emoji => (
                         <button
                             key={emoji}
@@ -268,16 +502,76 @@ function ChatMessage(props) {
                         </button>
                     ))}
                     {onReply && (
-                        <button 
-                            className="reply-btn" 
+                        <button
+                            className="reply-btn quote-reply-btn"
                             onClick={() => onReply(props.message)}
-                            title="Reply to this message"
+                            title="Reply (quote message)"
+                            aria-label="Reply to this message"
                         >
-                            ↩️
+                            ❝
                         </button>
+                    )}
+                    {!deleted && (
+                        <div className="message-menu-wrapper" ref={menuRef}>
+                            <button
+                                className="reply-btn message-menu-trigger"
+                                aria-haspopup="true"
+                                aria-expanded={menuOpen}
+                                onClick={() => setMenuOpen(o => !o)}
+                                title="Message options"
+                            >
+                                …
+                            </button>
+                            {menuOpen && createPortal(
+                                <div
+                                    ref={menuPanelRef}
+                                    className={`message-menu open mode-${menuMode} ${menuReady ? 'ready' : 'measuring'}`}
+                                    role="menu"
+                                    aria-label="Message options"
+                                    onMouseDown={(e)=>e.stopPropagation()}
+                                    style={menuStyle}
+                                >
+                                    <div className="menu-reactions-row" role="group" aria-label="Quick reactions">
+                                        {quickMenuEmojis.map(r => (
+                                            <button
+                                              key={r}
+                                              className="menu-reaction-btn"
+                                              onClick={() => { addReaction(r); /* keep menu open for multi-react? choose close */ setMenuOpen(false); }}
+                                              title={`React ${r}`}
+                                              aria-label={`React with ${r}`}
+                                            >{r}</button>
+                                        ))}
+                                    </div>
+                                    <div className="menu-divider" />
+                                    <button role="menuitem" className="menu-item" onClick={handleAddReactionFull}>Add Reaction<span className="menu-item-icon" aria-hidden>+</span></button>
+                                    {onReply && <button role="menuitem" className="menu-item" onClick={() => { onReply(props.message); setMenuOpen(false); }}>Reply<span className="menu-item-icon" aria-hidden>↩</span></button>}
+                                    <button role="menuitem" className="menu-item" onClick={handleCopyText} disabled={!text}>Copy Text<span className="menu-item-icon" aria-hidden>⧉</span></button>
+                                    {uid === auth.currentUser?.uid && type !== 'image' && (
+                                        <button role="menuitem" onClick={startEditing} className="menu-item">Edit<span className="menu-item-icon" aria-hidden>✎</span></button>
+                                    )}
+                                    {uid === auth.currentUser?.uid && (
+                                        <button role="menuitem" onClick={() => setShowDeleteConfirm(true)} className="menu-item delete-item">Delete<span className="menu-item-icon" aria-hidden>⌫</span></button>
+                                    )}
+                                </div>, document.body)
+                            }
+                        </div>
                     )}
                 </div>
             </div>
+            {showDeleteConfirm && (
+                <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-label="Confirm delete" onMouseDown={(e)=>{ e.stopPropagation(); }} onClick={(e)=>{ e.stopPropagation(); }}>
+                    <div className="delete-modal" onMouseDown={(e)=>e.stopPropagation()} onClick={(e)=>e.stopPropagation()}>
+                        <h4>Delete message?</h4>
+                        <p className="no-bg">This action cannot be undone.</p>
+                        <div className="delete-modal-actions">
+                            <button className="danger" onClick={handleDelete} autoFocus>Delete</button>
+                            <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+                        </div>
+                    </div>
+                    {/* Clicking outside modal (overlay background) closes only the delete modal */}
+                    <div className="delete-modal-backdrop-click-capture" onMouseDown={(e)=>{ e.stopPropagation(); setShowDeleteConfirm(false); }} />
+                </div>
+            )}
         </div>
     )
 }
