@@ -52,13 +52,13 @@ function ChatMessage(props) {
         if (!timestamp) return '';
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
         return date.toLocaleString('en-US', {
-            month: '2-digit',
-            day: '2-digit',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
+            month: '2-digit', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true
         });
+    };
+    const formatTimeOnly = (timestamp) => {
+        if (!timestamp) return '';
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     };
 
     const handleViewProfileClick = async () => {
@@ -354,6 +354,138 @@ function ChatMessage(props) {
         replyTo ? 'has-inline-reply' : '',
         showMeta ? 'with-meta' : 'no-meta'
     ].filter(Boolean).join(' ');
+
+    // Specialized compact rendering for consecutive grouped (no-meta) messages
+    if (!showMeta) {
+        const timeOnly = formatTimeOnly(createdAt);
+        return (
+            <div
+                className={rootClasses}
+                data-message-id={messageId}
+                role="article"
+                aria-label={`Message from ${userName}`}
+            >
+                {/* Reserve the same left column width as avatar messages for perfect vertical alignment */}
+                <div className="time-col" title={formatTimestamp(createdAt)} aria-hidden="true">{timeOnly}</div>
+                {deleted ? (
+                    <p className="deleted-message" aria-label="Message deleted">This message was deleted.</p>
+                ) : isEditing ? (
+                    <div className="edit-container">
+                        <textarea
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            onKeyDown={onEditKeyDown}
+                            aria-label="Edit message text"
+                            autoFocus
+                        />
+                        <div className="edit-actions">
+                            <button onClick={saveEdit} aria-label="Save edit" className="save-edit-btn">Save</button>
+                            <button onClick={cancelEditing} aria-label="Cancel edit" className="cancel-edit-btn">Cancel</button>
+                        </div>
+                    </div>
+                ) : type === 'image' && imageURL ? (
+                    <div className="message-image">
+                        <img
+                            src={imageURL}
+                            alt="Shared image"
+                            onClick={() => setShowFullImage(true)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter') setShowFullImage(true); }}
+                            aria-label="Open image in modal"
+                            loading="lazy"
+                            decoding="async"
+                        />
+                        {showFullImage && (
+                            <div className="image-modal" onClick={() => setShowFullImage(false)} role="dialog" aria-modal="true" aria-label="Image preview">
+                                <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+                                    <img src={imageURL} alt="Full size view" />
+                                    <button className="image-modal-close" onClick={() => setShowFullImage(false)} aria-label="Close image preview">✕</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    text && (
+                        <p>
+                            {highlightText(text, searchTerm)}{' '}
+                            {editedAt && (
+                                <sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>
+                            )}
+                        </p>
+                    )
+                )}
+                {/* Reactions for no-meta variant */}
+                {Object.keys(reactions).length > 0 && (
+                    <div className="message-reactions">
+                        {Object.entries(reactions).map(([emoji, userIds]) => {
+                            const isArray = Array.isArray(userIds);
+                            const count = isArray ? userIds.length : (typeof userIds === 'number' ? userIds : 0);
+                            const hasUserReacted = isArray ? userIds.includes(auth.currentUser?.uid) : false;
+                            return (
+                                <span
+                                    key={emoji}
+                                    className={`reaction ${hasUserReacted ? 'reacted' : ''}`}
+                                    onClick={() => addReaction(emoji)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') addReaction(emoji); }}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-pressed={hasUserReacted}
+                                    aria-label={`${emoji} reaction, ${count} user${count !== 1 ? 's' : ''}. ${hasUserReacted ? 'You reacted.' : 'Activate to toggle your reaction.'}`}
+                                    title={`${count} reaction${count !== 1 ? 's' : ''}`}
+                                >{emoji} {count}</span>
+                            );
+                        })}
+                    </div>
+                )}
+                <div className={`reaction-buttons ${menuOpen ? 'force-visible' : ''}`}>
+                    {reactionEmojis.map(emoji => (
+                        <button key={emoji} className="reaction-btn" onClick={() => addReaction(emoji)} title={`React with ${emoji}`} aria-label={`React to message with ${emoji}`}>{emoji}</button>
+                    ))}
+                    {onReply && (
+                        <button className="reply-btn quote-reply-btn" onClick={() => onReply(props.message)} title="Reply (quote message)" aria-label="Reply to this message">❝</button>
+                    )}
+                    {!deleted && (
+                        <div className="message-menu-wrapper" ref={menuRef}>
+                            <button className="reply-btn message-menu-trigger" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)} title="Message options">…</button>
+                            {menuOpen && createPortal(
+                                <div ref={menuPanelRef} className={`message-menu open mode-${menuMode} ${menuReady ? 'ready' : 'measuring'}`} role="menu" aria-label="Message options" onMouseDown={(e)=>e.stopPropagation()} style={menuStyle}>
+                                    <div className="menu-reactions-row" role="group" aria-label="Quick reactions">
+                                        {quickMenuEmojis.map(r => (
+                                            <button key={r} className="menu-reaction-btn" onClick={() => { addReaction(r); setMenuOpen(false); }} title={`React ${r}`} aria-label={`React with ${r}`}>{r}</button>
+                                        ))}
+                                    </div>
+                                    <div className="menu-divider" />
+                                    <button role="menuitem" className="menu-item" onClick={handleAddReactionFull}>Add Reaction<span className="menu-item-icon" aria-hidden>+</span></button>
+                                    {onReply && <button role="menuitem" className="menu-item" onClick={() => { onReply(props.message); setMenuOpen(false); }}>Reply<span className="menu-item-icon" aria-hidden>↩</span></button>}
+                                    <button role="menuitem" className="menu-item" onClick={handleCopyText} disabled={!text}>Copy Text<span className="menu-item-icon" aria-hidden>⧉</span></button>
+                                    {uid === auth.currentUser?.uid && type !== 'image' && (
+                                        <button role="menuitem" onClick={startEditing} className="menu-item">Edit<span className="menu-item-icon" aria-hidden>✎</span></button>
+                                    )}
+                                    {uid === auth.currentUser?.uid && (
+                                        <button role="menuitem" onClick={() => setShowDeleteConfirm(true)} className="menu-item delete-item">Delete<span className="menu-item-icon" aria-hidden>⌫</span></button>
+                                    )}
+                                </div>, document.body)
+                            }
+                        </div>
+                    )}
+                </div>
+                {showDeleteConfirm && (
+                    <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-label="Confirm delete" onMouseDown={(e)=>{ e.stopPropagation(); }} onClick={(e)=>{ e.stopPropagation(); }}>
+                        <div className="delete-modal" onMouseDown={(e)=>e.stopPropagation()} onClick={(e)=>e.stopPropagation()}>
+                            <h4>Delete message?</h4>
+                            <p className="no-bg">This action cannot be undone.</p>
+                            <div className="delete-modal-actions">
+                                <button className="danger" onClick={handleDelete} autoFocus>Delete</button>
+                                <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+                            </div>
+                        </div>
+                        <div className="delete-modal-backdrop-click-capture" onMouseDown={(e)=>{ e.stopPropagation(); setShowDeleteConfirm(false); }} />
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div
