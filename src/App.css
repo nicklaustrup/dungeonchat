@@ -141,7 +141,7 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 1px;
   position: relative;
   min-height: 0; /* prevent content from forcing parent taller than available */
 }
