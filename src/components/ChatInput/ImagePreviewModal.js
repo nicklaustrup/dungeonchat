@@ -1,6 +1,7 @@
 import React from 'react';
 
-export function ImagePreviewModal({ imagePreview, uploading, onSend, onCancel }) {
+// Added optional error prop so we only show Retry when an error occurred (upload failed)
+export function ImagePreviewModal({ imagePreview, uploading, error, onSend, onCancel, onRetry }) {
   const dialogRef = React.useRef(null);
   const lastActiveRef = React.useRef(null);
 
@@ -44,10 +45,20 @@ export function ImagePreviewModal({ imagePreview, uploading, onSend, onCancel })
     return () => document.removeEventListener('keydown', handleKey);
   }, [imagePreview, onCancel, onSend, uploading]);
 
+  // Track that user already initiated send to disable button immediately (before uploading flips true)
+  const [pendingSend, setPendingSend] = React.useState(false);
+  React.useEffect(() => {
+    if (!uploading) {
+      // reset pending flag when not uploading (either cleared or finished)
+      setPendingSend(false);
+    }
+  }, [uploading]);
+
   const handleSend = React.useCallback(() => {
-    if (uploading) return; // prevent duplicate sends
+    if (uploading || pendingSend) return; // prevent duplicate sends
+    setPendingSend(true);
     onSend();
-  }, [onSend, uploading]);
+  }, [onSend, uploading, pendingSend]);
 
   if (!imagePreview) return null;
   return (
@@ -57,16 +68,26 @@ export function ImagePreviewModal({ imagePreview, uploading, onSend, onCancel })
         <div className="image-preview-actions">
           <button
             onClick={handleSend}
-            disabled={uploading}
-            className="send-image-btn"
+            disabled={uploading || pendingSend}
+            aria-disabled={uploading || pendingSend}
+            className={`send-image-btn ${uploading || pendingSend ? 'disabled' : ''}`.trim()}
           >
-            {uploading ? 'Uploading...' : 'Send Image'}
+            {uploading ? 'Uploading…' : (pendingSend ? 'Sending…' : 'Send Image')}
           </button>
+          {error && onRetry && (
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => { if (!uploading && onRetry) onRetry(); }}
+              className="retry-image-btn"
+            >Retry</button>
+          )}
           <button
             onClick={onCancel}
             className="cancel-image-btn"
+            type="button"
           >
-            Cancel
+            {uploading ? 'Cancel Upload' : 'Cancel'}
           </button>
         </div>
         <div className="image-preview-hints" aria-hidden="true">

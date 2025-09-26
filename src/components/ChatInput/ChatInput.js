@@ -177,8 +177,10 @@ function ChatInput({
       <ImagePreviewModal
         imagePreview={imageHook.imagePreview}
         uploading={imageHook.uploading}
+        error={imageHook.error}
         onSend={() => { lastImageOriginRef.current = 'internal'; imageHook.sendImageMessage(); }}
         onCancel={clearImage}
+        onRetry={() => { lastImageOriginRef.current = 'internal'; imageHook.sendImageMessage(); }}
       />
       <ReplyPreview
         replyingTo={replyingTo}
