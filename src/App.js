@@ -9,6 +9,7 @@ import { useVirtualKeyboard } from './hooks/useVirtualKeyboard';
 import { useInitTelemetry } from './hooks/useInitTelemetry';
 
 function App() {
+  //test
   // Apply viewport class logic once at app root
   useViewportInfo();
   // Detect virtual keyboard & toggle html.keyboard-open

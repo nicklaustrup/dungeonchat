@@ -16,7 +16,9 @@ if ! command -v npx >/dev/null 2>&1 || [ ! -d node_modules ]; then
 fi
 
 # Collect staged JS/TS files (Added, Copied, Modified, Renamed, Type changed, Updated, etc.)
-STAGED_JS="$(git diff --cached --name-only --diff-filter=ACMRTUXB | grep -Ei '\\.(js|jsx|ts|tsx)$' || true)"
+# NOTE: Previous pattern used `\\.` inside single quotes which resulted in matching a literal backslash + dot
+# and therefore failed to detect files. We also strip potential CR characters (Windows) before grep so `$` anchor works.
+STAGED_JS="$(git diff --cached --name-only --diff-filter=ACMRTUXB | tr -d '\r' | grep -E '\.(js|jsx|ts|tsx)$' || true)"
 
 if [ -z "$STAGED_JS" ]; then
   echo "[husky] No JS/TS changes – skipping related test run."
