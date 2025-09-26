@@ -74,11 +74,12 @@ export function ImagePreviewModal({ imagePreview, uploading, error, onSend, onCa
           >
             {uploading ? 'Uploading…' : (pendingSend ? 'Sending…' : 'Send Image')}
           </button>
-          {error && onRetry && (
+          {false && !uploading && error && onRetry && (
+            // Retry button temporarily disabled in UI due to persist visibility issue; retain code for future.
             <button
               type="button"
-              disabled={uploading}
-              onClick={() => { if (!uploading && onRetry) onRetry(); }}
+              disabled={false}
+              onClick={() => { if (onRetry) onRetry(); }}
               className="retry-image-btn"
             >Retry</button>
           )}
