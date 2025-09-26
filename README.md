@@ -1,3 +1,72 @@
+# Production Deployment (Firebase App Hosting / Hosting)
+
+## 1. Environment Variables
+Create a `.env` file based on `.env.example` before building:
+
+```
+cp .env.example .env
+# edit .env with your Firebase project's web config values
+```
+
+Only variables prefixed with `REACT_APP_` are embedded at build time.
+
+## 2. Build the App
+```
+npm install
+npm run build
+```
+This outputs static assets to the `build/` directory (used by both traditional Firebase Hosting and Firebase App Hosting).
+
+## 3. Deploy (Option A: Firebase Hosting Classic)
+If you prefer standard Firebase Hosting (CDN + optional Functions):
+```
+firebase deploy --only hosting
+```
+Ensure `firebase.json` has a `hosting` section pointing to `build`.
+
+## 4. Deploy (Option B: Firebase App Hosting Beta)
+App Hosting uses `apphosting.yaml`. After authenticating:
+```
+firebase apphosting:apps:create # only first time
+firebase apphosting:deploy
+```
+The build command (`npm run build`) and `outputDirectory` are defined in `apphosting.yaml`.
+
+## 5. Cloud Functions (If Used)
+The `functions/` directory currently has an `index.js`. Deploy with:
+```
+firebase deploy --only functions
+```
+Or combine:
+```
+firebase deploy --only apphosting,functions
+```
+
+## 6. Verifying Storage Bucket Name
+If uploads fail, double‑check `REACT_APP_FIREBASE_STORAGE_BUCKET`.
+The conventional value is usually `<project-id>.appspot.com`.
+
+## 7. Security Rules
+Review and deploy rules:
+```
+firebase deploy --only firestore:rules,database,storage
+```
+
+## 8. Caching & Performance
+For Hosting you can add headers in `firebase.json` to leverage aggressive caching of static assets under `/static`.
+
+## 9. CI/CD Suggestion
+In GitHub Actions you can:
+1. Check out repo
+2. Setup Node
+3. `npm ci && npm run build`
+4. `firebase deploy --only hosting --token $FIREBASE_TOKEN`
+
+## 10. Troubleshooting
+* Blank page after deploy: confirm `.env` values were present during build.
+* Auth domain mismatch: ensure the domain is added in Firebase Console > Auth > Settings.
+* Realtime Database perms: adjust `database.rules.json` as needed.
+
 <div align="center">
 	<h1>SuperChat</h1>
 	<p>A modern Firebase-powered real‑time chat application built with React.</p>
