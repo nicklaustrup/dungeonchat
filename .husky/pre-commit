@@ -1,34 +1,41 @@
-#!/usr/bin/env bash
-. "$(dirname "$0")/_/husky.sh"
+#!/usr/bin/env sh
 
-echo "[husky] Pre-commit: validating changed files via related tests"
+# Lightweight Husky v9+ style hook (no helper sourcing, future-proof for v10)
 
-# Ensure deps installed (skip if node_modules present)
-if [ ! -d node_modules ]; then
-	echo "[husky] node_modules missing – running npm ci (first commit scenario)"
-	npm ci || { echo "[husky] npm ci failed"; exit 1; }
+if [ "$HUSKY_SKIP_TESTS" = "1" ]; then
+  echo "[husky] Skipping tests due to HUSKY_SKIP_TESTS=1"
+  exit 0
 fi
 
-STAGED_JS=$(git diff --cached --name-only --diff-filter=ACMRTUXB | grep -E '\.(js|jsx|ts|tsx)$' || true)
+echo "[husky] Pre-commit: validating changed JS/TS via related Jest tests"
+
+# Ensure dependencies installed (first-clone scenarios). Fast check for react-scripts.
+if ! command -v npx >/dev/null 2>&1 || [ ! -d node_modules ]; then
+  echo "[husky] Installing dependencies (bootstrap)"
+  npm ci || { echo "[husky] npm ci failed"; exit 1; }
+fi
+
+# Collect staged JS/TS files (Added, Copied, Modified, Renamed, Type changed, Updated, etc.)
+STAGED_JS="$(git diff --cached --name-only --diff-filter=ACMRTUXB | grep -Ei '\\.(js|jsx|ts|tsx)$' || true)"
 
 if [ -z "$STAGED_JS" ]; then
-	echo "[husky] No JS/TS changes – skipping test:changed."
-	exit 0
+  echo "[husky] No JS/TS changes – skipping related test run."
+  exit 0
 fi
 
-echo "[husky] Staged JS/TS files:"$'\n'
+echo "[husky] Staged JS/TS files:" | sed 's/^/ /'
 for f in $STAGED_JS; do
-	echo " - $f"
+  echo "  - $f"
 done
 
-echo "[husky] Running related Jest tests"
+echo "[husky] Running related Jest tests (will pass if no matching tests)"
 
-# Use xargs to pass files; if Jest exits 0 with no tests found, continue
-echo $STAGED_JS | xargs npm run test:changed -- || {
-	status=$?
-	if [ $status -eq 1 ]; then
-		echo "[husky] Related test run failed; aborting commit."; exit 1;
-	fi
-}
+# Run related tests; if Jest returns 1 (fail) abort; other codes (e.g., no tests) allowed via --passWithNoTests
+printf '%s\n' $STAGED_JS | xargs npm run test:changed -- || status=$?
+
+if [ "${status:-0}" -ne 0 ]; then
+  echo "[husky] Related tests failed (exit $status). Aborting commit."
+  exit $status
+fi
 
 echo "[husky] Pre-commit tests passed"

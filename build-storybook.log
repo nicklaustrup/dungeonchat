@@ -1,0 +1,49 @@
+
+> dungeonchat@0.1.0 build-storybook
+> storybook build --output-dir=C:\Users\nlaus\AppData\Local\Temp\chromatic--67316-uA5yx9E8hc35
+
+[1m@storybook/core v8.6.14
+[22m
+info => Cleaning outputDir: [36m..\..\..\AppData\Local\Temp\chromatic--67316-uA5yx9E8hc35[39m
+info => Loading presets
+info => Building manager..
+info => Manager built ([38;2;181;126;229m446 ms[39m)
+info => Building preview..
+info Addon-docs: using MDX3
+info => Loading Webpack configuration from `node_modules\react-scripts`
+info => Removing existing JavaScript and TypeScript rules.
+info => Modifying Create React App rules.
+info => Using default Webpack5 setup
+info => Copying static files: [36mpublic[39m at [36m..\..\..\AppData\Local\Temp\chromatic--67316-uA5yx9E8hc35[39m
+WARN export 'FirebaseContext' (imported as 'FirebaseContext') was not found in '../services/FirebaseContext' (possible exports: FirebaseProvider, useFirebase)
+WARN [eslint] 
+WARN src\components\ChatInput\ChatInput.js
+WARN   Line 45:6:  React Hook React.useEffect has a missing dependency: 'imageHook'. Either include it or remove the dependency array                                                                                                                                                                                                      react-hooks/exhaustive-deps
+WARN   Line 52:6:  React Hook React.useEffect has missing dependencies: 'setLiftedImagePreview', 'setLiftedSelectedImage', and 'setLiftedUploading'. Either include them or remove the dependency array. If 'setLiftedSelectedImage' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+WARN 
+WARN src\stories\ChatInput.stories.jsx
+WARN   Line 5:1:  Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+WARN 
+WARN src\utils\sound.js
+WARN   Line 5:5:  '_debugId' is assigned a value but never used  no-unused-vars
+WARN 
+WARN 
+WARN asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+WARN This can impact web performance.
+WARN Assets: 
+WARN   735.35c51abe.iframe.bundle.js (364 KiB)
+WARN   609.8443812a.iframe.bundle.js (826 KiB)
+WARN   944.9268142b.iframe.bundle.js (639 KiB)
+WARN   959.43a66e44.iframe.bundle.js (311 KiB)
+WARN   555.cf476838.iframe.bundle.js (1.41 MiB)
+WARN   878.7f22bd3e.iframe.bundle.js (982 KiB)
+WARN entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+WARN Entrypoints:
+WARN   main (1.44 MiB)
+WARN       runtime~main.3659550c.iframe.bundle.js
+WARN       555.cf476838.iframe.bundle.js
+WARN       main.1c77fb22.iframe.bundle.js
+WARN       static/css/main.2ed24445.css
+WARN 
+info => Preview built ([38;2;181;126;229m16 s[39m)
+info => Output directory: C:\Users\nlaus\AppData\Local\Temp\chromatic--67316-uA5yx9E8hc35

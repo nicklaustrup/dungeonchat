@@ -18,19 +18,19 @@
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "@storybook/react": "^8.2.0",
-  "@storybook/react-webpack5": "^8.2.0",
-  "@storybook/preset-create-react-app": "^8.2.0",
+    "@storybook/addon-a11y": "^8.2.0",
     "@storybook/addon-essentials": "^8.2.0",
     "@storybook/addon-interactions": "^8.2.0",
-    "@storybook/addon-a11y": "^8.2.0",
+    "@storybook/preset-create-react-app": "^8.2.0",
+    "@storybook/react": "^8.2.0",
+    "@storybook/react-webpack5": "^8.2.0",
     "@storybook/testing-library": "^0.2.2",
-    "chromatic": "^11.0.0",
+    "chromatic": "^11.29.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^9.1.0",
-    "lint-staged": "^15.2.7",
-    "cross-env": "^7.0.3"
+    "lint-staged": "^15.2.7"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -41,7 +41,8 @@
     "build-storybook": "storybook build",
     "chromatic": "chromatic --project-token=$CHROMATIC_PROJECT_TOKEN",
     "prepare": "husky install",
-    "test:ci": "cross-env CI=true react-scripts test --watch=false --passWithNoTests",
+    "lint": "eslint . --ext .js,.jsx --max-warnings=0",
+    "test:ci": "cross-env CI=true react-scripts test --watch=false --passWithNoTests --coverage",
     "test:changed": "cross-env CI=true react-scripts test --watch=false --bail --findRelatedTests --passWithNoTests"
   },
   "lint-staged": {

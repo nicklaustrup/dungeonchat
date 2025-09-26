@@ -57,13 +57,48 @@ For Hosting you can add headers in `firebase.json` to leverage aggressive cachin
 
 ## 9. CI/CD Suggestion
 GitHub Actions workflow (`.github/workflows/ci-deploy.yml`) now performs:
-1. Checkout & cache Node modules
-2. `npm ci` (root + functions)
-3. Run test suite (`npm run test:ci`)
-4. Build Storybook (regression surface)
-5. Build production app (`npm run build`)
-6. Upload build artifact
-7. Deploy (on push to `main`) to Firebase Hosting + Functions using a service account
+
+Pipeline (Build & Test job):
+1. Concurrency guard (cancels superseded runs per branch)
+2. Detect if `functions/` code changed (for selective deploy later)
+3. Install dependencies (root + `functions/`)
+4. Lint (`npm run lint`) with `--max-warnings=0`
+5. Run Jest in CI w/ coverage (`npm run test:ci` → creates `coverage/` incl. `lcov.info`)
+6. Upload coverage artifact + (optional) upload to Codecov if token present
+7. Build Storybook (static) and optionally run Chromatic visual regression (if token present)
+8. Build production app (`npm run build`) and store artifact
+
+Deployment job (only push to `main`):
+1. Re-check diff to decide if Functions changed
+2. Install Firebase CLI
+3. Auth via `FIREBASE_DEPLOY_TOKEN` (legacy token) — consider migrating to service account + `firebase-tools` or OIDC later
+4. Deploy only Hosting if Functions unchanged; otherwise Hosting + Functions
+
+Selective Functions Deploy:
+If no files under `functions/` changed between the last commit and current, only Hosting is deployed, saving time & quota.
+
+Visual Regression:
+Chromatic runs only if `CHROMATIC_PROJECT_TOKEN` secret is set. Failing Chromatic does not fail the build (non-blocking) currently.
+
+Coverage:
+Jest coverage uploaded as artifact always; Codecov upload attempted if `CODECOV_TOKEN` present (private repos). Public repos can often upload without token.
+
+Secrets required / optional:
+- `FIREBASE_DEPLOY_TOKEN` (required for deploy) – generate with `firebase login:ci`
+- `FIREBASE_PROJECT_ID` (required) – your Firebase project id
+- `CHROMATIC_PROJECT_TOKEN` (optional) – enables Chromatic visual regression
+- `CODECOV_TOKEN` (optional, needed for private repos coverage in Codecov)
+
+Environment Variables at runtime: none additional required; build uses `.env` values embedded at build step.
+
+Adding new secrets: GitHub repo → Settings → Secrets and variables → Actions → New repository secret.
+
+Future Hardening Ideas:
+- Switch to service account JSON + OIDC (no long-lived token)
+- Fail build on Chromatic diff (set policy once baseline stable)
+- Add caching for Storybook and functions node_modules
+- Add a rules deploy step when `.rules` or `firestore.rules` changes
+- Add Lighthouse CI for performance budgets
 
 Secrets required:
 - `FIREBASE_SERVICE_ACCOUNT_JSON` (JSON of service account with deploy perms)
