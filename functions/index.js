@@ -16,23 +16,24 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 const db = admin.firestore();
 
-exports.detectEvilUsers = onDocumentCreated("messages/{messageId}", async (event) => {
-  const pf = new ProfanityFilter();
-  const {text, uid} = event.data.data();
+exports.detectEvilUsers = onDocumentCreated(
+    "messages/{messageId}",
+    async (event) => {
+        const pf = new ProfanityFilter();
+        const {text, uid} = event.data.data();
+        if (!pf.isProfane(text)) return;
+        const cleaned = pf.clean(text);
+        await event.data.ref.update({
+            text: "[removed: profanity]",
+        });
+        await db.collection("banned").doc(uid).set({});
+        console.log(
+            "Removed profane message by " + uid + ": " + cleaned,
+        );
+    },
+);
 
-  if (pf.isProfane(text)) {
-    // Delete the message
-    const cleaned = pf.clean(text);
-    await event.data.ref.update({text: "I got banned for using bad words!"});
-    await db.collection("banned").doc(uid).set({});
-    console.log(
-      // eslint-disable-next-line max-len
-      `Deleted message from ${uid} for profanity: ${cleaned}`
-    );
-  }
-});
-
-setGlobalOptions({maxInstances:10});
+setGlobalOptions({maxInstances: 10});
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started

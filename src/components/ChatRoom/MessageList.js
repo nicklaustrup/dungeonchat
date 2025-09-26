@@ -13,6 +13,10 @@ function MessageList({
   topSentinel,
   bottomAnchorRef
 }) {
+  const [selectedMessageId, setSelectedMessageId] = React.useState(null);
+  const [hoveredMessageId, setHoveredMessageId] = React.useState(null);
+  const handleSelectMessage = React.useCallback((id) => setSelectedMessageId(id), []);
+  const handleHoverMessage = React.useCallback((id) => setHoveredMessageId(id), []);
   if (searchTerm && messages && messages.length === 0) {
     return (
       <>
@@ -38,7 +42,7 @@ function MessageList({
       {messages && messages.map(m => {
         const ts = m.createdAt;
         const dateObj = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : null;
-        const dateKey = dateObj ? dateObj.getFullYear()+ '-' + (dateObj.getMonth()+1) + '-' + dateObj.getDate() : null;
+        const dateKey = dateObj ? dateObj.getFullYear() + '-' + (dateObj.getMonth() + 1) + '-' + dateObj.getDate() : null;
         let showDivider = false;
         if (dateKey && dateKey !== lastDateKey) {
           // Only show if not first OR if the gap is >= 1 day from previous
@@ -50,8 +54,8 @@ function MessageList({
           }
         }
         // Determine if this message should show meta (avatar/name/timestamp)
-  const baseShowMeta = showDivider || prevUid !== m.uid;
-  const showMeta = baseShowMeta || !!m.replyTo; // always show meta if quoting another message
+        const baseShowMeta = showDivider || prevUid !== m.uid;
+        const showMeta = baseShowMeta || !!m.replyTo; // always show meta if quoting another message
         const content = (
           <ChatMessage
             key={m.id}
@@ -61,15 +65,19 @@ function MessageList({
             isReplyTarget={replyingToId && m.id === replyingToId}
             onViewProfile={onViewProfile}
             showMeta={showMeta}
+            selected={selectedMessageId === m.id}
+            onSelectMessage={handleSelectMessage}
+            hovered={hoveredMessageId === m.id}
+            onHoverMessage={handleHoverMessage}
           />
         );
         const elements = [];
         if (showDivider) {
-            elements.push(
-              <div className="date-divider" key={`div-${m.id}`}>
-                <span className="date-divider-label">{formatDateHeading(ts)}</span>
-              </div>
-            );
+          elements.push(
+            <div className="date-divider" key={`div-${m.id}`}>
+              <span className="date-divider-label">{formatDateHeading(ts)}</span>
+            </div>
+          );
         }
         if (dateKey) lastDateKey = dateKey;
         prevUid = m.uid;

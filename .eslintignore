@@ -5,3 +5,4 @@ node_modules/
 coverage/
 # Firebase / deployment artifacts (if any future)
 functions/lib/
+functions/index.js

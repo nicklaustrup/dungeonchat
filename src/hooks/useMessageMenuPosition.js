@@ -55,6 +55,9 @@ export function useMessageMenuPosition({ menuOpen, onClose, showDeleteConfirm })
       return next;
     });
     setMenuReady(true);
+      // Edge shift class for narrow screens to reduce off-canvas risk
+      const nearHorizontalEdge = (triggerRect.left < 24) || (viewportW - triggerRect.right < 24);
+      panel.classList.toggle('edge-shift', nearHorizontalEdge);
   }, [menuOpen]);
 
   // Manage body class when any menu open

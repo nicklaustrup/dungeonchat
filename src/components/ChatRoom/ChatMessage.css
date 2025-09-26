@@ -1,6 +1,17 @@
 /* Core message layout & non-split styles */
 :root { --message-left-col-width: 56px; --message-horizontal-gap: 14px; }
 
+/* Phase 1 mobile spacing refinement */
+@media (max-width: 599px) {
+  :root { --message-horizontal-gap: 10px; }
+}
+
+/* Phase 2: progressive rendering optimization */
+@supports (content-visibility: auto) {
+  /* Opt-in via root class to allow A/B comparison */
+  :root.enable-content-visibility .message { content-visibility: auto; contain-intrinsic-size: 180px; }
+}
+
 .deleted-message {
   font-style: italic;
   opacity: .6;

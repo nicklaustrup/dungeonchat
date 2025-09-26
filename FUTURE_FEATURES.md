@@ -110,6 +110,13 @@
 - Keyboard Navigation (focus management, Enter vs Shift+Enter logic, shortcuts palette).
 - ARIA Roles & Live Regions (announce new messages, polite vs assertive strategies).
 - Media Alt Text Prompts for image uploads.
+- Mobile Reaction Long-Press (Implemented) ✅
+- Adaptive Popover Edge Repositioning (Implemented) ✅
+- Keyboard Overlap Mitigation / Sticky Input Refinement (Implemented) ✅
+- Reduced Motion & Focus Outline Enhancements (Implemented) ✅
+- Telemetry & Lighthouse Baseline (In Progress) 🟡
+- Visual Regression Harness (Planned) 🟡
+ - Visual Regression Snapshots for key breakpoints (moved from Phase 5 checklist) 🔄
 - Automated Testing (units, RTL integration, E2E flows for send → reaction → pagination).
 
 ---
@@ -369,3 +376,22 @@ Performance Watchpoints
 Avoid broad listeners: always apply orderBy('createdAt','desc').limit(n) and paginate.
 Debounce typing indicator writes (e.g., only write every 2–3s or on pause).
 Use onSnapshot unsubscribes on route change / tab hidden to reduce billed minutes.
+
+---
+
+## Additional Ideas (Appended During Mobile Phase 2)
+
+| Idea | Description | Notes |
+|------|-------------|-------|
+| Content Visibility Toggle | Runtime toggle (settings) to enable/disable `content-visibility` for A/B perf measurement | Controlled via root class `enable-content-visibility` |
+| Compact Mode | Reduce vertical padding + avatar size on mobile landscape | Could pair with virtualized list later |
+| Battery Saver Mode | Auto-disable blurs & heavy shadows when `navigator.getBattery()` low | Fallback heuristic if API unsupported |
+| Emoji Recent Cache | Store last 16 used emoji in localStorage for quick bar | Prefetch subset to reduce picker open cost |
+| Lazy Emoji Picker Import | Dynamic import only when user first opens emoji menu | Reduces initial JS payload |
+| Haptic Feedback Wrapper | Abstract vibration / haptics for reactions & long-press | Progressive enhancement only |
+| Lazy Emoji Picker (Implemented) | Now dynamically imported on demand | Further enhancement: prefetch on idle |
+| Performance Mode Toggle (Implemented) | User toggle adds content-visibility for messages | Could auto-enable on low-end heuristics |
+| Long-Press Reply | Long-press message triggers reply context on mobile | Prevents accidental menu open |
+| Gesture Swipe to Scroll Bottom | Small upward swipe near bottom reveals quick-scroll button | Accessibility: keep existing button too |
+| Accessibility Audit Script | Automated `axe-core` run in CI on Storybook stories | Surfaces regressions early |
+| Performance Markers | Insert `performance.mark` around message render batches | Enables INP analysis |

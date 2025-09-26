@@ -1,6 +1,13 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import EmojiPicker from 'emoji-picker-react';
+// Dynamic loader for emoji-picker-react to defer large bundle cost until first open
+let EmojiPickerMod = null;
+async function loadEmojiPicker() {
+  if (!EmojiPickerMod) {
+    EmojiPickerMod = await import('emoji-picker-react');
+  }
+  return EmojiPickerMod.default || EmojiPickerMod.EmojiPicker || EmojiPickerMod;
+}
 
 /**
  * EmojiMenu (portal-based floating picker)
@@ -17,6 +24,16 @@ function EmojiMenuSingleton() {
   useEffect(() => { stateRef.current = state; }, [state]);
   const panelRef = useRef(null);
   const [panelStyle, setPanelStyle] = useState(null);
+  // Hooks for dynamic picker module (declared unconditionally to satisfy rules-of-hooks)
+  const [pickerReady, setPickerReady] = useState(false);
+  const PickerRef = useRef(null);
+  // Kick off load when panel becomes visible first time
+  useEffect(() => {
+    if (!state.visible) return; // do not load until needed
+    let active = true;
+    loadEmojiPicker().then(Mod => { if (active) { PickerRef.current = Mod; setPickerReady(true); } });
+    return () => { active = false; };
+  }, [state.visible]);
 
   const close = useCallback(() => {
     setState(s => ({ ...s, visible: false }));
@@ -94,16 +111,22 @@ function EmojiMenuSingleton() {
 
   const style = panelStyle || (state.anchorRect ? { position: 'fixed', top: state.anchorRect.bottom + 8, left: state.anchorRect.left, opacity: 0 } : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
 
+  const PickerComp = PickerRef.current;
+
   return createPortal(
     <div ref={panelRef} className="emoji-picker-portal" style={{ zIndex: 1600, ...style }}>
-      <EmojiPicker
-        onEmojiClick={(emojiData) => {
-          if (state.onSelect) state.onSelect(emojiData);
-          close();
-        }}
-        autoFocusSearch={true}
-        theme={theme}
-      />
+      {pickerReady && PickerComp ? (
+        <PickerComp
+          onEmojiClick={(emojiData) => {
+            if (state.onSelect) state.onSelect(emojiData);
+            close();
+          }}
+          autoFocusSearch={true}
+          theme={theme}
+        />
+      ) : (
+        <div style={{ padding: '32px 48px', fontSize: 12, opacity: 0.8 }}>Loading emoji…</div>
+      )}
     </div>,
     mountNode
   );

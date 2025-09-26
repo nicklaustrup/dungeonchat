@@ -5,10 +5,10 @@ import ChatHeader from '../components/ChatHeader/ChatHeader';
 import ChatRoom from '../components/ChatRoom/ChatRoom';
 import ChatInput from '../components/ChatInput/ChatInput';
 import SignIn from '../components/SignIn/SignIn';
-import UserProfileModal from '../components/UserProfileModal/UserProfileModal';
-import '../components/UserProfileModal/UserProfileModal.css';
 import TypingBubble from '../components/TypingBubble/TypingBubble';
 import ScrollToBottomButton from '../components/ChatRoom/ScrollToBottomButton';
+// Lazy load rarely used profile modal for bundle splitting (Phase 2)
+const UserProfileModal = React.lazy(() => import('../components/UserProfileModal/UserProfileModal'));
 
 function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
   const { user, rtdb } = useFirebase();
@@ -157,11 +157,15 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
           <SignIn />
         )}
       </section>
-      <UserProfileModal
-        user={profileModalUser}
-        isOpen={!!profileModalUser}
-        onClose={() => setProfileModalUser(null)}
-      />
+      <React.Suspense fallback={null}>
+        {profileModalUser && (
+          <UserProfileModal
+            user={profileModalUser}
+            isOpen={!!profileModalUser}
+            onClose={() => setProfileModalUser(null)}
+          />
+        )}
+      </React.Suspense>
     </div>
   );
 }

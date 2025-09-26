@@ -185,10 +185,17 @@ function ChatMessage(props) {
     ].filter(Boolean).join(' ');
 
     // Specialized compact rendering for consecutive grouped (no-meta) messages
+    const { selected, onSelectMessage, hovered, onHoverMessage } = props;
+    const isTouch = React.useMemo(() => matchMedia('(hover: none) and (pointer: coarse)').matches, []);
+    const showActions = isTouch ? selected : hovered; // desktop: only hovered message (centralized)
+    const handleSelect = () => {
+        if (isTouch && onSelectMessage) onSelectMessage(messageId);
+    };
+
     if (!showMeta) {
         const timeOnly = formatTimeOnly(createdAt);
         return (
-            <div className={rootClasses} data-message-id={messageId} role="article" aria-label={`Message from ${userName}`}>                
+            <div className={rootClasses} data-message-id={messageId} role="article" aria-label={`Message from ${userName}`} onClick={isTouch ? handleSelect : undefined} onMouseEnter={() => onHoverMessage && onHoverMessage(messageId)} onMouseLeave={() => onHoverMessage && onHoverMessage(null)}>
                 <div className="time-col" aria-hidden="true">{timeOnly}</div>
                 <div className="message-content">
                     {deleted ? (
@@ -211,7 +218,7 @@ function ChatMessage(props) {
                         )
                     )}
                     <ReactionList reactions={reactionsState} currentUserId={auth.currentUser?.uid} onToggle={addReaction} />
-                    <ReactionBar emojis={reactionEmojis} onReact={addReaction} onReply={onReply} message={props.message} menuOpen={menuOpen}>
+                    <ReactionBar emojis={reactionEmojis} onReact={addReaction} onReply={onReply} message={props.message} menuOpen={menuOpen} hidden={!showActions}>
                         {!deleted && (
                             <div className="message-menu-wrapper" ref={menuRef}>
                                 <button className="reply-btn message-menu-trigger" data-tip="Options" aria-label="Options" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>…</button>
@@ -243,7 +250,11 @@ function ChatMessage(props) {
     }
 
     return (
-        <div className={rootClasses} data-message-id={messageId} role="article" aria-label={`Message from ${userName}${isReplyTarget ? ' (reply target)' : ''}`}>            
+        <div className={rootClasses} data-message-id={messageId} role="article" aria-label={`Message from ${userName}${isReplyTarget ? ' (reply target)' : ''}`} onClick={isTouch ? (e) => {
+            const tag = (e.target.tagName || '').toLowerCase();
+            if (['button','img','input','textarea','a'].includes(tag)) return;
+            handleSelect();
+        } : undefined} onMouseEnter={() => onHoverMessage && onHoverMessage(messageId)} onMouseLeave={() => onHoverMessage && onHoverMessage(null)}>
             <div className="message-inner">
                                 {replyTo && showMeta && (
                                     <div className="message-top-row" aria-label={`Replying to ${replyTo.displayName || 'user'}`}>
@@ -301,32 +312,32 @@ function ChatMessage(props) {
                                 </p>
                             )
                         ))}
-                                                <ReactionList reactions={reactionsState} currentUserId={auth.currentUser?.uid} onToggle={addReaction} />
-                                                <ReactionBar emojis={reactionEmojis} onReact={addReaction} onReply={onReply} message={props.message} menuOpen={menuOpen}>
-                                                    {!deleted && (
-                                                        <div className="message-menu-wrapper" ref={menuRef}>
-                                                            <button className="reply-btn message-menu-trigger" data-tip="Options" aria-label="Options" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>…</button>
-                                                            <MessageOptionsMenu
-                                                                open={menuOpen}
-                                                                menuPanelRef={menuPanelRef}
-                                                                menuMode={menuMode}
-                                                                menuReady={menuReady}
-                                                                menuStyle={menuStyle}
-                                                                quickMenuEmojis={quickMenuEmojis}
-                                                                addReaction={(e) => { addReaction(e); setMenuOpen(false); }}
-                                                                handleAddReactionFull={handleAddReactionFull}
-                                                                onReply={onReply ? (m) => { onReply(m); setMenuOpen(false); } : undefined}
-                                                                message={props.message}
-                                                                handleCopyText={handleCopyText}
-                                                                canEdit={uid === auth.currentUser?.uid && type !== 'image'}
-                                                                startEditing={() => { startEditing(); setMenuOpen(false); }}
-                                                                canDelete={uid === auth.currentUser?.uid}
-                                                                onDelete={() => { setShowDeleteConfirm(true); setMenuOpen(false); }}
-                                                                text={text}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </ReactionBar>
+                        <ReactionList reactions={reactionsState} currentUserId={auth.currentUser?.uid} onToggle={addReaction} />
+                        <ReactionBar emojis={reactionEmojis} onReact={addReaction} onReply={onReply} message={props.message} menuOpen={menuOpen} hidden={!showActions}>
+                            {!deleted && (
+                                <div className="message-menu-wrapper" ref={menuRef}>
+                                    <button className="reply-btn message-menu-trigger" data-tip="Options" aria-label="Options" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>…</button>
+                                    <MessageOptionsMenu
+                                        open={menuOpen}
+                                        menuPanelRef={menuPanelRef}
+                                        menuMode={menuMode}
+                                        menuReady={menuReady}
+                                        menuStyle={menuStyle}
+                                        quickMenuEmojis={quickMenuEmojis}
+                                        addReaction={(e) => { addReaction(e); setMenuOpen(false); }}
+                                        handleAddReactionFull={handleAddReactionFull}
+                                        onReply={onReply ? (m) => { onReply(m); setMenuOpen(false); } : undefined}
+                                        message={props.message}
+                                        handleCopyText={handleCopyText}
+                                        canEdit={uid === auth.currentUser?.uid && type !== 'image'}
+                                        startEditing={() => { startEditing(); setMenuOpen(false); }}
+                                        canDelete={uid === auth.currentUser?.uid}
+                                        onDelete={() => { setShowDeleteConfirm(true); setMenuOpen(false); }}
+                                        text={text}
+                                    />
+                                </div>
+                            )}
+                        </ReactionBar>
                     </div>
                     <DeleteConfirmModal open={showDeleteConfirm} onConfirm={handleDelete} onCancel={() => setShowDeleteConfirm(false)} />
                 </div>

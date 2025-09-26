@@ -1,7 +1,9 @@
 import React from 'react';
+import { usePerformanceMode } from '../../hooks/usePerformanceMode';
 import './SettingsModal.css';
 
 function SettingsModal({ isOpen, onClose, isDarkTheme, toggleTheme, soundEnabled, toggleSound, awayAfterSeconds, setAwayAfterSeconds }) {
+  const { enabled: perfEnabled, toggle: togglePerf } = usePerformanceMode();
   const warnedRef = React.useRef(false);
   const pendingRef = React.useRef(null);
   const [localMinutes, setLocalMinutes] = React.useState(() => Math.round(awayAfterSeconds/60));
@@ -53,6 +55,12 @@ function SettingsModal({ isOpen, onClose, isDarkTheme, toggleTheme, soundEnabled
           <span>Theme</span>
           <button className="icon-btn" onClick={toggleTheme} title="Toggle theme">
             {isDarkTheme ? '☀️' : '🌙'}
+          </button>
+        </div>
+        <div className="settings-item">
+          <span>Performance Mode</span>
+          <button className="icon-btn" onClick={togglePerf} title="Toggle performance rendering optimizations">
+            {perfEnabled ? '⚡' : '⏳'}
           </button>
         </div>
         <div className="settings-item column">

@@ -5,6 +5,13 @@
     z-index: 100;
 }
 
+/* Keyboard open mode (JS toggles .keyboard-open on html) */
+html.keyboard-open .chat-input-area {
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.25);
+    padding-bottom: 2px;
+}
+html.keyboard-open .chat-input-area .message-bar { border-color: var(--primary-color); }
+
 .reply-preview {
     display: flex;
     align-items: center;
@@ -40,6 +47,15 @@
 }
 
 .reply-preview-close {
+
+/* Phase 1: ensure tap target sizing without forcing layout bloat */
+.bar-icon-btn, .send-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Avoid double-scaling icons inside larger hit zones */
+.bar-icon-btn svg { pointer-events: none; }
     background: var(--primary-color);
     color: #fff;
     border: none;
@@ -419,6 +435,17 @@
 @media (max-width:699px) {
     .send-btn {
         display: flex;
+    }
+}
+
+/* Phase 1 mobile sticky (mirrors responsive.css but local to component if imported alone) */
+@media (max-width: 599px) {
+    .chat-input-area {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg-secondary);
+        padding-bottom: calc(env(safe-area-inset-bottom, 0) + 4px);
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.35);
     }
 }
 
