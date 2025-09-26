@@ -38,30 +38,82 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
     const latest = messages[messages.length - 1];
     if (!latest) return;
     const prevId = prevLatestIdRef.current;
+    const isNewTail = prevId && latest.id !== prevId; // only treat as new if tail id changed (avoid pagination or reordering noise)
     prevLatestIdRef.current = latest.id;
     if (!prevId) return; // skip initial hydration
+    if (!isNewTail) return; // suppress sound on pagination / non-tail mutations
     if (soundEnabled && latest.uid && latest.uid !== auth?.currentUser?.uid) {
       playReceiveMessageSound(true);
     }
   }, [messages, auth, soundEnabled]);
 
-  const { isAtBottom, hasNew: hasNewMessages, newCount: newMessagesCount, scrollToBottom } = useAutoScroll({
+  const { isAtBottom, hasNew: hasNewMessages, newCount: newMessagesCount, scrollToBottom, __debug } = useAutoScroll({
     containerRef: mainRef,
     anchorRef: dummy,
     items: sortedMessages,
     bottomThreshold: 60,
   });
 
-  // Notify parent about scroll meta for external button positioning
+  // Notify parent about scroll meta for external button positioning.
+  // NOTE: A previous implementation introduced an infinite render loop by:
+  //  1. Including an ever-changing field (Date.now()) in the meta object
+  //  2. Depending on a parent-provided inline onScrollMeta callback that updated parent state each call
+  // This caused: effect -> parent state update -> new callback identity -> effect ...
+  // We fix this by (a) removing volatile fields, and (b) only invoking the callback when meaningful values change.
+  const lastMetaRef = React.useRef(null);
   React.useEffect(() => {
     if (!onScrollMeta) return;
-    onScrollMeta({
-      visible: !isAtBottom,
+    const el = mainRef.current;
+    let dist = 0;
+    if (el) {
+      dist = el.scrollHeight - (el.scrollTop + el.clientHeight);
+    }
+    const bottomThreshold = 60; // keep in sync with hook usage
+    const withinReadZone = dist <= bottomThreshold;
+    const effectiveAtBottom = isAtBottom || withinReadZone;
+
+    if (process.env.NODE_ENV !== 'production') {
+      if (effectiveAtBottom && dist > bottomThreshold * 1.5) {
+        // eslint-disable-next-line no-console
+        console.warn('[ScrollMetaDebug] effectiveAtBottom=true but dist large', { dist, bottomThreshold, isAtBottom, withinReadZone });
+      }
+    }
+
+    const nextMeta = {
+      visible: !effectiveAtBottom,
       hasNew: hasNewMessages,
       newCount: newMessagesCount,
-      scrollToBottom,
-    });
-  }, [onScrollMeta, isAtBottom, hasNewMessages, newMessagesCount, scrollToBottom]);
+      scrollToBottom, // function reference (assumed stable from hook)
+      debugDist: dist,
+      debugWithinReadZone: withinReadZone,
+      debugIsAtBottom: isAtBottom,
+      debugEffectiveAtBottom: effectiveAtBottom,
+      debugThreshold: bottomThreshold,
+      debugSuppressed: __debug?._suppressed,
+      debugPrevNearBottom: __debug?._prevNearBottom,
+      debugAtBottomOnLastAppend: __debug?._atBottomOnLastAppend,
+      debugLastDistance: __debug?._lastDistance,
+      debugIdSetSize: __debug?._idSetSize
+    };
+
+    // Shallow compare against last meaningful snapshot to avoid parent updates that would
+    // recreate onScrollMeta and re-trigger this effect unnecessarily.
+    const prev = lastMetaRef.current;
+    let changed = false;
+    if (!prev) {
+      changed = true;
+    } else {
+      for (const k in nextMeta) {
+        if (nextMeta[k] !== prev[k]) { changed = true; break; }
+      }
+    }
+    if (!changed) return;
+    lastMetaRef.current = nextMeta;
+    onScrollMeta(nextMeta);
+  // Intentionally exclude onScrollMeta from dependency array to avoid infinite loops when
+  // parent recreates the callback; guarded by our change detection above.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAtBottom, hasNewMessages, newMessagesCount, scrollToBottom, __debug]);
 
   const filteredMessages = useMessageSearch(sortedMessages, searchTerm);
 

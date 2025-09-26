@@ -36,10 +36,19 @@ eslintCmd="npx eslint"
 if ! command -v npx >/dev/null 2>&1; then
   echo "[husky] npx not found; skipping eslint"
 else
-  # Run eslint only on staged files (pipe-safe)
+  echo "[husky] Attempting auto-fix (eslint --fix) on staged files"
+  printf '%s\n' $STAGED_JS | xargs $eslintCmd --fix --quiet || fixStatus=$?
+  # Re-stage any files modified by --fix (ignore errors if a file was removed mid-process)
+  echo "[husky] Re-staging potentially fixed files"
+  printf '%s\n' $STAGED_JS | xargs git add -- 2>/dev/null || true
+  if [ "${fixStatus:-0}" -ne 0 ]; then
+    echo "[husky] Auto-fix encountered issues (exit $fixStatus); continuing to strict check"
+  fi
+  echo "[husky] Running strict lint (no warnings allowed)"
   printf '%s\n' $STAGED_JS | xargs $eslintCmd --max-warnings=0 -- || status=$?
   if [ "${status:-0}" -ne 0 ]; then
-    echo "[husky] ESLint failed (exit $status). Aborting commit."
+    echo "[husky] ESLint failed after auto-fix (exit $status). Aborting commit."
+    echo "[husky] Tip: run 'npx eslint . --ext .js,.jsx --fix' to apply broader fixes."
     exit $status
   fi
 fi

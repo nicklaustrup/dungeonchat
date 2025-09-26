@@ -31,7 +31,9 @@ const pushTrace = (event) => {
 };
 
 export const logEvent = (label, data = {}) => {
-  if (!debugEnabled) return;
+  // Only log if debugEnabled or SCROLL_DEBUG env is set (never in test/CI)
+  const shouldLog = debugEnabled || (typeof process !== 'undefined' && process.env && process.env.SCROLL_DEBUG);
+  if (!shouldLog) return;
   // eslint-disable-next-line no-console
   console.log('%c[ScrollDbg]', styleTag, label, data);
   pushTrace({ label, ...data });

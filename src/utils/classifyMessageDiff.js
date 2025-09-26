@@ -41,8 +41,26 @@ export function classifyMessageDiff(prevMessages, nextMessages) {
     appendedCount = (nextLength - 1) - idxPrevLast;
   }
 
-  const didPrepend = prependedCount > 0;
-  const didAppend = appendedCount > 0;
+  let didPrepend = prependedCount > 0;
+  let didAppend = appendedCount > 0;
+
+  // Heuristic correction: False-positive single-item prepend when only the last item changed.
+  // Scenario: backend reorders or we briefly miss the old first id; classification shows prependedCount=1, appendedCount=0
+  // but the previous last id shifted inward by exactly one and list length grew by 1 (true append). We can detect by:
+  //  - net growth of 1 (nextLength === prevLength + 1)
+  //  - previous last id still present (already guaranteed by hasPrevLastInNext)
+  //  - index of previous last id == nextLength - 2 (it moved down exactly one slot)
+  //  - prependedCount === 1 and appendedCount === 0
+  if (!didAppend && didPrepend && prependedCount === 1 && (nextLength === prevLength + 1) && hasPrevLastInNext) {
+    const idxPrevLastInNext = nextIds.indexOf(prevLast);
+    if (idxPrevLastInNext === nextLength - 2) {
+      // Reclassify as a pure append of 1
+      didPrepend = false;
+      prependedCount = 0;
+      didAppend = true;
+      appendedCount = 1;
+    }
+  }
 
   return { didPrepend, prependedCount, didAppend, appendedCount, reset, prevLength, nextLength };
 }
