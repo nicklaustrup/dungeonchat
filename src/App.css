@@ -66,6 +66,20 @@ body {
   transition: all 0.3s ease;
 }
 
+.logo-container {
+  width: 50px; 
+  height: 50px;
+  background-image: url('/public/logo192.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: background-image 0.25s ease-in-out;
+}
+
+.logo-container:hover {
+  background-image: url('/public/rolling.gif');
+}
+
 .header-top {
   display: flex;
   align-items: center;
@@ -76,6 +90,9 @@ body {
 .App header h1 {
   margin: 0;
   font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .header-controls {
@@ -163,27 +180,39 @@ form {
   transition: all 0.3s ease;
 }
 
-main::-webkit-scrollbar {
-  width: 8px;
-}
+/* --- Scrollbar visibility control (revised): keep width, fade in colors on hover/scroll --- */
+/* Prevent horizontal scrollbar */
+.chatroom-wrapper main { overflow-y: auto; overflow-x: hidden; }
 
-main::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+/* WebKit base scrollbar always present size-wise, but visually transparent until active */
+.chatroom-wrapper main::-webkit-scrollbar { width: 8px; height: 8px; background: transparent; }
+.chatroom-wrapper main::-webkit-scrollbar-track { background: transparent; border-radius: 4px; }
+.chatroom-wrapper main::-webkit-scrollbar-thumb {
+  background: transparent; /* hidden state */
   border-radius: 4px;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-main::-webkit-scrollbar-thumb {
+/* Visible styles when user hovers or while scrolling (JS adds .scrolling) */
+.chatroom-wrapper main:hover::-webkit-scrollbar-thumb,
+.chatroom-wrapper main.scrolling::-webkit-scrollbar-thumb {
   background: var(--primary-color);
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
 }
+.chatroom-wrapper main:hover::-webkit-scrollbar-track,
+.chatroom-wrapper main.scrolling::-webkit-scrollbar-track { background: var(--bg-secondary); }
 
-main::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-dark);
+.chatroom-wrapper main:hover::-webkit-scrollbar-thumb:hover,
+.chatroom-wrapper main.scrolling::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+
+/* Firefox: adjust colors dynamically */
+@supports (scrollbar-color: auto) {
+  .chatroom-wrapper main { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  .chatroom-wrapper main:hover,
+  .chatroom-wrapper main.scrolling { scrollbar-color: var(--primary-color) var(--bg-secondary); }
 }
 
 form button {
-  width: 80px;
   background-color: rgb(56, 56, 143);
   flex-shrink: 0;
 }
@@ -364,7 +393,7 @@ img {
 /* Search functionality */
 .search-bar {
   display: flex;
-  align-items: center;
+  align-items: end;
   background: var(--bg-light);
   border: 2px solid var(--primary-color);
   border-radius: 25px;
@@ -484,6 +513,37 @@ img {
 .search-bar.compact .search-input { font-size: 13px; padding: 4px 6px; }
 .search-bar.compact .search-close { width: 18px; height: 18px; }
 
+/* --- New full-width header search input --- */
+.search-container { width: 100%; max-width: 260px; position: relative; }
+.search-input-field {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 30px 6px 12px; /* space for icon */
+margin-top: 10px;
+  background: var(--bg-light);
+  border: 1px solid #888; /* gray outline */
+  border-radius: 8px; /* more square with gently rounded edges */
+  color: var(--text-color);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+.search-input-field:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(11,147,246,0.25); }
+.search-input-field::placeholder { color: var(--text-secondary); }
+
+/* Right aligned magnifying glass icon using mask (for theme adaptability) */
+.search-input-field {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-5.34C15.57 5.59 13.28 3.3 10.5 3.05 6.91 2.7 3.9 5.22 3.55 8.81c-.35 3.59 2.17 6.6 5.76 6.95a6.471 6.471 0 0 0 5.34-1.57l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14Zm-5 0c-2.49 0-4.5-2.01-4.5-4.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px 16px;
+}
+
+/* Light theme icon color override by swapping embedded SVG fill */
+.light-theme .search-input-field {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23000000' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-5.34C15.57 5.59 13.28 3.3 10.5 3.05 6.91 2.7 3.9 5.22 3.55 8.81c-.35 3.59 2.17 6.6 5.76 6.95a6.471 6.471 0 0 0 5.34-1.57l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14Zm-5 0c-2.49 0-4.5-2.01-4.5-4.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14Z'/%3E%3C/svg%3E");
+}
+
 /* User info chip */
 .user-chip {
   display: flex;
@@ -504,7 +564,7 @@ img {
 
 /* User menu dropdown */
 .user-menu-wrapper { position: relative; }
-.user-menu-trigger { cursor: pointer; }
+.user-menu-trigger { cursor: pointer; margin:auto; }
 .user-menu-caret { font-size: 0.9rem; opacity: 0.8; margin-left: 2px; transition: transform 0.25s ease; }
 .user-menu-trigger.open .user-menu-caret { transform: rotate(180deg); }
 .trunc-tooltip[data-truncated="true"] { position: relative; cursor: help; }
@@ -976,14 +1036,14 @@ img {
   bottom: auto;
 }
 
-.image-upload-wrapper.inside-input .image-upload-btn {
+.image-upload-wrapper.inside-input { /* .image-upload-btn */
   background: linear-gradient(135deg, #2f4159, #35506b); /* muted bluish gray */
   width: 38px;
   height: 38px;
   font-size: 16px;
 }
 
-.image-upload-wrapper.inside-input .image-upload-btn:hover {
+.image-upload-wrapper.inside-input  { /* .image-upload-btn:hover*/
   background: linear-gradient(135deg, #3a5674, #426684);
 }
 

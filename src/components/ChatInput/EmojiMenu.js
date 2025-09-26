@@ -14,6 +14,7 @@ let mountNode; // singleton mount node in document.body
 function EmojiMenuSingleton() {
   const [state, setState] = useState({ visible: false, anchorRect: null, onSelect: null, onClose: null });
   const panelRef = useRef(null);
+  const [panelStyle, setPanelStyle] = useState(null);
 
   const close = useCallback(() => {
     setState(s => ({ ...s, visible: false }));
@@ -48,28 +49,57 @@ function EmojiMenuSingleton() {
     };
   }, [state.visible, close]);
 
+  // Position calculation after render so we know panel size
+  useEffect(() => {
+    if (!state.visible) { setPanelStyle(null); return; }
+    if (!panelRef.current || !state.anchorRect) return;
+    const gap = 6;
+    const anchor = state.anchorRect;
+    const panelRect = panelRef.current.getBoundingClientRect();
+    // Determine bounding container (try main chat area or app root)
+    const appContainer = document.querySelector('.App section') || document.querySelector('.App') || document.body;
+    const bounds = appContainer.getBoundingClientRect();
+    // Preferred: above the anchor
+    let top = anchor.top - panelRect.height - gap;
+    let placeAbove = true;
+    if (top < bounds.top + 4) {
+      top = anchor.bottom + gap; // fallback below
+      placeAbove = false;
+    }
+    let left = anchor.left;
+    if (left + panelRect.width > bounds.right - 4) left = bounds.right - panelRect.width - 4;
+    if (left < bounds.left + 4) left = bounds.left + 4;
+    // Prevent going below container bottom; if so, force above if possible
+    if (!placeAbove && top + panelRect.height > bounds.bottom - 4) {
+      const retryTop = anchor.top - panelRect.height - gap;
+      if (retryTop >= bounds.top + 4) {
+        top = retryTop;
+        placeAbove = true;
+      }
+    }
+    setPanelStyle({ top: Math.round(top), left: Math.round(left), position: 'fixed', transform: 'none', '--emoji-placement': placeAbove ? 'above' : 'below' });
+  }, [state.visible, state.anchorRect]);
+
+  // Theme detection
+  const theme = (() => {
+    // Prefer explicit light-theme class on body or root
+    const isLight = document.body.classList.contains('light-theme') || document.querySelector('.App.light-theme');
+    return isLight ? 'light' : 'dark';
+  })();
+
   if (!state.visible) return null;
 
-  // Compute position near anchor
-  let style = { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
-  if (state.anchorRect) {
-    const { top, left, bottom } = state.anchorRect;
-    const gap = 6;
-    style = {
-      top: Math.round(bottom + gap),
-      left: Math.round(left),
-      position: 'fixed'
-    };
-  }
+  const style = panelStyle || (state.anchorRect ? { position: 'fixed', top: state.anchorRect.bottom + 8, left: state.anchorRect.left, opacity: 0 } : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
 
   return createPortal(
-    <div ref={panelRef} className="emoji-picker-portal" style={{ position: 'fixed', zIndex: 1600, ...style }}>
+    <div ref={panelRef} className="emoji-picker-portal" style={{ zIndex: 1600, ...style }}>
       <EmojiPicker
         onEmojiClick={(emojiData) => {
           if (state.onSelect) state.onSelect(emojiData);
           close();
         }}
         autoFocusSearch={true}
+        theme={theme}
       />
     </div>,
     mountNode

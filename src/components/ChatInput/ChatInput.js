@@ -5,12 +5,16 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage
 import { useFirebase } from '../../services/FirebaseContext';
 import './ChatInput.css';
 import { playNotificationSound, playTypingSound } from '../../utils/sound';
-import { getFallbackAvatar } from '../../utils/avatar';
+import { FaPlus } from 'react-icons/fa6';
+import { VscSmiley } from 'react-icons/vsc';
+import EmojiMenu from './EmojiMenu';
 
 function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, selectedImage, setSelectedImage, imagePreview, setImagePreview, uploading, setUploading, forceScrollBottom }) {
   const { auth, firestore, rtdb, storage } = useFirebase();
   const [formValue, setFormValue] = React.useState('');
-  const inputRef = React.useRef(null);
+  const inputRef = React.useRef(null); // textarea (fixed height)
+  const emojiBtnRef = React.useRef(null);
+  const [emojiOpen, setEmojiOpen] = React.useState(false);
   // image + uploading state lifted to parent (ChatPage)
 
   const messagesRef = collection(firestore, 'messages');
@@ -89,8 +93,11 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
     }
   };
 
+  // Removed auto-resize logic; fixed-height textarea with scroll.
+
   const handleInputChange = (e) => {
-    setFormValue(e.target.value);
+    const val = e.target.value;
+    setFormValue(val);
     if (auth.currentUser) {
       const uid = auth.currentUser.uid;
       const userTypingRef = databaseRef(rtdb, `typing/${uid}`);
@@ -177,6 +184,62 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
     return () => document.removeEventListener('chat:prefill', prefillHandler);
   }, []);
 
+  // Keyboard shortcut: Ctrl+I (or Cmd+I on Mac) to open image file dialog
+  React.useEffect(() => {
+    const handleShortcut = (e) => {
+      // Ignore if focused element is an input/textarea to avoid interfering with native shortcuts
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+      if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+      const isMod = e.ctrlKey || e.metaKey; // support Cmd on macOS
+      if (isMod && (e.key === 'i' || e.key === 'I')) {
+        e.preventDefault();
+        const fileInput = document.getElementById('image-upload');
+        if (fileInput) {
+          fileInput.click();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleShortcut);
+    return () => document.removeEventListener('keydown', handleShortcut);
+  }, []);
+
+  // Adjust height on mount & when reply cleared
+  // Removed height adjustment effects.
+
+  const handleEmojiPick = (emojiData) => {
+    const emoji = emojiData?.emoji || '';
+    if (!emoji) return;
+    setFormValue(v => v + emoji);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  const toggleEmojiMenu = () => {
+    if (emojiOpen) {
+      // Let outside click handler in EmojiMenu close it; just flag state
+      setEmojiOpen(false);
+      return;
+    }
+    const anchorRect = emojiBtnRef.current ? emojiBtnRef.current.getBoundingClientRect() : null;
+    EmojiMenu.open({
+      anchorRect,
+      onSelect: handleEmojiPick,
+      onClose: () => setEmojiOpen(false)
+    });
+    setEmojiOpen(true);
+  };
+
+  const handleTextareaKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (formValue.trim()) {
+        sendMessage(e);
+        // No height reset needed; fixed height.
+      }
+    }
+  };
+
   return (
     <div className="chat-input-area">
       {imagePreview && (
@@ -235,14 +298,7 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
         </div>
       )}
       <form onSubmit={sendMessage} className="message-form">
-        <div className="message-input-wrapper">
-          <input
-            ref={inputRef}
-            value={formValue}
-            onChange={handleInputChange}
-            placeholder="Say something nice"
-            className="message-input"
-          />
+        <div className="message-bar" role="group" aria-label="Message input">
           <input
             type="file"
             accept="image/*"
@@ -250,14 +306,39 @@ function ChatInput({ getDisplayName, replyingTo, setReplyingTo, soundEnabled, se
             style={{ display: 'none' }}
             id="image-upload"
           />
-          <div className="image-upload-wrapper inside-input">
-            <label htmlFor="image-upload" className="image-upload-btn" title="Select image">
-              📷
-            </label>
-            <div className="image-upload-tooltip">
-              Drop an image here or click to select
-            </div>
-          </div>
+          <button
+            type="button"
+            className="bar-icon-btn"
+            aria-label="Upload image"
+            data-tip="Upload image"
+            onClick={() => {
+              const fileInput = document.getElementById('image-upload');
+              if (fileInput) fileInput.click();
+            }}
+          >
+            <FaPlus size={18} aria-hidden="true" />
+          </button>
+          <textarea
+            ref={inputRef}
+            value={formValue}
+            onChange={handleInputChange}
+            onKeyDown={handleTextareaKeyDown}
+            placeholder="Send a message"
+            className="message-input"
+            aria-label="Message text"
+            rows={1}
+            spellCheck={true}
+          />
+          <button
+            type="button"
+            ref={emojiBtnRef}
+            className={`bar-icon-btn ${emojiOpen ? 'emoji-active' : ''}`}
+            aria-label="Add emoji"
+            data-tip="Add emoji"
+            onClick={toggleEmojiMenu}
+          >
+            <VscSmiley size={20} aria-hidden="true" />
+          </button>
         </div>
         <button type="submit" disabled={!formValue} className="send-btn" aria-label="Send message">➤</button>
       </form>

@@ -59,6 +59,27 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
     onStateChange: onDragStateChange
   });
 
+  // Manage transient 'scrolling' class so CSS can reveal scrollbar while in motion
+  React.useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    let scrollingTimeout;
+    const handleScroll = () => {
+      if (!el.classList.contains('scrolling')) {
+        el.classList.add('scrolling');
+      }
+      clearTimeout(scrollingTimeout);
+      scrollingTimeout = setTimeout(() => {
+        el.classList.remove('scrolling');
+      }, 650); // delay before hiding again after user stops
+    };
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollingTimeout);
+    };
+  }, []);
+
   return (
     <div className={`chatroom-wrapper ${isDragActive ? 'drag-active' : ''} ${imageDragReady ? 'drag-ready' : ''}`.trim()}>
       <main

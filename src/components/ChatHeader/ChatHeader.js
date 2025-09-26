@@ -67,42 +67,15 @@ function ChatHeader({
     document.addEventListener('keydown', handleKey);
     return () => { document.removeEventListener('click', handleClick); document.removeEventListener('keydown', handleKey); };
   }, []);
-    return (
-      <>
-        <header className="App-header">
-          <div className="header-top">
-            <h1>SuperChat 💬</h1>
-            <div className="header-controls">
-              <div className="search-wrapper">
-                {!showSearch && (
-                  <button
-                    className="icon-btn search-icon"
-                    onClick={() => setShowSearch(true)}
-                    title="Search messages"
-                  >
-                    🔍
-                    <span className="search-tooltip">Search Messages</span>
-                  </button>
-                )}
-                {showSearch && (
-                  <div className="search-bar compact">
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="search-input"
-                      autoFocus
-                    />
-                    <button
-                      className="search-close"
-                      onClick={() => { setShowSearch(false); setSearchTerm(''); }}
-                      title="Close search"
-                    >✕</button>
-                  </div>
-                )}
-              </div>
-              {user && (
+  return (
+    <>
+      <header className="App-header">
+        <div className="header-top">
+          <h1>DungeonChat</h1>
+          <div className="logo-container"></div>
+          <div className="header-controls">
+            {user && (
+              <div className="user-menu-info-wrapper">
                 <div className="user-menu-wrapper">
                   <button
                     className="user-chip user-menu-trigger"
@@ -162,10 +135,23 @@ function ChatHeader({
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+                <div className="search-wrapper">
+                  <div className="search-container always-visible">
+                    <input
+                      type="text"
+                      placeholder="Search"
+                      aria-label="Search messages"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="search-input-field"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
-  {/* PresenceLegend removed as requested */}
+        </div>
       </header>
       <SettingsModal
         isOpen={settingsOpen}
