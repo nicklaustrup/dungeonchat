@@ -6,7 +6,11 @@
   ],
   "plugins": [
     ["@semantic-release/commit-analyzer", {
-      "preset": "conventionalcommits"
+      "preset": "conventionalcommits",
+      "releaseRules": [
+        { "type": "build", "release": "patch" },
+        { "type": "chore", "scope": "deps", "release": "patch" }
+      ]
     }],
     ["@semantic-release/release-notes-generator", {
       "preset": "conventionalcommits"
