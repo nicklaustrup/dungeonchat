@@ -1,115 +1,195 @@
-# Production Deployment (Firebase App Hosting / Hosting)
+<div align="center">
+	<h1>SuperChat</h1>
+	<p><strong>Firebase-powered real‑time chat</strong> showcasing pragmatic architecture, performance-aware patterns, and an AI-friendly roadmap for iterative feature growth.</p>
+	<p>
+		<a href="#quickstart">Quickstart</a> ·
+		<a href="#contributing">Contributing</a> ·
+		<a href="#features">Features</a> ·
+		<a href="#roadmap">Roadmap</a> ·
+		<a href="#license">License</a>
+	</p>
+</div>
 
-## 1. Environment Variables
-Create a `.env` file based on `.env.example` before building:
+---
 
-```
-cp .env.example .env
-# edit .env with your Firebase project's web config values
-```
+## Why This Project Exists
+SuperChat is a learning + experimentation sandbox for modern, incrementally scalable chat features using:
+* Firestore (persistent canonical message & room state)
+* Realtime Database (ephemeral presence / typing)
+* Storage (media uploads)
+* Cloud Functions (future: moderation, scheduled send, push notifications)
 
-Only variables prefixed with `REACT_APP_` are embedded at build time.
+The repo is intentionally optimized for future human & AI contributors:
+* Clearly scoped feature backlog (`FUTURE_FEATURES.md`)
+* Minimal but expressive component boundaries
+* Hook-oriented data / UI composition (`useAutoScroll`, `useInfiniteScrollTop`, etc.)
+* Explicit docs for security, performance, and testing strategy
 
-## 2. Build the App
-```
+---
+
+## Current Core Features <a id="features"></a>
+| Category | Feature | Notes |
+|----------|---------|-------|
+| Auth | Google Sign-In | Popup flow via Firebase Auth |
+| Messaging | Real-time stream | Firestore query ordered by `createdAt` |
+| Messaging | Pagination (incremental) | Expands window when scrolling upward |
+| Messaging | Text & Images | Client-side compression for images |
+| Messaging | Inline Replies (lightweight) | `replyTo` snapshot for context |
+| Reactions | Emoji reactions | Inline map `{ emoji: [uids...] }` |
+| Presence | Online + typing indicator | RTDB paths; debounced writes |
+| Theming | Light / Dark toggle | Body class; persistence roadmap |
+| Accessibility | Focus management baseline | Reaction list ARIA roles |
+| Tooling | Storybook + tests scaffold | Visual & a11y tests expanding |
+
+For upcoming enhancements see `FUTURE_FEATURES.md`.
+
+---
+
+## Tech Stack
+| Layer | Choice | Rationale |
+|-------|--------|-----------|
+| UI | React (CRA) | Simplicity + fast iteration |
+| State | Local hooks + Firebase SDK | Avoid early heavy state mgmt |
+| Backend as a Service | Firebase (Firestore, RTDB, Storage, Auth) | Real-time + structured queries |
+| Build | CRA scripts | Zero-config baseline |
+| Testing | Jest + React Testing Library | Unit + integration coverage |
+| Visual/A11y (planned) | Playwright / Chromatic | Regression gates |
+| Deployment | Firebase Hosting / App Hosting | CDN + serverless integration |
+
+---
+
+## Quickstart <a id="quickstart"></a>
+1. Clone & install
+```bash
+git clone https://github.com/<your-org-or-user>/superchat.git
+cd superchat
 npm install
+```
+2. Configure Firebase: copy `.env.example` → `.env` and fill `REACT_APP_*` values.
+3. Run locally
+```bash
+npm start
+```
+4. (Optional) Build
+```bash
 npm run build
 ```
-This outputs static assets to the `build/` directory (used by both traditional Firebase Hosting and Firebase App Hosting).
-
-## 3. Deploy (Option A: Firebase Hosting Classic)
-If you prefer standard Firebase Hosting (CDN + optional Functions):
-```
+5. (Optional) Deploy (classic hosting)
+```bash
 firebase deploy --only hosting
 ```
-Ensure `firebase.json` has a `hosting` section pointing to `build`.
 
-## 4. Deploy (Option B: Firebase App Hosting Beta)
-App Hosting uses `apphosting.yaml`. After authenticating:
-```
-firebase apphosting:apps:create # only first time
-firebase apphosting:deploy
-```
-The build command (`npm run build`) and `outputDirectory` are defined in `apphosting.yaml`.
+---
 
-## 5. Cloud Functions (If Used)
-The `functions/` directory currently has an `index.js`. Deploy with:
-```
-firebase deploy --only functions
-```
-Or combine:
-```
-firebase deploy --only apphosting,functions
+## Development Workflow
+| Step | Action |
+|------|--------|
+| 1 | Create an issue (feature / bug) with clear scope |
+| 2 | Branch `feat/<name>` or `fix/<name>` |
+| 3 | Implement + add/update tests (unit + integration where applicable) |
+| 4 | Run lint & tests locally (`npm run lint && npm test`) |
+| 5 | Submit PR referencing issue; CI runs build + tests + (future) visual regressions |
+| 6 | Review: focus on data modeling, rule safety, performance |
+| 7 | Squash merge; deployment pipeline publishes build |
+
+Commit Convention: `type: short description` where `type ∈ { feat | fix | docs | refactor | perf | test | chore }`.
+
+---
+
+## Contributing <a id="contributing"></a>
+We welcome incremental, well-tested improvements. Before starting a larger feature, **open an issue or comment on an existing one** to avoid scope collisions.
+
+Good first issues (examples):
+* Persist theme to `localStorage`
+* Add draft message persistence per room
+* Implement message edit window & `edited` badge
+* Add unit tests for reaction edge cases
+
+Guidelines:
+* Prefer thin vertical slices (data + UI + rule + test) over broad partial implementations
+* Include security rule updates & corresponding emulator tests when adding new writes
+* Add telemetry hook stubs (even if no backend store yet) for new interaction types
+* Keep bundle size in mind—lazy load heavy optional UI (emoji picker, modals)
+
+AI Agents: Follow the spec template in `FUTURE_FEATURES.md`. Always add acceptance criteria + test coverage.
+
+---
+
+## Testing
+| Level | Tool | Examples |
+|-------|------|----------|
+| Unit | Jest | Formatting, reaction toggling |
+| Integration | RTL | Send → appears, reply association |
+| Accessibility | Jest + axe (planned) | Reaction list semantics |
+| Visual (planned) | Playwright / Chromatic | Message layout variants |
+| E2E (future) | Playwright | Auth → DM → pagination |
+
+Run locally:
+```bash
+npm test
 ```
 
-## 6. Verifying Storage Bucket Name
-If uploads fail, double‑check `REACT_APP_FIREBASE_STORAGE_BUCKET`.
-The conventional value is usually `<project-id>.appspot.com`.
+---
 
-## 7. Security Rules
-Review and deploy rules:
-```
+## Deployment
+Primary: Firebase Hosting / App Hosting
+* Build: `npm run build` produces `build/`
+* Deploy hosting only: `firebase deploy --only hosting`
+* Deploy functions (if modified): `firebase deploy --only functions`
+
+Security rules & indexes should be reviewed prior to major feature deploys:
+```bash
 firebase deploy --only firestore:rules,database,storage
 ```
 
-## 8. Caching & Performance
-For Hosting you can add headers in `firebase.json` to leverage aggressive caching of static assets under `/static`.
+---
 
-## 9. CI/CD Suggestion
-GitHub Actions workflow (`.github/workflows/ci-deploy.yml`) now performs:
+## Roadmap Snapshot <a id="roadmap"></a>
+See `FUTURE_FEATURES.md` for the living backlog. Near-term slice: message edit + soft delete, profiles + friend requests, offline cache, read receipts, moderation primitives.
 
-Pipeline (Build & Test job):
-1. Concurrency guard (cancels superseded runs per branch)
-2. Detect if `functions/` code changed (for selective deploy later)
-3. Install dependencies (root + `functions/`)
-4. Lint (`npm run lint`) with `--max-warnings=0`
-5. Run Jest in CI w/ coverage (`npm run test:ci` → creates `coverage/` incl. `lcov.info`)
-6. Upload coverage artifact + (optional) upload to Codecov if token present
-7. Build Storybook (static) and optionally run Chromatic visual regression (if token present)
-8. Build production app (`npm run build`) and store artifact
+---
 
-Deployment job (only push to `main`):
-1. Re-check diff to decide if Functions changed
-2. Install Firebase CLI
-3. Auth via `FIREBASE_DEPLOY_TOKEN` (legacy token) — consider migrating to service account + `firebase-tools` or OIDC later
-4. Deploy only Hosting if Functions unchanged; otherwise Hosting + Functions
+## Architecture Overview
+| Concern | Service | Reason |
+|---------|---------|-------|
+| Durable history | Firestore | Query + index flexibility |
+| Ephemeral state | Realtime DB | Low-latency presence / typing |
+| Media | Storage | Scalable uploads + rules |
+| Future async | Cloud Functions | Push, moderation, scheduled tasks |
 
-Selective Functions Deploy:
-If no files under `functions/` changed between the last commit and current, only Hosting is deployed, saving time & quota.
+Message docs include: `text`, `uid`, `createdAt (server)`, optional `imageURL`, `replyTo`, `reactions`.
 
-Visual Regression:
-Chromatic runs only if `CHROMATIC_PROJECT_TOKEN` secret is set. Failing Chromatic does not fail the build (non-blocking) currently.
+---
 
-Coverage:
-Jest coverage uploaded as artifact always; Codecov upload attempted if `CODECOV_TOKEN` present (private repos). Public repos can often upload without token.
+## Performance & A11y Philosophy
+* Optimize for perceived responsiveness: early paint + incremental hydration of history
+* Keep auto-scroll deterministic (scroll heuristics tested in hooks)
+* Provide accessible semantics (live regions for reactions, focus-visible styles)
+* Add instrumentation before complex features (threads, virtualization)
 
-Secrets required / optional:
-- `FIREBASE_DEPLOY_TOKEN` (required for deploy) – generate with `firebase login:ci`
-- `FIREBASE_PROJECT_ID` (required) – your Firebase project id
-- `CHROMATIC_PROJECT_TOKEN` (optional) – enables Chromatic visual regression
-- `CODECOV_TOKEN` (optional, needed for private repos coverage in Codecov)
+---
 
-Environment Variables at runtime: none additional required; build uses `.env` values embedded at build step.
+## License <a id="license"></a>
+MIT © 2025 SuperChat Contributors. See `LICENSE` for details.
 
-Adding new secrets: GitHub repo → Settings → Secrets and variables → Actions → New repository secret.
+---
 
-Future Hardening Ideas:
-- Switch to service account JSON + OIDC (no long-lived token)
-- Fail build on Chromatic diff (set policy once baseline stable)
-- Add caching for Storybook and functions node_modules
-- Add a rules deploy step when `.rules` or `firestore.rules` changes
-- Add Lighthouse CI for performance budgets
+## Security & Responsible Disclosure
+No authentication secrets stored in repo. If you find a vulnerability in rules or data exposure, open a **private** issue or email the maintainer before public disclosure.
 
-Secrets required:
-- `FIREBASE_SERVICE_ACCOUNT_JSON` (JSON of service account with deploy perms)
-- `FIREBASE_PROJECT_ID` (e.g., `your-project-id`)
+---
 
-Local pre-commit hook (Husky + lint-staged) runs tests related to staged JS/TS files. Install automatically after `npm install` via the `prepare` script.
+## A Note to Future AI Contributors
+1. Read `FUTURE_FEATURES.md` to select an open slice.
+2. Add or update tests FIRST when feasible.
+3. Implement code + rules simultaneously to prevent drift.
+4. Update docs & remove completed backlog items immediately.
 
-## 10. Troubleshooting
-* Blank page after deploy: confirm `.env` values were present during build.
-* Auth domain mismatch: ensure the domain is added in Firebase Console > Auth > Settings.
-* Realtime Database perms: adjust `database.rules.json` as needed.
+Ship small. Measure. Iterate.
+
+---
+
+Happy building! 🚀
 
 <div align="center">
 	<h1>SuperChat</h1>

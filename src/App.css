@@ -1227,3 +1227,11 @@ margin-top: 10px;
   animation: olderFade 1.4s ease-in-out infinite;
 }
 @keyframes olderFade { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+
+/* Enhanced loading spinner + history start marker */
+.loading-older-spinner { width:16px; height:16px; border-radius:50%; border:2px solid var(--primary-color); border-top-color:transparent; animation: spin 0.7s linear infinite; display:inline-block; }
+@keyframes spin { to { transform: rotate(360deg);} }
+.loading-older-label { margin-left:8px; font-size:12px; letter-spacing:0.3px; }
+.history-start-marker { display:flex; align-items:center; justify-content:center; gap:10px; padding:16px 0 8px; font-size:11px; color: var(--text-secondary); opacity:0.8; text-transform:uppercase; letter-spacing:1px; }
+.history-start-marker .history-start-line { flex:1; height:1px; background: linear-gradient(90deg, transparent, var(--border-color), transparent); }
+.history-start-marker .history-start-text { white-space:nowrap; }

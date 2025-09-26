@@ -8,6 +8,7 @@ import { useChatMessages } from '../../hooks/useChatMessages';
 import { useAutoScroll } from '../../hooks/useAutoScroll';
 import { useInfiniteScrollTop } from '../../hooks/useInfiniteScrollTop';
 import { useMessageSearch } from '../../hooks/useMessageSearch';
+import { useScrollPrependRestoration } from '../../hooks/useScrollPrependRestoration';
 import DragOverlay from './DragOverlay';
 import MessageList from './MessageList';
 
@@ -16,7 +17,10 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
   const { firestore, auth /* rtdb */ } = useFirebase();
   const dummy = React.useRef();
   const mainRef = React.useRef();
-  const { messages, loadMore, hasMore } = useChatMessages({ firestore, limitBatchSize: 25, maxLimit: 100 });
+  // Allow deeper history than the previous hard cap of 100. Defaults to 1000 (configurable via env).
+  const historyCap = Number(process.env.REACT_APP_CHAT_MAX_HISTORY) || 1000; // can be raised safely; consider virtualization > ~1500
+  const { messages, loadMore, hasMore } = useChatMessages({ firestore, limitBatchSize: 25, maxLimit: historyCap });
+  const restoration = useScrollPrependRestoration(mainRef);
 
   // const typingUsers = useTypingUsers({ rtdb, currentUid: auth.currentUser?.uid }); // reserved for future feature
   const { setReplyTarget } = useReplyState({
@@ -61,13 +65,45 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
 
   const filteredMessages = useMessageSearch(sortedMessages, searchTerm);
 
+  const wrappedLoadMore = React.useCallback(() => {
+    restoration.markBeforeLoadMore(messages);
+    loadMore();
+  }, [restoration, loadMore, messages]);
+
   const { sentinelRef, isFetching: loadingOlder } = useInfiniteScrollTop({
     containerRef: mainRef,
     hasMore,
-    onLoadMore: loadMore,
+    onLoadMore: wrappedLoadMore,
     threshold: 0,
-    debounceMs: 120,
+    debounceMs: 0,
+    cooldownMs: 600,
+    enableFallback: true,
   });
+
+  // Auto-fill viewport: if after load we still can't scroll and there are more, load more (guard loop)
+  const autoFillRef = React.useRef(0);
+  React.useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    if (!hasMore) return; // nothing else
+    // If content fits (not scrollable) and we haven't tried too many times, fetch more
+    if (el.scrollHeight <= el.clientHeight + 8 && autoFillRef.current < 5) {
+      autoFillRef.current += 1;
+      wrappedLoadMore();
+    }
+  }, [messages, hasMore, wrappedLoadMore]);
+
+  // After messages change, run classification/restoration
+  const lastBoundaryRef = React.useRef({ len: 0, first: null, last: null });
+  React.useEffect(() => {
+    const len = messages.length;
+    const first = messages[0]?.id || null;
+    const last = messages[len - 1]?.id || null;
+    const prev = lastBoundaryRef.current;
+    if (prev.len === len && prev.first === first && prev.last === last) return; // no meaningful change
+    lastBoundaryRef.current = { len, first, last };
+    restoration.handleAfterMessages(messages);
+  }, [messages, restoration]);
 
   const { isDragActive, imageReady: imageDragReady, bind: dragBind } = useDragAndDropImages({
     onImage: onImageDrop,
@@ -116,10 +152,31 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
           showTyping={false}
           typingUsers={[]}
           topSentinel={hasMore ? (
-            <div ref={sentinelRef} className="load-older-sentinel" style={{ height: '2px' }}>
-              {loadingOlder && <span className="loading-older">Loading older messages…</span>}
+            <div
+              ref={sentinelRef}
+              className={`load-older-sentinel ${loadingOlder ? 'active' : ''}`}
+              style={{
+                height: loadingOlder ? '36px' : '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative'
+              }}
+            >
+              {loadingOlder && (
+                <>
+                  <span className="loading-older-spinner" aria-hidden="true" />
+                  <span className="loading-older-label" aria-live="polite">Loading older messages…</span>
+                </>
+              )}
             </div>
-          ) : null}
+          ) : (
+            <div className="history-start-marker" aria-label="Start of conversation">
+              <span className="history-start-line" />
+              <span className="history-start-text">Start of conversation</span>
+              <span className="history-start-line" />
+            </div>
+          )}
           bottomAnchorRef={dummy}
         />
         {/* ScrollToBottomButton lifted to parent overlay */}

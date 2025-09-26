@@ -1,24 +1,269 @@
-# Future Features & Roadmap
+# Future Features & AI Implementation Backlog
 
-> Curated, structured list of potential enhancements for the chat application. Organized for clarity, prioritization, and implementation planning.
+This file is optimized for future AI Agents & contributors. Each feature spec is intentionally concise and **action oriented** (what to build, where to build it, how to validate). Implemented items have been removed from the backlog (e.g. reactions, dark mode toggle, basic pagination, typing indicator, basic presence, image messages, reply threading-lite, accessibility baseline improvements).
 
 ## Table of Contents
-1. [Core Messaging Enhancements](#core-messaging-enhancements)
-2. [Engagement & Personalization](#engagement--personalization)
-3. [Scalability & Performance](#scalability--performance)
-4. [Reliability & Offline](#reliability--offline)
-5. [Security & Privacy](#security--privacy)
-6. [Discovery & Growth](#discovery--growth)
-7. [Observability & Analytics](#observability--analytics)
-8. [Accessibility & Quality](#accessibility--quality)
-9. [Developer Experience & Architecture](#developer-experience--architecture)
-10. [Priority Matrix](#priority-matrix-impact-vs-effort)
-11. [Phased Roadmap](#phased-roadmap)
-12. [Firestore Data Modeling Tips](#firestore-data-modeling-tips)
-13. [Security Rule Enhancements](#security-rule-enhancements)
-14. [PWA & Push Strategy](#pwa--push-strategy)
-15. [Testing Strategy](#testing-strategy)
-16. [Performance Watchpoints](#performance-watchpoints)
+1. [Core Messaging](#core-messaging)
+2. [User Identity & Social Graph](#user-identity--social-graph)
+3. [Private & Structured Conversations](#private--structured-conversations)
+4. [Engagement & Personalization](#engagement--personalization)
+5. [Mobile & Responsive Enhancements](#mobile--responsive-enhancements)
+6. [Reliability, Offline & Performance](#reliability-offline--performance)
+7. [Security, Safety & Compliance](#security-safety--compliance)
+8. [Discovery & Growth](#discovery--growth)
+9. [Observability & Analytics](#observability--analytics)
+10. [Developer Experience](#developer-experience)
+11. [Data Modeling Patterns](#data-modeling-patterns)
+12. [Security Rule Templates](#security-rule-templates)
+13. [Push & PWA Strategy](#push--pwa-strategy)
+14. [Testing Strategy](#testing-strategy)
+15. [Performance Watchpoints](#performance-watchpoints)
+16. [Phased Roadmap Snapshot](#phased-roadmap-snapshot)
+
+---
+
+## Spec Template (Use For New Features)
+```
+Title: <Feature Name>
+Goal: <1 sentence problem statement>
+Data Model: <Collections / docs / indexes>
+Client Changes: <Components / hooks to add or extend>
+Security Rules: <Rule summary + invariants>
+Acceptance Criteria:
+	- [ ] <Measurable outcome 1>
+	- [ ] <Outcome 2>
+Telemetry: <Events / metrics to log>
+Risks & Mitigations: <short list>
+```
+
+---
+
+## Core Messaging
+| Feature | Summary | Notes / Modeling Hints |
+|---------|---------|------------------------|
+| Message Edit (with audit) | Allow author edits within 15m; show `edited` badge | Keep original text in subcollection `revisions` (optional) |
+| Soft Delete | Author can mark message deleted; retain for moderation | `deleted: true` + keep text for moderators (rules restrict non-mod reviewers) |
+| Read Receipts (Room) | Per-user last read timestamp | Store in `/rooms/{roomId}/members/{uid}.lastReadAt` |
+| Read Receipts (Per-Message Count) | Show small read avatars for small rooms (<10) | Derive lazily; avoid hot writes per receipt—client aggregate pass |
+| Pinned Messages | Room-level curated list | `/rooms/{roomId}.pinnedMessageIds` (array) or subcollection for ordering |
+| Starred (User Personal) | User bookmarks across rooms | `/users/{uid}/starred/{messageId}` mirror snapshot |
+| Rich Formatting (Markdown Subset) | Bold / italics / inline code / links | Sanitize with DOMPurify; store original + rendered html cache (optional) |
+| File Attachments | Non-image docs (PDF, txt) | Metadata doc + Storage path; restrict size & type |
+| Voice Notes | Short audio clips | Capture, compress (Opus), upload; waveform precomputed client-side |
+| Scheduled / Delayed Send | User sets future time | Cloud Function scheduled via Firestore trigger & a queue collection |
+| Bulk Import (Admin) | Seed historical messages | Batch write / backfill script + rate limiting |
+
+---
+
+## User Identity & Social Graph
+| Feature | Summary | Data Model |
+|---------|---------|-----------|
+| User Profiles | Avatar, bio, status message, time zone | `/users/{uid}` extends current doc (displayName, photoURL, bio, tz, statusMsg) |
+| Username Handle Reservation | Unique `@handle` for mentions | Enforce uniqueness via lowercased `handles/{handle}` doc referencing uid |
+| Friend Requests | Directed request accept/deny flow | `/friendRequests/{requestId}` with from, to, status; derived friend list collection |
+| Friends List / Roster | List accepted friends; presence overlay | `/users/{uid}/friends/{friendUid}` doc storing since + lastInteractedAt |
+| Blocking / Muting | Prevent DM + hide messages | `/users/{uid}/blocks/{blockedUid}`; rule denies reads of blocked user messages (optional client filter) |
+| Profile Privacy Levels | Public / Friends / Private | Field on user doc; queries filter by allowed scope |
+
+---
+
+## Private & Structured Conversations
+| Feature | Summary | Modeling |
+|---------|---------|---------|
+| Direct Messages (DM) | 1:1 channel separate from public rooms | Deterministic roomId = hash(sorted uids) in `rooms` collection with `type: 'dm'` |
+| Group DMs | Ad-hoc small groups (<=15) | `rooms.type = 'group'`, membership array or subcollection `/rooms/{id}/members` |
+| Mentions & Notifications | `@handle` parsing; highlight & notify | Store mention references `/mentions/{id}` with messageId + targetUid |
+| Threaded Replies (Full) | Expand partial reply model to full thread view | Parent message `replyCount` + query by `parentId` index |
+| Message Permalinks | Deep link to a message & scroll into view | Route param `?mid=` triggers fetch + scroll anchor |
+| Channel Topics / Descriptions | Contextual info at header | `rooms.topic` + `updatedAt` |
+| Room Roles & Permissions | Owner / moderator roles | Role map in `/rooms/{roomId}.roles[uid] = 'mod'` |
+
+---
+
+## Engagement & Personalization
+| Feature | Summary | Notes |
+|---------|---------|-------|
+| Draft Persistence | Per-room unsent text | localStorage key `draft:<roomId>` -> sync later |
+| Theming Persistence | Remember theme + system auto | Save `theme` in localStorage + honor `prefers-color-scheme` |
+| Notification Preferences | Per-sound volume + mute sets | `/users/{uid}/preferences` doc |
+| Smart Reply Suggestions | ML lightweight suggestions (optional) | Local simple n-gram / API stub—opt-in |
+| Custom Emoji / Packs | Upload & curate | Storage path `emoji/{uid}/...`; metadata collection for indexing |
+| Presence Detail Panel | Show current users in room (live) | Combine RTDB presence & Firestore membership |
+| Activity Badges | New / active rooms indicator | Cache unread counts + highlight in room list |
+
+---
+
+## Mobile & Responsive Enhancements
+Migrated outstanding tasks from former `MOBILE_REFACTOR.md` (file removed after migration).
+
+| Task | Description | Notes |
+|------|------------|-------|
+| Offline cache recent messages | IndexedDB cache hydrate on load | Use room scoped store; limit N messages |
+| Mini attachment tray | Quick access (camera, file, emoji) | Collapsible panel above input |
+| Inline image compression (mobile) | Reduce upload size | Canvas or Web Worker (quality target) |
+| Visual regression snapshots | Playwright or Storybook capture | Integrate in CI gating |
+| PWA shell & basic service worker | Offline shell + static asset caching | Workbox generateSW + runtime caching images |
+| Adaptive battery saver mode | Disable heavy effects heuristically | Detect low-end via FPS / memory sniff |
+| Tap-to-reveal reaction bar (mobile) | Reduce clutter; explicit affordance | Analytics: open rate, dwell |
+| Collapsible / icon-triggered search bar | Space saving on small widths | Auto-focus expansion animation |
+| Header vertical spacing reduction | Condense <600px | Adjust CSS vars |
+| Optional swipe gesture for reactions | Horizontal swipe on message | Prototype; ensure a11y fallback |
+| Message action sheet | Bottom sheet alternative to context menu | Portal + focus trap |
+| Sticky day/date dividers | Keep context during scroll | IntersectionObserver + position: sticky |
+| Inline skeleton shimmer for images | Better perceived perf | Prefers-reduced-motion respected |
+| Breakpoint map formalization | Centralized responsive tokens | `responsive.css` + exported constants |
+| Safe-area sticky input finalized | Ensure keyboard & notch safe | iOS 15+ env vars |
+| Coarse pointer reaction UX | Non-hover fallback fully shipped | Toggle presence & analytics |
+| Normalize tap target sizes | 44px min across interactives | Audit test |
+| Reduced-motion overrides | Provide complete coverage | Verify no large motion left |
+| Focus-visible outlines | Consistent accessibility baseline | Check high contrast mode |
+| Optimized mobile shadows | Lighter elevation tokens | Perf measure before/after |
+
+---
+
+## Reliability, Offline & Performance
+| Feature | Summary | Notes |
+|---------|---------|-------|
+| Optimistic Offline Queue | Queue & replay sends | Leverage Firestore persistence & custom retry journal |
+| Virtualized Message List | Large history performance | Use `react-virtuoso` or `react-window` abstraction wrapper hook |
+| Local Image Lazy Transform | Downscale before upload | Worker off main thread |
+| Rate Limiting (Client Hint) | Prevent accidental spam | Client debouncing + UI warnings |
+| Intelligent Listener Detach | Pause listeners when tab hidden | Page visibility + focus events |
+| Session Resume Fast Path | Rehydrate from IndexedDB before network | Boot metric improvement |
+| Performance Budget Alerts | Failing Lighthouse threshold triggers CI warning | GitHub Action annotation |
+
+---
+
+## Security, Safety & Compliance
+| Feature | Summary | Notes |
+|---------|---------|-------|
+| Refined Firestore Rules | Enforce immutability & constraints | See templates below |
+| Abuse / Profanity Filter | Pre-write moderation | Cloud Function + allow override for mods |
+| Moderator Console | Review flagged / deleted messages | `/moderation/flags` collection |
+| Message Flagging | User can flag message | Write to `/flags/{id}` referencing messageId |
+| Rate Limiting (Server) | Per-IP / per-uid sliding window | RTDB counters or external cache |
+| GDPR / Data Export | User export of their messages | Cloud Function aggregator + Storage bundle |
+| Data Retention Policies | TTL for ephemeral rooms or DMs | Scheduled Function deleting aged docs |
+| E2EE Opt-In Rooms | End-to-end encrypted mode | libsodium sealed boxes; trade off server-side search |
+| Audit Log (Admins) | Track privileged actions | Append-only `/auditLogs` collection |
+
+---
+
+## Discovery & Growth
+| Feature | Summary | Notes |
+|---------|---------|-------|
+| Public Room Directory | Browse discoverable rooms | Indexed by `visibility = 'public'` |
+| Invitation Tokens | Join via short-lived token | Signed token doc w/ expiration |
+| Trending Rooms | Rank by recent message velocity | Cloud Function periodic scoring |
+| External Search Integration | Full-text search external index | Export messages to Algolia/Meilisearch |
+| Unread Counts | Badge counts for sidebar | Approximate using lastReadAt delta |
+| Email / Push Re-engagement | Weekly digest or push summary | Cloud Function batching |
+
+---
+
+## Observability & Analytics
+| Feature | Summary | Notes |
+|---------|---------|-------|
+| Structured Event Logging | Standard schema (category, action, meta) | `telemetry/` util wrapper |
+| Error Monitoring | Sentry or equivalent | DSN via env; scrub PII |
+| Performance Tracing | TTFMP, input latency, scroll jank | `performance.mark` instrumentation |
+| Feature Flag Metrics | Exposure vs conversion tracking | Tie to Remote Config / Firestore config doc |
+| Health Dashboard | Basic admin UI | Aggregate Firestore counts, error rates |
+
+---
+
+## Developer Experience
+| Feature | Summary | Notes |
+|---------|---------|-------|
+| Central `useMessages(roomId)` Hook | Encapsulate pagination + virtualization | Simplify component usage |
+| Zod Env Validation | Fail fast misconfig | `config/env.ts` (future TS) |
+| Pre-commit Hooks | Lint + type + test changed | Husky + lint-staged (extend) |
+| Feature Flags Framework | Simple `useFlag('name')` | Backed by Remote Config or Firestore doc |
+| Storybook Visual Regression | Snapshot baseline gating | Playwright / Chromatic hybrid |
+| API Surface Docs | Auto-generated component MDX | Storybook Docs + compodoc style |
+| Test Data Seeds | Script to populate dev DB | `scripts/seed.js` |
+
+---
+
+## Data Modeling Patterns
+### Reactions
+Current inline map works; consider migrating high-churn to subcollection if contention observed.
+
+### Read Receipts
+Per-user last read timestamp; derive counts on client (avoid fan-out writes).
+
+### Threads
+Flat list with `parentId`; index `(roomId, parentId, createdAt)`.
+
+### Social Graph
+Friendship edges symmetrical: maintain both sides or derive on query; prefer storing both docs for simpler queries.
+
+---
+
+## Security Rule Templates
+Pseudo illustrating invariants (NOT final syntax):
+```js
+function isAuthor() { return request.auth != null && request.auth.uid == resource.data.authorId; }
+function withinEditWindow() { return request.time < resource.data.createdAt + duration.value(15, 'm'); }
+
+match /messages/{id} {
+	allow create: if request.resource.data.createdAt == request.time
+		&& request.resource.data.authorId == request.auth.uid
+		&& request.resource.data.text.size() <= 2000;
+	allow update: if isAuthor() && withinEditWindow() && request.resource.data.text.size() <= 2000;
+	allow delete: if isAuthor() || isModerator();
+}
+```
+
+---
+
+## Push & PWA Strategy
+| Concern | Plan |
+|---------|------|
+| Service Worker | Workbox precache + runtime cache avatars/images |
+| Push Opt-In Timing | Prompt after first successful send or 2 visits |
+| Token Storage | `/users/{uid}.fcmTokens` map keyed by device hash |
+| Notification Filtering | Skip active room viewers (presence) |
+| Background Sync | Retry unsent queue when reconnecting |
+
+---
+
+## Testing Strategy
+| Level | Focus |
+|-------|-------|
+| Unit | Formatting utils, reaction toggle, queue logic |
+| Integration | send → edit → react → paginate → read receipt update |
+| E2E | Auth → join → DM → mention → pin → mobile viewport |
+| Performance | Virtualized list render budget under threshold |
+| Security | Emulator rule tests (valid vs invalid mutations) |
+
+---
+
+## Performance Watchpoints
+* Keep message query narrow: `orderBy(createdAt desc).limit(N)` backward paginate.
+* Detach listeners on tab hidden (visibility API).
+* Debounce typing & presence writes (>=2s).
+* Avoid large unbounded arrays (prefer subcollections for >50 churn items).
+* Use `content-visibility` & virtualization for large histories.
+
+---
+
+## Phased Roadmap Snapshot
+| Phase | Focus | Representative Slice (Pick 1–3 at a time) |
+|-------|-------|-------------------------------------------|
+| 1 | Trust & Editing | Edit, soft delete, refined rules |
+| 2 | Social Graph | Profiles, friend requests, DMs |
+| 3 | Engagement | Pins, unread counts, mentions, notifications |
+| 4 | Scale & Perf | Virtualization, offline cache, listener hygiene |
+| 5 | Safety & Moderation | Flagging, moderation console, abuse filter |
+| 6 | Advanced UX | Threads expansion, scheduled send, voice notes |
+| 7 | Growth & Analytics | Directory, trending, metrics dashboards |
+
+---
+
+## Notes
+Prioritize delivering **thin vertical slices** that include: data model + client UI + rules + tests + telemetry. Avoid starting several medium/high effort features simultaneously. Keep this file pruned—remove an item immediately after production verification.
+
 
 ---
 

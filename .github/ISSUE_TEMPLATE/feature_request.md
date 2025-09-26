@@ -14,7 +14,7 @@ A clear and concise summary of the feature.
 - Why is this important now?
 
 ## Proposed Solution
-Describe the UX + technical approach (components, data model, rules). Include alternatives considered.
+Describe the UX + technical approach (components, data model, rules). Include alternatives considered. Use the Spec Template in `FUTURE_FEATURES.md` where possible.
 
 ## Scope
 - In Scope:
@@ -28,6 +28,9 @@ List concrete, verifiable conditions.
 2. 
 3. 
 
+## Telemetry / Metrics
+Events or counters to emit (if any).
+
 ## Screens / UX Draft (Optional)
 Attach wireframes, mockups, or flow description.
 
@@ -36,6 +39,12 @@ Attach wireframes, mockups, or flow description.
 - Index requirements
 - Security rule adjustments
 
+## Testing Strategy
+- Unit:
+- Integration:
+- Emulator rule tests:
+- Visual / a11y (if applicable):
+
 ## Dependencies / Prerequisites
 - e.g., requires auth change, refactor of message hook, etc.
 
@@ -43,6 +52,10 @@ Attach wireframes, mockups, or flow description.
 | Risk | Impact | Mitigation |
 |------|--------|------------|
 |      |        |            |
+
+## Rollout / Flagging
+- Feature flag needed? yes/no
+- Partial rollout plan:
 
 ## Metrics / Success Signals
 How will we evaluate success? (e.g., increased retention, reduced load time, NPS improvement)

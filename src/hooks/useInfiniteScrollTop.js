@@ -1,4 +1,5 @@
 import React from 'react';
+import { logInfiniteTrigger, logScrollMetrics, logEvent } from './scrollDebugUtils';
 
 /**
  * useInfiniteScrollTop
@@ -13,40 +14,89 @@ import React from 'react';
  * @param {number} [params.debounceMs=150] - Debounce delay between triggers
  * @returns {{ sentinelRef: React.RefObject<HTMLDivElement>, isFetching: boolean }}
  */
-export function useInfiniteScrollTop({ containerRef, hasMore, onLoadMore, threshold = 0, debounceMs = 150 }) {
+export function useInfiniteScrollTop({ containerRef, hasMore, onLoadMore, threshold = 0, debounceMs = 150, cooldownMs = 600, enableFallback = true }) {
   const sentinelRef = React.useRef(null);
   const isFetchingRef = React.useRef(false);
   const [isFetching, setIsFetching] = React.useState(false);
   const timeoutRef = React.useRef();
+  const observerRef = React.useRef(null);
+  const sentinelElRef = React.useRef(null);
+  const loadCbRef = React.useRef(onLoadMore);
+  const lastTriggerTsRef = React.useRef(0);
+  const scrollListenerAttachedRef = React.useRef(false);
 
-  const clearDebounce = () => {
+  // Keep latest callback without re-instantiating observer
+  React.useEffect(() => { loadCbRef.current = onLoadMore; }, [onLoadMore]);
+
+  const clearDebounce = (canceled = false) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
+      if (canceled && isFetchingRef.current) {
+        // Reset fetching state if we cancel before execution
+        isFetchingRef.current = false;
+        setIsFetching(false);
+        logEvent('infinite-cancelled');
+      }
     }
   };
 
   React.useEffect(() => {
-    if (!hasMore) return; // no observer if nothing more to load
+    // Capture container element for stable cleanup references (lint: react-hooks/exhaustive-deps guidance)
+    const containerElForEffect = containerRef.current;
+    if (!hasMore) {
+      // Disconnect if no more pages
+      if (observerRef.current) observerRef.current.disconnect();
+      // Remove fallback listener if present
+      if (scrollListenerAttachedRef.current && containerRef.current) {
+        containerRef.current.removeEventListener('scroll', onScrollFallback, { passive: true });
+        scrollListenerAttachedRef.current = false;
+      }
+      return;
+    }
     const el = sentinelRef.current;
     if (!el) return;
+    sentinelElRef.current = el;
 
-    const observer = new IntersectionObserver((entries) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver((entries) => {
       const entry = entries[0];
       if (!entry.isIntersecting) return;
       if (!hasMore) return;
       if (isFetchingRef.current) return; // prevent overlap
-
+      // Only trigger if user is actually near the very top of the scroll container (avoid auto cascade on mount)
+      const container = containerRef.current;
+      if (container && container.scrollTop > 8) return;
+      const now = Date.now();
+      if (now - lastTriggerTsRef.current < cooldownMs) {
+        return; // cooldown
+      }
+      logInfiniteTrigger({ event: 'intersect', fetching: isFetchingRef.current });
       isFetchingRef.current = true;
       setIsFetching(true);
-      // Debounce actual load to avoid rapid multiple triggers
+      // Unobserve while fetching to prevent duplicate queueing
+      try { observerRef.current && observerRef.current.unobserve(el); } catch (_) {}
       clearDebounce();
       timeoutRef.current = setTimeout(async () => {
         try {
-          await onLoadMore?.();
+          logInfiniteTrigger({ event: 'loadMore-start' });
+          logScrollMetrics('before-loadMore', containerRef);
+          lastTriggerTsRef.current = Date.now();
+          await loadCbRef.current?.();
+          logScrollMetrics('after-loadMore', containerRef);
         } finally {
           isFetchingRef.current = false;
           setIsFetching(false);
+          logInfiniteTrigger({ event: 'loadMore-end' });
+          // Re-observe if still has more
+          if (hasMore && observerRef.current && sentinelElRef.current) {
+            requestAnimationFrame(() => {
+              try { observerRef.current.observe(sentinelElRef.current); } catch (_) {}
+            });
+          }
         }
       }, debounceMs);
     }, {
@@ -54,13 +104,60 @@ export function useInfiniteScrollTop({ containerRef, hasMore, onLoadMore, thresh
       rootMargin: '0px 0px 0px 0px',
       threshold
     });
+    observerRef.current.observe(el);
 
-    observer.observe(el);
-    return () => {
+    // Fallback: scroll listener to detect top if IO misses (e.g., layout shifts or 0px sentinel quirks)
+    function onScrollFallback() {
+      if (!enableFallback) return;
+      const elc = containerRef.current;
+      if (!elc) return;
+      if (!hasMore) return;
+      if (isFetchingRef.current) return;
+      if (elc.scrollTop > 2) return;
+      const now = Date.now();
+      if (now - lastTriggerTsRef.current < cooldownMs) return; // respect cooldown
+      // Ensure not already debounced
+      logInfiniteTrigger({ event: 'top-scroll-fallback' });
+      isFetchingRef.current = true;
+      setIsFetching(true);
       clearDebounce();
-      observer.disconnect();
+      try { observerRef.current && sentinelElRef.current && observerRef.current.unobserve(sentinelElRef.current); } catch (_) {}
+      timeoutRef.current = setTimeout(async () => {
+        try {
+          logInfiniteTrigger({ event: 'loadMore-start' });
+          logScrollMetrics('before-loadMore', containerRef);
+          lastTriggerTsRef.current = Date.now();
+          await loadCbRef.current?.();
+          logScrollMetrics('after-loadMore', containerRef);
+        } finally {
+          isFetchingRef.current = false;
+          setIsFetching(false);
+          logInfiniteTrigger({ event: 'loadMore-end' });
+          if (hasMore && observerRef.current && sentinelElRef.current) {
+            requestAnimationFrame(() => {
+              try { observerRef.current.observe(sentinelElRef.current); } catch (_) {}
+            });
+          }
+        }
+      }, debounceMs);
+    }
+    // Store ref to allow removal in cleanup
+    const onScrollFallbackRef = onScrollFallback; // alias for closure
+    // Attach once
+    if (!scrollListenerAttachedRef.current && containerRef.current) {
+      containerRef.current.addEventListener('scroll', onScrollFallbackRef, { passive: true });
+      scrollListenerAttachedRef.current = true;
+    }
+
+    return () => {
+      clearDebounce(true);
+      observerRef.current && observerRef.current.disconnect();
+      if (scrollListenerAttachedRef.current && containerElForEffect) {
+        containerElForEffect.removeEventListener('scroll', onScrollFallbackRef, { passive: true });
+        scrollListenerAttachedRef.current = false;
+      }
     };
-  }, [hasMore, onLoadMore, threshold, debounceMs, containerRef]);
+  }, [hasMore, threshold, debounceMs, containerRef, cooldownMs, enableFallback]);
 
   return { sentinelRef, isFetching };
 }

@@ -7,7 +7,7 @@ assignees: []
 ---
 
 ## Description
-Clear description of the problem.
+Clear description of the problem. Be concise; focus on observable behavior.
 
 ## Environment
 - Browser:
@@ -24,6 +24,11 @@ What you expected to happen.
 
 ## Actual Behavior
 What actually happened (include screenshot / console output if relevant).
+
+## Reproducibility
+- [ ] Always
+- [ ] Intermittent
+- [ ] Single occurrence
 
 ## Logs / Console Output
 Paste relevant excerpts (redact sensitive info).
@@ -42,6 +47,18 @@ Hypotheses, suspected modules.
 
 ## Proposed Fix (Optional)
 Potential approach.
+
+## Test Coverage Suggestion
+Describe (or check) the kind of test to add:
+- [ ] Unit test (logic / util)
+- [ ] Integration test (component / hook)
+- [ ] Emulator rule test (security)
+- [ ] E2E (future)
+
+## AI Assistant Notes (If Filed By Agent)
+- Verified feature not already fixed: yes/no
+- Relevant files touched: (list paths)
+- Suggested smallest fix PR scope: (short)
 
 ## Additional Context
 Anything else helpful.

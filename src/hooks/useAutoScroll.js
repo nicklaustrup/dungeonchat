@@ -1,4 +1,11 @@
 import React from 'react';
+import {
+  logScrollMetrics,
+  logMessageAppend,
+  logClassification,
+  logAutoDecision,
+  logSuppressionChange
+} from './scrollDebugUtils';
 
 /**
  * useAutoScroll
@@ -75,6 +82,7 @@ export function useAutoScroll({ containerRef, anchorRef, items, bottomThreshold 
       } else {
         prevNearBottomRef.current = dist <= Math.max(200, clientHeight * 0.25, bottomThreshold * 2, 180);
       }
+      logScrollMetrics('scroll', containerRef, { dist, delta, atBottom, suppressed: suppressAutoRef.current });
     };
     el.addEventListener('scroll', onScroll);
     return () => el.removeEventListener('scroll', onScroll);
@@ -88,9 +96,18 @@ export function useAutoScroll({ containerRef, anchorRef, items, bottomThreshold 
       entries.forEach(entry => {
         bottomVisibleRef.current = entry.isIntersecting;
         if (entry.isIntersecting) {
+          // Allow restoration hook to suppress a stale bottom signal
+          const ignore = containerRef.current && containerRef.current.__IGNORE_BOTTOM_ONCE__;
+          if (ignore) {
+            // Clear the flag and skip
+            delete containerRef.current.__IGNORE_BOTTOM_ONCE__;
+            logScrollMetrics('bottom-intersect-ignored', containerRef);
+            return;
+          }
           computeDistance();
           setIsAtBottom(true);
           setNewCount(0);
+          logScrollMetrics('bottom-intersect', containerRef, { viaObserver: true });
         }
       });
     }, { root: containerRef.current, threshold: [0, 0.01, 0.1] });
@@ -130,6 +147,7 @@ export function useAutoScroll({ containerRef, anchorRef, items, bottomThreshold 
       lastTypeRef.current = items[length - 1]?.type || null;
       idSetRef.current = new Set(items.map(m => m.id));
       prevNearBottomRef.current = true;
+      logClassification({ phase: 'initial-hydrate', length });
       return;
     }
 
@@ -141,7 +159,7 @@ export function useAutoScroll({ containerRef, anchorRef, items, bottomThreshold 
     const newLastType = newLast?.type || null;
 
     // Detect pagination (older messages prepended) when first id changes but last id is unchanged
-    const paginationDetected = newFirstId !== prevFirstIdRef.current && newLastId === prevLastIdRef.current;
+  const paginationDetected = newFirstId !== prevFirstIdRef.current && newLastId === prevLastIdRef.current;
 
     // Update refs for future comparisons early
     prevLenRef.current = length;
@@ -165,6 +183,19 @@ export function useAutoScroll({ containerRef, anchorRef, items, bottomThreshold 
     // Refresh known IDs set
     idSetRef.current = new Set(items.map(m => m.id));
 
+  logMessageAppend(items, prevLenRef.current - appendedCount); // crude baseline call
+
+  logClassification({
+    phase: 'length-change',
+    length,
+    prevLen: prevLenRef.current,
+    paginationDetected,
+    appendedCount,
+    wasNearBottom: prevNearBottomRef.current,
+    isAtBottom,
+    dist: lastDistanceRef.current
+  });
+
   if (paginationDetected || appendedCount === 0) return; // do nothing for pagination
 
     const prevType = lastTypeRef.current;
@@ -178,7 +209,17 @@ export function useAutoScroll({ containerRef, anchorRef, items, bottomThreshold 
   const recentScroll = Date.now() - lastScrollInfoRef.current.time < 400 && lastScrollInfoRef.current.delta < 0; // user scrolled up recently
   const userReading = suppressAutoRef.current || recentScroll;
   const isCloseRuntime = isAtBottom || bottomVisibleRef.current || distNow <= proximityPx;
-  const shouldAuto = (wasNearBottom || isCloseRuntime) && !userReading;
+    const shouldAuto = (wasNearBottom || isCloseRuntime) && !userReading;
+    logAutoDecision({
+      appendedCount,
+      shouldAuto,
+      wasNearBottom,
+      isCloseRuntime,
+      userReading,
+      paginationDetected,
+      distNow,
+      proximityPx
+    });
 
     const performScroll = () => {
       scrollToBottom('auto');
@@ -196,9 +237,16 @@ export function useAutoScroll({ containerRef, anchorRef, items, bottomThreshold 
       }));
     } else {
       setNewCount(c => c + appendedCount);
+      if (!suppressAutoRef.current) {
+        suppressAutoRef.current = true; // lock until user returns bottom
+        logSuppressionChange({ reason: 'user-away-on-append', appendedCount });
+      }
       // Once user acknowledges (scrolls to bottom) suppression resets in scroll listener
     }
   }, [items, isAtBottom, scrollToBottom, bottomThreshold, containerRef, computeDistance]);
+
+  // Expose a strict bottom concept (<=8px) if needed externally later
+  // (Keeping API stable for now.)
 
   return { isAtBottom, hasNew: newCount > 0, newCount, scrollToBottom };
 }
