@@ -922,9 +922,9 @@ margin-top: 10px;
 
 .message-image {
   margin: 5px 0;
-  border-radius: 15px;
+  /* Removed rounded corners per new spec */
   overflow: hidden;
-  max-width: 300px;
+  max-width: 340px; /* slightly wider allowance */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
@@ -934,6 +934,7 @@ margin-top: 10px;
   display: block;
   cursor: pointer;
   transition: transform 0.2s ease;
+  border-radius: 0;
 }
 
 .message-image img:hover {
@@ -966,30 +967,32 @@ margin-top: 10px;
   max-width: 100%;
   max-height: 95vh;
   object-fit: contain;
-  border-radius: 10px;
+  border-radius: 4px; /* subtle radius only in modal */
 }
 
 .image-modal-close {
   position: absolute;
-  top: -40px;
-  right: -40px;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  font-size: 16px;
+  top: -48px;
+  right: -48px;
+  background: var(--bg-primary);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px; /* square button with rounded corners */
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
 }
 
 .image-modal-close:hover {
-  background: #dc3545;
-  transform: scale(1.1);
+  background: var(--primary-color);
+  color: #fff;
+  transform: translateY(-2px);
 }
 
 /* --- Image Upload Tooltip & Drag Styles (Added) --- */

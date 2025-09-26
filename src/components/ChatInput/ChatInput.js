@@ -37,21 +37,32 @@ function ChatInput({
   playSendSound: () => playSendMessageSound(true)
   });
 
-  // If parent still passes lifted state, sync it (transition support)
-  React.useEffect(() => {
-    if (liftedSelectedImage && !imageHook.selectedImage) imageHook.setSelectedImage(liftedSelectedImage);
-    if (liftedImagePreview && !imageHook.imagePreview) imageHook.setImagePreview(liftedImagePreview);
-    if (typeof liftedUploading === 'boolean' && liftedUploading !== imageHook.uploading) imageHook.setUploading(liftedUploading);
-    // Only react to external lifted props and internal selected/uploading state
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liftedSelectedImage, liftedImagePreview, liftedUploading, imageHook.selectedImage, imageHook.imagePreview, imageHook.uploading]);
+  // Determine if parent is controlling (legacy) vs internal self-managed
+  const isControlled = React.useMemo(() => (
+    liftedSelectedImage !== undefined || liftedImagePreview !== undefined || liftedUploading !== undefined
+  ), [liftedSelectedImage, liftedImagePreview, liftedUploading]);
 
+  // In controlled mode: pull values from parent ONLY when they differ
   React.useEffect(() => {
-    // push internal state back up to parent for compatibility
+    if (!isControlled) return; // parent drives
+    if (liftedSelectedImage !== undefined && liftedSelectedImage !== imageHook.selectedImage) {
+      imageHook.setSelectedImage(liftedSelectedImage);
+    }
+    if (liftedImagePreview !== undefined && liftedImagePreview !== imageHook.imagePreview) {
+      imageHook.setImagePreview(liftedImagePreview);
+    }
+    if (typeof liftedUploading === 'boolean' && liftedUploading !== imageHook.uploading) {
+      imageHook.setUploading(liftedUploading);
+    }
+  }, [isControlled, liftedSelectedImage, liftedImagePreview, liftedUploading, imageHook.selectedImage, imageHook.imagePreview, imageHook.uploading, imageHook]);
+
+  // In uncontrolled (preferred) mode: optionally surface internal state upward only if parent provided setters but not controlling.
+  React.useEffect(() => {
+    if (isControlled) return; // avoid feedback loop
     if (setLiftedSelectedImage) setLiftedSelectedImage(imageHook.selectedImage);
     if (setLiftedImagePreview) setLiftedImagePreview(imageHook.imagePreview);
     if (setLiftedUploading) setLiftedUploading(imageHook.uploading);
-  }, [setLiftedSelectedImage, setLiftedImagePreview, setLiftedUploading, imageHook.selectedImage, imageHook.imagePreview, imageHook.uploading]);
+  }, [isControlled, setLiftedSelectedImage, setLiftedImagePreview, setLiftedUploading, imageHook.selectedImage, imageHook.imagePreview, imageHook.uploading]);
 
   const { handleInputActivity } = useTypingPresence({ rtdb, user, soundEnabled });
   const { open: emojiOpen, toggle: toggleEmoji, buttonRef: emojiButtonRef, setOnSelect } = useEmojiPicker();
