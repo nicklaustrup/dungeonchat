@@ -57,6 +57,16 @@ function ChatInput({
   const { open: emojiOpen, toggle: toggleEmoji, buttonRef: emojiButtonRef, setOnSelect } = useEmojiPicker();
   const inputRef = React.useRef(null);
 
+  // Auto-focus on initial mount / when user becomes available
+  React.useEffect(() => {
+    if (user && inputRef.current) {
+      // Delay to ensure layout present
+      setTimeout(() => {
+        try { inputRef.current.focus(); } catch (_) {}
+      }, 30);
+    }
+  }, [user]);
+
   // Emoji selection handler
   React.useEffect(() => {
     setOnSelect((emojiData) => {

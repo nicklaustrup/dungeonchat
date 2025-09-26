@@ -109,7 +109,16 @@ function EmojiMenuSingleton() {
 
   if (!state.visible) return null;
 
-  const style = panelStyle || (state.anchorRect ? { position: 'fixed', top: state.anchorRect.bottom + 8, left: state.anchorRect.left, opacity: 0 } : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
+  // If panelStyle not yet calculated, provide a conservative initial style.
+  // On mobile (coarse pointer) the virtual keyboard can shrink viewport height causing bottom overflow.
+  // We place it centered horizontally and 20% from top as a safer default until measured.
+  let fallbackStyle;
+  if (state.anchorRect) {
+    fallbackStyle = { position: 'fixed', top: Math.min(window.innerHeight - 300, state.anchorRect.bottom + 8), left: state.anchorRect.left, opacity: 0 };
+  } else {
+    fallbackStyle = { position: 'fixed', top: Math.round(window.innerHeight * 0.2), left: '50%', transform: 'translateX(-50%)', opacity: 0 };
+  }
+  const style = panelStyle || fallbackStyle;
 
   const PickerComp = PickerRef.current;
 

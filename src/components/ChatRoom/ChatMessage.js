@@ -187,7 +187,7 @@ function ChatMessage(props) {
     // Specialized compact rendering for consecutive grouped (no-meta) messages
     const { selected, onSelectMessage, hovered, onHoverMessage } = props;
     const isTouch = React.useMemo(() => matchMedia('(hover: none) and (pointer: coarse)').matches, []);
-    const showActions = isTouch ? selected : hovered; // desktop: only hovered message (centralized)
+    const showActions = isTouch ? selected : hovered; // On touch show only if selected
     const handleSelect = () => {
         if (isTouch && onSelectMessage) onSelectMessage(messageId);
     };
@@ -195,7 +195,7 @@ function ChatMessage(props) {
     if (!showMeta) {
         const timeOnly = formatTimeOnly(createdAt);
         return (
-            <div className={rootClasses} data-message-id={messageId} role="article" aria-label={`Message from ${userName}`} onClick={isTouch ? handleSelect : undefined} onMouseEnter={() => onHoverMessage && onHoverMessage(messageId)} onMouseLeave={() => onHoverMessage && onHoverMessage(null)}>
+            <div className={rootClasses} data-message-id={messageId} data-selected={selected ? 'true' : undefined} role="article" aria-label={`Message from ${userName}`} onClick={isTouch ? handleSelect : undefined} onMouseEnter={() => onHoverMessage && onHoverMessage(messageId)} onMouseLeave={() => onHoverMessage && onHoverMessage(null)}>
                 <div className="time-col" aria-hidden="true">{timeOnly}</div>
                 <div className="message-content">
                     {deleted ? (
@@ -218,7 +218,14 @@ function ChatMessage(props) {
                         )
                     )}
                     <ReactionList reactions={reactionsState} currentUserId={auth.currentUser?.uid} onToggle={addReaction} />
-                    <ReactionBar emojis={reactionEmojis} onReact={addReaction} onReply={onReply} message={props.message} menuOpen={menuOpen} hidden={!showActions}>
+                    <ReactionBar
+                        emojis={reactionEmojis}
+                        onReact={addReaction}
+                        onReply={onReply}
+                        message={props.message}
+                        menuOpen={menuOpen || (isTouch && selected)}
+                        hidden={!showActions}
+                    >
                         {!deleted && (
                             <div className="message-menu-wrapper" ref={menuRef}>
                                 <button className="reply-btn message-menu-trigger" data-tip="Options" aria-label="Options" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>…</button>
@@ -250,7 +257,7 @@ function ChatMessage(props) {
     }
 
     return (
-        <div className={rootClasses} data-message-id={messageId} role="article" aria-label={`Message from ${userName}${isReplyTarget ? ' (reply target)' : ''}`} onClick={isTouch ? (e) => {
+    <div className={rootClasses} data-message-id={messageId} data-selected={selected ? 'true' : undefined} role="article" aria-label={`Message from ${userName}${isReplyTarget ? ' (reply target)' : ''}`} onClick={isTouch ? (e) => {
             const tag = (e.target.tagName || '').toLowerCase();
             if (['button','img','input','textarea','a'].includes(tag)) return;
             handleSelect();
@@ -313,7 +320,14 @@ function ChatMessage(props) {
                             )
                         ))}
                         <ReactionList reactions={reactionsState} currentUserId={auth.currentUser?.uid} onToggle={addReaction} />
-                        <ReactionBar emojis={reactionEmojis} onReact={addReaction} onReply={onReply} message={props.message} menuOpen={menuOpen} hidden={!showActions}>
+                        <ReactionBar
+                            emojis={reactionEmojis}
+                            onReact={addReaction}
+                            onReply={onReply}
+                            message={props.message}
+                            menuOpen={menuOpen || (isTouch && selected)}
+                            hidden={!showActions}
+                        >
                             {!deleted && (
                                 <div className="message-menu-wrapper" ref={menuRef}>
                                     <button className="reply-btn message-menu-trigger" data-tip="Options" aria-label="Options" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>…</button>

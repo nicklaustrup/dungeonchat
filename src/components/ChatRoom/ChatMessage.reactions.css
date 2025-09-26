@@ -39,7 +39,8 @@ body.chat-menu-open .reaction-buttons:not(.force-visible) { opacity:0 !important
 		border: none;
 		/* hidden by default; shown by JS adding .force-visible */
 	}
-	.reaction-buttons.force-visible { opacity:1 !important; }
+	.reaction-buttons.force-visible, .message[data-selected="true"] .reaction-buttons { opacity:1 !important; }
+	.message:not([data-selected="true"]) .reaction-buttons { opacity:0; }
 	.reaction-btn, .reply-btn, .message-menu-trigger { background: var(--bg-light); border-radius: 10px; }
 	.reaction-btn:hover, .reply-btn:hover, .message-menu-trigger:hover { background: var(--primary-color); color:#fff; }
 }

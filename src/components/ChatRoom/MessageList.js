@@ -15,8 +15,33 @@ function MessageList({
 }) {
   const [selectedMessageId, setSelectedMessageId] = React.useState(null);
   const [hoveredMessageId, setHoveredMessageId] = React.useState(null);
-  const handleSelectMessage = React.useCallback((id) => setSelectedMessageId(id), []);
   const handleHoverMessage = React.useCallback((id) => setHoveredMessageId(id), []);
+
+  // Mobile: allow tapping the same message to deselect & hide reactions
+  const handleSelectMessageToggle = React.useCallback((id, currentlySelected) => {
+    setSelectedMessageId(currentlySelected ? null : id);
+  }, []);
+
+  // Global listeners to clear selection when user focuses input or taps outside any message
+  React.useEffect(() => {
+    const clearIfOutside = (e) => {
+      // Ignore if already no selection
+      if (!selectedMessageId) return;
+      const msgEl = e.target.closest && e.target.closest('.message');
+      if (!msgEl) setSelectedMessageId(null);
+    };
+    const handleFocusIn = (e) => {
+      if (!selectedMessageId) return;
+      const msgEl = e.target.closest && e.target.closest('.message');
+      if (!msgEl) setSelectedMessageId(null);
+    };
+    document.addEventListener('pointerdown', clearIfOutside, true);
+    document.addEventListener('focusin', handleFocusIn, true);
+    return () => {
+      document.removeEventListener('pointerdown', clearIfOutside, true);
+      document.removeEventListener('focusin', handleFocusIn, true);
+    };
+  }, [selectedMessageId]);
   if (searchTerm && messages && messages.length === 0) {
     return (
       <>
@@ -66,7 +91,8 @@ function MessageList({
             onViewProfile={onViewProfile}
             showMeta={showMeta}
             selected={selectedMessageId === m.id}
-            onSelectMessage={handleSelectMessage}
+            // Pass toggle-aware handler so tapping the selected message again deselects on touch devices
+            onSelectMessage={(id) => handleSelectMessageToggle(id, selectedMessageId === id)}
             hovered={hoveredMessageId === m.id}
             onHoverMessage={handleHoverMessage}
           />

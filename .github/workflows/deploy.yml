@@ -1,0 +1,74 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  firebase-deploy:
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_DEPLOY_TOKEN }}
+      FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install root deps (minimal for firebase-tools peer needs)
+        run: npm ci --omit=dev
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: build
+
+      - name: Validate Firebase secrets
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then echo "Missing FIREBASE_DEPLOY_TOKEN secret" >&2; exit 1; fi
+          if [ -z "$FIREBASE_PROJECT_ID" ]; then echo "Missing FIREBASE_PROJECT_ID secret" >&2; exit 1; fi
+
+      - name: Install firebase-tools
+        run: npm install -g firebase-tools
+
+      - name: Determine functions change (re-run safety)
+        id: diff
+        run: |
+          if git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            RANGE="HEAD^ HEAD"
+          else
+            git fetch --depth=2 origin main || true
+            RANGE="origin/main...HEAD"
+          fi
+          if git diff --name-only $RANGE | grep '^functions/' >/dev/null 2>&1; then
+            echo "deploy_functions=true" >> $GITHUB_OUTPUT
+          else
+            echo "deploy_functions=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install functions deps (only if functions changed)
+        if: steps.diff.outputs.deploy_functions == 'true'
+        run: (cd functions && npm ci --omit=dev)
+
+      - name: Deploy Hosting only
+        if: steps.diff.outputs.deploy_functions == 'false'
+        run: firebase deploy --only hosting --non-interactive --project $FIREBASE_PROJECT_ID --token "$FIREBASE_TOKEN"
+
+      - name: Deploy Hosting + Functions
+        if: steps.diff.outputs.deploy_functions == 'true'
+        run: firebase deploy --only hosting,functions --non-interactive --project $FIREBASE_PROJECT_ID --token "$FIREBASE_TOKEN"

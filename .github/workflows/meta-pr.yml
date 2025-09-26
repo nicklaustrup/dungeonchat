@@ -1,0 +1,42 @@
+name: PR Meta Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  meta:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply labels
+        uses: fuxingloh/multi-labeler@v2
+        with:
+          config-path: .github/labeler.yml
+
+      - name: Scan for TODO / FIXME
+        id: scan
+        run: |
+          MATCHES=$(grep -RInE "TODO:|FIXME" --exclude-dir=node_modules --exclude-dir=build --exclude-dir=storybook-static src || true)
+          MATCH_COUNT=$(echo "$MATCHES" | grep -c : || true)
+          echo "found=$MATCH_COUNT" >> $GITHUB_OUTPUT
+          echo "===RAW_MATCHES_START===" >> report.txt
+            echo "$MATCHES" | head -n 200 >> report.txt
+          echo "===RAW_MATCHES_END===" >> report.txt
+
+      - name: Comment on PR with TODO report
+        if: steps.scan.outputs.found != '0'
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            📝 Found ${{ steps.scan.outputs.found }} TODO/FIXME markers (showing up to first 200 lines):
+
+            ```
+            $(sed -n '/===RAW_MATCHES_START===/,/===RAW_MATCHES_END===/p' report.txt | sed '1d;$d')
+            ```

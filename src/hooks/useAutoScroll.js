@@ -221,24 +221,20 @@ export function useAutoScroll({ containerRef, anchorRef, items, bottomThreshold 
     prevLastIdRef.current = newLastId;
     prevFirstIdRef.current = newFirstId;
 
-    // Build appended ID list (new messages that appeared at tail)
+    // Build appended ID list (new messages that appeared at tail).
+    // IMPORTANT: use previous idSetRef before refreshing so pagination detection doesn't wipe unread context.
     let appendedCount = 0;
     if (!paginationDetected) {
-      // Walk backwards until we find a previously known id
       for (let i = length - 1; i >= 0; i--) {
         const id = items[i]?.id;
-        if (!idSetRef.current.has(id)) {
-          appendedCount++;
-        } else {
-          break;
-        }
+        if (!idSetRef.current.has(id)) appendedCount++; else break;
       }
     }
 
-    // Refresh known IDs set
+    // Refresh known IDs AFTER computing appendedCount
     idSetRef.current = new Set(items.map(m => m.id));
 
-  logMessageAppend(items, prevLenBefore - appendedCount); // crude baseline call (prev length minus newly appended)
+  logMessageAppend(items, prevLenBefore); // log previous length baseline (appendedCount handled in classification)
 
   logClassification({
     phase: 'length-change',

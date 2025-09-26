@@ -50,6 +50,7 @@
   "release": "semantic-release",
   "lint": "eslint . --ext .js,.jsx --quiet",
   "test:ci": "cross-env CI=true react-scripts test --watch=false --passWithNoTests --coverage --coverageReporters=lcov --coverageReporters=text --coverageReporters=json-summary",
+  "test:fast": "cross-env CI=true react-scripts test --watch=false --passWithNoTests --testPathIgnorePatterns=storybook-static build",
     "test:changed": "cross-env CI=true react-scripts test --watch=false --bail --findRelatedTests --passWithNoTests"
   },
   "lint-staged": {

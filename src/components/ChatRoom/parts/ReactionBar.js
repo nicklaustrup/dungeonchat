@@ -31,11 +31,13 @@ export default function ReactionBar({ emojis, onReact, onReply, message, menuOpe
     }
   };
 
+  const isTouch = React.useMemo(() => matchMedia('(hover: none) and (pointer: coarse)').matches, []);
+  const effectiveHidden = hidden && !(isTouch && menuOpen); // allow menuOpen (selected) to show on touch
   return (
     <div
-      className={`reaction-buttons ${menuOpen ? 'force-visible' : ''} ${hidden ? 'hidden-collapsed' : ''}`}
+      className={`reaction-buttons ${menuOpen ? 'force-visible' : ''} ${effectiveHidden ? 'hidden-collapsed' : ''}`}
       data-testid="reaction-bar"
-      aria-hidden={hidden || undefined}
+      aria-hidden={effectiveHidden || undefined}
     >
       {emojis.map(emoji => (
         <button

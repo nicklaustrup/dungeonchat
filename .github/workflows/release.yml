@@ -1,8 +1,9 @@
 name: Release
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
 
 permissions:
   contents: write
@@ -12,12 +13,15 @@ permissions:
 
 jobs:
   release:
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha }}
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -25,19 +29,6 @@ jobs:
           cache: npm
       - name: Install deps
         run: npm ci
-      - name: Optional build sanity (skip if env vars missing)
-        env:
-          REACT_APP_FIREBASE_API_KEY: ${{ vars.REACT_APP_FIREBASE_API_KEY }}
-          REACT_APP_FIREBASE_AUTH_DOMAIN: ${{ vars.REACT_APP_FIREBASE_AUTH_DOMAIN }}
-          REACT_APP_FIREBASE_PROJECT_ID: ${{ vars.REACT_APP_FIREBASE_PROJECT_ID }}
-          REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ vars.REACT_APP_FIREBASE_STORAGE_BUCKET }}
-          REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.REACT_APP_FIREBASE_MESSAGING_SENDER_ID }}
-          REACT_APP_FIREBASE_APP_ID: ${{ vars.REACT_APP_FIREBASE_APP_ID }}
-          REACT_APP_FIREBASE_DATABASE_URL: ${{ vars.REACT_APP_FIREBASE_DATABASE_URL }}
-        run: |
-          if [ -z "$REACT_APP_FIREBASE_API_KEY" ]; then
-            echo "Firebase env vars not set in repo vars; skipping build sanity."; exit 0; fi
-          npm run build || { echo 'Build failed; aborting release.' >&2; exit 1; }
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

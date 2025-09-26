@@ -163,6 +163,11 @@ body {
 .chatroom-overlays { position:absolute; left:0; right:0; bottom:8px; height:0; pointer-events:none; }
 .chatroom-overlays .typing-bubble { position:absolute; left:12px; bottom:0; }
 .chatroom-overlays .scroll-btn-wrapper { position:absolute; left:50%; transform:translateX(-50%); bottom:0; pointer-events:auto; }
+/* Mobile layout: move scroll button to right side to avoid overlap with typing indicator */
+@media (max-width: 720px) {
+  .chatroom-overlays .scroll-btn-wrapper { left:auto; right:12px; transform:none; }
+  .chatroom-overlays .scroll-to-bottom-btn { align-self:flex-end; }
+}
 .chatroom-overlays .scroll-to-bottom-btn { position:relative; }
 
 /* Drag border now scoped to wrapper so it matches visible frame */
@@ -1152,14 +1157,14 @@ margin-top: 10px;
 
 /* Scroll to bottom / New messages indicator */
 .scroll-to-bottom-btn {
-  position: sticky; /* Changed from absolute to sticky */
+  position: sticky; /* stick to bottom inside scroll area wrapper */
   bottom: 0px;
   right: 16px;
   align-self: center;
   background: var(--bg-light);
   color: var(--text-color);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
+  border-radius: 14px;
   padding: 6px 14px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -1170,9 +1175,25 @@ margin-top: 10px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
   opacity: .9;
   backdrop-filter: blur(4px);
-  /* Base transitions + custom slide/fade */
   transition: background .25s ease, color .25s ease, transform .25s ease, opacity .3s ease, box-shadow .25s ease;
   z-index: 120;
+}
+
+/* Icon-only square variant on narrow screens */
+@media (max-width: 720px) {
+  .scroll-to-bottom-btn {
+    width:46px;
+    height:46px;
+    padding:0;
+    border-radius:14px;
+    justify-content:center;
+  }
+  .scroll-to-bottom-btn .scroll-label { display:none; }
+  .scroll-to-bottom-btn .scroll-icon-wrapper { display:flex; }
+}
+@media (min-width: 721px) {
+  .scroll-to-bottom-btn .scroll-label { display:inline-block; }
+  .scroll-to-bottom-btn .scroll-icon-wrapper { margin-right:6px; }
 }
 .scroll-to-bottom-btn.is-visible { opacity: .95; transform: translateY(0) scale(1); pointer-events: auto; }
 .scroll-to-bottom-btn.is-hiding { opacity: 0; transform: translateY(8px) scale(.96); pointer-events: none; }

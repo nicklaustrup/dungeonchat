@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { LuArrowDownToLine } from 'react-icons/lu';
 
 // Adds fade / slide in-out animation. Keeps the button mounted during exit
 // so the disappear animation can play before removal.
@@ -55,7 +56,8 @@ function ScrollToBottomButton({ visible, hasNew, newCount, onClick }) {
       aria-label={hasNew ? 'Scroll to latest new messages' : 'Scroll to bottom'}
       tabIndex={show ? 0 : -1}
     >
-      {label}
+  <span className="scroll-icon-wrapper" aria-hidden="true"><LuArrowDownToLine size={20} /></span>
+  <span className="scroll-label">{label}</span>
     </button>
   );
 }
