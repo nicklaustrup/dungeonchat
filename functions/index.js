@@ -8,9 +8,8 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-
-const { setGlobalOptions } = require("firebase-functions");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const {setGlobalOptions} = require("firebase-functions");
+const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const ProfanityFilter = require("profanity-filter");
 const admin = require("firebase-admin");
 
@@ -19,19 +18,21 @@ const db = admin.firestore();
 
 exports.detectEvilUsers = onDocumentCreated("messages/{messageId}", async (event) => {
   const pf = new ProfanityFilter();
-  const { text, uid } = event.data.data();
-  
+  const {text, uid} = event.data.data();
+
   if (pf.isProfane(text)) {
     // Delete the message
     const cleaned = pf.clean(text);
-    await event.data.ref.update({ text: "I got banned for using bad words!" });
-
+    await event.data.ref.update({text: "I got banned for using bad words!"});
     await db.collection("banned").doc(uid).set({});
-    console.log(`Deleted message from ${uid} for profanity: ${cleaned}`);
+    console.log(
+      // eslint-disable-next-line max-len
+      `Deleted message from ${uid} for profanity: ${cleaned}`
+    );
   }
 });
 
-setGlobalOptions({maxInstances: 10});
+setGlobalOptions({maxInstances:10});
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started

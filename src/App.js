@@ -10,6 +10,7 @@ function App() {
     const val = stored ? parseInt(stored, 10) : 300;
     return isNaN(val) ? 300 : val;
   });
+  //test
   React.useEffect(() => {
     localStorage.setItem('awayAfterSeconds', String(awayAfterSeconds));
   }, [awayAfterSeconds]);

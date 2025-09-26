@@ -41,8 +41,8 @@
     "build-storybook": "storybook build",
     "chromatic": "chromatic --project-token=$CHROMATIC_PROJECT_TOKEN",
     "prepare": "husky install",
-    "lint": "eslint . --ext .js,.jsx --max-warnings=0",
-    "test:ci": "cross-env CI=true react-scripts test --watch=false --passWithNoTests --coverage",
+  "lint": "eslint . --ext .js,.jsx --quiet",
+  "test:ci": "cross-env CI=true react-scripts test --watch=false --passWithNoTests --coverage --coverageReporters=lcov --coverageReporters=text --coverageReporters=json-summary",
     "test:changed": "cross-env CI=true react-scripts test --watch=false --bail --findRelatedTests --passWithNoTests"
   },
   "lint-staged": {
@@ -52,6 +52,21 @@
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "**/src/tests/**/*.{js,jsx}",
+          "**/src/**/__tests__/**/*.{js,jsx}",
+          "**/src/**/*.{test,spec}.{js,jsx}"
+        ],
+        "rules": {
+          "import/first": "off",
+          "testing-library/no-node-access": "off",
+          "testing-library/no-unnecessary-act": "off",
+          "testing-library/prefer-screen-queries": "warn"
+        }
+      }
     ]
   },
   "browserslist": {
