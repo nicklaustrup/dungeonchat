@@ -5,13 +5,13 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDkaNKFFSvbphzzTRWPsDJtDP45boXqELY",
-  authDomain: "superchat-58b43.firebaseapp.com",
-  projectId: "superchat-58b43",
-  storageBucket: "superchat-58b43.firebasestorage.app",
-  messagingSenderId: "131619204399",
-  appId: "1:131619204399:web:3cf92be0cd8c606ea245da",
-  databaseURL: "https://superchat-58b43-default-rtdb.firebaseio.com"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL,
 };
 
 const app = initializeApp(firebaseConfig);
