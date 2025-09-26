@@ -56,11 +56,20 @@ firebase deploy --only firestore:rules,database,storage
 For Hosting you can add headers in `firebase.json` to leverage aggressive caching of static assets under `/static`.
 
 ## 9. CI/CD Suggestion
-In GitHub Actions you can:
-1. Check out repo
-2. Setup Node
-3. `npm ci && npm run build`
-4. `firebase deploy --only hosting --token $FIREBASE_TOKEN`
+GitHub Actions workflow (`.github/workflows/ci-deploy.yml`) now performs:
+1. Checkout & cache Node modules
+2. `npm ci` (root + functions)
+3. Run test suite (`npm run test:ci`)
+4. Build Storybook (regression surface)
+5. Build production app (`npm run build`)
+6. Upload build artifact
+7. Deploy (on push to `main`) to Firebase Hosting + Functions using a service account
+
+Secrets required:
+- `FIREBASE_SERVICE_ACCOUNT_JSON` (JSON of service account with deploy perms)
+- `FIREBASE_PROJECT_ID` (e.g., `your-project-id`)
+
+Local pre-commit hook (Husky + lint-staged) runs tests related to staged JS/TS files. Install automatically after `npm install` via the `prepare` script.
 
 ## 10. Troubleshooting
 * Blank page after deploy: confirm `.env` values were present during build.
