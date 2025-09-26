@@ -37,32 +37,40 @@ function ChatInput({
   playSendSound: () => playSendMessageSound(true)
   });
 
-  // Determine if parent is controlling (legacy) vs internal self-managed
-  const isControlled = React.useMemo(() => (
-    liftedSelectedImage !== undefined || liftedImagePreview !== undefined || liftedUploading !== undefined
-  ), [liftedSelectedImage, liftedImagePreview, liftedUploading]);
+  // --- Image state synchronization (drag & drop + file picker) ---
+  // We track the origin of the last change to avoid feedback loops.
+  const lastImageOriginRef = React.useRef(null); // 'parent' | 'internal' | null
 
-  // In controlled mode: pull values from parent ONLY when they differ
+  // Parent -> internal (mirror lifted state when it changes externally)
   React.useEffect(() => {
-    if (!isControlled) return; // parent drives
-    if (liftedSelectedImage !== undefined && liftedSelectedImage !== imageHook.selectedImage) {
-      imageHook.setSelectedImage(liftedSelectedImage);
-    }
-    if (liftedImagePreview !== undefined && liftedImagePreview !== imageHook.imagePreview) {
-      imageHook.setImagePreview(liftedImagePreview);
-    }
-    if (typeof liftedUploading === 'boolean' && liftedUploading !== imageHook.uploading) {
-      imageHook.setUploading(liftedUploading);
-    }
-  }, [isControlled, liftedSelectedImage, liftedImagePreview, liftedUploading, imageHook.selectedImage, imageHook.imagePreview, imageHook.uploading, imageHook]);
+    // Only run when parent actually changed values (origin not internal)
+    if (lastImageOriginRef.current === 'internal') return; // skip while internal pushing
+    let changed = false;
+    if (liftedSelectedImage !== imageHook.selectedImage) { imageHook.setSelectedImage(liftedSelectedImage); changed = true; }
+    if (liftedImagePreview !== imageHook.imagePreview) { imageHook.setImagePreview(liftedImagePreview); changed = true; }
+    if (typeof liftedUploading === 'boolean' && liftedUploading !== imageHook.uploading) { imageHook.setUploading(liftedUploading); changed = true; }
+    if (changed) lastImageOriginRef.current = 'parent';
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liftedSelectedImage, liftedImagePreview, liftedUploading]);
 
-  // In uncontrolled (preferred) mode: optionally surface internal state upward only if parent provided setters but not controlling.
+  // Internal -> parent (when user selects/clears via ChatInput)
   React.useEffect(() => {
-    if (isControlled) return; // avoid feedback loop
-    if (setLiftedSelectedImage) setLiftedSelectedImage(imageHook.selectedImage);
-    if (setLiftedImagePreview) setLiftedImagePreview(imageHook.imagePreview);
-    if (setLiftedUploading) setLiftedUploading(imageHook.uploading);
-  }, [isControlled, setLiftedSelectedImage, setLiftedImagePreview, setLiftedUploading, imageHook.selectedImage, imageHook.imagePreview, imageHook.uploading]);
+    if (lastImageOriginRef.current !== 'internal') return;
+    if (setLiftedSelectedImage) setLiftedSelectedImage(imageHook.selectedImage || null);
+    if (setLiftedImagePreview) setLiftedImagePreview(imageHook.imagePreview || null);
+    if (setLiftedUploading) setLiftedUploading(imageHook.uploading || false);
+    lastImageOriginRef.current = null; // reset after flush
+  }, [imageHook.selectedImage, imageHook.imagePreview, imageHook.uploading, setLiftedSelectedImage, setLiftedImagePreview, setLiftedUploading]);
+
+  // Wrap internal handlers to mark origin
+  const handleLocalFile = React.useCallback((file) => {
+    lastImageOriginRef.current = 'internal';
+    imageHook.handleImageSelect(file);
+  }, [imageHook]);
+  const clearImage = React.useCallback(() => {
+    lastImageOriginRef.current = 'internal';
+    imageHook.clearImage();
+  }, [imageHook]);
 
   const { handleInputActivity } = useTypingPresence({ rtdb, user, soundEnabled });
   const { open: emojiOpen, toggle: toggleEmoji, buttonRef: emojiButtonRef, setOnSelect } = useEmojiPicker();
@@ -169,8 +177,8 @@ function ChatInput({
       <ImagePreviewModal
         imagePreview={imageHook.imagePreview}
         uploading={imageHook.uploading}
-        onSend={imageHook.sendImageMessage}
-        onCancel={imageHook.clearImage}
+        onSend={() => { lastImageOriginRef.current = 'internal'; imageHook.sendImageMessage(); }}
+        onCancel={clearImage}
       />
       <ReplyPreview
         replyingTo={replyingTo}
@@ -185,7 +193,7 @@ function ChatInput({
           onPickEmoji={toggleEmoji}
           emojiOpen={emojiOpen}
           emojiButtonRef={emojiButtonRef}
-          onTriggerFile={imageHook.handleImageSelect}
+          onTriggerFile={(file) => { if (file) handleLocalFile(file); }}
           textareaRef={inputRef}
         />
         <button type="submit" disabled={!text} className="send-btn" aria-label="Send message">➤</button>

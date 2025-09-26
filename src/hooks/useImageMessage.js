@@ -9,19 +9,31 @@ export function useImageMessage({ storage, firestore, user, getDisplayName, soun
   const [selectedImage, setSelectedImage] = React.useState(null);
   const [imagePreview, setImagePreview] = React.useState(null);
   const [uploading, setUploading] = React.useState(false);
+  const selectionTokenRef = React.useRef(0);
 
   const handleImageSelect = React.useCallback((file) => {
     if (!file || !file.type?.startsWith('image/')) return;
+    const token = ++selectionTokenRef.current;
     setSelectedImage(file);
     const reader = new FileReader();
-    reader.onload = (e) => setImagePreview(e.target.result);
+    reader.onload = (e) => {
+      // Ignore stale loads after a cancel/clear
+      if (selectionTokenRef.current !== token) return;
+      setImagePreview(e.target.result);
+    };
     reader.readAsDataURL(file);
   }, []);
 
   const clearImage = React.useCallback(() => {
+    selectionTokenRef.current++; // invalidate any in-flight readers
     setSelectedImage(null);
     setImagePreview(null);
     setUploading(false);
+    // Double-clear on next tick to guard against any late async callbacks
+    setTimeout(() => {
+      setSelectedImage(null);
+      setImagePreview(null);
+    }, 0);
   }, []);
 
   const sendImageMessage = React.useCallback(async () => {

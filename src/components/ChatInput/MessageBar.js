@@ -18,8 +18,11 @@ export function MessageBar({
         type="file"
         accept="image/*"
         onChange={(e) => {
-          const file = e.target.files?.[0];
+          const fileInput = e.target;
+          const file = fileInput.files?.[0];
           if (file) onTriggerFile(file);
+          // Allow selecting the same file again (mobile browsers often cache last selection)
+          fileInput.value = '';
         }}
         style={{ display: 'none' }}
         id="image-upload"

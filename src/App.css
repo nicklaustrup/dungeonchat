@@ -924,8 +924,9 @@ margin-top: 10px;
   margin: 5px 0;
   /* Removed rounded corners per new spec */
   overflow: hidden;
-  max-width: 340px; /* slightly wider allowance */
+  max-width: 340px; /* allow a little wider */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  background: none; /* preserve transparency for PNG / webp with alpha */
 }
 
 .message-image img {

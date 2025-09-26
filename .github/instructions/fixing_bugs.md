@@ -1,19 +1,16 @@
 ---
 applyTo: '**'
 ---
-That's a great request! I'll convert the **VS Code Bug Squasher Protocol for AI Agents** into a clean, copy-paste-friendly markdown message.
-
----
 # VS Code Bug Squasher Protocol for AI Agents 
 
-**Objective:** To systematically identify, test, and resolve bugs within a given codebase. This protocol prioritizes a **test-driven approach** to ensure accuracy, prevent regressions, and minimize debugging time.
-
+**Objective:** To systematically identify, test, and resolve bugs within a given codebase. This protocol prioritizes a **test-driven approach** to ensure accuracy, prevent regressions, and minimize debugging time. Share a one sentence summary of what you are doing at after "Working" at each step.
 ---
 
 ## Phase 1: Diagnosis & Strategy 
 This phase is about understanding the problem completely before writing any code.
 
 ### 1. Ingest & Deconstruct the Bug Report 
+* **Communication:** Summarize the issue in your own words.
 * **Parse All Inputs:** Thoroughly analyze the user's bug report, including titles, descriptions, and comments.
 * **Identify Key Information:** Extract the following critical data points:
     * **Expected Behavior:** What should the software do? 
@@ -40,6 +37,7 @@ This phase creates the success criteria for the fix. You will build a test that 
 * **Confirm the Failure:** Run the new test against the current, unmodified codebase. **It MUST fail**.
     * This failure is critical—it confirms you have successfully and reliably reproduced the bug in a controlled environment.
     * This failing test is now your target for a successful fix.
+    * Write additional tests for new and unexpected bugs that come up during this phase.
 
 ---
 
@@ -69,8 +67,9 @@ This phase ensures the fix is clean, well-documented, and ready for integration.
 * Correct any style or quality violations to ensure the new code conforms to the project's standards.
 
 ### 7. Generate the Final Report 
-* **Commit Message:** Prepare a clear and descriptive commit message following conventional standards (e.g., `fix(module): resolve type error on null email field`).
+* **Commit Message:** Prepare a clear and descriptive commit message following conventional standards (e.g., `fix(module): resolve type error on null email field`). Do NOT send git commands on behalf of the user unless specifically asked to.
 * **Summary of Changes:** Create a final report that includes:
     * **Root Cause Analysis:** A brief explanation of the bug's origin.
     * **Solution Implemented:** A concise summary of the code changes made. A code diff is highly effective here.
     * **Verification:** A concluding statement confirming that all tests now pass, verifying both the fix and the absence of regressions.
+    * **Next Steps:** Suggest improvements on the code covered in this process.

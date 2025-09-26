@@ -119,9 +119,14 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
               setReplyingTo={setReplyingTo}
               onImageDrop={(file) => {
                 if (!file) return;
+                // Instead of directly setting lifted state (which can race with controlled sync),
+                // we dispatch a custom event the ChatInput can listen to in future if needed.
+                // For now we still set lifted state but ensure preview generation mirrors file input logic.
                 setSelectedImage(file);
                 const reader = new FileReader();
-                reader.onload = (e) => setImagePreview(e.target.result);
+                reader.onload = (e) => {
+                  setImagePreview(e.target.result);
+                };
                 reader.readAsDataURL(file);
               }}
               onViewProfile={handleViewProfile}
