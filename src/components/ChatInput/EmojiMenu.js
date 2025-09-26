@@ -13,13 +13,16 @@ let mountNode; // singleton mount node in document.body
 
 function EmojiMenuSingleton() {
   const [state, setState] = useState({ visible: false, anchorRect: null, onSelect: null, onClose: null });
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
   const panelRef = useRef(null);
   const [panelStyle, setPanelStyle] = useState(null);
 
   const close = useCallback(() => {
     setState(s => ({ ...s, visible: false }));
-    if (state.onClose) state.onClose();
-  }, [state.onClose]);
+    const latest = stateRef.current;
+    if (latest.onClose) latest.onClose();
+  }, []);
 
   const open = useCallback((opts) => {
     setState({

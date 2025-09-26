@@ -26,15 +26,12 @@
 
 | Feature | Description | Notes |
 |---------|-------------|-------|
-| Typing Indicators | Show who is typing | Presence subcollection or Realtime DB hybrid |
 | Message Status | Sent / delivered / read receipts | Use per-user read marker document |
-| Edit & Delete | Allow edits + soft delete | Preserve original timestamp; mark `edited` flag |
-| Reactions | Emoji reactions per message | Map (emoji → userIds[]) or per-emoji docs for contention |
 | Threading / Replies | Nested or flat reply model | Lazy-load replies; show reply count |
 | Pinned & Starred | Highlight or personal save | Room-level pinned list; user-level starred collection |
-| Search | Full-text lookup | External index (Algolia / Meilisearch) via trigger |
 | File & Media Support | Attach images/files | Storage + metadata doc; generate thumbnails |
 | Voice Notes | Audio snippets | Record → compress → upload; optional waveform |
+| Mobile Optimizations | Long-press (mobile) to open menu. | Have AI do it |
 
 ### Additional Considerations
 - Message formatting (Markdown subset) pairs well with edit functionality.

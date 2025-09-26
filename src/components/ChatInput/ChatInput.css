@@ -247,7 +247,7 @@
 /* Square-ish input + icon buttons */
 .message-input {
     border-radius: 10px;
-    padding: px;
+    /* removed invalid padding value */
 }
 
 /* .image-upload-btn {
@@ -423,6 +423,9 @@
 }
 
 /* Old interaction helpers removed (no longer needed with grid layout) */
+
+/* Legacy selectors (kept for safety, candidates for deletion after verification) */
+/* .image-upload-btn { legacy removed in refactor } */
 
 /* Emoji picker portal minor styling */
 .emoji-picker-portal { box-shadow: 0 6px 28px rgba(0,0,0,0.45), 0 2px 10px rgba(0,0,0,0.3); border-radius: 12px; }

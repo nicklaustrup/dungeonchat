@@ -1,0 +1,18 @@
+/*
+ * ChatMessage.reactions.css
+ * Reaction bar (hover buttons), reaction chips list & reply/menu trigger button styling.
+ * Excludes tooltip visuals which are centralized in ChatMessage.tooltips.css for reuse.
+ */
+.reaction-buttons { display:flex; gap:4px; position:absolute; top:-10px; right:12px; background:rgba(0,0,0,0.62); padding:4px 6px; border-radius:10px; opacity:0; transition:opacity .18s ease; backdrop-filter:blur(6px) saturate(150%); border:1px solid rgba(255,255,255,0.12); }
+.reaction-buttons.force-visible { opacity:1 !important; pointer-events:auto; }
+.reaction-btn { background:none; border:none; font-size:16px; cursor:pointer; padding:4px; border-radius:8px; transition: background .18s ease, color .18s ease; }
+.reaction-btn:hover { background: rgba(255,255,255,0.08); }
+.light-theme .reaction-btn:hover { background: rgba(0,0,0,0.08); }
+.reaction-btn:active { background: rgba(255,255,255,0.15); }
+.message-reactions { display:flex; flex-wrap:wrap; gap:4px; margin:2px 0 0 0; position:relative; z-index:1; }
+.reaction { background-color: rgba(11,148,246,0.329); border:1px solid rgba(11,147,246,0.35); border-radius:10px; padding:0 6px; font-size:12px; cursor:pointer; transition: background-color .18s ease, border-color .18s ease; min-height:24px; display:inline-flex; align-items:center; }
+.reaction:hover { background-color: rgba(255,255,255,0.18); }
+.reaction.reacted { background-color: rgba(11,148,246,0.144); border-color:#0b93f6; color:#fff; font-weight:600; }
+.reaction.reacted:hover { background-color: rgba(11,147,246,0.34); border-color:#31a4ff; }
+body:not(.chat-menu-open) .message:hover .reaction-buttons { opacity:1; }
+body.chat-menu-open .reaction-buttons:not(.force-visible) { opacity:0 !important; }

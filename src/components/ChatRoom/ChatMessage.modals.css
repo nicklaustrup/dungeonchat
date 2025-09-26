@@ -1,0 +1,14 @@
+/*
+ * ChatMessage.modals.css
+ * Delete confirmation modal styles (image preview handled in its own component / global styles).
+ * Split out to allow lazy-loading or future modal theming without touching core message layout.
+ */
+.delete-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; z-index:1300; }
+.delete-modal { background: var(--bg-secondary); border:1px solid var(--border-color); border-radius:14px; padding:20px 24px; width:min(340px,92%); box-shadow:0 10px 32px rgba(0,0,0,0.5); }
+.delete-modal h4 { margin:0 0 8px; font-size:1rem; }
+.delete-modal p { margin:0 0 16px; font-size:0.85rem; opacity:.8; max-width:100%; padding:0; background:transparent; color: var(--text-color); }
+.delete-modal-actions { display:flex; gap:10px; justify-content:flex-end; }
+.delete-modal-actions button { padding:8px 14px; font-size:0.75rem; background: var(--bg-light); border:1px solid var(--border-color); border-radius:8px; }
+.delete-modal-actions button:hover { background: var(--primary-color); color:#fff; }
+.delete-modal-actions .danger { background:#ff4d4f; border-color:#ff4d4f; color:#fff; }
+.delete-modal-actions .danger:hover { background:#ff2d2f; }
