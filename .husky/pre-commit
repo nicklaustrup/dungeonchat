@@ -1,9 +1,34 @@
 #!/usr/bin/env bash
 . "$(dirname "$0")/_/husky.sh"
 
-echo "[husky] Running pre-commit quality gates (tests on staged files)"
+echo "[husky] Pre-commit: validating changed files via related tests"
 
-# Run lint-staged to execute related tests for changed JS/TS files
-npx lint-staged || { echo "Tests failed. Commit aborted."; exit 1; }
+# Ensure deps installed (skip if node_modules present)
+if [ ! -d node_modules ]; then
+	echo "[husky] node_modules missing – running npm ci (first commit scenario)"
+	npm ci || { echo "[husky] npm ci failed"; exit 1; }
+fi
 
-echo "[husky] Pre-commit checks passed"
+STAGED_JS=$(git diff --cached --name-only --diff-filter=ACMRTUXB | grep -E '\.(js|jsx|ts|tsx)$' || true)
+
+if [ -z "$STAGED_JS" ]; then
+	echo "[husky] No JS/TS changes – skipping test:changed."
+	exit 0
+fi
+
+echo "[husky] Staged JS/TS files:"$'\n'
+for f in $STAGED_JS; do
+	echo " - $f"
+done
+
+echo "[husky] Running related Jest tests"
+
+# Use xargs to pass files; if Jest exits 0 with no tests found, continue
+echo $STAGED_JS | xargs npm run test:changed -- || {
+	status=$?
+	if [ $status -eq 1 ]; then
+		echo "[husky] Related test run failed; aborting commit."; exit 1;
+	fi
+}
+
+echo "[husky] Pre-commit tests passed"

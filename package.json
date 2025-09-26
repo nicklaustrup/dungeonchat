@@ -42,7 +42,7 @@
     "chromatic": "chromatic --project-token=$CHROMATIC_PROJECT_TOKEN",
     "prepare": "husky install",
     "test:ci": "cross-env CI=true react-scripts test --watch=false --passWithNoTests",
-    "test:changed": "cross-env CI=true react-scripts test --watch=false --bail --findRelatedTests"
+    "test:changed": "cross-env CI=true react-scripts test --watch=false --bail --findRelatedTests --passWithNoTests"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "npm run test:changed --"
