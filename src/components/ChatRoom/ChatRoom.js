@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFirebase } from '../../services/FirebaseContext';
 import { useDragAndDropImages } from '../../hooks/useDragAndDropImages';
-import { useTypingUsers } from '../../hooks/useTypingUsers';
+// import { useTypingUsers } from '../../hooks/useTypingUsers'; // currently unused
 import { useReplyState } from '../../hooks/useReplyState';
 import { useChatMessages } from '../../hooks/useChatMessages';
 import { useAutoScroll } from '../../hooks/useAutoScroll';
@@ -12,12 +12,12 @@ import MessageList from './MessageList';
 
 
 function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, setReplyingTo, onImageDrop, onViewProfile, onScrollMeta }) {
-  const { firestore, auth, rtdb } = useFirebase();
+  const { firestore /* auth, rtdb */ } = useFirebase();
   const dummy = React.useRef();
   const mainRef = React.useRef();
   const { messages, loadMore, hasMore } = useChatMessages({ firestore, limitBatchSize: 25, maxLimit: 100 });
 
-  const typingUsers = useTypingUsers({ rtdb, currentUid: auth.currentUser?.uid });
+  // const typingUsers = useTypingUsers({ rtdb, currentUid: auth.currentUser?.uid }); // reserved for future feature
   const { setReplyTarget } = useReplyState({
     getDisplayName,
     externalReply: replyingTo,

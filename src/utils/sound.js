@@ -2,7 +2,7 @@
 let _audioCtx = null;
 let _masterGain = null;
 let _unlocked = false;
-let _debugId = 0; // retained for possible future diagnostics (no logs emitted)
+// let _debugId = 0; // removed to satisfy ESLint (was unused)
 
 function createContext() {
   const AC = window.AudioContext || window.webkitAudioContext;
@@ -157,7 +157,7 @@ export const playTypingSound = (soundEnabled, { multiple = false, count = 1, sel
 
       osc.start(start + drift);
       osc.stop(end + 0.02);
-      _debugId++; // increment silently
+  // (debug counter removed)
     }
   } catch (e) {
     console.warn('⚠️ playTypingSound error:', e);

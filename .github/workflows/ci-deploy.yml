@@ -77,7 +77,7 @@ jobs:
             path: coverage.tar.gz
             if-no-files-found: warn
 
-      - name: Upload coverage to Codecov (optional)
+      - name: Upload coverage to codecov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |

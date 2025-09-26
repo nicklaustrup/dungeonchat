@@ -3,7 +3,7 @@ import { ref as databaseRef, onValue } from 'firebase/database';
 import { useFirebase } from './FirebaseContext';
 
 // Presence states: 'online' | 'away' | 'offline'
-const PresenceContext = createContext(null);
+export const PresenceContext = createContext(null);
 
 export function PresenceProvider({ children, awayAfterSeconds: propAway = 300 }) {
   const { rtdb, auth } = useFirebase();

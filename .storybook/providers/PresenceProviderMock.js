@@ -1,25 +1,24 @@
 import React from 'react';
-
-const PresenceCtx = React.createContext(null);
+import { PresenceContext } from '../../src/services/PresenceContext';
 
 export function PresenceProviderMock({ children }) {
-  const presenceMap = new Map([
+  const presenceMap = React.useMemo(() => new Map([
     ['user_current', { state: 'online', lastSeen: Date.now(), online: true }],
     ['user_other', { state: 'away', lastSeen: Date.now() - 120000, online: true }],
     ['user_offline', { state: 'offline', lastSeen: Date.now() - 3600_000, online: false }]
-  ]);
+  ]), []);
 
-  const getPresence = (uid) => presenceMap.get(uid) || { state: 'offline', lastSeen: 0, online: false };
+  const getPresence = React.useCallback((uid) => presenceMap.get(uid) || { state: 'offline', lastSeen: 0, online: false }, [presenceMap]);
   const ensureSubscribed = () => {};
+  const typingMap = React.useMemo(() => new Map(), []);
+
+  const value = React.useMemo(() => ({ presenceMap, getPresence, ensureSubscribed, typingMap, awayAfterSeconds: 300 }), [presenceMap, getPresence]);
 
   return (
-    <PresenceCtx.Provider value={{ presenceMap, getPresence, ensureSubscribed, typingMap: new Map(), awayAfterSeconds: 300 }}>
+    <PresenceContext.Provider value={value}>
       {children}
-    </PresenceCtx.Provider>
+    </PresenceContext.Provider>
   );
 }
 
-export function usePresence(uid) {
-  const ctx = React.useContext(PresenceCtx);
-  return ctx.getPresence(uid);
-}
+// No custom usePresence export; components use real hook.

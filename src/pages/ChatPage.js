@@ -1,5 +1,5 @@
 import React from 'react';
-import { ref as databaseRef, onDisconnect as rtdbOnDisconnect, set as rtdbSet, serverTimestamp as rtdbServerTimestamp, update as rtdbUpdate } from 'firebase/database';
+import { ref as databaseRef, onDisconnect as rtdbOnDisconnect, set as rtdbSet, update as rtdbUpdate } from 'firebase/database';
 import { useFirebase } from '../services/FirebaseContext';
 import ChatHeader from '../components/ChatHeader/ChatHeader';
 import ChatRoom from '../components/ChatRoom/ChatRoom';
@@ -17,21 +17,24 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [showSearch, setShowSearch] = React.useState(false);
   // Global drag state no longer needed for border styling (scoped to ChatRoom main)
-  const [globalDragActive, setGlobalDragActive] = React.useState(false);
-  const [globalDragReady, setGlobalDragReady] = React.useState(false);
+  // const [globalDragActive, setGlobalDragActive] = React.useState(false); // retired global drag state
+  // const [globalDragReady, setGlobalDragReady] = React.useState(false);
   const [replyingTo, setReplyingTo] = React.useState(null);
   // Lifted image upload state so drag-drop in ChatRoom can populate ChatInput
   const [selectedImage, setSelectedImage] = React.useState(null);
   const [imagePreview, setImagePreview] = React.useState(null);
   const [uploading, setUploading] = React.useState(false);
   const [profileModalUser, setProfileModalUser] = React.useState(null);
-  const [settingsModalOpen, setSettingsModalOpen] = React.useState(false);
+  // const [settingsModalOpen, setSettingsModalOpen] = React.useState(false); // placeholder for future settings modal
   const [scrollMeta, setScrollMeta] = React.useState({ visible: false, hasNew: false, newCount: 0, scrollToBottom: null });
 
   const getDisplayName = React.useCallback((uid, originalName) => {
     if (uid === user?.uid) return originalName || 'You';
     return originalName || 'Anonymous';
   }, [user?.uid]);
+
+  // Stable no-op used for disabled callbacks
+  const noop = React.useCallback(() => {}, []);
 
   React.useEffect(() => {
     if (!user) return;
@@ -111,7 +114,7 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
             <ChatRoom
               getDisplayName={getDisplayName}
               searchTerm={searchTerm}
-              onDragStateChange={(active, ready) => { setGlobalDragActive(active); setGlobalDragReady(ready); }}
+              onDragStateChange={noop}
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
               onImageDrop={(file) => {

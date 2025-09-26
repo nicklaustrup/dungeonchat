@@ -7,7 +7,7 @@ if [ "$HUSKY_SKIP_TESTS" = "1" ]; then
   exit 0
 fi
 
-echo "[husky] Pre-commit: validating changed JS/TS via related Jest tests"
+echo "[husky] Pre-commit: running ESLint + related Jest tests"
 
 # Ensure dependencies installed (first-clone scenarios). Fast check for react-scripts.
 if ! command -v npx >/dev/null 2>&1 || [ ! -d node_modules ]; then
@@ -28,7 +28,21 @@ for f in $STAGED_JS; do
   echo "  - $f"
 done
 
-echo "[husky] Running related Jest tests (will pass if no matching tests)"
+echo "[husky] Running ESLint on staged files"
+
+eslintCmd="npx eslint"
+if ! command -v npx >/dev/null 2>&1; then
+  echo "[husky] npx not found; skipping eslint"
+else
+  # Run eslint only on staged files (pipe-safe)
+  printf '%s\n' $STAGED_JS | xargs $eslintCmd --max-warnings=0 -- || status=$?
+  if [ "${status:-0}" -ne 0 ]; then
+    echo "[husky] ESLint failed (exit $status). Aborting commit."
+    exit $status
+  fi
+fi
+
+echo "[husky] ESLint passed; running related Jest tests (will pass if no matching tests)"
 
 # Run related tests; if Jest returns 1 (fail) abort; other codes (e.g., no tests) allowed via --passWithNoTests
 printf '%s\n' $STAGED_JS | xargs npm run test:changed -- || status=$?

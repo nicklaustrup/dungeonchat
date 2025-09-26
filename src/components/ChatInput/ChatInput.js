@@ -42,14 +42,16 @@ function ChatInput({
     if (liftedSelectedImage && !imageHook.selectedImage) imageHook.setSelectedImage(liftedSelectedImage);
     if (liftedImagePreview && !imageHook.imagePreview) imageHook.setImagePreview(liftedImagePreview);
     if (typeof liftedUploading === 'boolean' && liftedUploading !== imageHook.uploading) imageHook.setUploading(liftedUploading);
-  }, [liftedSelectedImage, liftedImagePreview, liftedUploading]);
+    // Only react to external lifted props and internal selected/uploading state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liftedSelectedImage, liftedImagePreview, liftedUploading, imageHook.selectedImage, imageHook.imagePreview, imageHook.uploading]);
 
   React.useEffect(() => {
     // push internal state back up to parent for compatibility
     if (setLiftedSelectedImage) setLiftedSelectedImage(imageHook.selectedImage);
     if (setLiftedImagePreview) setLiftedImagePreview(imageHook.imagePreview);
     if (setLiftedUploading) setLiftedUploading(imageHook.uploading);
-  }, [imageHook.selectedImage, imageHook.imagePreview, imageHook.uploading]);
+  }, [setLiftedSelectedImage, setLiftedImagePreview, setLiftedUploading, imageHook.selectedImage, imageHook.imagePreview, imageHook.uploading]);
 
   const { handleInputActivity } = useTypingPresence({ rtdb, user, soundEnabled });
   const { open: emojiOpen, toggle: toggleEmoji, buttonRef: emojiButtonRef, setOnSelect } = useEmojiPicker();

@@ -2,7 +2,8 @@ import React, { createContext, useContext } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, firestore, rtdb, storage, signInWithPopup, signOut, GoogleAuthProvider } from './firebase';
 
-const FirebaseContext = createContext(null);
+// Export the context so Storybook/tests can mock via <FirebaseContext.Provider />
+export const FirebaseContext = createContext(null);
 
 export const FirebaseProvider = ({ children }) => {
   const [user] = useAuthState(auth);
@@ -25,6 +26,4 @@ export const FirebaseProvider = ({ children }) => {
   );
 };
 
-export const useFirebase = () => {
-  return useContext(FirebaseContext);
-};
+export const useFirebase = () => useContext(FirebaseContext);
