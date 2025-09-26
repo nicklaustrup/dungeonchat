@@ -14,12 +14,15 @@ build:
   # these files.
   outputDirectory: "build"
 
-serve:
+run:
   # This command tells App Hosting to start a static file server
   # that serves the contents of the 'build' directory.
   # The '--single' flag ensures that all requests fall back to index.html,
   # which is standard for single-page applications (SPAs) like React.
   # The '-l 8080' specifies the port Cloud Run (which App Hosting uses) expects.
+  command: "npx serve -s build -l $PORT"
+
+serve:
   command: "npx serve -s build -l $PORT"
 
 # Optional: Runtime configuration for the Cloud Run service that serves your app.
