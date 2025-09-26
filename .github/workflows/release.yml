@@ -25,6 +25,19 @@ jobs:
           cache: npm
       - name: Install deps
         run: npm ci
+      - name: Optional build sanity (skip if env vars missing)
+        env:
+          REACT_APP_FIREBASE_API_KEY: ${{ vars.REACT_APP_FIREBASE_API_KEY }}
+          REACT_APP_FIREBASE_AUTH_DOMAIN: ${{ vars.REACT_APP_FIREBASE_AUTH_DOMAIN }}
+          REACT_APP_FIREBASE_PROJECT_ID: ${{ vars.REACT_APP_FIREBASE_PROJECT_ID }}
+          REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ vars.REACT_APP_FIREBASE_STORAGE_BUCKET }}
+          REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.REACT_APP_FIREBASE_MESSAGING_SENDER_ID }}
+          REACT_APP_FIREBASE_APP_ID: ${{ vars.REACT_APP_FIREBASE_APP_ID }}
+          REACT_APP_FIREBASE_DATABASE_URL: ${{ vars.REACT_APP_FIREBASE_DATABASE_URL }}
+        run: |
+          if [ -z "$REACT_APP_FIREBASE_API_KEY" ]; then
+            echo "Firebase env vars not set in repo vars; skipping build sanity."; exit 0; fi
+          npm run build || { echo 'Build failed; aborting release.' >&2; exit 1; }
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
