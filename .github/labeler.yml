@@ -1,0 +1,17 @@
+# Auto labeling rules
+backend:
+  - 'functions/**'
+ui:
+  - 'src/components/**'
+  - 'src/stories/**'
+context:
+  - 'src/services/**'
+  - 'src/hooks/**'
+styles:
+  - 'src/**/*.css'
+config:
+  - '.github/**'
+  - 'firebase.json'
+  - 'apphosting.yaml'
+tests:
+  - 'src/tests/**'

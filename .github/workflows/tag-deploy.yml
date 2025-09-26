@@ -1,0 +1,79 @@
+name: Tag Deploy
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-rc.*'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force deploy latest build from main to production hosting'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_DEPLOY_TOKEN }}
+      FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install deps
+        run: npm ci
+
+      - name: Build app
+        env:
+          REACT_APP_FIREBASE_API_KEY: ${{ vars.REACT_APP_FIREBASE_API_KEY }}
+          REACT_APP_FIREBASE_AUTH_DOMAIN: ${{ vars.REACT_APP_FIREBASE_AUTH_DOMAIN }}
+          REACT_APP_FIREBASE_PROJECT_ID: ${{ vars.REACT_APP_FIREBASE_PROJECT_ID }}
+          REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ vars.REACT_APP_FIREBASE_STORAGE_BUCKET }}
+          REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.REACT_APP_FIREBASE_MESSAGING_SENDER_ID }}
+          REACT_APP_FIREBASE_APP_ID: ${{ vars.REACT_APP_FIREBASE_APP_ID }}
+          REACT_APP_FIREBASE_DATABASE_URL: ${{ vars.REACT_APP_FIREBASE_DATABASE_URL }}
+        run: npm run build
+
+      - name: Install firebase-tools
+        run: npm install -g firebase-tools
+
+      - name: Validate secrets
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then echo 'Missing FIREBASE_DEPLOY_TOKEN' >&2; exit 1; fi
+          if [ -z "$FIREBASE_PROJECT_ID" ]; then echo 'Missing FIREBASE_PROJECT_ID' >&2; exit 1; fi
+
+      - name: Determine channel
+        id: channel
+        run: |
+          REF="${GITHUB_REF#refs/tags/}"
+          if [[ "$REF" == *-rc.* ]]; then
+            echo 'channel=canary' >> $GITHUB_OUTPUT
+          else
+            echo 'channel=live' >> $GITHUB_OUTPUT
+          fi
+          echo "Detected tag: $REF"
+
+      - name: Deploy (live)
+        if: steps.channel.outputs.channel == 'live' || inputs.force == 'true'
+        run: |
+          firebase deploy --only hosting,functions --project $FIREBASE_PROJECT_ID --token "$FIREBASE_TOKEN" --non-interactive
+
+      - name: Deploy (canary preview channel)
+        if: steps.channel.outputs.channel == 'canary'
+        run: |
+          # Use a preview channel named 'canary' (auto-created if absent) expiring after 7d
+          firebase hosting:channel:deploy canary --project $FIREBASE_PROJECT_ID --token "$FIREBASE_TOKEN" --expires 7d
