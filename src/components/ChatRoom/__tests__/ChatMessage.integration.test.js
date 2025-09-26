@@ -57,15 +57,16 @@ describe('ChatMessage integration', () => {
   test('renders text and opens options menu', () => {
     renderMessage();
     expect(screen.getByText(/hello world/i)).toBeInTheDocument();
-    const menuBtn = screen.getAllByRole('button', { name: /options/i })[0];
-    fireEvent.click(menuBtn);
+    // Simulate desktop hover by focusing the message (hover CSS not applied in JSDOM, but button is present in DOM)
+    const optionsBtn = screen.getByLabelText(/options/i);
+    fireEvent.click(optionsBtn);
     expect(screen.getByRole('menu', { name: /message options/i })).toBeInTheDocument();
   });
 
   test('edit flow: enter editing then save', async () => {
     const { updateDoc } = require('firebase/firestore');
     renderMessage();
-    fireEvent.click(screen.getAllByRole('button', { name: /options/i })[0]);
+  fireEvent.click(screen.getByLabelText(/options/i));
     fireEvent.click(screen.getByRole('menuitem', { name: /edit/i }));
     const ta = screen.getByLabelText(/edit message text/i);
     fireEvent.change(ta, { target: { value: 'New text' } });
@@ -77,7 +78,7 @@ describe('ChatMessage integration', () => {
   test('delete confirmation appears and triggers updateDoc', async () => {
     const { updateDoc } = require('firebase/firestore');
     renderMessage();
-    fireEvent.click(screen.getAllByRole('button', { name: /options/i })[0]);
+  fireEvent.click(screen.getByLabelText(/options/i));
     fireEvent.click(screen.getByRole('menuitem', { name: /delete/i }));
     expect(screen.getByTestId('delete-confirm-modal')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /^delete$/i }));

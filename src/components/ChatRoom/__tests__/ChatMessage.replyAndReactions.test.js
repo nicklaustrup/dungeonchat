@@ -74,7 +74,7 @@ describe('ChatMessage reply navigation & reactions', () => {
   test('reaction toggle triggers hook callback (emoji captured)', () => {
     const msg = buildMessage({ id: 'm2', text: 'Reactable' });
     render(<ChatMessage message={msg} searchTerm="" getDisplayName={(uid, name) => name} />);
-    const firstReactionBtn = screen.getByRole('button', { name: /react to message with 👍/i });
+  const firstReactionBtn = screen.getAllByTestId('reaction-btn')[0];
     fireEvent.click(firstReactionBtn);
     expect(lastToggleArgs).toBe('👍');
   });
