@@ -7,11 +7,15 @@ jest.mock('../../services/presenceService', () => ({
 }));
 
 jest.mock('../../utils/sound', () => ({
-  playTypingSound: jest.fn()
+  playTypingSound: jest.fn(),
+  playTapSound: jest.fn(),
+  playSendMessageSound: jest.fn(),
+  playReceiveMessageSound: jest.fn(),
+  beginTypingLoop: jest.fn(),
+  endTypingLoop: jest.fn()
 }));
 
 import { setTyping, refreshPresence } from '../../services/presenceService';
-import { playTypingSound } from '../../utils/sound';
 
 describe('useTypingPresence', () => {
   const base = { rtdb: {}, user: { uid: 'u1', displayName: 'Alice' }, soundEnabled: true };

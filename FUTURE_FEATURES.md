@@ -47,6 +47,9 @@
 - Markdown Formatting (bold, italics, inline/code blocks) with sanitization (DOMPurify).
 - Theming (Light / Dark / System) via CSS variables + persisted preference.
 - Internationalization scaffold (i18next or react-intl) early to avoid string fragmentation.
+- Per-User Mute (Future): Allow muting specific users' notification sounds while still displaying their messages.\
+	Implementation sketch: maintain a local (and optionally synced) mutedUserIds set. When a new message arrives, suppress `playReceiveMessageSound` if `message.uid` is muted. UI: contextual menu action "Mute @User" with undo in a settings panel. Persist to localStorage first; later sync via `/users/{uid}/preferences` document. Accessibility: still announce new messages to screen readers.
+- Volume Adjuster (Future): Settings modal slider(s) for master volume (and potentially per sound category: send, receive, typing). Persist in localStorage; apply by scaling each audio element's base volume. Provide live preview button with reduced motion consideration.
 
 ---
 

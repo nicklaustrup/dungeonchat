@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import ChatInput from '../../components/ChatInput/ChatInput';
 
 // Mock firebase context hook
@@ -13,7 +13,15 @@ jest.mock('../../services/FirebaseContext', () => ({
 }));
 
 // Mock sound to avoid audio operations
-jest.mock('../../utils/sound', () => ({ playNotificationSound: jest.fn(), playTypingSound: jest.fn() }));
+jest.mock('../../utils/sound', () => ({
+  playNotificationSound: jest.fn(), // legacy alias
+  playTypingSound: jest.fn(),
+  playSendMessageSound: jest.fn(),
+  playReceiveMessageSound: jest.fn(),
+  playTapSound: jest.fn(),
+  beginTypingLoop: jest.fn(),
+  endTypingLoop: jest.fn()
+}));
 
 // Mock image/upload + message service chain
 jest.mock('../../services/imageUploadService', () => ({

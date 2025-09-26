@@ -3,31 +3,12 @@ import { useFirebase } from '../../services/FirebaseContext';
 import { useTypingUsers } from '../../hooks/useTypingUsers';
 import './TypingBubble.css';
 
-import { playTypingSound } from '../../utils/sound';
 
 function TypingBubble({ users, soundEnabled }) {
   const { rtdb, auth } = useFirebase();
   const hookUsers = useTypingUsers({ rtdb, currentUid: auth.currentUser?.uid });
   const typingUsers = users || hookUsers;
-  const prevIdsRef = React.useRef(new Set());
-  const lastPlayRef = React.useRef(0);
-
-  React.useEffect(() => {
-    if (!typingUsers || typingUsers.length === 0) {
-      prevIdsRef.current.clear();
-      return;
-    }
-    const nowIds = new Set(typingUsers.map(u => u.uid));
-    // Detect if any new uid started typing this frame
-    let newCount = 0;
-    nowIds.forEach(id => { if (!prevIdsRef.current.has(id)) newCount++; });
-    const now = Date.now();
-    if (newCount > 0 && soundEnabled && (now - lastPlayRef.current > 1200)) {
-      playTypingSound(true, { multiple: newCount > 1, count: newCount, withReverb: true });
-      lastPlayRef.current = now;
-    }
-    prevIdsRef.current = nowIds;
-  }, [typingUsers, soundEnabled]);
+  // Removed remote typing tap sounds per updated requirement.
 
   if (!typingUsers || !typingUsers.length) return null;
   const names = typingUsers.slice(0,3).map(u => u.displayName || 'Someone');

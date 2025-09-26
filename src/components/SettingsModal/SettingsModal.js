@@ -6,11 +6,11 @@ function SettingsModal({ isOpen, onClose, isDarkTheme, toggleTheme, soundEnabled
   const { enabled: perfEnabled, toggle: togglePerf } = usePerformanceMode();
   const warnedRef = React.useRef(false);
   const pendingRef = React.useRef(null);
-  const [localMinutes, setLocalMinutes] = React.useState(() => Math.round(awayAfterSeconds/60));
+  const [localMinutes, setLocalMinutes] = React.useState(() => Math.round(awayAfterSeconds / 60));
 
   React.useEffect(() => {
     // sync when external value changes (e.g., reset elsewhere)
-    setLocalMinutes(Math.round(awayAfterSeconds/60));
+    setLocalMinutes(Math.round(awayAfterSeconds / 60));
   }, [awayAfterSeconds]);
 
   const commit = React.useCallback((mins) => {
@@ -63,28 +63,28 @@ function SettingsModal({ isOpen, onClose, isDarkTheme, toggleTheme, soundEnabled
             {perfEnabled ? '⚡' : '⏳'}
           </button>
         </div>
-        <div className="settings-item column">
-          <label htmlFor="away-timeout-range" style={{display:'flex', justifyContent:'space-between', width:'100%'}}>
-            <span>Away Timeout</span>
-            <span style={{fontVariantNumeric:'tabular-nums'}}>{localMinutes}m</span>
-          </label>
-          <input
-            id="away-timeout-range"
-            type="range"
-            min={1}
-            max={60}
-            value={localMinutes}
-            onChange={handleRangeChange}
-            title="Minutes of inactivity before showing Away"
-          />
-          <div style={{display:'flex', justifyContent:'space-between', width:'100%', marginTop:4}}>
-            <button className="icon-btn" onClick={handleReset} title="Reset to 5 minutes">Reset</button>
-            <small style={{opacity:0.7}}>Updates debounced</small>
+        <div className="settings-item" style={{ gap: '1rem' }}>
+          <span>Away Timeout</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'flex-end' }}>
+            <input
+              id="away-timeout-range"
+              type="range"
+              min={1}
+              max={60}
+              value={localMinutes}
+              onChange={handleRangeChange}
+              title="Minutes of inactivity before showing Away"
+              style={{ width: '100%' }}
+            />
+            <span style={{ fontVariantNumeric: 'tabular-nums', minWidth: '3ch', textAlign: 'right' }}>{localMinutes}m</span>
+            <button className="icon-btn watch" onClick={handleReset} title="Reset to 5 minutes">
+              <span role="img" aria-label="Watch" aria-hidden={false}>⌚</span>
+            </button>
           </div>
         </div>
         <button className="settings-close" onClick={onClose}>Close</button>
       </div>
-    </div>
+    </div >
   );
 }
 

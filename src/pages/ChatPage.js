@@ -126,6 +126,7 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
               }}
               onViewProfile={handleViewProfile}
               onScrollMeta={setScrollMeta}
+              soundEnabled={soundEnabled}
             />
             <div className="chatroom-overlays">
               <TypingBubble soundEnabled={soundEnabled} />

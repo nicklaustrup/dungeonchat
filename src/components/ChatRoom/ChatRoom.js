@@ -1,5 +1,6 @@
 import React from 'react';
 import { useFirebase } from '../../services/FirebaseContext';
+import { playReceiveMessageSound } from '../../utils/sound';
 import { useDragAndDropImages } from '../../hooks/useDragAndDropImages';
 // import { useTypingUsers } from '../../hooks/useTypingUsers'; // currently unused
 import { useReplyState } from '../../hooks/useReplyState';
@@ -11,8 +12,8 @@ import DragOverlay from './DragOverlay';
 import MessageList from './MessageList';
 
 
-function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, setReplyingTo, onImageDrop, onViewProfile, onScrollMeta }) {
-  const { firestore /* auth, rtdb */ } = useFirebase();
+function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, setReplyingTo, onImageDrop, onViewProfile, onScrollMeta, soundEnabled = true }) {
+  const { firestore, auth /* rtdb */ } = useFirebase();
   const dummy = React.useRef();
   const mainRef = React.useRef();
   const { messages, loadMore, hasMore } = useChatMessages({ firestore, limitBatchSize: 25, maxLimit: 100 });
@@ -25,6 +26,20 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
   });
 
   const sortedMessages = messages;
+
+  // Play receive sound when a new message arrives from another user (excluding initial load)
+  const prevLatestIdRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!messages.length) return;
+    const latest = messages[messages.length - 1];
+    if (!latest) return;
+    const prevId = prevLatestIdRef.current;
+    prevLatestIdRef.current = latest.id;
+    if (!prevId) return; // skip initial hydration
+    if (soundEnabled && latest.uid && latest.uid !== auth?.currentUser?.uid) {
+      playReceiveMessageSound(true);
+    }
+  }, [messages, auth, soundEnabled]);
 
   const { isAtBottom, hasNew: hasNewMessages, newCount: newMessagesCount, scrollToBottom } = useAutoScroll({
     containerRef: mainRef,

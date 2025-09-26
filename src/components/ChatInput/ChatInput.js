@@ -1,7 +1,7 @@
 import React from 'react';
 import './ChatInput.css';
 import { useFirebase } from '../../services/FirebaseContext';
-import { playNotificationSound } from '../../utils/sound';
+import { playSendMessageSound } from '../../utils/sound';
 import { createTextMessage } from '../../services/messageService';
 import { useImageMessage } from '../../hooks/useImageMessage';
 import { useTypingPresence } from '../../hooks/useTypingPresence';
@@ -34,7 +34,7 @@ function ChatInput({
     user,
     getDisplayName,
     soundEnabled,
-    playSendSound: () => playNotificationSound(true)
+  playSendSound: () => playSendMessageSound(true)
   });
 
   // If parent still passes lifted state, sync it (transition support)
@@ -78,7 +78,7 @@ function ChatInput({
       await createTextMessage({ firestore, text, user, getDisplayName, replyTo: replyingTo });
       setText('');
       setReplyingTo(null);
-      if (soundEnabled) playNotificationSound(true);
+  if (soundEnabled) playSendMessageSound(true);
       if (forceScrollBottom) setTimeout(() => forceScrollBottom(), 10);
     } catch (err) {
       console.error('Error sending message', err);
