@@ -20,7 +20,7 @@ serve:
   # The '--single' flag ensures that all requests fall back to index.html,
   # which is standard for single-page applications (SPAs) like React.
   # The '-l 8080' specifies the port Cloud Run (which App Hosting uses) expects.
-  command: "npx serve -s build -l 8080"
+  command: "npx serve -s build -l $PORT"
 
 # Optional: Runtime configuration for the Cloud Run service that serves your app.
 # Since your React app will be served as static files after building,
