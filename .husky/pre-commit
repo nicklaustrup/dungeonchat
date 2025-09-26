@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+. "$(dirname "$0")/_/husky.sh"
+
+echo "[husky] Running pre-commit quality gates (tests on staged files)"
+
+# Run lint-staged to execute related tests for changed JS/TS files
+npx lint-staged || { echo "Tests failed. Commit aborted."; exit 1; }
+
+echo "[husky] Pre-commit checks passed"

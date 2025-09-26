@@ -1,20 +1,17 @@
 import React from 'react';
-// Removed nickname feature: no Firestore user profile updates needed here now
 import { ref as databaseRef, onDisconnect as rtdbOnDisconnect, set as rtdbSet, serverTimestamp as rtdbServerTimestamp, update as rtdbUpdate } from 'firebase/database';
 import { useFirebase } from '../services/FirebaseContext';
 import ChatHeader from '../components/ChatHeader/ChatHeader';
-import { ensureAudioReady } from '../utils/sound';
 import ChatRoom from '../components/ChatRoom/ChatRoom';
 import ChatInput from '../components/ChatInput/ChatInput';
 import SignIn from '../components/SignIn/SignIn';
 import UserProfileModal from '../components/UserProfileModal/UserProfileModal';
-import SettingsModal from '../components/SettingsModal/SettingsModal';
 import '../components/UserProfileModal/UserProfileModal.css';
 import TypingBubble from '../components/TypingBubble/TypingBubble';
 import ScrollToBottomButton from '../components/ChatRoom/ScrollToBottomButton';
 
 function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
-  const { user, firestore, rtdb } = useFirebase();
+  const { user, rtdb } = useFirebase();
   const [isDarkTheme, setIsDarkTheme] = React.useState(true);
   const [soundEnabled, setSoundEnabled] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
