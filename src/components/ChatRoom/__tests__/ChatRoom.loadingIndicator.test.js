@@ -10,14 +10,13 @@ jest.mock('../../../hooks/useChatMessages', () => ({
 jest.mock('../../../hooks/useInfiniteScrollTop', () => ({
   useInfiniteScrollTop: jest.fn()
 }));
-jest.mock('../../../hooks/useAutoScrollV2', () => ({
-  useAutoScrollV2: () => ({ isAtBottom: true, hasNew: false, newCount: 0, scrollToBottom: jest.fn() })
-}));
-jest.mock('../../../hooks/useScrollPrependRestoration', () => ({
-  useScrollPrependRestoration: () => ({
-    markBeforeLoadMore: jest.fn(),
-    handleAfterMessages: jest.fn(),
-    ignoreBottomRef: { current: false }
+jest.mock('../../../hooks/useUnifiedScrollManager', () => ({
+  useUnifiedScrollManager: () => ({ 
+    isAtBottom: true, 
+    hasNewMessages: false, 
+    newMessagesCount: 0, 
+    scrollToBottom: jest.fn(),
+    captureBeforeLoadMore: jest.fn()
   })
 }));
 jest.mock('../../../hooks/useMessageSearch', () => ({

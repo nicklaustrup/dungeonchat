@@ -219,6 +219,13 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     
     // Classify the change
     const classification = classifyMessageDiff(prevMessages, currentMessages);
+    
+    // Handle case where classification might be null/undefined
+    if (!classification) {
+      prevMessagesRef.current = currentMessages;
+      return;
+    }
+    
     const { didAppend, didPrepend, newMessages, appendedCount } = classification;
     
     if (process.env.NODE_ENV === 'development') {
@@ -261,8 +268,11 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
   
   // Initialize bottom state
   React.useEffect(() => {
-    const initialCheck = checkIfAtBottom();
-    setIsAtBottom(initialCheck);
+    // Initial check should happen after container is set up
+    requestAnimationFrame(() => {
+      const initialCheck = checkIfAtBottom();
+      setIsAtBottom(initialCheck);
+    });
   }, [checkIfAtBottom]);
   
   return {
