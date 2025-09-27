@@ -58,6 +58,18 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
     threshold: 60, // Single threshold for clean behavior
   });
 
+  // Debug logging
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ChatRoom: scroll state changed', { 
+        isAtBottom, 
+        hasNewMessages, 
+        newMessagesCount,
+        messageCount: sortedMessages.length 
+      });
+    }
+  }, [isAtBottom, hasNewMessages, newMessagesCount, sortedMessages.length]);
+
   // Notify parent about scroll meta for external button positioning.
   const lastMetaRef = React.useRef(null);
   React.useEffect(() => {
@@ -139,7 +151,13 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
     const prev = lastBoundaryRef.current;
     if (prev.len === len && prev.first === first && prev.last === last) return; // no meaningful change
     lastBoundaryRef.current = { len, first, last };
-    restoration.handleAfterMessages(messages);
+    
+    // TEMPORARILY DISABLED: restoration.handleAfterMessages(messages);
+    // This might be conflicting with V2 scroll logic
+    // const classification = restoration.handleAfterMessages(messages);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ChatRoom: restoration disabled for testing');
+    }
   }, [messages, restoration]);
 
   const { isDragActive, imageReady: imageDragReady, bind: dragBind } = useDragAndDropImages({

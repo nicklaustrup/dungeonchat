@@ -39,7 +39,8 @@ export function useAutoScrollV2({ containerRef, anchorRef, items, threshold = 10
   
   // Check if user is at bottom
   const checkAtBottom = React.useCallback(() => {
-    return computeDistance() <= threshold;
+    const distance = computeDistance();
+    return distance <= threshold;
   }, [computeDistance, threshold]);
   
   // Scroll to bottom function
@@ -49,7 +50,25 @@ export function useAutoScrollV2({ containerRef, anchorRef, items, threshold = 10
     
     if (!el) return;
     
-    // Try anchor scroll first (better for accessibility)
+    // For 'auto' behavior (initial load), use direct scroll for reliability
+    if (behavior === 'auto' || behavior === 'instant') {
+      requestAnimationFrame(() => {
+        const targetTop = Math.max(0, el.scrollHeight - el.clientHeight);
+        el.scrollTop = targetTop;
+        
+        // Update state based on actual position after scroll
+        requestAnimationFrame(() => {
+          const actuallyAtBottom = checkAtBottom();
+          setIsAtBottom(actuallyAtBottom);
+          if (actuallyAtBottom) {
+            setUnreadCount(0);
+          }
+        });
+      });
+      return;
+    }
+    
+    // For smooth scrolling, try anchor first
     if (anchor && typeof anchor.scrollIntoView === 'function') {
       try {
         anchor.scrollIntoView({ behavior, block: 'end' });
@@ -61,17 +80,18 @@ export function useAutoScrollV2({ containerRef, anchorRef, items, threshold = 10
     // Ensure we're truly at bottom
     requestAnimationFrame(() => {
       const targetTop = Math.max(0, el.scrollHeight - el.clientHeight);
-      if (behavior === 'auto' || behavior === 'instant') {
-        el.scrollTop = targetTop;
-      } else {
-        el.scrollTo({ top: targetTop, behavior });
-      }
+      el.scrollTo({ top: targetTop, behavior });
       
-      // Update state to reflect we're now at bottom
-      setIsAtBottom(true);
-      setUnreadCount(0);
+      // Update state based on actual position after scroll
+      requestAnimationFrame(() => {
+        const actuallyAtBottom = checkAtBottom();
+        setIsAtBottom(actuallyAtBottom);
+        if (actuallyAtBottom) {
+          setUnreadCount(0);
+        }
+      });
     });
-  }, [containerRef, anchorRef]);
+  }, [containerRef, anchorRef, checkAtBottom]);
   
   // Handle scroll events
   React.useEffect(() => {
@@ -81,6 +101,15 @@ export function useAutoScrollV2({ containerRef, anchorRef, items, threshold = 10
     let rafId = null;
     
     const handleScroll = () => {
+      // Skip scroll detection if restoration hook is temporarily ignoring
+      if (el.__IGNORE_BOTTOM_ONCE__) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('V2 hook: ignoring scroll event (restoration flag set)');
+        }
+        el.__IGNORE_BOTTOM_ONCE__ = false; // reset flag
+        return;
+      }
+      
       // Debounce with RAF for performance
       if (rafId) return;
       
@@ -123,6 +152,9 @@ export function useAutoScrollV2({ containerRef, anchorRef, items, threshold = 10
     
     // Initial load - always scroll to bottom
     if (isInitialLoadRef.current) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('V2 hook: initial load detected, scrolling to bottom');
+      }
       isInitialLoadRef.current = false;
       prevItemsLengthRef.current = currentLength;
       prevFirstIdRef.current = currentFirstId;
@@ -162,15 +194,29 @@ export function useAutoScrollV2({ containerRef, anchorRef, items, threshold = 10
     if (hasNewMessages) {
       const newMessageCount = currentLength - prevLength;
       
-      if (isAtBottom) {
+      // Debug logging for development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('V2 hook: detected new messages', { newMessageCount, currentLastId, prevLastId });
+      }
+      
+      // Check current position instead of relying on state
+      const currentlyAtBottom = checkAtBottom();
+      
+      if (currentlyAtBottom) {
         // User at bottom: auto-scroll to show new messages
+        if (process.env.NODE_ENV === 'development') {
+          console.log('V2 hook: auto-scrolling to new messages');
+        }
         scrollToBottom('auto');
       } else {
         // User scrolled up: increment unread count
+        if (process.env.NODE_ENV === 'development') {
+          console.log('V2 hook: incrementing unread count');
+        }
         setUnreadCount(prev => prev + newMessageCount);
       }
     }
-  }, [items, isAtBottom, scrollToBottom]);
+  }, [items, isAtBottom, scrollToBottom, checkAtBottom]);
   
   // Handle image loads - re-scroll if at bottom
   React.useEffect(() => {

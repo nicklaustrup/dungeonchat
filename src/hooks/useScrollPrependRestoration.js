@@ -47,7 +47,18 @@ export function useScrollPrependRestoration(containerRef, { ignoreBottomFrames =
   const restoreIfNeeded = React.useCallback((classification) => {
     if (!classification) return;
     const { didPrepend, prependedCount, didAppend, reset } = classification;
-    if (!didPrepend || didAppend || reset) return; // only restore for pure prepend
+    
+    // Debug logging for development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Restoration hook classification:', { didPrepend, prependedCount, didAppend, reset });
+    }
+    
+    if (!didPrepend || didAppend || reset) {
+      if (process.env.NODE_ENV === 'development' && (didAppend || reset)) {
+        console.log('Restoration hook: skipping restore (append or reset detected)');
+      }
+      return; // only restore for pure prepend
+    }
     const el = containerRef.current;
     if (!el || !beforeRef.current) return;
     const prev = beforeRef.current;
