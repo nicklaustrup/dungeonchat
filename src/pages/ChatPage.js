@@ -1,6 +1,7 @@
 import React from 'react';
 import { ref as databaseRef, onDisconnect as rtdbOnDisconnect, set as rtdbSet, update as rtdbUpdate } from 'firebase/database';
 import { useFirebase } from '../services/FirebaseContext';
+import { useChatState, useChatTheme, useChatSound, useChatSearch, useChatReply, useChatImage, useChatScroll } from '../contexts/ChatStateContext';
 import ChatHeader from '../components/ChatHeader/ChatHeader';
 import ChatRoom from '../components/ChatRoom/ChatRoom';
 import ChatInput from '../components/ChatInput/ChatInput';
@@ -10,23 +11,17 @@ import ScrollToBottomButton from '../components/ChatRoom/ScrollToBottomButton';
 // Lazy load rarely used profile modal for bundle splitting (Phase 2)
 const UserProfileModal = React.lazy(() => import('../components/UserProfileModal/UserProfileModal'));
 
-function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
+function ChatPage() {
   const { user, rtdb } = useFirebase();
-  const [isDarkTheme, setIsDarkTheme] = React.useState(true);
-  const [soundEnabled, setSoundEnabled] = React.useState(true);
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [showSearch, setShowSearch] = React.useState(false);
-  // Global drag state no longer needed for border styling (scoped to ChatRoom main)
-  // const [globalDragActive, setGlobalDragActive] = React.useState(false); // retired global drag state
-  // const [globalDragReady, setGlobalDragReady] = React.useState(false);
-  const [replyingTo, setReplyingTo] = React.useState(null);
-  // Lifted image upload state so drag-drop in ChatRoom can populate ChatInput
-  const [selectedImage, setSelectedImage] = React.useState(null);
-  const [imagePreview, setImagePreview] = React.useState(null);
-  const [uploading, setUploading] = React.useState(false);
-  const [profileModalUser, setProfileModalUser] = React.useState(null);
-  // const [settingsModalOpen, setSettingsModalOpen] = React.useState(false); // placeholder for future settings modal
-  const [scrollMeta, setScrollMeta] = React.useState({ visible: false, hasNew: false, newCount: 0, scrollToBottom: null });
+  const { state, actions } = useChatState();
+  
+  // Convenient hooks for specific state slices
+  const { isDarkTheme, toggleTheme } = useChatTheme();
+  const { soundEnabled, toggleSound } = useChatSound();
+  const { searchTerm, showSearch, setSearch } = useChatSearch();
+  const { replyingTo, setReplyingTo } = useChatReply();
+  const { handleImageDrop } = useChatImage();
+  const { scrollMeta, setScrollMeta } = useChatScroll();
 
   const getDisplayName = React.useCallback((uid, originalName) => {
     if (uid === user?.uid) return originalName || 'You';
@@ -35,6 +30,11 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
 
   // Stable no-op used for disabled callbacks
   const noop = React.useCallback(() => {}, []);
+
+  // Persistence for away seconds (moved from App.js)
+  React.useEffect(() => {
+    localStorage.setItem('awayAfterSeconds', String(state.awayAfterSeconds));
+  }, [state.awayAfterSeconds]);
 
   React.useEffect(() => {
     if (!user) return;
@@ -79,15 +79,9 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
     document.body.className = isDarkTheme ? 'dark-theme' : 'light-theme';
   }, [isDarkTheme]);
 
-  // Removed eager audio init to prevent autoplay warnings; context unlock handled on first gesture.
-
-  const toggleTheme = () => setIsDarkTheme(!isDarkTheme);
-  const toggleSound = () => setSoundEnabled(!soundEnabled);
-
   const handleViewProfile = (profileUser) => {
     if (profileUser) {
-      // Ensure we have the full user object if needed, for now this is fine
-      setProfileModalUser(profileUser);
+      actions.setProfileModal(profileUser);
     }
   };
 
@@ -100,12 +94,12 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
         soundEnabled={soundEnabled}
         toggleSound={toggleSound}
         showSearch={showSearch}
-        setShowSearch={setShowSearch}
+        setShowSearch={(show) => setSearch(searchTerm, show)}
         searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
+        setSearchTerm={(term) => setSearch(term, showSearch)}
         onViewProfile={handleViewProfile}
-        awayAfterSeconds={awayAfterSeconds}
-        setAwayAfterSeconds={setAwayAfterSeconds}
+        awayAfterSeconds={state.awayAfterSeconds}
+        setAwayAfterSeconds={actions.setAwaySeconds}
       />
       <section>
         {user ? (
@@ -117,18 +111,7 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
               onDragStateChange={noop}
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
-              onImageDrop={(file) => {
-                if (!file) return;
-                // Instead of directly setting lifted state (which can race with controlled sync),
-                // we dispatch a custom event the ChatInput can listen to in future if needed.
-                // For now we still set lifted state but ensure preview generation mirrors file input logic.
-                setSelectedImage(file);
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                  setImagePreview(e.target.result);
-                };
-                reader.readAsDataURL(file);
-              }}
+              onImageDrop={handleImageDrop}
               onViewProfile={handleViewProfile}
               onScrollMeta={setScrollMeta}
               soundEnabled={soundEnabled}
@@ -150,12 +133,6 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
               soundEnabled={soundEnabled}
-              selectedImage={selectedImage}
-              setSelectedImage={setSelectedImage}
-              imagePreview={imagePreview}
-              setImagePreview={setImagePreview}
-              uploading={uploading}
-              setUploading={setUploading}
               forceScrollBottom={() => scrollMeta.scrollToBottom && scrollMeta.scrollToBottom('auto')}
             />
           </>
@@ -164,11 +141,11 @@ function ChatPage({ awayAfterSeconds, setAwayAfterSeconds }) {
         )}
       </section>
       <React.Suspense fallback={null}>
-        {profileModalUser && (
+        {state.profileModalUser && (
           <UserProfileModal
-            user={profileModalUser}
-            isOpen={!!profileModalUser}
-            onClose={() => setProfileModalUser(null)}
+            user={state.profileModalUser}
+            isOpen={!!state.profileModalUser}
+            onClose={() => actions.setProfileModal(null)}
           />
         )}
       </React.Suspense>

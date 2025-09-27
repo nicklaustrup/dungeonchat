@@ -1,13 +1,9 @@
-// ChatRoom Component - V2 Implementation Only
-// Migrated from V1 on 2025-09-27T02:57:53.091Z
-// All feature flags and A/B comparison logic removed
-
 import React from 'react';
 import { useFirebase } from '../../services/FirebaseContext';
+import { useChatReply } from '../../contexts/ChatStateContext';
 import { playReceiveMessageSound } from '../../utils/sound';
 import { useDragAndDropImages } from '../../hooks/useDragAndDropImages';
 // import { useTypingUsers } from '../../hooks/useTypingUsers'; // currently unused
-import { useReplyState } from '../../hooks/useReplyState';
 import { useChatMessages } from '../../hooks/useChatMessages';
 import { useAutoScrollV2 } from '../../hooks/useAutoScrollV2';
 import { useInfiniteScrollTop } from '../../hooks/useInfiniteScrollTop';
@@ -16,21 +12,19 @@ import { useScrollPrependRestoration } from '../../hooks/useScrollPrependRestora
 import DragOverlay from './DragOverlay';
 import MessageList from './MessageList';
 
-function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, setReplyingTo, onImageDrop, onViewProfile, onScrollMeta, soundEnabled = true }) {
+function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, onViewProfile, onScrollMeta, soundEnabled = true }) {
   const { firestore, auth /* rtdb */ } = useFirebase();
   const dummy = React.useRef();
   const mainRef = React.useRef();
+  
+  // Use centralized reply state instead of prop drilling
+  const { replyingTo, setReplyingTo } = useChatReply();
   // Allow deeper history than the previous hard cap of 100. Defaults to 1000 (configurable via env).
   const historyCap = Number(process.env.REACT_APP_CHAT_MAX_HISTORY) || 1000; // can be raised safely; consider virtualization > ~1500
   const { messages, loadMore, hasMore } = useChatMessages({ firestore, limitBatchSize: 25, maxLimit: historyCap });
   const restoration = useScrollPrependRestoration(mainRef);
 
   // const typingUsers = useTypingUsers({ rtdb, currentUid: auth.currentUser?.uid }); // reserved for future feature
-  const { setReplyTarget } = useReplyState({
-    getDisplayName,
-    externalReply: replyingTo,
-    setExternalReply: setReplyingTo
-  });
 
   const sortedMessages = messages;
 
@@ -202,7 +196,7 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
           messages={filteredMessages}
           searchTerm={searchTerm}
           replyingToId={replyingTo?.id}
-          onReply={setReplyTarget}
+          onReply={setReplyingTo}
           onViewProfile={onViewProfile}
           showTyping={false}
           typingUsers={[]}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ChatRoom from '../ChatRoom';
+import { ChatStateProvider } from '../../../contexts/ChatStateContext';
 
 // Mock dependent hooks to isolate loading sentinel / start marker rendering
 jest.mock('../../../hooks/useChatMessages', () => ({
@@ -45,25 +46,31 @@ describe('ChatRoom top sentinel + history marker', () => {
     getDisplayName: () => 'User',
     searchTerm: '',
     onDragStateChange: jest.fn(),
-    replyingTo: null,
-    setReplyingTo: jest.fn(),
     onImageDrop: jest.fn(),
     onViewProfile: jest.fn(),
     onScrollMeta: jest.fn(),
     soundEnabled: false
   };
 
+  const renderWithContext = (props) => {
+    return render(
+      <ChatStateProvider>
+        <ChatRoom {...props} />
+      </ChatStateProvider>
+    );
+  };
+
   test('shows loading older indicator when fetching and hasMore', () => {
     useChatMessages.mockReturnValue({ messages: [{ id: 'm1' }], loadMore: jest.fn(), hasMore: true });
     useInfiniteScrollTop.mockReturnValue({ sentinelRef: { current: null }, isFetching: true });
-    render(<ChatRoom {...baseProps} />);
+    renderWithContext(baseProps);
     expect(screen.getByText(/Loading older messages/i)).toBeInTheDocument();
   });
 
   test('shows start of conversation marker when no more history', () => {
     useChatMessages.mockReturnValue({ messages: [{ id: 'm1' }], loadMore: jest.fn(), hasMore: false });
     useInfiniteScrollTop.mockReturnValue({ sentinelRef: { current: null }, isFetching: false });
-    render(<ChatRoom {...baseProps} />);
+    renderWithContext(baseProps);
     expect(screen.getByText(/Start of conversation/i)).toBeInTheDocument();
   });
 });

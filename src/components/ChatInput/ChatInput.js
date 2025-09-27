@@ -3,6 +3,7 @@ import './ChatInput.css';
 import { useFirebase } from '../../services/FirebaseContext';
 import { playSendMessageSound } from '../../utils/sound';
 import { createTextMessage } from '../../services/messageService';
+import { useChatReply, useChatImage } from '../../contexts/ChatStateContext';
 import { useImageMessage } from '../../hooks/useImageMessage';
 import { useTypingPresence } from '../../hooks/useTypingPresence';
 import { useEmojiPicker } from '../../hooks/useEmojiPicker';
@@ -12,65 +13,40 @@ import { MessageBar } from './MessageBar';
 
 function ChatInput({
   getDisplayName,
-  replyingTo,
-  setReplyingTo,
   soundEnabled,
-  selectedImage: liftedSelectedImage, // legacy props (will phase out)
-  setSelectedImage: setLiftedSelectedImage,
-  imagePreview: liftedImagePreview,
-  setImagePreview: setLiftedImagePreview,
-  uploading: liftedUploading,
-  setUploading: setLiftedUploading,
   forceScrollBottom
 }) {
   const { auth, firestore, rtdb, storage } = useFirebase();
   const user = auth.currentUser;
   const [text, setText] = React.useState('');
 
-  // Image handling (prefer internal if parent not controlling)
+  // Use centralized state instead of prop drilling  
+  const { replyingTo, setReplyingTo } = useChatReply();
+  const { preview, uploading, setImageState, clearImage } = useChatImage();
+
+  // Image handling - simplified approach
   const imageHook = useImageMessage({
     storage,
     firestore,
     user,
     getDisplayName,
     soundEnabled,
-  playSendSound: () => playSendMessageSound(true)
+    playSendSound: () => playSendMessageSound(true)
   });
 
-  // --- Image state synchronization (drag & drop + file picker) ---
-  // We track the origin of the last change to avoid feedback loops.
-  const lastImageOriginRef = React.useRef(null); // 'parent' | 'internal' | null
-
-  // Parent -> internal (mirror lifted state when it changes externally)
-  React.useEffect(() => {
-    // Only run when parent actually changed values (origin not internal)
-    if (lastImageOriginRef.current === 'internal') return; // skip while internal pushing
-    let changed = false;
-    if (liftedSelectedImage !== imageHook.selectedImage) { imageHook.setSelectedImage(liftedSelectedImage); changed = true; }
-    if (liftedImagePreview !== imageHook.imagePreview) { imageHook.setImagePreview(liftedImagePreview); changed = true; }
-    if (typeof liftedUploading === 'boolean' && liftedUploading !== imageHook.uploading) { imageHook.setUploading(liftedUploading); changed = true; }
-    if (changed) lastImageOriginRef.current = 'parent';
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liftedSelectedImage, liftedImagePreview, liftedUploading]);
-
-  // Internal -> parent (when user selects/clears via ChatInput)
-  React.useEffect(() => {
-    if (lastImageOriginRef.current !== 'internal') return;
-    if (setLiftedSelectedImage) setLiftedSelectedImage(imageHook.selectedImage || null);
-    if (setLiftedImagePreview) setLiftedImagePreview(imageHook.imagePreview || null);
-    if (setLiftedUploading) setLiftedUploading(imageHook.uploading || false);
-    lastImageOriginRef.current = null; // reset after flush
-  }, [imageHook.selectedImage, imageHook.imagePreview, imageHook.uploading, setLiftedSelectedImage, setLiftedImagePreview, setLiftedUploading]);
-
-  // Wrap internal handlers to mark origin
   const handleLocalFile = React.useCallback((file) => {
-    lastImageOriginRef.current = 'internal';
     imageHook.handleImageSelect(file);
-  }, [imageHook]);
-  const clearImage = React.useCallback(() => {
-    lastImageOriginRef.current = 'internal';
+    // Update context to match hook state (but don't create cycles)
+    setImageState({
+      selectedFile: file,
+      preview: null // Will be updated when FileReader completes
+    });
+  }, [imageHook, setImageState]);
+  
+  const handleClearImage = React.useCallback(() => {
     imageHook.clearImage();
-  }, [imageHook]);
+    clearImage();
+  }, [imageHook, clearImage]);
 
   const { handleInputActivity } = useTypingPresence({ rtdb, user, soundEnabled });
   const { open: emojiOpen, toggle: toggleEmoji, buttonRef: emojiButtonRef, setOnSelect } = useEmojiPicker();
@@ -175,12 +151,12 @@ function ChatInput({
   return (
     <div className="chat-input-area">
       <ImagePreviewModal
-        imagePreview={imageHook.imagePreview}
-        uploading={imageHook.uploading}
+        imagePreview={preview}
+        uploading={uploading}
         error={imageHook.error}
-        onSend={() => { lastImageOriginRef.current = 'internal'; imageHook.sendImageMessage(); }}
-        onCancel={clearImage}
-        onRetry={() => { lastImageOriginRef.current = 'internal'; imageHook.sendImageMessage(); }}
+        onSend={imageHook.sendImageMessage}
+        onCancel={handleClearImage}
+        onRetry={imageHook.sendImageMessage}
       />
       <ReplyPreview
         replyingTo={replyingTo}
