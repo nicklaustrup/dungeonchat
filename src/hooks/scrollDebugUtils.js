@@ -20,7 +20,8 @@ export const enableScrollDebug = (enabled = true, opts = {}) => {
   }
 };
 
-const styleTag = 'background:#222;color:#6cf;padding:2px 4px;border-radius:3px;font-size:11px;';
+// Style tag for console logs (preserved for future use if logs are re-enabled)
+// const styleTag = 'background:#222;color:#6cf;padding:2px 4px;border-radius:3px;font-size:11px;';
 
 const pushTrace = (event) => {
   if (!debugEnabled || !captureToWindow || typeof window === 'undefined') return;
@@ -34,8 +35,9 @@ export const logEvent = (label, data = {}) => {
   // Only log if debugEnabled or SCROLL_DEBUG env is set (never in test/CI)
   const shouldLog = debugEnabled || (typeof process !== 'undefined' && process.env && process.env.SCROLL_DEBUG);
   if (!shouldLog) return;
+  // Comment out console logs to reduce test output noise
   // eslint-disable-next-line no-console
-  console.log('%c[ScrollDbg]', styleTag, label, data);
+  // console.log('%c[ScrollDbg]', styleTag, label, data);
   pushTrace({ label, ...data });
 };
 

@@ -52,7 +52,8 @@ export function useImageMessage({ storage, firestore, user, getDisplayName, soun
       clearImage();
       if (soundEnabled && playSendSound) playSendSound();
     } catch (err) {
-      console.error('sendImageMessage error', err);
+      // Comment out console logs to reduce test output noise
+      // console.error('sendImageMessage error', err);
       pushToast('Image upload failed: ' + err.message, { type: 'error' });
       setUploading(false);
       setError(err);

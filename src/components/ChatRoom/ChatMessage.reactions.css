@@ -12,8 +12,10 @@
 .reaction-btn:active { background: rgba(255,255,255,0.15); }
 .reply-btn:active, .message-menu-trigger:active { background: rgba(255,255,255,0.15); }
 .message-reactions { display:flex; flex-wrap:wrap; gap:4px; margin:2px 0 0 0; position:relative; z-index:1; }
-.reaction { background-color: rgba(11,148,246,0.329); border:1px solid rgba(11,147,246,0.35); border-radius:10px; padding:0 6px; font-size:12px; cursor:pointer; transition: background-color .18s ease, border-color .18s ease; min-height:24px; display:inline-flex; align-items:center; }
+/* Default gray style for others' reactions */
+.reaction { background-color: rgba(200,200,200,0.2); border:1px solid rgba(200,200,200,0.3); border-radius:10px; padding:0 6px; font-size:12px; cursor:pointer; transition: background-color .18s ease, border-color .18s ease; min-height:24px; display:inline-flex; align-items:center; }
 .reaction:hover { background-color: rgba(255,255,255,0.18); }
+/* Blue highlight style when the current user has reacted */
 .reaction.reacted { background-color: rgba(11,148,246,0.144); border-color:#0b93f6; color:#fff; font-weight:600; }
 .reaction.reacted:hover { background-color: rgba(11,147,246,0.34); border-color:#31a4ff; }
 body:not(.chat-menu-open) .message:hover .reaction-buttons { opacity:1; }
