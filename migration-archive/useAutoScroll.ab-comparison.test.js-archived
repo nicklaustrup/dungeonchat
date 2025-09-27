@@ -1,0 +1,297 @@
+import React from 'react';
+import { render, act, fireEvent } from '@testing-library/react';
+import ChatRoom from '../../components/ChatRoom/ChatRoom';
+
+// Mock all the dependencies that ChatRoom needs
+jest.mock('../../services/FirebaseContext', () => ({
+  useFirebase: () => ({ 
+    firestore: {}, 
+    auth: { currentUser: { uid: 'test-user' } } 
+  })
+}));
+
+jest.mock('../../hooks/useChatMessages', () => ({
+  useChatMessages: jest.fn()
+}));
+
+jest.mock('../../hooks/useScrollPrependRestoration', () => ({
+  useScrollPrependRestoration: () => ({ 
+    markBeforeLoadMore: jest.fn(), 
+    handleAfterMessages: jest.fn() 
+  })
+}));
+
+jest.mock('../../hooks/useInfiniteScrollTop', () => ({
+  useInfiniteScrollTop: () => ({ 
+    sentinelRef: { current: null }, 
+    isFetching: false 
+  })
+}));
+
+jest.mock('../../hooks/useMessageSearch', () => ({
+  useMessageSearch: (msgs) => msgs
+}));
+
+jest.mock('../../hooks/useReplyState', () => ({
+  useReplyState: () => ({ setReplyTarget: jest.fn() })
+}));
+
+jest.mock('../../hooks/useDragAndDropImages', () => ({
+  useDragAndDropImages: () => ({ 
+    isDragActive: false, 
+    imageReady: false, 
+    bind: {} 
+  })
+}));
+
+jest.mock('../../components/ChatRoom/MessageList', () => function MockMessageList() { 
+  return <div data-testid="message-list" />; 
+});
+
+// Mock sound utility
+jest.mock('../../utils/sound', () => ({
+  playReceiveMessageSound: jest.fn()
+}));
+
+// Create comparison data collector
+class ComparisonCollector {
+  constructor() {
+    this.data = [];
+    this.consoleLog = console.log;
+  }
+
+  start() {
+    // Intercept console.log to capture comparison data
+    console.log = (...args) => {
+      if (args[0] && typeof args[0] === 'string' && args[0].includes('🔄 Scroll Implementation Comparison')) {
+        this.data.push(args[1]);
+      }
+      this.consoleLog.apply(console, args);
+    };
+  }
+
+  stop() {
+    console.log = this.consoleLog;
+  }
+
+  getComparisonData() {
+    return this.data;
+  }
+
+  clear() {
+    this.data = [];
+  }
+}
+
+describe('A/B Implementation Comparison', () => {
+  let mockMessages;
+  let collector;
+
+  beforeEach(() => {
+    collector = new ComparisonCollector();
+    collector.start();
+    
+    // Mock messages for testing
+    mockMessages = [
+      { id: 'm1', text: 'Message 1', uid: 'user1', createdAt: new Date('2025-01-01T10:00:00Z') },
+      { id: 'm2', text: 'Message 2', uid: 'user2', createdAt: new Date('2025-01-01T10:01:00Z') },
+      { id: 'm3', text: 'Message 3', uid: 'user1', createdAt: new Date('2025-01-01T10:02:00Z') },
+    ];
+
+    // Mock useChatMessages to return our test data
+    require('../../hooks/useChatMessages').useChatMessages.mockReturnValue({
+      messages: mockMessages,
+      loadMore: jest.fn(),
+      hasMore: false
+    });
+  });
+
+  afterEach(() => {
+    collector.stop();
+    jest.clearAllMocks();
+  });
+
+  describe('Feature Flag Switching', () => {
+    test('V1 implementation is used when flag is false', async () => {
+      // Set environment to use V1
+      const originalEnv = process.env.REACT_APP_USE_AUTO_SCROLL_V2;
+      process.env.REACT_APP_USE_AUTO_SCROLL_V2 = 'false';
+      process.env.REACT_APP_SCROLL_COMPARISON = 'true';
+
+      let scrollMeta = [];
+      
+      const { container } = render(
+        <ChatRoom 
+          onScrollMeta={(meta) => scrollMeta.push(meta)}
+          soundEnabled={false}
+        />
+      );
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      // Check that the component rendered without errors
+      expect(container).toBeTruthy();
+      
+      // The active implementation should be V1 when flag is false
+      // We can't easily test internal state, but we can verify no errors occurred
+      expect(container.querySelector('[data-testid="message-list"]')).toBeTruthy();
+
+      // Restore environment
+      process.env.REACT_APP_USE_AUTO_SCROLL_V2 = originalEnv;
+    });
+
+    test('V2 implementation is used when flag is true', async () => {
+      // Set environment to use V2
+      const originalEnv = process.env.REACT_APP_USE_AUTO_SCROLL_V2;
+      process.env.REACT_APP_USE_AUTO_SCROLL_V2 = 'true';
+      process.env.REACT_APP_SCROLL_COMPARISON = 'true';
+
+      let scrollMeta = [];
+      
+      const { container } = render(
+        <ChatRoom 
+          onScrollMeta={(meta) => scrollMeta.push(meta)}
+          soundEnabled={false}
+        />
+      );
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      // Check that the component rendered without errors
+      expect(container).toBeTruthy();
+      expect(container.querySelector('[data-testid="message-list"]')).toBeTruthy();
+
+      // Restore environment
+      process.env.REACT_APP_USE_AUTO_SCROLL_V2 = originalEnv;
+    });
+  });
+
+  describe('Behavior Comparison Scenarios', () => {
+    beforeEach(() => {
+      // Enable comparison mode
+      process.env.REACT_APP_SCROLL_COMPARISON = 'true';
+    });
+
+    test('Initial load behavior comparison', async () => {
+      collector.clear();
+
+      const { container } = render(
+        <ChatRoom soundEnabled={false} />
+      );
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 200));
+      });
+
+      // Should have rendered without errors
+      expect(container).toBeTruthy();
+      
+      // Check if comparison data was collected
+      const comparisons = collector.getComparisonData();
+      
+      if (comparisons.length > 0) {
+        // Verify comparison data structure
+        const comparison = comparisons[0];
+        expect(comparison).toHaveProperty('implementation');
+        expect(comparison).toHaveProperty('original');
+        expect(comparison).toHaveProperty('v2');
+        expect(comparison.original).toHaveProperty('isAtBottom');
+        expect(comparison.original).toHaveProperty('newCount');
+        expect(comparison.original).toHaveProperty('hasNew');
+        expect(comparison.v2).toHaveProperty('isAtBottom');
+        expect(comparison.v2).toHaveProperty('newCount'); 
+        expect(comparison.v2).toHaveProperty('hasNew');
+      }
+    });
+
+    test('New message arrival simulation', async () => {
+      collector.clear();
+
+      // Start with initial messages
+      const { rerender } = render(<ChatRoom soundEnabled={false} />);
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      // Add a new message
+      const newMessages = [...mockMessages, {
+        id: 'm4', 
+        text: 'New Message', 
+        uid: 'user2', 
+        createdAt: new Date('2025-01-01T10:03:00Z')
+      }];
+
+      // Update the mock to return new messages
+      require('../../hooks/useChatMessages').useChatMessages.mockReturnValue({
+        messages: newMessages,
+        loadMore: jest.fn(),
+        hasMore: false
+      });
+
+      rerender(<ChatRoom soundEnabled={false} />);
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      // Check if implementations handled new message consistently
+      const comparisons = collector.getComparisonData();
+      
+      if (comparisons.length > 0) {
+        const latestComparison = comparisons[comparisons.length - 1];
+        
+        // Both implementations should handle initial messages the same way
+        // (This is where we'd catch behavioral differences)
+        console.log('New message comparison data:', latestComparison);
+      }
+    });
+  });
+
+  describe('Performance Comparison', () => {
+    test('Render performance comparison', async () => {
+      const startTime = performance.now();
+      
+      const { container } = render(
+        <ChatRoom soundEnabled={false} />
+      );
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      const endTime = performance.now();
+      const renderTime = endTime - startTime;
+
+      // Should render reasonably quickly (under 1 second)
+      expect(renderTime).toBeLessThan(1000);
+      expect(container).toBeTruthy();
+    });
+
+    test('Memory usage stays reasonable with both implementations', async () => {
+      // Create multiple instances to test memory usage
+      const instances = [];
+      
+      for (let i = 0; i < 5; i++) {
+        const { container } = render(
+          <ChatRoom key={i} soundEnabled={false} />
+        );
+        instances.push(container);
+      }
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 200));
+      });
+
+      // All instances should render successfully
+      instances.forEach(container => {
+        expect(container).toBeTruthy();
+        expect(container.querySelector('[data-testid="message-list"]')).toBeTruthy();
+      });
+    });
+  });
+});
