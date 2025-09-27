@@ -6,3 +6,5 @@ coverage/
 # Firebase / deployment artifacts (if any future)
 functions/lib/
 functions/index.js
+# Migration archive - legacy code no longer actively maintained
+migration-archive/

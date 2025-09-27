@@ -1,3 +1,7 @@
+// ChatRoom Component - V2 Implementation Only
+// Migrated from V1 on 2025-09-27T02:57:53.091Z
+// All feature flags and A/B comparison logic removed
+
 import React from 'react';
 import { useFirebase } from '../../services/FirebaseContext';
 import { playReceiveMessageSound } from '../../utils/sound';
@@ -5,13 +9,12 @@ import { useDragAndDropImages } from '../../hooks/useDragAndDropImages';
 // import { useTypingUsers } from '../../hooks/useTypingUsers'; // currently unused
 import { useReplyState } from '../../hooks/useReplyState';
 import { useChatMessages } from '../../hooks/useChatMessages';
-import { useAutoScroll } from '../../hooks/useAutoScroll';
+import { useAutoScrollV2 } from '../../hooks/useAutoScrollV2';
 import { useInfiniteScrollTop } from '../../hooks/useInfiniteScrollTop';
 import { useMessageSearch } from '../../hooks/useMessageSearch';
 import { useScrollPrependRestoration } from '../../hooks/useScrollPrependRestoration';
 import DragOverlay from './DragOverlay';
 import MessageList from './MessageList';
-
 
 function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, setReplyingTo, onImageDrop, onViewProfile, onScrollMeta, soundEnabled = true }) {
   const { firestore, auth /* rtdb */ } = useFirebase();
@@ -47,19 +50,15 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
     }
   }, [messages, auth, soundEnabled]);
 
-  const { isAtBottom, hasNew: hasNewMessages, newCount: newMessagesCount, scrollToBottom, __debug } = useAutoScroll({
+  // V2 Implementation Only (simplified, optimized)
+  const { isAtBottom, hasNew: hasNewMessages, newCount: newMessagesCount, scrollToBottom } = useAutoScrollV2({
     containerRef: mainRef,
     anchorRef: dummy,
     items: sortedMessages,
-    bottomThreshold: 60,
+    threshold: 60, // Single threshold for clean behavior
   });
 
   // Notify parent about scroll meta for external button positioning.
-  // NOTE: A previous implementation introduced an infinite render loop by:
-  //  1. Including an ever-changing field (Date.now()) in the meta object
-  //  2. Depending on a parent-provided inline onScrollMeta callback that updated parent state each call
-  // This caused: effect -> parent state update -> new callback identity -> effect ...
-  // We fix this by (a) removing volatile fields, and (b) only invoking the callback when meaningful values change.
   const lastMetaRef = React.useRef(null);
   React.useEffect(() => {
     if (!onScrollMeta) return;
@@ -72,32 +71,19 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
     const withinReadZone = dist <= bottomThreshold;
     const effectiveAtBottom = isAtBottom || withinReadZone;
 
-    if (process.env.NODE_ENV !== 'production') {
-      if (effectiveAtBottom && dist > bottomThreshold * 1.5) {
-        // eslint-disable-next-line no-console
-        console.warn('[ScrollMetaDebug] effectiveAtBottom=true but dist large', { dist, bottomThreshold, isAtBottom, withinReadZone });
-      }
-    }
-
     const nextMeta = {
       visible: !effectiveAtBottom,
       hasNew: hasNewMessages,
       newCount: newMessagesCount,
-      scrollToBottom, // function reference (assumed stable from hook)
+      scrollToBottom, // function reference (stable from V2 hook)
       debugDist: dist,
       debugWithinReadZone: withinReadZone,
       debugIsAtBottom: isAtBottom,
       debugEffectiveAtBottom: effectiveAtBottom,
-      debugThreshold: bottomThreshold,
-      debugSuppressed: __debug?._suppressed,
-      debugPrevNearBottom: __debug?._prevNearBottom,
-      debugAtBottomOnLastAppend: __debug?._atBottomOnLastAppend,
-      debugLastDistance: __debug?._lastDistance,
-      debugIdSetSize: __debug?._idSetSize
+      debugThreshold: bottomThreshold
     };
 
-    // Shallow compare against last meaningful snapshot to avoid parent updates that would
-    // recreate onScrollMeta and re-trigger this effect unnecessarily.
+    // Shallow compare against last meaningful snapshot to avoid parent updates
     const prev = lastMetaRef.current;
     let changed = false;
     if (!prev) {
@@ -110,10 +96,9 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, replyingTo, s
     if (!changed) return;
     lastMetaRef.current = nextMeta;
     onScrollMeta(nextMeta);
-  // Intentionally exclude onScrollMeta from dependency array to avoid infinite loops when
-  // parent recreates the callback; guarded by our change detection above.
+  // Intentionally exclude onScrollMeta from dependency array to avoid infinite loops
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAtBottom, hasNewMessages, newMessagesCount, scrollToBottom, __debug]);
+  }, [isAtBottom, hasNewMessages, newMessagesCount, scrollToBottom]);
 
   const filteredMessages = useMessageSearch(sortedMessages, searchTerm);
 

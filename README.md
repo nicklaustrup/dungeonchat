@@ -430,3 +430,13 @@ Sign in with Google → send a message → add a reaction → drag in an image.
 
 Happy chatting! ✨
 
+
+
+## Scroll Behavior
+
+This application uses an optimized scroll behavior system (`useAutoScrollV2`) that provides:
+- Intelligent auto-scroll when users are at the bottom
+- Unread message tracking when scrolled up
+- Smooth performance with minimal memory usage
+
+See `docs/final-scroll-architecture.md` for complete documentation.

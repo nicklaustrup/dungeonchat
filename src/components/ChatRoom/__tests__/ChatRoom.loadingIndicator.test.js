@@ -9,8 +9,8 @@ jest.mock('../../../hooks/useChatMessages', () => ({
 jest.mock('../../../hooks/useInfiniteScrollTop', () => ({
   useInfiniteScrollTop: jest.fn()
 }));
-jest.mock('../../../hooks/useAutoScroll', () => ({
-  useAutoScroll: () => ({ isAtBottom: true, hasNew: false, newCount: 0, scrollToBottom: jest.fn() })
+jest.mock('../../../hooks/useAutoScrollV2', () => ({
+  useAutoScrollV2: () => ({ isAtBottom: true, hasNew: false, newCount: 0, scrollToBottom: jest.fn() })
 }));
 jest.mock('../../../hooks/useScrollPrependRestoration', () => ({
   useScrollPrependRestoration: () => ({

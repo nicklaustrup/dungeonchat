@@ -70,6 +70,11 @@ export function useScrollPrependRestoration(containerRef, { ignoreBottomFrames =
 
     // Primary positive-delta path (list grew as expected)
     if (delta > 0) {
+      // Make sure we're calculating the correct scroll position
+      // We want to maintain the visual position of existing content rather than jumping to the top
+      const finalTarget = Math.min(target, el.scrollHeight - el.clientHeight);
+      target = finalTarget > 0 ? finalTarget : target;
+      
       applyScroll('delta-growth');
       return;
     }
