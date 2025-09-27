@@ -5,10 +5,9 @@ import { playReceiveMessageSound } from '../../utils/sound';
 import { useDragAndDropImages } from '../../hooks/useDragAndDropImages';
 // import { useTypingUsers } from '../../hooks/useTypingUsers'; // currently unused
 import { useChatMessages } from '../../hooks/useChatMessages';
-import { useAutoScrollV2 } from '../../hooks/useAutoScrollV2';
+import { useUnifiedScrollManager } from '../../hooks/useUnifiedScrollManager';
 import { useInfiniteScrollTop } from '../../hooks/useInfiniteScrollTop';
 import { useMessageSearch } from '../../hooks/useMessageSearch';
-import { useScrollPrependRestoration } from '../../hooks/useScrollPrependRestoration';
 import DragOverlay from './DragOverlay';
 import MessageList from './MessageList';
 
@@ -22,7 +21,6 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
   // Allow deeper history than the previous hard cap of 100. Defaults to 1000 (configurable via env).
   const historyCap = Number(process.env.REACT_APP_CHAT_MAX_HISTORY) || 1000; // can be raised safely; consider virtualization > ~1500
   const { messages, loadMore, hasMore } = useChatMessages({ firestore, limitBatchSize: 25, maxLimit: historyCap });
-  const restoration = useScrollPrependRestoration(mainRef);
 
   // const typingUsers = useTypingUsers({ rtdb, currentUid: auth.currentUser?.uid }); // reserved for future feature
 
@@ -44,12 +42,18 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
     }
   }, [messages, auth, soundEnabled]);
 
-  // V2 Implementation Only (simplified, optimized)
-  const { isAtBottom, hasNew: hasNewMessages, newCount: newMessagesCount, scrollToBottom } = useAutoScrollV2({
+  // Unified scroll management (replaces useAutoScrollV2 + useScrollPrependRestoration)
+  const { 
+    isAtBottom, 
+    hasNewMessages, 
+    newMessagesCount, 
+    scrollToBottom, 
+    captureBeforeLoadMore 
+  } = useUnifiedScrollManager({
     containerRef: mainRef,
     anchorRef: dummy,
-    items: sortedMessages,
-    threshold: 60, // Single threshold for clean behavior
+    messages: sortedMessages,
+    threshold: 60,
   });
 
   // Debug logging
@@ -109,9 +113,9 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
   const filteredMessages = useMessageSearch(sortedMessages, searchTerm);
 
   const wrappedLoadMore = React.useCallback(() => {
-    restoration.markBeforeLoadMore(messages);
+    captureBeforeLoadMore();
     loadMore();
-  }, [restoration, loadMore, messages]);
+  }, [captureBeforeLoadMore, loadMore]);
 
   const { sentinelRef, isFetching: loadingOlder } = useInfiniteScrollTop({
     containerRef: mainRef,
@@ -135,24 +139,6 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
       wrappedLoadMore();
     }
   }, [messages, hasMore, wrappedLoadMore]);
-
-  // After messages change, run classification/restoration
-  const lastBoundaryRef = React.useRef({ len: 0, first: null, last: null });
-  React.useEffect(() => {
-    const len = messages.length;
-    const first = messages[0]?.id || null;
-    const last = messages[len - 1]?.id || null;
-    const prev = lastBoundaryRef.current;
-    if (prev.len === len && prev.first === first && prev.last === last) return; // no meaningful change
-    lastBoundaryRef.current = { len, first, last };
-    
-    // TEMPORARILY DISABLED: restoration.handleAfterMessages(messages);
-    // This might be conflicting with V2 scroll logic
-    // const classification = restoration.handleAfterMessages(messages);
-    if (process.env.NODE_ENV === 'development') {
-      console.log('ChatRoom: restoration disabled for testing');
-    }
-  }, [messages, restoration]);
 
   const { isDragActive, imageReady: imageDragReady, bind: dragBind } = useDragAndDropImages({
     onImage: onImageDrop,
