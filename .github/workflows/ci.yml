@@ -37,6 +37,7 @@ jobs:
           else
             git fetch --depth=2 origin main || true
             echo "range=origin/main...HEAD" >> $GITHUB_OUTPUT
+          fi
       - name: Detect changed areas
         id: diff
         run: |
