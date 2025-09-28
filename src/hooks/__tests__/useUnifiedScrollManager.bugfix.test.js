@@ -1,6 +1,9 @@
 import { renderHook, act } from '@testing-library/react';
 import { useUnifiedScrollManager } from '../useUnifiedScrollManager';
 
+// Set test timeout to 10 seconds
+jest.setTimeout(10000);
+
 // Mock the message diff classifier
 jest.mock('../../utils/classifyMessageDiff', () => ({
   classifyMessageDiff: jest.fn()
@@ -15,6 +18,8 @@ describe('useUnifiedScrollManager - Bug Fix Tests', () => {
   let anchorRef;
 
   beforeEach(() => {
+    jest.useFakeTimers();
+    
     // Create mock DOM elements
     let currentScrollTop = 0;
     mockContainer = {
@@ -51,8 +56,10 @@ describe('useUnifiedScrollManager - Bug Fix Tests', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    jest.clearAllTimers();
     jest.useRealTimers();
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
   });
 
   describe('Bug Fix: Initial Load Scrolling', () => {

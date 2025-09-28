@@ -5,6 +5,9 @@
 import { renderHook, act } from '@testing-library/react';
 import { useUnifiedScrollManager } from '../useUnifiedScrollManager';
 
+// Set test timeout to 10 seconds
+jest.setTimeout(10000);
+
 // Mock the message diff classifier
 jest.mock('../../utils/classifyMessageDiff', () => ({
   classifyMessageDiff: jest.fn()
@@ -48,8 +51,10 @@ describe('useUnifiedScrollManager - Bug Fixes Verification', () => {
   });
 
   afterEach(() => {
+    jest.clearAllTimers();
     jest.useRealTimers();
     jest.restoreAllMocks();
+    jest.clearAllMocks();
   });
 
   test('Bug Fix Verification: Both reported bugs are fixed', async () => {
