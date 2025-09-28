@@ -13,6 +13,16 @@ export default function ReactionBar({ emojis, onReact, onReply, message, menuOpe
   const longPressActive = React.useRef(false);
   const pointerHandled = React.useRef(false); // Track if pointer events handled the reaction
   const lastReactionTime = React.useRef({}); // Track last reaction time per emoji
+  const lastMenuOpenState = React.useRef(menuOpen);
+
+  // Clear debounce state when menuOpen changes from true to false (deselection)
+  React.useEffect(() => {
+    if (lastMenuOpenState.current && !menuOpen) {
+      // Message was deselected - clear debounce state to allow immediate reactions on next selection
+      lastReactionTime.current = {};
+    }
+    lastMenuOpenState.current = menuOpen;
+  }, [menuOpen]);
 
   const handlePointerDown = (emoji, e) => {
     if (e.pointerType === 'mouse') return; // focus on touch only
@@ -58,8 +68,8 @@ export default function ReactionBar({ emojis, onReact, onReply, message, menuOpe
     }
   };
 
-  const isTouch = React.useMemo(() => matchMedia('(hover: none) and (pointer: coarse)').matches, []);
-  const effectiveHidden = hidden && !(isTouch && menuOpen); // allow menuOpen (selected) to show on touch
+
+  const effectiveHidden = hidden && !menuOpen; // Simplified: menuOpen already includes touch+selected logic from parent
   return (
     <div
       className={`reaction-buttons ${menuOpen ? 'force-visible' : ''} ${effectiveHidden ? 'hidden-collapsed' : ''}`}
