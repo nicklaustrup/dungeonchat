@@ -4,8 +4,9 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 
 /**
  * useChatMessages
- * Handles Firestore message retrieval with incremental limit, normalization, and ordering.
+ * Optimized Firestore message retrieval with incremental limit, normalization, and ordering.
  * Messages are returned in chronological (oldest -> newest) order.
+ * Enhanced with memoization and performance optimizations.
  *
  * @param {Object} params
  * @param {import('firebase/firestore').Firestore} params.firestore
@@ -15,8 +16,19 @@ import { useCollection } from 'react-firebase-hooks/firestore';
  */
 export function useChatMessages({ firestore, limitBatchSize = 25, maxLimit = 100, preserveDuringPagination = true } = {}) {
   const [messageLimit, setMessageLimit] = React.useState(limitBatchSize);
-  const messagesRef = React.useMemo(() => collection(firestore, 'messages'), [firestore]);
-  const q = React.useMemo(() => query(messagesRef, orderBy('createdAt', 'desc'), fsLimit(messageLimit)), [messagesRef, messageLimit]);
+  
+  // Memoize collection reference with more specific dependency
+  const messagesRef = React.useMemo(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'messages');
+  }, [firestore]);
+  
+  // Optimize query memoization
+  const q = React.useMemo(() => {
+    if (!messagesRef) return null;
+    return query(messagesRef, orderBy('createdAt', 'desc'), fsLimit(messageLimit));
+  }, [messagesRef, messageLimit]);
+  
   const [snapshot, loading, error] = useCollection(q);
 
   // We keep a stable copy of the last non-empty (or loaded) message list to avoid
@@ -28,11 +40,20 @@ export function useChatMessages({ firestore, limitBatchSize = 25, maxLimit = 100
   const paginatingRef = React.useRef(false); // true between loadMore invocation and next snapshot arrival
   const previousHasMoreRef = React.useRef(true); // preserve sentinel visibility while paginating
 
+  // Optimized message computation with better memoization
   const computedMessages = React.useMemo(() => {
-    if (!snapshot) return null; // explicitly distinguish 'no snapshot yet'
-    const list = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .reverse();
+    if (!snapshot || !snapshot.docs) return null; // explicitly distinguish 'no snapshot yet'
+    
+    // Pre-allocate array for better performance
+    const docs = snapshot.docs;
+    const list = new Array(docs.length);
+    
+    // Reverse iteration for better performance (avoid .reverse() call)
+    for (let i = docs.length - 1, j = 0; i >= 0; i--, j++) {
+      const doc = docs[i];
+      list[j] = { id: doc.id, ...doc.data() };
+    }
+    
     return list;
   }, [snapshot]);
 
@@ -45,7 +66,7 @@ export function useChatMessages({ firestore, limitBatchSize = 25, maxLimit = 100
     }
   }, [computedMessages]);
 
-  // Derive messages. Dependency on stableMessagesState triggers updates when snapshot commits.
+  // Derive messages with optimized logic. Dependency on stableMessagesState triggers updates when snapshot commits.
   const messages = React.useMemo(() => {
     if (!preserveDuringPagination) return computedMessages || [];
     if (!computedMessages && stableMessagesRef.current.length) return stableMessagesRef.current;
@@ -55,15 +76,20 @@ export function useChatMessages({ firestore, limitBatchSize = 25, maxLimit = 100
 
   const isInitialLoading = loading && messageLimit === limitBatchSize && !stableMessagesRef.current.length;
 
-  // Heuristic: If we received fewer docs than requested (AND query settled) there are no more.
-  let hasMoreCandidate = (messages.length >= messageLimit) && messageLimit < maxLimit;
-  // During in-flight pagination where snapshot not yet arrived, retain previous hasMore (avoid hiding sentinel & triggering layout thrash)
-  if (!computedMessages && paginatingRef.current) {
-    hasMoreCandidate = previousHasMoreRef.current;
-  } else {
-    previousHasMoreRef.current = hasMoreCandidate;
-  }
-  const hasMore = hasMoreCandidate;
+  // Optimized hasMore computation
+  const hasMore = React.useMemo(() => {
+    // Heuristic: If we received fewer docs than requested (AND query settled) there are no more.
+    let hasMoreCandidate = (messages.length >= messageLimit) && messageLimit < maxLimit;
+    
+    // During in-flight pagination where snapshot not yet arrived, retain previous hasMore (avoid hiding sentinel & triggering layout thrash)
+    if (!computedMessages && paginatingRef.current) {
+      hasMoreCandidate = previousHasMoreRef.current;
+    } else {
+      previousHasMoreRef.current = hasMoreCandidate;
+    }
+    
+    return hasMoreCandidate;
+  }, [messages.length, messageLimit, maxLimit, computedMessages]);
 
   const loadMore = React.useCallback(() => {
     setMessageLimit(prev => {
@@ -73,12 +99,19 @@ export function useChatMessages({ firestore, limitBatchSize = 25, maxLimit = 100
     });
   }, [limitBatchSize, maxLimit]);
 
-  if (error && process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line no-console
-    console.warn('[useChatMessages] Firestore error:', error);
-  }
+  // Memoized error handling
+  React.useEffect(() => {
+    if (error && process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.warn('[useChatMessages] Firestore error:', error);
+    }
+  }, [error]);
 
-  const totalReached = messageLimit >= maxLimit && !hasMore;
+  const totalReached = React.useMemo(() => 
+    messageLimit >= maxLimit && !hasMore, 
+    [messageLimit, maxLimit, hasMore]
+  );
+  
   // Dev-time diagnostic: warn once when we hit the artificial cap so integrators realize deeper history is truncated.
   const warnedRef = React.useRef(false);
   React.useEffect(() => {

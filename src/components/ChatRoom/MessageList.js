@@ -2,6 +2,20 @@ import React from 'react';
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
 
+// Memoized date formatter to avoid recreating function on every render
+const formatDateHeading = (ts) => {
+  if (!ts) return '';
+  const date = ts.toDate ? ts.toDate() : new Date(ts);
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+};
+
+// Memoized date key calculator to optimize date divider logic
+const getDateKey = (ts) => {
+  if (!ts) return null;
+  const dateObj = ts.toDate ? ts.toDate() : new Date(ts);
+  return dateObj.getFullYear() + '-' + (dateObj.getMonth() + 1) + '-' + dateObj.getDate();
+};
+
 function MessageList({
   messages,
   searchTerm,
@@ -42,6 +56,59 @@ function MessageList({
       document.removeEventListener('focusin', handleFocusIn, true);
     };
   }, [selectedMessageId]);
+  // Memoize the computed message elements to avoid recalculating on every render
+  const messageElements = React.useMemo(() => {
+    if (!messages) return [];
+    
+    let lastDateKey = null;
+    let prevUid = null;
+    
+    return messages.flatMap(m => {
+      const ts = m.createdAt;
+      const dateKey = getDateKey(ts);
+      
+      let showDivider = false;
+      if (dateKey && dateKey !== lastDateKey && lastDateKey !== null) {
+        showDivider = true;
+      }
+      
+      // Determine if this message should show meta (avatar/name/timestamp)
+      const baseShowMeta = showDivider || prevUid !== m.uid;
+      const showMeta = baseShowMeta || !!m.replyTo; // always show meta if quoting another message
+      
+      const messageComponent = (
+        <ChatMessage
+          key={m.id}
+          message={m}
+          searchTerm={searchTerm}
+          onReply={onReply}
+          isReplyTarget={replyingToId && m.id === replyingToId}
+          onViewProfile={onViewProfile}
+          showMeta={showMeta}
+          selected={selectedMessageId === m.id}
+          // Pass toggle-aware handler so tapping the selected message again deselects on touch devices
+          onSelectMessage={(id) => handleSelectMessageToggle(id, selectedMessageId === m.id)}
+          hovered={hoveredMessageId === m.id}
+          onHoverMessage={handleHoverMessage}
+        />
+      );
+      
+      const elements = [];
+      if (showDivider) {
+        elements.push(
+          <div className="date-divider" key={`div-${m.id}`}>
+            <span className="date-divider-label">{formatDateHeading(ts)}</span>
+          </div>
+        );
+      }
+      
+      if (dateKey) lastDateKey = dateKey;
+      prevUid = m.uid;
+      elements.push(messageComponent);
+      return elements;
+    });
+  }, [messages, searchTerm, replyingToId, onReply, onViewProfile, selectedMessageId, hoveredMessageId, handleSelectMessageToggle, handleHoverMessage]);
+
   if (searchTerm && messages && messages.length === 0) {
     return (
       <>
@@ -52,64 +119,10 @@ function MessageList({
     );
   }
 
-  const formatDateHeading = (ts) => {
-    if (!ts) return '';
-    const date = ts.toDate ? ts.toDate() : new Date(ts);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  };
-
-  let lastDateKey = null;
-  let prevUid = null;
-
   return (
     <>
       {topSentinel}
-      {messages && messages.map(m => {
-        const ts = m.createdAt;
-        const dateObj = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : null;
-        const dateKey = dateObj ? dateObj.getFullYear() + '-' + (dateObj.getMonth() + 1) + '-' + dateObj.getDate() : null;
-        let showDivider = false;
-        if (dateKey && dateKey !== lastDateKey) {
-          // Only show if not first OR if the gap is >= 1 day from previous
-          if (lastDateKey !== null) {
-            showDivider = true;
-          } else {
-            // First message of list: we don't show divider before it
-            showDivider = false;
-          }
-        }
-        // Determine if this message should show meta (avatar/name/timestamp)
-        const baseShowMeta = showDivider || prevUid !== m.uid;
-        const showMeta = baseShowMeta || !!m.replyTo; // always show meta if quoting another message
-        const content = (
-          <ChatMessage
-            key={m.id}
-            message={m}
-            searchTerm={searchTerm}
-            onReply={onReply}
-            isReplyTarget={replyingToId && m.id === replyingToId}
-            onViewProfile={onViewProfile}
-            showMeta={showMeta}
-            selected={selectedMessageId === m.id}
-            // Pass toggle-aware handler so tapping the selected message again deselects on touch devices
-            onSelectMessage={(id) => handleSelectMessageToggle(id, selectedMessageId === id)}
-            hovered={hoveredMessageId === m.id}
-            onHoverMessage={handleHoverMessage}
-          />
-        );
-        const elements = [];
-        if (showDivider) {
-          elements.push(
-            <div className="date-divider" key={`div-${m.id}`}>
-              <span className="date-divider-label">{formatDateHeading(ts)}</span>
-            </div>
-          );
-        }
-        if (dateKey) lastDateKey = dateKey;
-        prevUid = m.uid;
-        elements.push(content);
-        return elements;
-      })}
+      {messageElements}
       {showTyping && <TypingIndicator users={typingUsers} />}
       <span ref={bottomAnchorRef} style={{ display: 'block', height: '1px' }}></span>
     </>
