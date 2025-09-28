@@ -26,17 +26,17 @@ jobs:
           MATCHES=$(grep -RInE "TODO:|FIXME" --exclude-dir=node_modules --exclude-dir=build --exclude-dir=storybook-static src || true)
           MATCH_COUNT=$(echo "$MATCHES" | grep -c : || true)
           echo "found=$MATCH_COUNT" >> $GITHUB_OUTPUT
-          echo "===RAW_MATCHES_START===" >> report.txt
-            echo "$MATCHES" | head -n 200 >> report.txt
-          echo "===RAW_MATCHES_END===" >> report.txt
+          echo "matches<<EOF" >> $GITHUB_OUTPUT
+          echo "$MATCHES" | head -n 200 >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Comment on PR with TODO report
         if: steps.scan.outputs.found != '0'
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            📝 Found ${{ steps.scan.outputs.found }} TODO/FIXME markers (showing up to first 200 lines):
-
+            Found ${{ steps.scan.outputs.found }} TODO/FIXME markers:
+            
             ```
-            $(sed -n '/===RAW_MATCHES_START===/,/===RAW_MATCHES_END===/p' report.txt | sed '1d;$d')
+            ${{ steps.scan.outputs.matches }}
             ```

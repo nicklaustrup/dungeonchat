@@ -66,8 +66,17 @@ jobs:
           path: build
         continue-on-error: true
 
+      - name: Check if build directory exists
+        id: check_build
+        run: |
+          if [ -d "build" ] && [ "$(ls -A build)" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Fallback build if artifact missing
-        if: !exists('build')
+        if: steps.check_build.outputs.exists == 'false'
         env:
           REACT_APP_FIREBASE_API_KEY: ${{ vars.REACT_APP_FIREBASE_API_KEY }}
           REACT_APP_FIREBASE_AUTH_DOMAIN: ${{ vars.REACT_APP_FIREBASE_AUTH_DOMAIN }}
