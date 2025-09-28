@@ -26,12 +26,21 @@ export function useTypingPresence({ rtdb, user, soundEnabled }) {
 
     // Clear previous inactivity timer
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-    // Auto-clear typing after 6s of inactivity
-    inactivityTimerRef.current = setTimeout(() => {
+    
+    if (isTyping) {
+      // Auto-clear typing after 6s of inactivity
+      inactivityTimerRef.current = setTimeout(() => {
+        updateTyping(false);
+        endTypingLoop();
+        typingLoopRunningRef.current = false;
+      }, 6000);
+    } else {
+      // If text length is 0, immediately stop typing indicator
       updateTyping(false);
       endTypingLoop();
       typingLoopRunningRef.current = false;
-    }, 6000);
+      return; // Exit early to avoid sound logic
+    }
 
     // Continuous typing loop (start when user starts typing, stop on inactivity timeout)
     if (soundEnabled) {

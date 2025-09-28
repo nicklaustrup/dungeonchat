@@ -79,11 +79,15 @@ function ChatInput({
 
   const sendText = async () => {
     if (!user || !text.trim()) return;
+    
+    // Clear typing indicator immediately when send is attempted
+    handleInputActivity(0);
+    
     try {
       await createTextMessage({ firestore, text, user, getDisplayName, replyTo: replyingTo });
       setText('');
       setReplyingTo(null);
-  if (soundEnabled) playSendMessageSound(true);
+      if (soundEnabled) playSendMessageSound(true);
       if (forceScrollBottom) setTimeout(() => forceScrollBottom(), 10);
     } catch (err) {
       console.error('Error sending message', err);

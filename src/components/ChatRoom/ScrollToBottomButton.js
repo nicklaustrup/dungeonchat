@@ -33,13 +33,28 @@ function ScrollToBottomButton({ visible, hasNew, newCount, onClick }) {
   useEffect(() => {
     if (!visible && document.activeElement === btnRef.current) {
       const log = document.querySelector('[role="log"]');
-      if (log) log.focus?.();
+      if (log) {
+        log.focus?.();
+      } else {
+        // Fallback: blur the button on mobile to clear focus state
+        btnRef.current?.blur();
+      }
     }
   }, [visible]);
 
   if (!render) return null;
 
   const label = hasNew ? `${newCount} new message${newCount > 1 ? 's' : ''}` : 'Scroll to bottom';
+  const handleClick = () => {
+    onClick();
+    // On mobile devices, blur the button after a short delay to clear focus/active state
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      setTimeout(() => {
+        btnRef.current?.blur();
+      }, 300);
+    }
+  };
+
   const classes = [
     'scroll-to-bottom-btn',
     show ? 'is-visible' : 'is-hiding',
@@ -51,7 +66,7 @@ function ScrollToBottomButton({ visible, hasNew, newCount, onClick }) {
       ref={btnRef}
       type="button"
       className={classes}
-      onClick={onClick}
+      onClick={handleClick}
       onTransitionEnd={handleTransitionEnd}
       aria-label={hasNew ? 'Scroll to latest new messages' : 'Scroll to bottom'}
       tabIndex={show ? 0 : -1}

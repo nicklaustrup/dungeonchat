@@ -158,7 +158,9 @@ describe('useUnifiedScrollManager', () => {
         result.current.scrollToBottom('auto');
       });
 
-      expect(mockContainer.scrollTop).toBe(mockContainer.scrollHeight);
+      // Should scroll to the proper bottom position (scrollHeight - clientHeight)
+      const expectedScrollTop = mockContainer.scrollHeight - mockContainer.clientHeight;
+      expect(mockContainer.scrollTop).toBe(expectedScrollTop);
     });
   });
 

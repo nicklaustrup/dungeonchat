@@ -54,15 +54,34 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     if (!el) return;
     
     if (anchor && behavior === 'smooth') {
-      // Use smooth scrollIntoView when anchor is available
+      // Use smooth scrollIntoView when anchor is available, but ensure we reach true bottom
       anchor.scrollIntoView({ 
         behavior: 'smooth',
         block: 'end',
         inline: 'nearest'
       });
+      
+      // Add a timeout to ensure we reach the true bottom after smooth scrolling
+      setTimeout(() => {
+        const targetTop = el.scrollHeight - el.clientHeight;
+        if (Math.abs(el.scrollTop - targetTop) > 5) { // If we're not close enough to bottom
+          el.scrollTop = Math.max(0, targetTop);
+        }
+        setIsAtBottom(true);
+        setUnreadCount(0);
+      }, 500); // Wait for smooth scroll to complete
     } else {
-      // Direct scroll assignment for instant scrolling
-      el.scrollTop = el.scrollHeight;
+      // For instant/auto scrolling, use direct scroll assignment and ensure we're truly at bottom
+      requestAnimationFrame(() => {
+        const targetTop = el.scrollHeight - el.clientHeight;
+        el.scrollTop = Math.max(0, targetTop);
+        
+        // Ensure we update the state after scroll
+        requestAnimationFrame(() => {
+          setIsAtBottom(true);
+          setUnreadCount(0);
+        });
+      });
     }
   }, [containerRef, anchorRef]);
   
@@ -195,30 +214,99 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     
     const nowAtBottom = checkIfAtBottom();
     
+    // Add debug logging in development
+    if (process.env.NODE_ENV === 'development') {
+      const el = containerRef.current;
+      if (el) {
+        const distance = computeDistanceFromBottom();
+        console.log('UnifiedScroll: scroll event', { 
+          nowAtBottom, 
+          prevAtBottom: isAtBottom, 
+          distance, 
+          threshold,
+          scrollTop: el.scrollTop,
+          scrollHeight: el.scrollHeight,
+          clientHeight: el.clientHeight
+        });
+      }
+    }
+    
     if (nowAtBottom !== isAtBottom) {
       setIsAtBottom(nowAtBottom);
       
       if (nowAtBottom) {
         // User scrolled back to bottom, clear unread count
         setUnreadCount(0);
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('UnifiedScroll: cleared unread count - user at bottom');
+        }
       }
     }
-  }, [checkIfAtBottom, isAtBottom]);
+  }, [checkIfAtBottom, isAtBottom, computeDistanceFromBottom, threshold, containerRef]);
   
   // Main effect: handle message changes
   React.useEffect(() => {
     const currentMessages = messages || [];
     const prevMessages = prevMessagesRef.current;
     
-    // Skip processing on initial load
-    if (isInitialLoadRef.current) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('UnifiedScroll: main effect running', { 
+        currentLength: currentMessages.length, 
+        prevLength: prevMessages.length,
+        isInitialLoad: isInitialLoadRef.current
+      });
+    }
+    
+    // Handle initial load: scroll to bottom when messages first load
+    if (isInitialLoadRef.current && currentMessages.length > 0) {
       isInitialLoadRef.current = false;
       prevMessagesRef.current = currentMessages;
+      
+      // Use multiple attempts with increasing delays to ensure scroll works
+      const attemptScroll = (attempt = 0) => {
+        if (attempt > 3) return; // Give up after 4 attempts
+        
+        setTimeout(() => {
+          const el = containerRef.current;
+          if (el) {
+            // Use the same reliable scroll logic as the scroll button
+            const targetTop = el.scrollHeight - el.clientHeight;
+            el.scrollTop = Math.max(0, targetTop);
+            
+            // Verify we actually scrolled to bottom, if not try again
+            requestAnimationFrame(() => {
+              const actualDistance = el.scrollHeight - (el.scrollTop + el.clientHeight);
+              if (actualDistance > 10 && attempt < 3) {
+                attemptScroll(attempt + 1);
+              } else {
+                setIsAtBottom(true);
+                setUnreadCount(0);
+              }
+            });
+          }
+        }, 50 + (attempt * 100)); // Increasing delays: 50ms, 150ms, 250ms, 350ms
+      };
+      
+      attemptScroll();
+      return;
+    }
+    
+    // Skip processing if still initial load but no messages yet
+    if (isInitialLoadRef.current) {
       return;
     }
     
     // Classify the change
     const classification = classifyMessageDiff(prevMessages, currentMessages);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('UnifiedScroll: classifying message diff', {
+        prevLength: prevMessages.length,
+        currentLength: currentMessages.length,
+        classification
+      });
+    }
     
     // Handle case where classification might be null/undefined
     if (!classification) {
@@ -226,7 +314,11 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
       return;
     }
     
-    const { didAppend, didPrepend, newMessages, appendedCount } = classification;
+    const { didAppend, didPrepend, appendedCount } = classification;
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('UnifiedScroll: classification result', { didAppend, didPrepend, appendedCount });
+    }
     
     if (process.env.NODE_ENV === 'development') {
       console.log('UnifiedScroll: Message change classified', classification);
@@ -238,21 +330,58 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     }
     
     // Handle new messages (appends)
-    if (didAppend && newMessages.length > 0) {
-      if (isAtBottom) {
-        // Auto-scroll to new messages
-        requestAnimationFrame(() => {
-          scrollToBottom('smooth');
+    if (didAppend && appendedCount > 0) {
+      // Force a fresh bottom check to ensure accuracy before making decisions
+      const el = containerRef.current;
+      let currentlyAtBottom = isAtBottom;
+      
+      if (el) {
+        const distance = Math.max(0, el.scrollHeight - (el.scrollTop + el.clientHeight));
+        currentlyAtBottom = distance <= threshold;
+        
+        // Update state immediately if it differs
+        if (currentlyAtBottom !== isAtBottom) {
+          setIsAtBottom(currentlyAtBottom);
+        }
+      }
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('UnifiedScroll: new message(s) detected', { 
+          appendedCount, 
+          currentlyAtBottom, 
+          stateIsAtBottom: isAtBottom,
+          unreadCount
         });
+      }
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('UnifiedScroll: checking auto-scroll condition', { currentlyAtBottom, stateIsAtBottom: isAtBottom });
+      }
+      
+      if (currentlyAtBottom) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('UnifiedScroll: auto-scrolling to new messages');
+        }
+        // Auto-scroll to new messages - use setTimeout for better test compatibility
+        setTimeout(() => scrollToBottom('smooth'), 1);
       } else {
         // Add to unread count
-        setUnreadCount(prev => prev + appendedCount);
+        const newUnreadCount = unreadCount + appendedCount;
+        setUnreadCount(newUnreadCount);
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('UnifiedScroll: incrementing unread count', { 
+            previousCount: unreadCount, 
+            newCount: newUnreadCount,
+            appendedCount
+          });
+        }
       }
     }
     
     // Update previous messages
     prevMessagesRef.current = currentMessages;
-  }, [messages, isAtBottom, restoreScrollPosition, scrollToBottom]);
+  }, [messages, isAtBottom, restoreScrollPosition, scrollToBottom, containerRef, threshold, unreadCount]);
   
   // Set up scroll event listener
   React.useEffect(() => {

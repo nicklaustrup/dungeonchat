@@ -6,14 +6,19 @@
  * @returns {{ didPrepend: boolean, prependedCount: number, didAppend: boolean, appendedCount: number, reset:boolean, prevLength:number, nextLength:number }}
  */
 export function classifyMessageDiff(prevMessages, nextMessages) {
+  // Handle undefined/null cases to prevent length errors
+  if (!prevMessages || !nextMessages) {
+    return { didPrepend: false, prependedCount: 0, didAppend: false, appendedCount: 0, reset: false, prevLength: 0, nextLength: 0 };
+  }
+  
   const prevLength = prevMessages.length;
   const nextLength = nextMessages.length;
   if (nextLength === 0 && prevLength === 0) {
     return { didPrepend: false, prependedCount: 0, didAppend: false, appendedCount: 0, reset: false, prevLength, nextLength };
   }
-  // Build quick id maps
-  const prevIds = prevMessages.map(m => m.id);
-  const nextIds = nextMessages.map(m => m.id);
+  // Build quick id maps - filter out null/invalid messages
+  const prevIds = prevMessages.filter(m => m && m.id).map(m => m.id);
+  const nextIds = nextMessages.filter(m => m && m.id).map(m => m.id);
   const prevFirst = prevIds[0];
   const prevLast = prevIds[prevIds.length - 1];
   // We only need previous boundary membership to detect reset and compute prepend/append counts.
