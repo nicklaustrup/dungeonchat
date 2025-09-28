@@ -11,12 +11,27 @@ export function getTelemetrySnapshot() { return [...telemetryQueue]; }
 export default function ReactionBar({ emojis, onReact, onReply, message, menuOpen, children, hidden }) {
   const longPressTimeout = React.useRef(null);
   const longPressActive = React.useRef(false);
+  const pointerHandled = React.useRef(false); // Track if pointer events handled the reaction
+  const lastReactionTime = React.useRef({}); // Track last reaction time per emoji
 
   const handlePointerDown = (emoji, e) => {
     if (e.pointerType === 'mouse') return; // focus on touch only
     longPressActive.current = false;
+    pointerHandled.current = false; // Reset flag at start of interaction
     longPressTimeout.current = setTimeout(() => {
       longPressActive.current = true;
+      
+      // Debounce rapid long presses on the same emoji for the same message (300ms window)
+      const now = Date.now();
+      const debounceKey = `${message?.id}-${emoji}`;
+      const lastTime = lastReactionTime.current[debounceKey] || 0;
+      if (now - lastTime < 300) {
+        console.log('Debouncing rapid long press on', emoji, 'for message', message?.id);
+        return;
+      }
+      
+      lastReactionTime.current[debounceKey] = now;
+      pointerHandled.current = true; // Mark as handled by pointer events
       // For long-press, treat as primary reaction toggle
       if (onReact) onReact(emoji);
       logTelemetry({ type: 'long-press-reaction', emoji, messageId: message?.id });
@@ -25,7 +40,19 @@ export default function ReactionBar({ emojis, onReact, onReply, message, menuOpe
 
   const clearLongPress = (emoji, triggerClick, e) => {
     if (longPressTimeout.current) clearTimeout(longPressTimeout.current);
-    if (!longPressActive.current && triggerClick && onReact) {
+    // Only trigger reaction on pointer up for touch devices, not mouse/pen
+    if (!longPressActive.current && triggerClick && e.pointerType !== 'mouse' && onReact) {
+      // Debounce rapid taps on the same emoji for the same message (300ms window)
+      const now = Date.now();
+      const debounceKey = `${message?.id}-${emoji}`;
+      const lastTime = lastReactionTime.current[debounceKey] || 0;
+      if (now - lastTime < 300) {
+        console.log('Debouncing rapid tap on', emoji, 'for message', message?.id);
+        return;
+      }
+      
+      lastReactionTime.current[debounceKey] = now;
+      pointerHandled.current = true; // Mark as handled by pointer events
       onReact(emoji);
       logTelemetry({ type: 'tap-reaction', emoji, messageId: message?.id });
     }
@@ -46,7 +73,18 @@ export default function ReactionBar({ emojis, onReact, onReply, message, menuOpe
           data-tip={`React ${emoji}`}
           onClick={() => {
             // Desktop / mouse path or keyboard activation (Enter/Space -> click)
-            if (longPressActive.current) return; // already handled by long press
+            if (longPressActive.current || pointerHandled.current) return; // already handled by long press or pointer events
+            
+            // Debounce rapid clicks on the same emoji for the same message (300ms window)
+            const now = Date.now();
+            const debounceKey = `${message?.id}-${emoji}`;
+            const lastTime = lastReactionTime.current[debounceKey] || 0;
+            if (now - lastTime < 300) {
+              console.log('Debouncing rapid click on', emoji, 'for message', message?.id);
+              return;
+            }
+            
+            lastReactionTime.current[debounceKey] = now;
             if (onReact) onReact(emoji);
             logTelemetry({ type: 'click-reaction', emoji, messageId: message?.id });
           }}

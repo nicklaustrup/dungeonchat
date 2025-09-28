@@ -15,9 +15,24 @@ function buildSummary(reactions) {
 }
 
 const ReactionList = ({ reactions, currentUserId, onToggle }) => {
-  const hasReactions = reactions && Object.keys(reactions).length > 0;
+  // Filter out reactions with zero count (empty arrays or zero values)
+  const validReactions = React.useMemo(() => {
+    if (!reactions) return {};
+    
+    const filtered = {};
+    Object.entries(reactions).forEach(([emoji, userIds]) => {
+      const isArray = Array.isArray(userIds);
+      const count = isArray ? userIds.length : (typeof userIds === 'number' ? userIds : 0);
+      if (count > 0) {
+        filtered[emoji] = userIds;
+      }
+    });
+    return filtered;
+  }, [reactions]);
+
+  const hasReactions = Object.keys(validReactions).length > 0;
   const [liveText, setLiveText] = React.useState('');
-  const summary = React.useMemo(() => buildSummary(reactions), [reactions]);
+  const summary = React.useMemo(() => buildSummary(validReactions), [validReactions]);
 
   // Debounced live region updates to prevent chatter when multiple reactions toggle quickly.
   React.useEffect(() => {
@@ -41,7 +56,7 @@ const ReactionList = ({ reactions, currentUserId, onToggle }) => {
         style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0 0 0 0)', border: 0 }}
         data-testid="reaction-live-region"
       >{liveText}</span>
-      {Object.entries(reactions).map(([emoji, userIds]) => {
+      {Object.entries(validReactions).map(([emoji, userIds]) => {
         const isArray = Array.isArray(userIds);
         const count = isArray ? userIds.length : (typeof userIds === 'number' ? userIds : 0);
         const hasUserReacted = isArray ? userIds.includes(currentUserId) : false;

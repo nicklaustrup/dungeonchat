@@ -116,6 +116,7 @@
 
 /* Reaction bar: ensure no vertical space reservation when hidden */
 .reaction-buttons.hidden-collapsed { position:absolute; }
+/* Note: pointer-events for hidden-collapsed are handled in ChatMessage.reactions.css with proper media query overrides */
 .message .reaction-buttons.hidden-collapsed { pointer-events:none; }
 
 @media (hover: none) and (pointer: coarse) {

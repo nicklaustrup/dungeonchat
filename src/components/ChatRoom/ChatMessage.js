@@ -236,7 +236,7 @@ function ChatMessage(props) {
                                     menuReady={menuReady}
                                     menuStyle={menuStyle}
                                     quickMenuEmojis={quickMenuEmojis}
-                                    addReaction={(e) => { addReaction(e); setMenuOpen(false); }}
+                                    addReaction={(emoji) => { addReaction(emoji); setMenuOpen(false); }}
                                     handleAddReactionFull={handleAddReactionFull}
                                     onReply={onReply ? (m) => { onReply(m); setMenuOpen(false); } : undefined}
                                     message={props.message}
@@ -338,7 +338,7 @@ function ChatMessage(props) {
                                         menuReady={menuReady}
                                         menuStyle={menuStyle}
                                         quickMenuEmojis={quickMenuEmojis}
-                                        addReaction={(e) => { addReaction(e); setMenuOpen(false); }}
+                                        addReaction={(emoji) => { addReaction(emoji); setMenuOpen(false); }}
                                         handleAddReactionFull={handleAddReactionFull}
                                         onReply={onReply ? (m) => { onReply(m); setMenuOpen(false); } : undefined}
                                         message={props.message}

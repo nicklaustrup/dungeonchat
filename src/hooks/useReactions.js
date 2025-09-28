@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteField } from 'firebase/firestore';
 
 /**
  * useReactions
@@ -80,7 +80,7 @@ export function useReactions({ firestore, auth, messageId, initialReactions = {}
       let updatePayload;
       if (idx > -1 && arr.length === 0) {
         // Remove the emoji key entirely when last user removed their reaction
-        updatePayload = { [`reactions.${emoji}`]: [] };
+        updatePayload = { [`reactions.${emoji}`]: deleteField() };
       } else {
         // Update only this specific emoji's reactions
         updatePayload = { [`reactions.${emoji}`]: nextState[emoji] || [] };
