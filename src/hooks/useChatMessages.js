@@ -42,16 +42,20 @@ export function useChatMessages({ firestore, limitBatchSize = 25, maxLimit = 100
 
   // Optimized message computation with better memoization
   const computedMessages = React.useMemo(() => {
-    if (!snapshot || !snapshot.docs) return null; // explicitly distinguish 'no snapshot yet'
+    if (!snapshot || !snapshot.docs || !Array.isArray(snapshot.docs)) return null; // explicitly distinguish 'no snapshot yet'
     
     // Pre-allocate array for better performance
     const docs = snapshot.docs;
+    if (docs.length === 0) return []; // Handle empty array case
+    
     const list = new Array(docs.length);
     
     // Reverse iteration for better performance (avoid .reverse() call)
     for (let i = docs.length - 1, j = 0; i >= 0; i--, j++) {
       const doc = docs[i];
-      list[j] = { id: doc.id, ...doc.data() };
+      if (doc && typeof doc.id === 'string' && typeof doc.data === 'function') {
+        list[j] = { id: doc.id, ...doc.data() };
+      }
     }
     
     return list;
@@ -79,7 +83,7 @@ export function useChatMessages({ firestore, limitBatchSize = 25, maxLimit = 100
   // Optimized hasMore computation
   const hasMore = React.useMemo(() => {
     // Heuristic: If we received fewer docs than requested (AND query settled) there are no more.
-    let hasMoreCandidate = (messages.length >= messageLimit) && messageLimit < maxLimit;
+    let hasMoreCandidate = (messages && messages.length >= messageLimit) && messageLimit < maxLimit;
     
     // During in-flight pagination where snapshot not yet arrived, retain previous hasMore (avoid hiding sentinel & triggering layout thrash)
     if (!computedMessages && paginatingRef.current) {
@@ -89,7 +93,7 @@ export function useChatMessages({ firestore, limitBatchSize = 25, maxLimit = 100
     }
     
     return hasMoreCandidate;
-  }, [messages.length, messageLimit, maxLimit, computedMessages]);
+  }, [messages, messageLimit, maxLimit, computedMessages]);
 
   const loadMore = React.useCallback(() => {
     setMessageLimit(prev => {

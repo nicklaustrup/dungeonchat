@@ -13,12 +13,13 @@ This file is optimized for future AI Agents & contributors. Each feature spec is
 8. [Discovery & Growth](#discovery--growth)
 9. [Observability & Analytics](#observability--analytics)
 10. [Developer Experience](#developer-experience)
-11. [Data Modeling Patterns](#data-modeling-patterns)
-12. [Security Rule Templates](#security-rule-templates)
-13. [Push & PWA Strategy](#push--pwa-strategy)
-14. [Testing Strategy](#testing-strategy)
-15. [Performance Watchpoints](#performance-watchpoints)
-16. [Phased Roadmap Snapshot](#phased-roadmap-snapshot)
+11. [Performance & Simplification Upgrades](#performance--simplification-upgrades)
+12. [Data Modeling Patterns](#data-modeling-patterns)
+13. [Security Rule Templates](#security-rule-templates)
+14. [Push & PWA Strategy](#push--pwa-strategy)
+15. [Testing Strategy](#testing-strategy)
+16. [Performance Watchpoints](#performance-watchpoints)
+17. [Phased Roadmap Snapshot](#phased-roadmap-snapshot)
 
 ---
 
@@ -182,6 +183,29 @@ Migrated outstanding tasks from former `MOBILE_REFACTOR.md` (file removed after 
 | Storybook Visual Regression | Snapshot baseline gating | Playwright / Chromatic hybrid |
 | API Surface Docs | Auto-generated component MDX | Storybook Docs + compodoc style |
 | Test Data Seeds | Script to populate dev DB | `scripts/seed.js` |
+
+---
+
+## Performance & Simplification Upgrades
+
+> **Note**: These items were deferred from Phase 4 of the major render refactor (completed Sept 2025). Consider for future performance optimization cycles.
+
+| Feature | Summary | Notes / Implementation |
+|---------|---------|------------------------|
+| Remove Auto-Fill Viewport Logic | Simplify ChatRoom.js scroll behavior | Remove `autoFillRef` and complex viewport detection in `ChatRoom.js` |
+| Simplify Debug Metadata | Remove complex scroll debug objects | Clean up `useUnifiedScrollManager` debug meta calculations |
+| Remove Unused Telemetry | Strip telemetry hooks from App.js | Audit `useTelemetry` and `useViewportInfo` - remove if unused |
+| Clean Up Commented Code | Remove disabled restoration logic | Search for `// TEMPORARILY DISABLED` and similar comments |
+| Consolidate CSS Classes | Merge duplicate/similar styles | Audit `.css` files for consolidation opportunities |
+| Reduce Component Nesting | Flatten unnecessary wrapper components | Look for single-child wrapper components to eliminate |
+| Virtual Message Scrolling | Implement for 10,000+ messages | Consider `react-window` or `react-virtualized` for very large rooms |
+| Service Worker Caching | Cache message data offline | PWA enhancement for better offline experience |
+| Message Compression | Compress network payload | Consider message compression for large text messages |
+| Performance Monitoring | Add runtime performance metrics | Track render times, memory usage, scroll performance |
+
+**Implementation Priority**: Low (nice-to-have optimizations)
+**Estimated Effort**: 1-2 weeks total
+**Risk**: Very low - these are cleanup/optimization tasks
 
 ---
 
