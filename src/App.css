@@ -13,15 +13,91 @@
    (example with :has() omitted for compatibility)
 */
 @media (max-width: 599px) {
-  .header-grid { flex-direction:row; justify-content:space-between; align-items:flex-start; }
-  .app-title { font-size:20px; margin:4px 0; }
-  .header-right.mobile-stack-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; margin-left:auto; }
-  .header-right.mobile-stack-right .user-menu { order:0; }
-  .header-right.mobile-stack-right .search-wrapper { order:1; width:100%; max-width:166px; display:flex; justify-content:flex-end; }
-  .header-right.mobile-stack-right .search-wrapper.expanded { width:100%; max-width:166px; }
-  .header-right.mobile-stack-right .search-container { width:100%; display:flex; justify-content:flex-end; }
-  .header-right.mobile-stack-right .search-container input { width:100%; text-align:right; }
-  .search-wrapper.collapsed { width:auto; }
+  .header-grid { 
+    flex-direction: row; 
+    justify-content: space-between; 
+    align-items: center; /* Center align instead of flex-start for better visual balance */
+  }
+  
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+  
+  .app-title { 
+    font-size: 20px; 
+    margin: 4px 0; 
+    white-space: nowrap;
+  }
+  
+  .header-right.mobile-stack-right { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: flex-end; 
+    gap: 6px; 
+    flex-shrink: 0;
+  }
+  
+  /* Header-specific user chip mobile styling */
+  .header-right.mobile-stack-right .user-menu-wrapper .user-chip {
+    flex-direction: column;
+    align-items: center;
+    padding: 4px;
+    gap: 2px;
+    max-width: 60px;
+    border-radius: 8px;
+  }
+  
+  .header-right.mobile-stack-right .user-menu-wrapper .user-chip-avatar {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .header-right.mobile-stack-right .user-menu-wrapper .user-chip-name {
+    font-size: 0.7rem;
+    font-weight: 500;
+    max-width: 52px;
+    text-align: center;
+    line-height: 1.1;
+  }
+  
+  .header-right.mobile-stack-right .user-menu-wrapper .user-menu-caret {
+    display: none; /* Hide caret on mobile for cleaner look */
+  }
+  
+  .header-right.mobile-stack-right .user-menu { 
+    order: 0; 
+  }
+  
+  .header-right.mobile-stack-right .search-wrapper { 
+    order: 1; 
+    width: 100%; 
+    max-width: 166px; 
+    display: flex; 
+    justify-content: flex-end; 
+  }
+  
+  .header-right.mobile-stack-right .search-wrapper.expanded { 
+    width: 100%; 
+    max-width: 166px; 
+  }
+  
+  .header-right.mobile-stack-right .search-container { 
+    width: 100%; 
+    display: flex; 
+    justify-content: flex-end; 
+  }
+  
+  .header-right.mobile-stack-right .search-container input { 
+    width: 100%; 
+    text-align: right; 
+  }
+  
+  .search-wrapper.collapsed { 
+    width: auto; 
+  }
 }
 
 /* Ensure desktop header retains original flex row layout */
