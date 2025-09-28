@@ -8,7 +8,41 @@
 .delete-modal h4 { margin:0 0 8px; font-size:1rem; }
 .delete-modal p { margin:0 0 16px; font-size:0.85rem; opacity:.8; max-width:100%; padding:0; background:transparent; color: var(--text-color); }
 .delete-modal-actions { display:flex; gap:10px; justify-content:flex-end; }
-.delete-modal-actions button { padding:8px 14px; font-size:0.75rem; background: var(--bg-light); border:1px solid var(--border-color); border-radius:8px; }
-.delete-modal-actions button:hover { background: var(--primary-color); color:#fff; }
-.delete-modal-actions .danger { background:#ff4d4f; border-color:#ff4d4f; color:#fff; }
-.delete-modal-actions .danger:hover { background:#ff2d2f; }
+.delete-modal-actions button { 
+  padding:8px 14px; 
+  font-size:0.75rem; 
+  background: linear-gradient(135deg, var(--bg-light), rgba(45, 48, 51, 0.9)); 
+  border:1px solid var(--border-color); 
+  border-radius:8px; 
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.delete-modal-actions button:hover { 
+  background: linear-gradient(135deg, var(--primary-color), #167ed3); 
+  color:#fff; 
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+.delete-modal-actions button:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.delete-modal-actions .danger { 
+  background: linear-gradient(135deg, #ff4d4f, #ff2d2f); 
+  border-color:#ff4d4f; 
+  color:#fff; 
+  box-shadow: 0 4px 14px rgba(255,77,79,0.35);
+}
+.delete-modal-actions .danger:hover { 
+  background: linear-gradient(135deg, #ff2d2f, #d32f2f); 
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 18px rgba(255,45,47,0.45);
+}
+.delete-modal-actions .danger:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(255,45,47,0.25);
+}

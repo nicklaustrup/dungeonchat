@@ -26,12 +26,28 @@ function EmojiMenuSingleton() {
   const [panelStyle, setPanelStyle] = useState(null);
   // Hooks for dynamic picker module (declared unconditionally to satisfy rules-of-hooks)
   const [pickerReady, setPickerReady] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const PickerRef = useRef(null);
   // Kick off load when panel becomes visible first time
   useEffect(() => {
     if (!state.visible) return; // do not load until needed
     let active = true;
-    loadEmojiPicker().then(Mod => { if (active) { PickerRef.current = Mod; setPickerReady(true); } });
+    setLoadError(null); // Clear any previous errors
+    loadEmojiPicker()
+      .then(Mod => { 
+        if (active) { 
+          PickerRef.current = Mod; 
+          setPickerReady(true);
+        } 
+      })
+      .catch(error => {
+        if (active) {
+          console.error('Failed to load emoji picker:', error);
+          setLoadError(error);
+          // Close the menu since we can't display the picker
+          setState(s => ({ ...s, visible: false }));
+        }
+      });
     return () => { active = false; };
   }, [state.visible]);
 
@@ -124,7 +140,51 @@ function EmojiMenuSingleton() {
 
   return createPortal(
     <div ref={panelRef} className="emoji-picker-portal" style={{ zIndex: 1600, ...style }}>
-      {pickerReady && PickerComp ? (
+      {loadError ? (
+        <div style={{ 
+          padding: '32px 48px', 
+          fontSize: 12, 
+          opacity: 0.8, 
+          textAlign: 'center',
+          backgroundColor: 'var(--bg-secondary, #2a2a2a)',
+          border: '1px solid var(--border-color, #444)',
+          borderRadius: '8px',
+          color: 'var(--text-color, #fff)'
+        }}>
+          <div style={{ marginBottom: '8px' }}>😔</div>
+          <div>Emoji picker failed to load</div>
+          <button 
+            onClick={() => {
+              setLoadError(null);
+              setPickerReady(false);
+              // Retry loading
+              const retryLoad = async () => {
+                try {
+                  const Mod = await loadEmojiPicker();
+                  PickerRef.current = Mod;
+                  setPickerReady(true);
+                } catch (error) {
+                  console.error('Retry failed:', error);
+                  setLoadError(error);
+                }
+              };
+              retryLoad();
+            }}
+            style={{
+              marginTop: '12px',
+              padding: '6px 12px',
+              fontSize: '11px',
+              background: 'var(--primary-color, #4a9eff)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      ) : pickerReady && PickerComp ? (
         <PickerComp
           onEmojiClick={(emojiData) => {
             if (state.onSelect) state.onSelect(emojiData);
@@ -134,7 +194,7 @@ function EmojiMenuSingleton() {
           theme={theme}
         />
       ) : (
-        <div style={{ padding: '32px 48px', fontSize: 12, opacity: 0.8 }}>Loading emoji…</div>
+        <div style={{ padding: '32px 48px', fontSize: 12, opacity: 0.8, textAlign: 'center' }}>Loading emoji…</div>
       )}
     </div>,
     mountNode

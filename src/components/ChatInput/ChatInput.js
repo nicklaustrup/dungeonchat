@@ -22,7 +22,7 @@ function ChatInput({
 
   // Use centralized state instead of prop drilling  
   const { replyingTo, setReplyingTo } = useChatReply();
-  const { preview, uploading, setImageState, clearImage } = useChatImage();
+  const { clearImage } = useChatImage();
 
   // Image handling - simplified approach
   const imageHook = useImageMessage({
@@ -36,12 +36,7 @@ function ChatInput({
 
   const handleLocalFile = React.useCallback((file) => {
     imageHook.handleImageSelect(file);
-    // Update context to match hook state (but don't create cycles)
-    setImageState({
-      selectedFile: file,
-      preview: null // Will be updated when FileReader completes
-    });
-  }, [imageHook, setImageState]);
+  }, [imageHook]);
   
   const handleClearImage = React.useCallback(() => {
     imageHook.clearImage();
@@ -155,8 +150,8 @@ function ChatInput({
   return (
     <div className="chat-input-area">
       <ImagePreviewModal
-        imagePreview={preview}
-        uploading={uploading}
+        imagePreview={imageHook.imagePreview}
+        uploading={imageHook.uploading}
         error={imageHook.error}
         onSend={imageHook.sendImageMessage}
         onCancel={handleClearImage}

@@ -15,10 +15,10 @@
 @keyframes menuPopDown { 0% { opacity:0; transform: translateY(-6px) scale(.94);} 60% { opacity:1; transform: translateY(2px) scale(1.02);} 100% { opacity:1; transform: translateY(0) scale(1);} }
 @keyframes menuPopMiddle { 0% { opacity:0; transform: scale(.9);} 60% { opacity:1; transform: scale(1.03);} 100% { opacity:1; transform: scale(1);} }
 .menu-reactions-row { display:flex; gap:8px; flex-wrap:nowrap; }
-.menu-reaction-btn { background: var(--bg-secondary); border:1px solid var(--border-color); width:40px; height:40px; border-radius:12px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: background .18s ease, border-color .18s ease; }
+.menu-reaction-btn { background: var(--bg-secondary); border:1px solid var(--border-color); width:40px; height:40px; border-radius:8px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: background .18s ease, border-color .18s ease; }
 .menu-reaction-btn:hover { background: var(--primary-color); color:#fff; border-color: var(--primary-color); }
 .menu-divider { height:1px; background: var(--border-color); margin:6px 0; }
-.menu-item { background:transparent; color: var(--text-color); border:none; border-radius:6px; padding:8px 10px; font-size:12px; cursor:pointer; opacity:.85; transition: background .18s ease, color .18s ease, opacity .18s ease; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.menu-item { background:transparent; color: var(--text-color); border:none; border-radius:8px; padding:8px 10px; font-size:12px; cursor:pointer; opacity:.85; transition: background .18s ease, color .18s ease, opacity .18s ease; display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .menu-item+.menu-item { border-top:1px solid var(--border-color); }
 .menu-item:hover:not([disabled]) { background: var(--primary-color); color:#fff; opacity:1; }
 .menu-item[disabled] { cursor:not-allowed; opacity:.5; }
