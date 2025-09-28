@@ -55,3 +55,9 @@ export const MenuOpenState = (args) => {
   // We cannot directly force menu open via prop; rely on user click in Chromatic (not ideal). Instead leave as standard.
   return <ChatMessage {...args} message={msg} />;
 };
+
+export const WithLinks = (args) => <ChatMessage {...args} message={makeMsg({ text: 'Check out https://github.com and www.example.com for more info!' })} />;
+
+export const MultipleLinks = (args) => <ChatMessage {...args} message={makeMsg({ text: 'Visit https://react.dev, https://firebase.google.com, and example.org for resources' })} />;
+
+export const LinksWithSearch = (args) => <ChatMessage {...args} searchTerm="example" message={makeMsg({ text: 'Here is an example: https://example.com has great example content' })} />;

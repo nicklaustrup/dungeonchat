@@ -10,7 +10,7 @@ import { getFallbackAvatar } from '../../utils/avatar';
 import { usePresence } from '../../services/PresenceContext';
 import EmojiMenu from '../../components/ChatInput/EmojiMenu';
 import { formatTimestamp, formatTimeOnly, formatFullTimestamp, buildMessageId, relativeLastActive } from '../../utils/messageFormatting';
-import { highlightText } from '../../utils/highlightText';
+import { processMessageText } from '../../utils/linkify';
 import AvatarWithPresence from './parts/AvatarWithPresence';
 import InlineReplyContext from './parts/InlineReplyContext';
 import ReactionList from './parts/ReactionList';
@@ -212,7 +212,7 @@ function ChatMessage(props) {
                     ) : (
                         text && (
                             <p>
-                                {highlightText(text, searchTerm)}{' '}
+                                {processMessageText(text, searchTerm)}{' '}
                                 {editedAt && (<sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>)}
                             </p>
                         )
@@ -314,7 +314,7 @@ function ChatMessage(props) {
                         ) : (
                             text && (
                                 <p>
-                                    {highlightText(text, searchTerm)}{' '}
+                                    {processMessageText(text, searchTerm)}{' '}
                                     {editedAt && (<sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>)}
                                 </p>
                             )

@@ -204,6 +204,38 @@ body.chat-menu-open .reaction-buttons:not(.force-visible) {
   line-height: 1.35;
 }
 
+/* Message link styles */
+.message-link {
+  color: #4a9eff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+  word-break: break-all;
+}
+
+.message-link:hover {
+  color: #66b3ff;
+  text-decoration-color: #66b3ff;
+}
+
+.message-link:active {
+  color: #3385d6;
+}
+
+/* Light theme link colors */
+.light-theme .message-link {
+  color: #0066cc;
+}
+
+.light-theme .message-link:hover {
+  color: #0052a3;
+}
+
+.light-theme .message-link:active {
+  color: #004080;
+}
+
 .avatar-container {
   position: relative;
   display: flex;
