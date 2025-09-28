@@ -30,7 +30,7 @@ jobs:
           cache: npm
 
       - name: Install root deps (minimal for firebase-tools peer needs)
-        run: npm ci --omit=dev
+        run: npm ci --omit=dev --ignore-scripts
 
       - name: Download build artifact
         uses: actions/download-artifact@v4
@@ -65,7 +65,7 @@ jobs:
 
       - name: Install functions deps (only if functions changed)
         if: steps.diff.outputs.deploy_functions == 'true'
-        run: (cd functions && npm ci --omit=dev)
+        run: (cd functions && npm ci --omit=dev --ignore-scripts)
 
       - name: Deploy Hosting only
         if: steps.diff.outputs.deploy_functions == 'false'

@@ -36,7 +36,7 @@ jobs:
           cache: npm
 
       - name: Install minimal deps
-        run: npm ci --omit=dev
+        run: npm ci --omit=dev --ignore-scripts
 
       - name: Install firebase-tools
         run: npm install -g firebase-tools
@@ -99,7 +99,7 @@ jobs:
           fi
       - name: Install functions deps (only if changed)
         if: steps.fn.outputs.functions_changed == 'true'
-        run: (cd functions && npm ci --omit=dev)
+        run: (cd functions && npm ci --omit=dev --ignore-scripts)
 
       - name: Deploy live
         if: steps.channel.outputs.channel == 'live' || inputs.force == 'true'
