@@ -44,7 +44,7 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     if (ignoreBottomCheckRef.current) return isAtBottom; // Don't update during restoration
     const distance = computeDistanceFromBottom();
     return distance <= threshold;
-  }, [computeDistanceFromBottom, threshold, isAtBottom]);
+  }, [computeDistanceFromBottom, threshold]);
   
   // Main scroll to bottom function
   const scrollToBottom = React.useCallback((behavior = 'smooth') => {
@@ -381,7 +381,7 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     
     // Update previous messages
     prevMessagesRef.current = currentMessages;
-  }, [messages, isAtBottom, restoreScrollPosition, scrollToBottom, containerRef, threshold, unreadCount]);
+  }, [messages, isAtBottom, restoreScrollPosition, scrollToBottom, containerRef, threshold]);
   
   // Set up scroll event listener
   React.useEffect(() => {
