@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
+import { render } from '../../../tests/test-utils';
 import ChatMessage from '../ChatMessage';
 
 // Mock Firebase context & hooks

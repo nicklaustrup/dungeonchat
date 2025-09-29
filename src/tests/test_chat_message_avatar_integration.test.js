@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { render } from './test-utils';
 import ChatMessage from '../components/ChatRoom/ChatMessage';
 
 // Mock EmojiMenu to avoid side-effects
