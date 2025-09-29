@@ -1,0 +1,241 @@
+/* Bulk Image Preview Modal Styles */
+.bulk-image-preview-container {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.bulk-image-preview {
+  background: var(--bg-primary);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.bulk-image-header {
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 16px;
+}
+
+.bulk-image-header h3 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.bulk-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+/* Custom scrollbar for the grid */
+.bulk-image-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.bulk-image-grid::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.bulk-image-grid::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.bulk-image-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.bulk-image-item {
+  position: relative;
+  aspect-ratio: 1;
+}
+
+.bulk-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  transition: all 0.18s ease;
+}
+
+.bulk-image-wrapper:hover {
+  transform: scale(1.02);
+}
+
+.bulk-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  background-color: transparent;
+}
+
+.bulk-image-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  opacity: 1;
+  z-index: 1;
+}
+
+.bulk-image-wrapper:hover .bulk-image-remove {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.bulk-image-remove:hover {
+  background: rgba(239, 68, 68, 0.9);
+  transform: scale(1.2);
+}
+
+.bulk-image-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bulk-image-remove svg {
+  width: 14px;
+  height: 14px;
+}
+
+.bulk-image-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.send-images-btn,
+.retry-images-btn,
+.cancel-images-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  min-width: 120px;
+}
+
+.send-images-btn {
+  background: var(--primary-color);
+  color: white;
+}
+
+.send-images-btn:hover:not(.disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.send-images-btn.disabled {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.retry-images-btn {
+  background: var(--warning-color, #f59e0b);
+  color: white;
+}
+
+.retry-images-btn:hover {
+  background: var(--warning-hover, #d97706);
+}
+
+.cancel-images-btn {
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.cancel-images-btn:hover:not(:disabled) {
+  background: var(--bg-light);
+  border-color: var(--text-secondary);
+}
+
+.cancel-images-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bulk-image-hints {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  padding-top: 8px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .bulk-image-preview {
+    padding: 16px;
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .bulk-image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    max-height: 50vh;
+  }
+  
+  .bulk-image-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .send-images-btn,
+  .retry-images-btn,
+  .cancel-images-btn {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .bulk-image-hints {
+    font-size: 0.8rem;
+  }
+}
+
+/* Touch devices - enhance visibility */
+@media (hover: none) and (pointer: coarse) {
+  .bulk-image-remove {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.8);
+  }
+}

@@ -5,11 +5,12 @@ import React from 'react';
  * Encapsulates drag & drop lifecycle for image uploads with robust image detection.
  *
  * @param {Object} params
- * @param {(file: File) => void} params.onImage - Callback when an image file is dropped.
+ * @param {(file: File) => void} params.onImage - Callback when a single image file is dropped.
+ * @param {(files: FileList) => void} params.onImages - Callback when multiple image files are dropped.
  * @param {(active: boolean, ready: boolean) => void} [params.onStateChange] - Notifies parent about drag state changes.
  * @returns {{ isDragActive: boolean, imageReady: boolean, bind: Object }}
  */
-export function useDragAndDropImages({ onImage, onStateChange } = {}) {
+export function useDragAndDropImages({ onImage, onImages, onStateChange } = {}) {
   const [isDragActive, setIsDragActive] = React.useState(false);
   const [imageReady, setImageReady] = React.useState(false);
   const dragCounterRef = React.useRef(0);
@@ -95,16 +96,29 @@ export function useDragAndDropImages({ onImage, onStateChange } = {}) {
     },
     onDrop: (e) => {
       e.preventDefault();
-      const file = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/') && onImage) {
-        onImage(file);
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        // Filter for image files
+        const imageFiles = Array.from(files).filter(file => 
+          file.type && file.type.startsWith('image/')
+        );
+        
+        if (imageFiles.length > 0) {
+          // Prioritize onImages handler if available (supports both single and multiple)
+          if (onImages) {
+            onImages(imageFiles);
+          } else if (onImage) {
+            // Fallback to single image handler only if onImages not provided
+            onImage(imageFiles[0]);
+          }
+        }
       }
       dragCounterRef.current = 0;
       setIsDragActive(false);
       setImageReady(false);
       notify(false, false);
     }
-  }), [detectImageItems, imageReady, isDragActive, notify, onImage]);
+  }), [detectImageItems, imageReady, isDragActive, notify, onImage, onImages]);
 
   return { isDragActive, imageReady, bind };
 }

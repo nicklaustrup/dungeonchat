@@ -142,6 +142,7 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
 
   const { isDragActive, imageReady: imageDragReady, bind: dragBind } = useDragAndDropImages({
     onImage: onImageDrop,
+    onImages: onImageDrop, // Use the same handler for both single and multiple
     onStateChange: onDragStateChange
   });
 

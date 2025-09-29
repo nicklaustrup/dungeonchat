@@ -53,6 +53,7 @@ Risks & Mitigations: <short list>
 | Voice Notes | Short audio clips | Capture, compress (Opus), upload; waveform precomputed client-side |
 | Scheduled / Delayed Send | User sets future time | Cloud Function scheduled via Firestore trigger & a queue collection |
 | Bulk Import (Admin) | Seed historical messages | Batch write / backfill script + rate limiting |
+| **Bulk Image Gallery Messages** | **Render all images from a single bulk upload as a side-by-side gallery in one message** | **Store array of imageURLs in single message doc; render as grid/carousel UI. Requires message schema extension + gallery component.** |
 
 ---
 
@@ -651,7 +652,53 @@ Use onSnapshot unsubscribes on route change / tab hidden to reduce billed minute
 
 ---
 
-## Additional Ideas (Appended During Mobile Phase 2)
+## Bulk Image Gallery Messages - Detailed Specification
+
+**Title:** Bulk Image Gallery Messages  
+**Goal:** Allow all images uploaded in a single bulk upload to render together as a gallery in one chat message instead of separate individual messages.
+
+**Data Model:**
+- Extend message schema to support `imageURLs` array field alongside existing `imageURL` single field
+- Message type would be `image-gallery` vs current `image`
+- Maintain backward compatibility with existing single image messages
+
+**Client Changes:**
+- Modify `BulkImagePreviewModal` send handler to create single message with multiple URLs
+- Update `ChatMessage` component to detect and render gallery messages
+- Create new `ImageGallery` component with grid/carousel layout
+- Enhance message service `createImageMessage` to support array of URLs
+
+**Security Rules:**
+- Extend existing image message rules to validate `imageURLs` array
+- Ensure array length limits (e.g., max 10 images per gallery)
+- Validate each URL in array follows same storage path restrictions
+
+**Acceptance Criteria:**
+- [ ] Bulk upload creates single message with multiple images displayed side-by-side
+- [ ] Gallery supports 2-6 images with responsive grid layout
+- [ ] Individual images in gallery can be clicked for full-screen preview
+- [ ] Maintains existing single image message functionality
+- [ ] Mobile-optimized layout with proper spacing and touch targets
+- [ ] Keyboard navigation support for accessibility
+
+**UI/UX Design:**
+- 2 images: Side-by-side layout
+- 3 images: 2-top, 1-bottom or 3-row layout
+- 4+ images: 2x2 grid with "show more" overlay for additional images
+- Max display: 4 images visible, "+X more" overlay for additional
+- Click any image opens carousel modal starting at clicked image
+
+**Telemetry:**
+- Track gallery message creation events
+- Monitor gallery image click-through rates
+- Measure performance impact of gallery rendering
+
+**Risks & Mitigations:**
+- Performance: Limit gallery size, lazy load off-screen images
+- Storage costs: Existing compression pipeline applies to all images
+- UI complexity: Progressive enhancement - fallback to individual messages if gallery render fails
+
+---
 
 | Idea | Description | Notes |
 |------|-------------|-------|

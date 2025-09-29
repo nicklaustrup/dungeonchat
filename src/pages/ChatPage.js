@@ -20,7 +20,7 @@ function ChatPage() {
   const { soundEnabled, toggleSound } = useChatSound();
   const { searchTerm, showSearch, setSearch } = useChatSearch();
   const { replyingTo, setReplyingTo } = useChatReply();
-  const { handleImageDrop } = useChatImage();
+  const { handleMultipleImageDrop } = useChatImage();
   const { scrollMeta, setScrollMeta } = useChatScroll();
 
   const getDisplayName = React.useCallback((uid, originalName) => {
@@ -111,7 +111,7 @@ function ChatPage() {
               onDragStateChange={noop}
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
-              onImageDrop={handleImageDrop}
+              onImageDrop={handleMultipleImageDrop}
               onViewProfile={handleViewProfile}
               onScrollMeta={setScrollMeta}
               soundEnabled={soundEnabled}

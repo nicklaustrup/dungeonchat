@@ -8,6 +8,7 @@ export function MessageBar({
   onKeyDown,
   onPickEmoji,
   onTriggerFile,
+  onTriggerFiles,
   emojiOpen,
   emojiButtonRef,
   textareaRef
@@ -17,10 +18,17 @@ export function MessageBar({
       <input
         type="file"
         accept="image/*"
+        multiple
         onChange={(e) => {
           const fileInput = e.target;
-          const file = fileInput.files?.[0];
-          if (file) onTriggerFile(file);
+          const files = fileInput.files;
+          if (files && files.length > 0) {
+            if (files.length === 1) {
+              onTriggerFile(files[0]);
+            } else {
+              onTriggerFiles && onTriggerFiles(files);
+            }
+          }
           // Allow selecting the same file again (mobile browsers often cache last selection)
           fileInput.value = '';
         }}

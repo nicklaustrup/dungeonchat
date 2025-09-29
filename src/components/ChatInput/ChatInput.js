@@ -3,13 +3,14 @@ import './ChatInput.css';
 import { useFirebase } from '../../services/FirebaseContext';
 import { playSendMessageSound } from '../../utils/sound';
 import { createTextMessage } from '../../services/messageService';
-import { useChatReply, useChatImage } from '../../contexts/ChatStateContext';
+import { useChatReply, useChatImage, useBulkImages } from '../../contexts/ChatStateContext';
 import { useImageMessage } from '../../hooks/useImageMessage';
 import { useTypingPresence } from '../../hooks/useTypingPresence';
 import { useEmojiPicker } from '../../hooks/useEmojiPicker';
 import { useToast } from '../../hooks/useToast';
 import { ReplyPreview } from './ReplyPreview';
 import { ImagePreviewModal } from './ImagePreviewModal';
+import { BulkImagePreviewModal } from './BulkImagePreviewModal';
 import { MessageBar } from './MessageBar';
 
 function ChatInput({
@@ -24,6 +25,7 @@ function ChatInput({
   // Use centralized state instead of prop drilling  
   const { replyingTo, setReplyingTo } = useChatReply();
   const { selectedFile: contextSelectedFile, preview: contextPreview, uploading: contextUploading, clearImage, setUploading } = useChatImage();
+  const { images: bulkImages, uploading: bulkUploading, removeImage, clearAllImages, setImagesUploading, addImages } = useBulkImages();
   const { push: pushToast } = useToast();
 
   // Image handling - hybrid approach to support both drag-drop (context) and file picker (hook)
@@ -46,6 +48,20 @@ function ChatInput({
   const handleLocalFile = React.useCallback((file) => {
     imageHook.handleImageSelect(file);
   }, [imageHook]);
+
+  const handleLocalFiles = React.useCallback((files) => {
+    if (!files || files.length === 0) return;
+    
+    const imageFiles = Array.from(files).filter(file => file.type && file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 1) {
+      // Single image - use existing flow
+      handleLocalFile(imageFiles[0]);
+    } else if (imageFiles.length > 1) {
+      // Multiple images - use bulk flow
+      addImages(imageFiles);
+    }
+  }, [handleLocalFile, addImages]);
   
   const handleClearImage = React.useCallback(() => {
     if (hasContextImage) {
@@ -54,6 +70,10 @@ function ChatInput({
       imageHook.clearImage(); // Clear hook state
     }
   }, [hasContextImage, imageHook, clearImage]);
+
+  const handleClearBulkImages = React.useCallback(() => {
+    clearAllImages();
+  }, [clearAllImages]);
 
   const handleSendImage = React.useCallback(async () => {
     if (hasContextImage) {
@@ -81,6 +101,33 @@ function ChatInput({
       await imageHook.sendImageMessage();
     }
   }, [hasContextImage, activeImageFile, isUploading, user, setUploading, storage, firestore, getDisplayName, soundEnabled, clearImage, imageHook, pushToast]);
+
+  const handleSendBulkImages = React.useCallback(async () => {
+    if (!bulkImages || bulkImages.length === 0 || bulkUploading || !user) return;
+    
+    setImagesUploading(true);
+    try {
+      const { compressImage, uploadImage } = await import('../../services/imageUploadService');
+      const { createImageMessage } = await import('../../services/messageService');
+      
+      // Upload all images in parallel
+      const uploadPromises = bulkImages.map(async (imageObj) => {
+        const compressed = await compressImage(imageObj.file);
+        const url = await uploadImage({ storage, file: compressed, uid: user.uid });
+        if (!url) throw new Error('Upload failed for ' + imageObj.file.name);
+        return createImageMessage({ firestore, imageURL: url, user, getDisplayName });
+      });
+      
+      await Promise.all(uploadPromises);
+      clearAllImages();
+      if (soundEnabled) playSendMessageSound(true);
+      if (forceScrollBottom) setTimeout(() => forceScrollBottom(), 10);
+    } catch (err) {
+      console.error('Bulk image upload error:', err);
+      pushToast('Some images failed to upload: ' + err.message, { type: 'error' });
+      setImagesUploading(false);
+    }
+  }, [bulkImages, bulkUploading, user, setImagesUploading, storage, firestore, getDisplayName, soundEnabled, clearAllImages, pushToast, forceScrollBottom]);
 
   const { handleInputActivity } = useTypingPresence({ rtdb, user, soundEnabled });
   const { open: emojiOpen, toggle: toggleEmoji, buttonRef: emojiButtonRef, setOnSelect } = useEmojiPicker();
@@ -196,6 +243,15 @@ function ChatInput({
         onCancel={handleClearImage}
         onRetry={handleSendImage}
       />
+      <BulkImagePreviewModal
+        images={bulkImages}
+        uploading={bulkUploading}
+        error={null}
+        onSend={handleSendBulkImages}
+        onCancel={handleClearBulkImages}
+        onRetry={handleSendBulkImages}
+        onRemoveImage={removeImage}
+      />
       <ReplyPreview
         replyingTo={replyingTo}
         onCancel={() => setReplyingTo(null)}
@@ -205,11 +261,12 @@ function ChatInput({
         <MessageBar
           text={text}
           onChange={handleChange}
-            onKeyDown={handleKeyDown}
+          onKeyDown={handleKeyDown}
           onPickEmoji={toggleEmoji}
           emojiOpen={emojiOpen}
           emojiButtonRef={emojiButtonRef}
           onTriggerFile={(file) => { if (file) handleLocalFile(file); }}
+          onTriggerFiles={(files) => { if (files) handleLocalFiles(files); }}
           textareaRef={inputRef}
         />
         <button type="submit" disabled={!text} className="send-btn" aria-label="Send message">➤</button>
