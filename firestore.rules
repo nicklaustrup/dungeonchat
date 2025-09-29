@@ -2,8 +2,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Allow users to read and write their own profile
+    // Also allow Firebase Functions to read profiles for moderation purposes
     match /userProfiles/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.token.firebase.sign_in_provider == 'custom';
     }
 
     // Allow users to read, write, and delete their own messages

@@ -4,6 +4,7 @@ import './responsive.css'; // Phase 1 mobile responsiveness
 import { PresenceProvider } from './services/PresenceContext';
 import { EmojiMenuProvider } from './components/ChatInput/EmojiMenu';
 import { ChatStateProvider } from './contexts/ChatStateContext';
+import { ProfanityFilterProvider } from './contexts/ProfanityFilterContext';
 import ChatPage from './pages/ChatPage';
 import { useViewportInfo } from './hooks/useViewportInfo';
 import { useVirtualKeyboard } from './hooks/useVirtualKeyboard';
@@ -27,8 +28,10 @@ function App() {
   return (
     <ChatStateProvider initialAwaySeconds={awayAfterSeconds}>
       <PresenceProvider awayAfterSeconds={awayAfterSeconds}>
-        <ChatPage />
-        <EmojiMenuProvider />
+        <ProfanityFilterProvider>
+          <ChatPage />
+          <EmojiMenuProvider />
+        </ProfanityFilterProvider>
       </PresenceProvider>
     </ChatStateProvider>
   );

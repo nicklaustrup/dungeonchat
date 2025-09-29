@@ -1,9 +1,11 @@
 import React from 'react';
 import { usePerformanceMode } from '../../hooks/usePerformanceMode';
+import { useProfanityFilterContext } from '../../contexts/ProfanityFilterContext';
 import './SettingsModal.css';
 
 function SettingsModal({ isOpen, onClose, isDarkTheme, toggleTheme, soundEnabled, toggleSound, awayAfterSeconds, setAwayAfterSeconds }) {
   const { enabled: perfEnabled, toggle: togglePerf } = usePerformanceMode();
+  const { profanityFilterEnabled, toggleProfanityFilter, loading: profileLoading } = useProfanityFilterContext();
   const warnedRef = React.useRef(false);
   const pendingRef = React.useRef(null);
   const [localMinutes, setLocalMinutes] = React.useState(() => Math.round(awayAfterSeconds / 60));
@@ -40,6 +42,15 @@ function SettingsModal({ isOpen, onClose, isDarkTheme, toggleTheme, soundEnabled
     setLocalMinutes(5);
     commit(5);
   };
+
+  const handleProfanityToggle = async () => {
+    try {
+      await toggleProfanityFilter();
+    } catch (error) {
+      console.error('Failed to toggle profanity filter:', error);
+    }
+  };
+
   if (!isOpen) return null;
   return (
     <div className="settings-modal-overlay" onClick={onClose}>
@@ -61,6 +72,17 @@ function SettingsModal({ isOpen, onClose, isDarkTheme, toggleTheme, soundEnabled
           <span>Performance Mode</span>
           <button className="icon-btn" onClick={togglePerf} title="Toggle performance rendering optimizations">
             {perfEnabled ? '⚡' : '⏳'}
+          </button>
+        </div>
+        <div className="settings-item">
+          <span>Profanity Filter</span>
+          <button 
+            className="icon-btn" 
+            onClick={handleProfanityToggle} 
+            title="Toggle profanity filter for incoming messages"
+            disabled={profileLoading}
+          >
+            {profanityFilterEnabled ? '🛡️' : '🔓'}
           </button>
         </div>
         <div className="settings-item" style={{ gap: '1rem' }}>

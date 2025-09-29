@@ -11,6 +11,8 @@ import { usePresence } from '../../services/PresenceContext';
 import EmojiMenu from '../../components/ChatInput/EmojiMenu';
 import { formatTimestamp, formatTimeOnly, formatFullTimestamp, buildMessageId, relativeLastActive } from '../../utils/messageFormatting';
 import { processMessageText } from '../../utils/linkify';
+import { useProfanityFilter } from '../../utils/profanityFilter';
+import { useProfanityFilterContext } from '../../contexts/ProfanityFilterContext';
 import AvatarWithPresence from './parts/AvatarWithPresence';
 import InlineReplyContext from './parts/InlineReplyContext';
 import ReactionList from './parts/ReactionList';
@@ -28,6 +30,13 @@ function ChatMessage(props) {
     const { firestore, auth } = useFirebase();
     const { text, uid, photoURL, reactions = {}, id, createdAt, imageURL, type, displayName, replyTo, editedAt, deleted } = props.message;
     const { searchTerm, getDisplayName, onReply, isReplyTarget, onViewProfile, showMeta = true } = props;
+    
+    // Get user's profanity filter preference from context (will re-render when changed)
+    const { profanityFilterEnabled } = useProfanityFilterContext();
+    
+    // Apply profanity filtering based on user preference
+    const displayText = useProfanityFilter(text, profanityFilterEnabled);
+    
     const presence = usePresence(uid);
     const isTyping = !!presence.typing;
     const presenceState = isTyping ? 'online' : presence.state; // typing overrides away state label visually
@@ -210,9 +219,9 @@ function ChatMessage(props) {
                             <ImagePreviewModal open={showFullImage} src={imageURL} onClose={() => setShowFullImage(false)} />
                         </>
                     ) : (
-                        text && (
+                        displayText && (
                             <p>
-                                {processMessageText(text, searchTerm)}{' '}
+                                {processMessageText(displayText, searchTerm)}{' '}
                                 {editedAt && (<sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>)}
                             </p>
                         )
@@ -312,9 +321,9 @@ function ChatMessage(props) {
                         {!deleted && (isEditing ? (
                             <EditMessageForm value={editText} onChange={setEditText} onSave={saveEdit} onCancel={cancelEditing} onKeyDown={onEditKeyDown} />
                         ) : (
-                            text && (
+                            displayText && (
                                 <p>
-                                    {processMessageText(text, searchTerm)}{' '}
+                                    {processMessageText(displayText, searchTerm)}{' '}
                                     {editedAt && (<sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>)}
                                 </p>
                             )

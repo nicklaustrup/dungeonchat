@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { render } from './test-utils'; // Use our custom render with providers
 import ChatMessage from '../components/ChatRoom/ChatMessage';
 
 // Mock Firebase and other dependencies

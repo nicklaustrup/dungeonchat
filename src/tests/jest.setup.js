@@ -1,5 +1,16 @@
 // Global Jest setup
 import '@testing-library/jest-dom';
+import React from 'react';
+import { configure } from '@testing-library/react';
+
+// Configure testing library to use our global wrapper
+configure({
+  wrapper: ({ children }) => {
+    // Import dynamically to avoid circular dependencies
+    const { ProfanityFilterProvider } = require('../contexts/ProfanityFilterContext');
+    return React.createElement(ProfanityFilterProvider, {}, children);
+  }
+});
 
 // Mock window.alert to avoid jsdom not implemented noise
 if (!window.alert) {

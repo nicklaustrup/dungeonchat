@@ -1,5 +1,7 @@
 import React from 'react';
 import { getFallbackAvatar } from '../../../utils/avatar';
+import { useProfanityFilter } from '../../../utils/profanityFilter';
+import { useProfanityFilterContext } from '../../../contexts/ProfanityFilterContext';
 
 /**
  * InlineReplyContext
@@ -10,6 +12,9 @@ import { getFallbackAvatar } from '../../../utils/avatar';
  *  - onNavigate(id) -> called when snippet clicked/Enter (for scrolling + highlight)
  */
 export default function InlineReplyContext({ replyTo, onViewProfile, onNavigate }) {
+  // Get user's profanity filter preference from context (will re-render when changed)
+  const { profanityFilterEnabled } = useProfanityFilterContext();
+
   // Always declare hooks before any early returns to satisfy rules-of-hooks.
   const { id, uid, displayName, text, type, photoURL } = replyTo || {};
   const fallbackAvatar = React.useMemo(
@@ -17,9 +22,12 @@ export default function InlineReplyContext({ replyTo, onViewProfile, onNavigate 
     [uid, displayName]
   );
 
+  // Apply profanity filtering to reply text
+  const filteredText = useProfanityFilter(text, profanityFilterEnabled);
+
   if (!replyTo) return null;
 
-  const snippet = (text ? text : (type === 'image' ? 'Image' : '')) || '';
+  const snippet = (filteredText ? filteredText : (type === 'image' ? 'Image' : '')) || '';
 
   const handleNavigate = () => { if (id && onNavigate) onNavigate(id); };
 
