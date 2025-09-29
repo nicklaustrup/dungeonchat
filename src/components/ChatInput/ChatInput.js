@@ -7,6 +7,7 @@ import { useChatReply, useChatImage } from '../../contexts/ChatStateContext';
 import { useImageMessage } from '../../hooks/useImageMessage';
 import { useTypingPresence } from '../../hooks/useTypingPresence';
 import { useEmojiPicker } from '../../hooks/useEmojiPicker';
+import { useToast } from '../../hooks/useToast';
 import { ReplyPreview } from './ReplyPreview';
 import { ImagePreviewModal } from './ImagePreviewModal';
 import { MessageBar } from './MessageBar';
@@ -22,9 +23,10 @@ function ChatInput({
 
   // Use centralized state instead of prop drilling  
   const { replyingTo, setReplyingTo } = useChatReply();
-  const { clearImage } = useChatImage();
+  const { selectedFile: contextSelectedFile, preview: contextPreview, uploading: contextUploading, clearImage, setUploading } = useChatImage();
+  const { push: pushToast } = useToast();
 
-  // Image handling - simplified approach
+  // Image handling - hybrid approach to support both drag-drop (context) and file picker (hook)
   const imageHook = useImageMessage({
     storage,
     firestore,
@@ -34,14 +36,51 @@ function ChatInput({
     playSendSound: () => playSendMessageSound(true)
   });
 
+  // Merge context and hook state for image preview
+  const hasContextImage = contextSelectedFile && contextPreview;
+  
+  const activeImagePreview = hasContextImage ? contextPreview : imageHook.imagePreview;
+  const activeImageFile = hasContextImage ? contextSelectedFile : imageHook.selectedImage;
+  const isUploading = hasContextImage ? contextUploading : imageHook.uploading;
+
   const handleLocalFile = React.useCallback((file) => {
     imageHook.handleImageSelect(file);
   }, [imageHook]);
   
   const handleClearImage = React.useCallback(() => {
-    imageHook.clearImage();
-    clearImage();
-  }, [imageHook, clearImage]);
+    if (hasContextImage) {
+      clearImage(); // Clear context state
+    } else {
+      imageHook.clearImage(); // Clear hook state
+    }
+  }, [hasContextImage, imageHook, clearImage]);
+
+  const handleSendImage = React.useCallback(async () => {
+    if (hasContextImage) {
+      // Handle context image upload
+      if (!activeImageFile || isUploading || !user) return;
+      setUploading(true);
+      try {
+        // Use the same upload logic as imageHook
+        const { compressImage, uploadImage } = await import('../../services/imageUploadService');
+        const { createImageMessage } = await import('../../services/messageService');
+        
+        const compressed = await compressImage(activeImageFile);
+        const url = await uploadImage({ storage, file: compressed, uid: user.uid });
+        if (!url) throw new Error('Upload failed');
+        await createImageMessage({ firestore, imageURL: url, user, getDisplayName });
+        clearImage();
+        if (soundEnabled) playSendMessageSound(true);
+      } catch (err) {
+        console.error('Context image upload error:', err);
+        pushToast('Image upload failed: ' + err.message, { type: 'error' });
+        setUploading(false);
+      }
+    } else {
+      // Use hook's send method
+      await imageHook.sendImageMessage();
+    }
+  }, [hasContextImage, activeImageFile, isUploading, user, setUploading, storage, firestore, getDisplayName, soundEnabled, clearImage, imageHook, pushToast]);
 
   const { handleInputActivity } = useTypingPresence({ rtdb, user, soundEnabled });
   const { open: emojiOpen, toggle: toggleEmoji, buttonRef: emojiButtonRef, setOnSelect } = useEmojiPicker();
@@ -150,12 +189,12 @@ function ChatInput({
   return (
     <div className="chat-input-area">
       <ImagePreviewModal
-        imagePreview={imageHook.imagePreview}
-        uploading={imageHook.uploading}
+        imagePreview={activeImagePreview}
+        uploading={isUploading}
         error={imageHook.error}
-        onSend={imageHook.sendImageMessage}
+        onSend={handleSendImage}
         onCancel={handleClearImage}
-        onRetry={imageHook.sendImageMessage}
+        onRetry={handleSendImage}
       />
       <ReplyPreview
         replyingTo={replyingTo}

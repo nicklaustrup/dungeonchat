@@ -58,9 +58,10 @@
   .header-right.mobile-stack-right .user-menu-wrapper .user-chip-name {
     font-size: 0.7rem;
     font-weight: 500;
-    max-width: 52px;
     text-align: center;
     line-height: 1.1;
+    /* Allow names up to ~30 characters (~150px at 0.7rem) before truncating */
+    max-width: 150px;
   }
   
   .header-right.mobile-stack-right .user-menu-wrapper .user-menu-caret {
@@ -692,6 +693,18 @@ margin-top: 10px;
 .user-chip.open { background: rgba(255,255,255,0.12); }
 .user-chip-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .user-chip-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+
+/* Force truncation for usernames over 30 characters */
+.user-chip-name.long-username {
+  max-width: 150px;
+}
+
+/* Mobile-specific truncation for long usernames */
+@media (max-width: 599px) {
+  .header-right.mobile-stack-right .user-menu-wrapper .user-chip-name.long-username {
+    max-width: 120px;
+  }
+}
 
 /* User menu dropdown */
 .user-menu-wrapper { position: relative; }

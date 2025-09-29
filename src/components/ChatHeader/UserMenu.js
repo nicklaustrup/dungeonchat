@@ -10,6 +10,7 @@ export default function UserMenu({ user, onViewProfile, onOpenSettings, openSett
   if (!user) return null;
   const display = user.displayName || 'Anonymous';
   const avatar = user.photoURL || '/logo192.png';
+  const isLongUsername = display.length > 30;
 
   const handleProfile = () => { onViewProfile && onViewProfile(user); close(); };
   const handleSettings = () => { openSettings(); if (onOpenSettings) onOpenSettings(); close(); };
@@ -26,7 +27,7 @@ export default function UserMenu({ user, onViewProfile, onOpenSettings, openSett
             onClick={() => { toggle(); setTimeout(recompute, 0); }}
           >
           <img src={avatar} alt={display} className="user-chip-avatar" />
-          <span ref={register} className="user-chip-name trunc-tooltip" data-full={display}>{display}</span>
+          <span ref={register} className={`user-chip-name trunc-tooltip ${isLongUsername ? 'long-username' : ''}`} data-full={display}>{display}</span>
           <span className="user-menu-caret">▾</span>
         </button>
         <div ref={menuRef} className={`user-menu ${open ? 'open' : ''}`} onClick={(e) => e.stopPropagation()} role="menu" aria-label="User menu">

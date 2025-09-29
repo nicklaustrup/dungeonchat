@@ -31,4 +31,26 @@ describe('UserMenu', () => {
     expect(openSettings).toHaveBeenCalled();
     expect(onOpenSettings).toHaveBeenCalled();
   });
+
+  test('applies long-username class for usernames over 30 characters', () => {
+    const longUser = { 
+      displayName: 'This is a very extraordinarily long display name that exceeds thirty characters', 
+      email: 'long@example.com', 
+      photoURL: '' 
+    };
+    render(<UserMenu user={longUser} openSettings={() => {}} />);
+    const chipNameSpan = document.querySelector('.user-chip-name');
+    expect(chipNameSpan).toHaveClass('long-username');
+  });
+
+  test('does not apply long-username class for usernames under 30 characters', () => {
+    const shortUser = { 
+      displayName: 'Short Name', 
+      email: 'short@example.com', 
+      photoURL: '' 
+    };
+    render(<UserMenu user={shortUser} openSettings={() => {}} />);
+    const chipNameSpan = document.querySelector('.user-chip-name');
+    expect(chipNameSpan).not.toHaveClass('long-username');
+  });
 });
