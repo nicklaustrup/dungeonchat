@@ -1,3 +1,10 @@
+## [1.1.0](https://github.com/nicklaustrup/dungeonchat/compare/v1.0.2...v1.1.0) (2025-09-30)
+
+
+### Features
+
+* Complete campaign system with responsive design and dark mode support ([e35c7f2](https://github.com/nicklaustrup/dungeonchat/commit/e35c7f27399db75eacafa79a50dfc33dce58b046))
+
 ## [1.0.2](https://github.com/nicklaustrup/dungeonchat/compare/v1.0.1...v1.0.2) (2025-09-28)
 
 
