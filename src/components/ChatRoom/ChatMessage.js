@@ -43,6 +43,19 @@ function ChatMessage(props) {
     
     const effectiveProfileData = uid === currentUser?.uid ? currentUserProfile : profileData;
     
+    // Debug: Log profile data to trace avatar issue
+    if (uid === currentUser?.uid) {
+        console.log('🔍 ChatMessage Debug (CURRENT USER) - User:', uid);
+        console.log('🔍 Current User Profile:', currentUserProfile);
+        console.log('🔍 Profile Picture URL:', currentUserProfile?.profilePictureURL);
+    } else {
+        console.log('🔍 ChatMessage Debug (OTHER USER) - User:', uid);
+        console.log('🔍 Fetched Profile Data:', profileData);
+        console.log('🔍 Profile Picture URL:', profileData?.profilePictureURL);
+    }
+    console.log('🔍 Effective Profile Data:', effectiveProfileData);
+    console.log('🔍 Original photoURL from message:', photoURL);
+    
     // Get user's profanity filter preference from context (will re-render when changed)
     const { profanityFilterEnabled } = useProfanityFilterContext();
     
@@ -94,6 +107,17 @@ function ChatMessage(props) {
     
     // Use profile picture from profile data if available, otherwise fallback
     const userPhotoURL = effectiveProfileData?.profilePictureURL || photoURL;
+    
+    // Debug: Focus on the avatar issue
+    if (effectiveProfileData && effectiveProfileData.profilePictureURL) {
+        console.log('✅ Profile has picture URL:', effectiveProfileData.profilePictureURL);
+    } else if (effectiveProfileData && !effectiveProfileData.profilePictureURL) {
+        console.log('❌ Profile exists but no profilePictureURL. Profile:', effectiveProfileData);
+    } else {
+        console.log('❌ No profile data at all for user:', uid);
+    }
+    console.log('🔍 Final userPhotoURL:', userPhotoURL);
+    
     const fallbackAvatar = React.useMemo(() => getFallbackAvatar({ uid, displayName: userName, size: 40 }), [uid, userName]);
 
     // formatting now handled by utils/messageFormatting.js
