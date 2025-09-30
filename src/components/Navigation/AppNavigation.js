@@ -99,6 +99,7 @@ function AppNavigation() {
               // TODO: Implement settings
               console.log('Open settings');
             }}
+            showSettings={false}
           />
         )}
       </div>

@@ -16,7 +16,9 @@ import { MessageBar } from './MessageBar';
 function ChatInput({
   getDisplayName,
   soundEnabled,
-  forceScrollBottom
+  forceScrollBottom,
+  campaignId = null,
+  channelId = 'general'
 }) {
   const { auth, firestore, rtdb, storage } = useFirebase();
   const user = auth.currentUser;
@@ -35,7 +37,9 @@ function ChatInput({
     user,
     getDisplayName,
     soundEnabled,
-    playSendSound: () => playSendMessageSound(true)
+    playSendSound: () => playSendMessageSound(true),
+    campaignId,
+    channelId
   });
 
   // Merge context and hook state for image preview
@@ -165,7 +169,15 @@ function ChatInput({
     handleInputActivity(0);
     
     try {
-      await createTextMessage({ firestore, text, user, getDisplayName, replyTo: replyingTo });
+      await createTextMessage({ 
+        firestore, 
+        text, 
+        user, 
+        getDisplayName, 
+        replyTo: replyingTo,
+        campaignId,
+        channelId
+      });
       setText('');
       setReplyingTo(null);
       if (soundEnabled) playSendMessageSound(true);

@@ -18,7 +18,6 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
   
   const [formData, setFormData] = useState({
     username: profile?.username || '',
-    displayName: profile?.displayName || '',
     bio: profile?.bio || '',
     statusMessage: profile?.statusMessage || '',
     profilePictureURL: profile?.profilePictureURL || '',
@@ -141,7 +140,6 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
       // Update profile data
       await updateProfile({
         username: formData.username,
-        displayName: formData.displayName,
         bio: formData.bio,
         statusMessage: formData.statusMessage,
         profilePictureURL: formData.profilePictureURL
@@ -177,7 +175,7 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
     );
   }
 
-  const currentAvatar = previewUrl || formData.profilePictureURL || 'https://via.placeholder.com/150x150?text=👤';
+  const currentAvatar = previewUrl || formData.profilePictureURL || '/logo192.png';
 
   return (
     <div className={`profile-editor ${compact ? 'compact' : ''}`}>
@@ -230,27 +228,17 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
               type="text"
               value={formData.username}
               onChange={(e) => handleChange('username', e.target.value)}
-              placeholder="Enter a unique username"
+              placeholder="Enter a unique username (e.g., dragonslayer92)"
               className={`form-input ${!validationState.username.valid ? 'invalid' : ''}`}
               disabled={saving}
             />
+            <small className="field-help">
+              Your username will be displayed in your profile chip and used to identify you across the platform.
+            </small>
             <div className={`validation-message ${validationState.username.valid ? 'valid' : 'invalid'}`}>
               {validationState.username.checking && <span className="spinner-small"></span>}
               {validationState.username.message}
             </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="displayName">Display Name</label>
-            <input
-              id="displayName"
-              type="text"
-              value={formData.displayName}
-              onChange={(e) => handleChange('displayName', e.target.value)}
-              placeholder="Your full name (optional)"
-              className="form-input"
-              disabled={saving}
-            />
           </div>
 
           <div className="form-group">
@@ -334,14 +322,6 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
 
       {/* Action Buttons */}
       <div className="profile-editor-actions">
-        <button
-          type="button"
-          className="button-secondary"
-          onClick={onCancel}
-          disabled={saving}
-        >
-          Cancel
-        </button>
         <button
           type="button"
           className="button-primary"

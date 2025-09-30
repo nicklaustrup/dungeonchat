@@ -389,6 +389,12 @@ body.chat-menu-open .reaction-buttons:not(.force-visible) {
   color: var(--text-secondary);
 }
 
+.status-message-indicator {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-left: 0.25rem;
+}
+
 /* Status indicator adjustments: overlap the avatar image */
 .avatar-container .status-indicator {
   position: absolute;

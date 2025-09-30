@@ -8,11 +8,13 @@ import './CampaignBrowser.css';
 
 const CampaignBrowser = () => {
   const [campaigns, setCampaigns] = useState([]);
+  const [userCampaigns, setUserCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSystem, setSelectedSystem] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [characterInfo, setCharacterInfo] = useState({
@@ -63,7 +65,20 @@ const CampaignBrowser = () => {
         tags: selectedTags,
         searchTerm: searchTerm
       });
-      setCampaigns(data);
+      
+      // Separate user campaigns from all campaigns
+      const userCampaignsList = data.filter(campaign => 
+        campaign.dmId === user.uid || 
+        (campaign.members && campaign.members.includes(user.uid))
+      );
+      
+      const otherCampaigns = data.filter(campaign => 
+        campaign.dmId !== user.uid && 
+        (!campaign.members || !campaign.members.includes(user.uid))
+      );
+      
+      setUserCampaigns(userCampaignsList);
+      setCampaigns(otherCampaigns);
     } catch (err) {
       setError('Failed to load campaigns');
       console.error('Error loading campaigns:', err);
@@ -85,6 +100,15 @@ const CampaignBrowser = () => {
   };
 
   const handleJoinCampaign = (campaign) => {
+    // If user is already a member or DM, navigate directly to campaign dashboard
+    if (campaign.dmId === user.uid || 
+        (campaign.members && campaign.members.includes(user.uid))) {
+      setCurrentCampaign(campaign);
+      navigate(`/campaign/${campaign.id}`);
+      return;
+    }
+    
+    // Otherwise, show join modal
     setSelectedCampaign(campaign);
     setShowJoinModal(true);
   };
@@ -95,11 +119,17 @@ const CampaignBrowser = () => {
       return;
     }
 
+    // Validate character name length
+    if (characterInfo.characterName.trim().length < 2) {
+      setError('Character name must be at least 2 characters long');
+      return;
+    }
+
     try {
       setLoading(true);
       await joinCampaign(firestore, selectedCampaign.id, user.uid, characterInfo);
       setCurrentCampaign(selectedCampaign);
-      navigate(`/campaign/${selectedCampaign.id}/chat`);
+      navigate(`/campaign/${selectedCampaign.id}`);
     } catch (err) {
       setError('Failed to join campaign');
       console.error('Error joining campaign:', err);
@@ -129,8 +159,14 @@ const CampaignBrowser = () => {
   return (
     <div className="campaign-browser">
       <div className="campaign-browser-header">
-        <h1>Discover Campaigns</h1>
+        <h1>Browse Campaigns</h1>
         <div className="header-actions">
+          <button 
+            className={`btn ${showAdvancedSearch ? 'btn-secondary' : 'btn-outline'}`}
+            onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+          >
+            {showAdvancedSearch ? '✕ Close Filters' : '🔍 Advanced Search'}
+          </button>
           <button 
             className="btn btn-primary"
             onClick={() => navigate('/create-campaign')}
@@ -140,53 +176,55 @@ const CampaignBrowser = () => {
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="search-section">
-        <div className="search-row">
-          <div className="search-input-group">
-            <input
-              type="text"
-              placeholder="Search campaigns..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            <button 
-              className="btn btn-primary"
-              onClick={handleSearch}
+      {/* Advanced Search and Filters */}
+      {showAdvancedSearch && (
+        <div className="search-section">
+          <div className="search-row">
+            <div className="search-input-group">
+              <input
+                type="text"
+                placeholder="Search campaigns..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+              <button 
+                className="btn btn-primary"
+                onClick={handleSearch}
+              >
+                Search
+              </button>
+            </div>
+            
+            <select
+              value={selectedSystem}
+              onChange={(e) => setSelectedSystem(e.target.value)}
+              className="system-filter"
             >
-              Search
-            </button>
+              <option value="">All Game Systems</option>
+              {gameSystems.map(system => (
+                <option key={system} value={system}>{system}</option>
+              ))}
+            </select>
           </div>
-          
-          <select
-            value={selectedSystem}
-            onChange={(e) => setSelectedSystem(e.target.value)}
-            className="system-filter"
-          >
-            <option value="">All Game Systems</option>
-            {gameSystems.map(system => (
-              <option key={system} value={system}>{system}</option>
-            ))}
-          </select>
-        </div>
 
-        <div className="tags-filter">
-          <h3>Filter by Tags:</h3>
-          <div className="tags-grid">
-            {availableTags.map(tag => (
-              <label key={tag} className={`tag-filter ${selectedTags.includes(tag) ? 'selected' : ''}`}>
-                <input
-                  type="checkbox"
-                  checked={selectedTags.includes(tag)}
-                  onChange={() => handleTagToggle(tag)}
-                />
-                {formatTag(tag)}
-              </label>
-            ))}
+          <div className="tags-filter">
+            <h3>Filter by Tags:</h3>
+            <div className="tags-grid">
+              {availableTags.map(tag => (
+                <label key={tag} className={`tag-filter ${selectedTags.includes(tag) ? 'selected' : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={selectedTags.includes(tag)}
+                    onChange={() => handleTagToggle(tag)}
+                  />
+                  {formatTag(tag)}
+                </label>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {error && (
         <div className="error-message">
@@ -194,62 +232,121 @@ const CampaignBrowser = () => {
         </div>
       )}
 
-      {/* Campaign List */}
-      <div className="campaigns-list">
-        {campaigns.length === 0 ? (
-          <div className="no-campaigns">
-            <h3>No campaigns found</h3>
-            <p>Try adjusting your search criteria or create a new campaign.</p>
-          </div>
-        ) : (
-          campaigns.map(campaign => (
-            <div key={campaign.id} className="campaign-card">
-              <div className="campaign-header">
-                <h3>{campaign.name}</h3>
-                <div className="campaign-system">{campaign.gameSystem}</div>
-              </div>
-              
-              <div className="campaign-description">
-                {campaign.description}
-              </div>
-              
-              <div className="campaign-details">
-                <div className="detail-item">
-                  <strong>Players:</strong> {formatPlayerCount(campaign.currentPlayers, campaign.maxPlayers)}
+      {/* My Campaigns Section */}
+      {userCampaigns.length > 0 && (
+        <div className="my-campaigns-section">
+          <h2>My Campaigns</h2>
+          <div className="campaigns-list">
+            {userCampaigns.map(campaign => (
+              <div key={campaign.id} className="campaign-card my-campaign">
+                <div className="campaign-header">
+                  <h3>{campaign.name}</h3>
+                  <div className="campaign-system">{campaign.gameSystem}</div>
+                  <div className="my-campaign-badge">
+                    {campaign.dmId === user.uid ? 'DM' : 'Player'}
+                  </div>
                 </div>
-                <div className="detail-item">
-                  <strong>DM:</strong> {campaign.dmName || 'Unknown'}
+                
+                <div className="campaign-description">
+                  {campaign.description}
                 </div>
-                <div className="detail-item">
-                  <strong>Status:</strong> 
+                
+                <div className="campaign-details">
+                  <div className="player-dm-row">
+                    <div className="detail-item">
+                      <strong>Players:</strong> {formatPlayerCount(campaign.currentPlayers, campaign.maxPlayers)}
+                    </div>
+                    <div className="detail-item">
+                      <strong>DM:</strong> {campaign.dmName || 'Unknown'}
+                    </div>
+                  </div>
+                </div>
+
+                {campaign.tags && campaign.tags.length > 0 && (
+                  <div className="campaign-tags">
+                    {campaign.tags.map(tag => (
+                      <span key={tag} className="tag">
+                        {formatTag(tag)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="campaign-actions">
                   <span className={`status ${campaign.status}`}>
                     {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                   </span>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleJoinCampaign(campaign)}
+                  >
+                    Open Campaign
+                  </button>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-              {campaign.tags && campaign.tags.length > 0 && (
-                <div className="campaign-tags">
-                  {campaign.tags.map(tag => (
-                    <span key={tag} className="tag">
-                      {formatTag(tag)}
-                    </span>
-                  ))}
-                </div>
-              )}
-              
-              <div className="campaign-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => handleJoinCampaign(campaign)}
-                  disabled={campaign.currentPlayers >= campaign.maxPlayers}
-                >
-                  {campaign.currentPlayers >= campaign.maxPlayers ? 'Full' : 'Join Campaign'}
-                </button>
-              </div>
+      {/* All Campaigns Section */}
+      <div className="all-campaigns-section">
+        <h2>All Campaigns</h2>
+        <div className="campaigns-list">
+          {campaigns.length === 0 ? (
+            <div className="no-campaigns">
+              <h3>No campaigns found</h3>
+              <p>Try adjusting your search criteria or create a new campaign.</p>
             </div>
-          ))
-        )}
+          ) : (
+            campaigns.map(campaign => (
+              <div key={campaign.id} className="campaign-card">
+                <div className="campaign-header">
+                  <h3>{campaign.name}</h3>
+                  <div className="campaign-system">{campaign.gameSystem}</div>
+                </div>
+                
+                <div className="campaign-description">
+                  {campaign.description}
+                </div>
+                
+                <div className="campaign-details">
+                  <div className="player-dm-row">
+                    <div className="detail-item">
+                      <strong>Players:</strong> {formatPlayerCount(campaign.currentPlayers, campaign.maxPlayers)}
+                    </div>
+                    <div className="detail-item">
+                      <strong>DM:</strong> {campaign.dmName || 'Unknown'}
+                    </div>
+                  </div>
+                </div>
+
+                {campaign.tags && campaign.tags.length > 0 && (
+                  <div className="campaign-tags">
+                    {campaign.tags.map(tag => (
+                      <span key={tag} className="tag">
+                        {formatTag(tag)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="campaign-actions">
+                  <span className={`status ${campaign.status}`}>
+                    {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                  </span>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleJoinCampaign(campaign)}
+                    disabled={campaign.currentPlayers >= campaign.maxPlayers}
+                  >
+                    {campaign.currentPlayers >= campaign.maxPlayers ? 'Full' : 'Join Campaign'}
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Join Campaign Modal */}
@@ -277,8 +374,9 @@ const CampaignBrowser = () => {
                     ...prev,
                     characterName: e.target.value
                   }))}
-                  placeholder="Enter your character's name"
+                  placeholder="Enter your character's name (e.g., Thorin Ironforge)"
                 />
+                <small>This name will be used in chat instead of your username for this campaign</small>
               </div>
               
               <div className="form-group">

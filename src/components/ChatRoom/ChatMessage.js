@@ -1,5 +1,5 @@
 import React from 'react';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import './ChatMessage.css';
 import './ChatMessage.menu.css';
 import './ChatMessage.reactions.css';
@@ -28,13 +28,49 @@ import { useMessageMenuPosition } from '../../hooks/useMessageMenuPosition';
 import { useUserProfileData } from '../../hooks/useUserProfileData';
 import { useUserProfile } from '../../hooks/useUserProfile';
 
+// Custom hook to get campaign member info for a specific user
+const useCampaignMember = (campaignId, userId) => {
+    const [memberData, setMemberData] = React.useState(null);
+    const { firestore } = useFirebase();
+    
+    React.useEffect(() => {
+        if (!campaignId || !userId || !firestore) {
+            setMemberData(null);
+            return;
+        }
+        
+        const fetchMemberData = async () => {
+            try {
+                const memberDoc = await getDoc(doc(firestore, 'campaigns', campaignId, 'members', userId));
+                if (memberDoc.exists()) {
+                    setMemberData(memberDoc.data());
+                } else {
+                    setMemberData(null);
+                }
+            } catch (error) {
+                console.warn('Could not fetch campaign member data:', error);
+                setMemberData(null);
+            }
+        };
+        
+        fetchMemberData();
+    }, [campaignId, userId, firestore]);
+    
+    return memberData;
+};
+
 function ChatMessage(props) {
+    // Extract the campaignId from props
+    const { campaignId } = props;
     const { firestore, auth } = useFirebase();
     const { text, uid, photoURL, reactions = {}, createdAt, imageURL, type, displayName, replyTo, editedAt, deleted } = props.message;
     const { searchTerm, onReply, isReplyTarget, onViewProfile, showMeta = true } = props;
 
     // Get enhanced profile data for this user
     const { profileData } = useUserProfileData(uid);
+
+    // Get campaign member data if in a campaign context
+    const campaignMemberData = useCampaignMember(campaignId, uid);
 
     // For the current user, we should use the profile from the global context
     // For other users, we use the fetched profile data
@@ -73,8 +109,21 @@ function ChatMessage(props) {
 
     const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
 
-    // Implement name priority: displayName (highest) > username (medium) > auth displayName (lowest)
+    // Enhanced name priority: Campaign character name (highest) > username (medium) > displayName > auth displayName (lowest)
     const getDisplayNameWithPriority = () => {
+        // If in a campaign context, prioritize character names for players
+        if (campaignId && campaignMemberData) {
+            // For DMs, use their username instead of character name
+            if (campaignMemberData.role === 'dm') {
+                return effectiveProfileData?.username || effectiveProfileData?.displayName || displayName || 'Unknown DM';
+            }
+            // For players, use character name if available
+            if (campaignMemberData.characterName) {
+                return campaignMemberData.characterName;
+            }
+        }
+        
+        // Standard priority for non-campaign or when no character name
         // Highest priority: Custom display name from profile
         if (effectiveProfileData?.displayName) {
             return effectiveProfileData.displayName;
@@ -354,6 +403,8 @@ function ChatMessage(props) {
                             formatTimestamp={formatTimestamp}
                             onViewProfile={handleViewProfileClick}
                             profileData={effectiveProfileData}
+                            campaignMemberData={campaignMemberData}
+                            isInCampaign={!!campaignId}
                         />)}
                         {!showMeta && (<HoverTimestamp createdAt={createdAt} formatTimestamp={formatTimestamp} />)}
                         {type === 'image' && imageURL && (

@@ -100,21 +100,27 @@
 /* Setup Content */
 .setup-content {
   padding: 0;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
+/* Remove box-shadow and border-radius from ProfileEditor when embedded */
 .setup-content .profile-editor {
   box-shadow: none;
   border-radius: 0;
 }
 
+/* Hide the ProfileEditor header when embedded in the setup modal */
 .setup-content .profile-editor-header {
-  display: none; /* Hide header in modal context */
+  display: none;
 }
 
+/* Adjust ProfileEditor content padding in modal context */
 .setup-content .profile-editor-content {
   padding: 2rem;
 }
 
+/* Ensure bottom radius is maintained */
 .setup-content .profile-editor-actions {
   border-radius: 0 0 16px 16px;
 }
@@ -300,6 +306,10 @@
   
   .profile-setup-modal {
     max-height: 95vh;
+  }
+  
+  .setup-content {
+    max-width: 100%;
   }
   
   .setup-header {

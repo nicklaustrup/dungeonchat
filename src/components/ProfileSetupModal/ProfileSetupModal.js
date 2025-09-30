@@ -46,7 +46,7 @@ export function ProfileSetupModal({ onComplete, canSkip = false }) {
             <div className="setup-header">
               <div className="setup-icon">👋</div>
               <h2>Welcome to DungeonChat!</h2>
-              <p>Let's set up your profile to get started. This helps other users recognize you in the chat.</p>
+              <p>Before you can start chatting and join campaigns, you need to set up a username. This helps other users recognize you across the platform.</p>
             </div>
 
             <div className="setup-content">
@@ -57,7 +57,7 @@ export function ProfileSetupModal({ onComplete, canSkip = false }) {
               />
             </div>
 
-            {canSkip && (
+            {/* {canSkip && (
               <div className="setup-footer">
                 <button 
                   className="skip-button"
@@ -67,7 +67,7 @@ export function ProfileSetupModal({ onComplete, canSkip = false }) {
                   Skip for now
                 </button>
               </div>
-            )}
+            )} */}
           </>
         )}
 

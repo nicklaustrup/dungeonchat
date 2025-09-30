@@ -25,7 +25,8 @@ function MessageList({
   showTyping,
   typingUsers,
   topSentinel,
-  bottomAnchorRef
+  bottomAnchorRef,
+  campaignId
 }) {
   const [selectedMessageId, setSelectedMessageId] = React.useState(null);
   const [hoveredMessageId, setHoveredMessageId] = React.useState(null);
@@ -90,6 +91,7 @@ function MessageList({
           onSelectMessage={(id) => handleSelectMessageToggle(id, selectedMessageId === m.id)}
           hovered={hoveredMessageId === m.id}
           onHoverMessage={handleHoverMessage}
+          campaignId={campaignId}
         />
       );
       
@@ -107,7 +109,7 @@ function MessageList({
       elements.push(messageComponent);
       return elements;
     });
-  }, [messages, searchTerm, replyingToId, onReply, onViewProfile, selectedMessageId, hoveredMessageId, handleSelectMessageToggle, handleHoverMessage]);
+  }, [messages, searchTerm, replyingToId, onReply, onViewProfile, selectedMessageId, hoveredMessageId, handleSelectMessageToggle, handleHoverMessage, campaignId]);
 
   if (searchTerm && messages && messages.length === 0) {
     return (

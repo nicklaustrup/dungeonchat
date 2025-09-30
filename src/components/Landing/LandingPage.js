@@ -1,33 +1,35 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useUserProfile } from '../../hooks/useUserProfile';
 import './LandingPage.css';
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { profile } = useUserProfile();
+
+  // Use username from profile, fallback to display name, then to 'Adventurer'
+  const displayName = profile?.username || user?.displayName || 'Adventurer';
 
   const navigationOptions = [
     {
       title: 'General Lobby',
       description: 'Join the main chat room and talk with the community',
       path: '/lobby',
-      icon: '💬',
-      color: '#3498db'
+      icon: '💬'
     },
     {
       title: 'Browse Campaigns',
       description: 'Discover and join D&D campaigns created by other players',
       path: '/campaigns',
-      icon: '🗡️',
-      color: '#e74c3c'
+      icon: '🗡️'
     },
     {
       title: 'Create Campaign',
       description: 'Start your own D&D campaign and invite players to join',
       path: '/create-campaign',
-      icon: '⚔️',
-      color: '#27ae60'
+      icon: '⚔️'
     }
   ];
 
@@ -37,7 +39,7 @@ const LandingPage = () => {
         <div className="landing-header">
           <h1>Welcome to DungeonChat!</h1>
           <p className="welcome-message">
-            Hello {user?.displayName || 'Adventurer'}! Choose your path below:
+            Hello {displayName}! Choose your path below:
           </p>
         </div>
 
@@ -47,9 +49,8 @@ const LandingPage = () => {
               key={index}
               className="nav-card"
               onClick={() => navigate(option.path)}
-              style={{ borderLeftColor: option.color }}
             >
-              <div className="nav-icon" style={{ backgroundColor: option.color }}>
+              <div className="nav-icon">
                 {option.icon}
               </div>
               <div className="nav-content">

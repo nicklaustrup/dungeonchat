@@ -186,7 +186,7 @@ function CampaignCreator() {
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 placeholder="A classic D&D 5e adventure for new players. We'll be exploring the Sword Coast..."
                 className={errors.description ? 'error' : ''}
-                rows={4}
+                rows={3}
                 maxLength={500}
               />
               {errors.description && <span className="error-message">{errors.description}</span>}
@@ -208,15 +208,41 @@ function CampaignCreator() {
 
             <div className="form-group">
               <label htmlFor="maxPlayers">Maximum Players</label>
-              <input
-                type="number"
-                id="maxPlayers"
-                value={formData.maxPlayers}
-                onChange={(e) => handleInputChange('maxPlayers', parseInt(e.target.value, 10))}
-                min={2}
-                max={12}
-                className={errors.maxPlayers ? 'error' : ''}
-              />
+              <div className="number-input-wrapper">
+                <input
+                  type="number"
+                  id="maxPlayers"
+                  value={formData.maxPlayers}
+                  onChange={(e) => handleInputChange('maxPlayers', parseInt(e.target.value, 10))}
+                  min={2}
+                  max={12}
+                  className={errors.maxPlayers ? 'error' : ''}
+                />
+                <div className="number-spinner">
+                  <button
+                    type="button"
+                    className="number-spinner-btn"
+                    onClick={() => {
+                      const newValue = Math.min(formData.maxPlayers + 1, 12);
+                      handleInputChange('maxPlayers', newValue);
+                    }}
+                    disabled={formData.maxPlayers >= 12}
+                  >
+                    ▴
+                  </button>
+                  <button
+                    type="button"
+                    className="number-spinner-btn"
+                    onClick={() => {
+                      const newValue = Math.max(formData.maxPlayers - 1, 2);
+                      handleInputChange('maxPlayers', newValue);
+                    }}
+                    disabled={formData.maxPlayers <= 2}
+                  >
+                    ▾
+                  </button>
+                </div>
+              </div>
               {errors.maxPlayers && <span className="error-message">{errors.maxPlayers}</span>}
             </div>
           </div>
@@ -225,7 +251,6 @@ function CampaignCreator() {
         {/* Campaign Tags */}
         <div className="form-section">
           <h2>Campaign Tags</h2>
-          <p>Help players find your campaign by selecting relevant tags:</p>
           
           <div className="tag-grid">
             {CAMPAIGN_TAGS.map(tag => (

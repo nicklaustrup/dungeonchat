@@ -46,8 +46,8 @@ service cloud.firestore {
       allow create: if request.auth != null && 
         request.auth.uid == request.resource.data.dmId;
       
-      // Only DM can update campaign
-      allow update: if request.auth != null && 
+      // Only DM can update or delete campaign
+      allow update, delete: if request.auth != null && 
         request.auth.uid == resource.data.dmId;
         
       // Campaign members subcollection

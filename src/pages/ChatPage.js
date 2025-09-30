@@ -4,8 +4,10 @@ import { ref as databaseRef, onDisconnect as rtdbOnDisconnect, set as rtdbSet, u
 import { useFirebase } from '../services/FirebaseContext';
 import useUserProfile from '../hooks/useUserProfile';
 import { useCampaign } from '../contexts/CampaignContext';
+import { useCampaignChatContext } from '../hooks/useCampaignChatContext';
 import { useChatState, useChatTheme, useChatSound, useChatSearch, useChatReply, useChatImage, useChatScroll } from '../contexts/ChatStateContext';
 import ChatHeader from '../components/ChatHeader/ChatHeader';
+import CampaignChatHeader from '../components/Campaign/CampaignChatHeader';
 import ChatRoom from '../components/ChatRoom/ChatRoom';
 import ChatInput from '../components/ChatInput/ChatInput';
 import SignIn from '../components/SignIn/SignIn';
@@ -16,7 +18,7 @@ const UserProfileModal = React.lazy(() => import('../components/UserProfileModal
 
 function ChatPage({ campaignContext = false, showHeader = true }) {
   const { campaignId, channelId } = useParams();
-  const { user, rtdb } = useFirebase();
+  const { user, rtdb, firestore } = useFirebase();
   const { profile, getDisplayInfo } = useUserProfile();
   const { currentChannel } = useCampaign();
   const { state, actions } = useChatState();
@@ -32,6 +34,9 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
   // Determine current context
   const isInCampaign = campaignContext && campaignId;
   const activeChannelId = channelId || currentChannel || 'general';
+  
+  // Get campaign data if in campaign context
+  const { campaign, loading: campaignLoading } = useCampaignChatContext(firestore, isInCampaign ? campaignId : null);
 
   const getDisplayName = React.useCallback((uid, originalName) => {
     if (uid === user?.uid) return originalName || 'You';
@@ -114,7 +119,7 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
 
   return (
     <div className="App">
-      {showHeader && (
+      {showHeader && !isInCampaign && (
         <ChatHeader
           user={enhancedUser}
           isDarkTheme={isDarkTheme}
@@ -130,6 +135,14 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
           setAwayAfterSeconds={actions.setAwaySeconds}
         />
       )}
+      
+      {isInCampaign && campaign && !campaignLoading && (
+        <CampaignChatHeader 
+          campaign={campaign}
+          channelName={activeChannelId}
+        />
+      )}
+      
       <section>
         {user ? (
           <>
@@ -163,6 +176,8 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
               setReplyingTo={setReplyingTo}
               soundEnabled={soundEnabled}
               forceScrollBottom={() => scrollMeta.scrollToBottom && scrollMeta.scrollToBottom('auto')}
+              campaignId={isInCampaign ? campaignId : null}
+              channelId={activeChannelId}
             />
           </>
         ) : (

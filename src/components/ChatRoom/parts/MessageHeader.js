@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function MessageHeader({ userName, userId, createdAt, formatTimestamp, onViewProfile, profileData }) {
+export default function MessageHeader({ userName, userId, createdAt, formatTimestamp, onViewProfile, profileData, campaignMemberData, isInCampaign }) {
   // The display name is already calculated in ChatMessage with proper priority
   // but we can double-check here if needed
   const getDisplayName = () => {
@@ -13,11 +13,12 @@ export default function MessageHeader({ userName, userId, createdAt, formatTimes
 
   const displayName = getDisplayName();
   const hasCustomProfile = profileData?.username || profileData?.profilePictureURL || profileData?.displayName;
+  const isDM = isInCampaign && campaignMemberData?.role === 'dm';
 
   return (
     <div className="message-header" data-testid="message-header">
       <div
-        className={`message-username ${hasCustomProfile ? 'custom-profile' : 'default-profile'}`}
+        className={`message-username ${hasCustomProfile ? 'custom-profile' : 'default-profile'} ${isDM ? 'dm-message' : ''}`}
         onClick={onViewProfile}
         onKeyDown={(e) => { if (e.key === 'Enter') onViewProfile(); }}
         style={{ cursor: 'pointer' }}
@@ -26,9 +27,14 @@ export default function MessageHeader({ userName, userId, createdAt, formatTimes
         tabIndex={0}
         aria-label={`View profile for ${displayName}`}
       >
+        {isDM && (
+          <span className="dm-crown" title="Dungeon Master">
+            👑
+          </span>
+        )}
         {displayName}
         {profileData?.statusMessage && (
-          <span className="status-indicator" title={profileData.statusMessage}>
+          <span className="status-message-indicator" title={profileData.statusMessage}>
             💬
           </span>
         )}

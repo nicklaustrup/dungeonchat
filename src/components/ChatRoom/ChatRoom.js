@@ -193,6 +193,7 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
           onViewProfile={onViewProfile}
           showTyping={false}
           typingUsers={[]}
+          campaignId={campaignId}
           topSentinel={hasMore ? (
             <div
               ref={sentinelRef}

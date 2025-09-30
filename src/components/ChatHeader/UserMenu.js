@@ -2,14 +2,18 @@ import React from 'react';
 import SignOut from '../SignOut/SignOut';
 import useMenuToggle from './hooks/useMenuToggle';
 import useTruncationObserver from './hooks/useTruncationObserver';
+import { useUserProfile } from '../../hooks/useUserProfile';
 
-export default function UserMenu({ user, onViewProfile, onEditProfile, onOpenSettings, openSettings, children }) {
+export default function UserMenu({ user, onViewProfile, onEditProfile, onOpenSettings, openSettings, showSettings = true, children }) {
   const { open, toggle, close, triggerRef, menuRef } = useMenuToggle();
   const { register, recompute } = useTruncationObserver();
+  const { profile } = useUserProfile();
 
   if (!user) return null;
-  const display = user.displayName || 'Anonymous';
-  const avatar = user.photoURL || '/logo192.png';
+  
+  // Use username from profile, fallback to display name, then to 'Anonymous'
+  const display = profile?.username || user.displayName || 'Anonymous';
+  const avatar = profile?.profilePictureURL || user.photoURL || '/logo192.png';
   const isLongUsername = display.length > 30;
 
   const handleProfile = () => { onViewProfile && onViewProfile(user); close(); };
@@ -44,7 +48,9 @@ export default function UserMenu({ user, onViewProfile, onEditProfile, onOpenSet
           <div className="user-menu-section user-menu-actions">
             <button className="user-menu-item actionable" onClick={handleProfile}>View Profile</button>
             <button className="user-menu-item actionable" onClick={handleEditProfile}>Edit Profile</button>
-            <button className="user-menu-item actionable" onClick={handleSettings}>Settings</button>
+            {showSettings && (
+              <button className="user-menu-item actionable" onClick={handleSettings}>Settings</button>
+            )}
           </div>
           <div className="user-menu-section user-menu-signout">
             <SignOut />

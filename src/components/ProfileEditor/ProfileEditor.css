@@ -1,7 +1,7 @@
 /* ProfileEditor.css - Comprehensive profile editing interface styles */
 
 .profile-editor {
-  max-width: 600px;
+  width: 100%;
   margin: 0 auto;
   background: var(--bg-secondary, #ffffff);
   border-radius: 12px;
@@ -10,7 +10,7 @@
 }
 
 .profile-editor.compact {
-  max-width: 500px;
+  width: 100%;
   margin: 0;
 }
 
@@ -39,7 +39,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
+  padding: 1rem 1.5rem;
   background: var(--bg-primary, #f8f9fa);
   border-bottom: 1px solid var(--border-color, #e5e5e5);
 }
@@ -69,7 +69,7 @@
 
 /* Content */
 .profile-editor-content {
-  padding: 2rem;
+  padding: 1.5rem;
   width: 100%;
   box-sizing: border-box;
 }
@@ -77,24 +77,28 @@
 /* Profile Picture Section */
 .profile-picture-section {
   text-align: center;
-  margin-bottom: 2rem;
-  padding-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--border-color, #e5e5e5);
 }
 
 .avatar-container {
   position: relative;
   display: inline-block;
+  width: 100px;
+  height: 100px;
+  margin-bottom: 0.75rem;
 }
 
 .profile-avatar {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid var(--border-color, #e5e5e5);
+  border: 3px solid var(--border-color, #e5e5e5);
   cursor: pointer;
   transition: all 0.3s ease;
+  display: block;
 }
 
 .profile-avatar:hover {
@@ -108,8 +112,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  width: 128px;
-  height: 128px;
+  width: 100px;
+  height: 100px;
   background: rgba(0, 0, 0, 0.6);
   border-radius: 50%;
   display: flex;
@@ -131,16 +135,17 @@
   margin: 0;
   font-size: 0.875rem;
   color: var(--text-secondary, #666666);
+  text-align: center;
 }
 
 /* Form Sections */
 .form-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-section h3 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.25rem;
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary, #333333);
   padding-bottom: 0.5rem;
@@ -149,7 +154,7 @@
 
 /* Form Groups */
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .form-group label {
@@ -202,6 +207,16 @@
   background: var(--disabled-bg, #f8f9fa);
   color: var(--text-disabled, #6c757d);
   cursor: not-allowed;
+}
+
+/* Form Helper Text */
+.field-help {
+  display: block;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted, #6c757d);
+  line-height: 1.3;
 }
 
 /* Validation Messages */
@@ -258,9 +273,9 @@
 /* Actions */
 .profile-editor-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 1rem;
-  padding: 1.5rem 2rem;
+  padding: 1rem 1.5rem;
   background: var(--bg-primary, #f8f9fa);
   border-top: 1px solid var(--border-color, #e5e5e5);
 }
@@ -344,18 +359,23 @@
     padding: 1rem;
   }
   
+  .avatar-container {
+    width: 80px;
+    height: 80px;
+  }
+  
   .profile-avatar {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
   }
   
   .avatar-overlay {
-    width: 108px;
-    height: 108px;
+    width: 80px;
+    height: 80px;
   }
   
   .profile-editor-actions {
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
   
   .button-primary,
@@ -374,14 +394,19 @@
     font-size: 1.125rem;
   }
   
+  .avatar-container {
+    width: 80px;
+    height: 80px;
+  }
+  
   .profile-avatar {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
   }
   
   .avatar-overlay {
-    width: 108px;
-    height: 108px;
+    width: 80px;
+    height: 80px;
   }
 }
 

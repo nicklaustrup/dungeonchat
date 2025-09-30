@@ -6,7 +6,7 @@ import { useToast } from './useToast';
 /**
  * Handles image selection, preview (data URL), compression, upload and message creation.
  */
-export function useImageMessage({ storage, firestore, user, getDisplayName, soundEnabled, playSendSound }) {
+export function useImageMessage({ storage, firestore, user, getDisplayName, soundEnabled, playSendSound, campaignId = null, channelId = 'general' }) {
   const [selectedImage, setSelectedImage] = React.useState(null);
   const [imagePreview, setImagePreview] = React.useState(null);
   const [uploading, setUploading] = React.useState(false);
@@ -48,7 +48,14 @@ export function useImageMessage({ storage, firestore, user, getDisplayName, soun
       const compressed = await compressImage(selectedImage);
       const url = await uploadImage({ storage, file: compressed, uid: user.uid });
       if (!url) throw new Error('Upload failed');
-      await createImageMessage({ firestore, imageURL: url, user, getDisplayName });
+      await createImageMessage({ 
+        firestore, 
+        imageURL: url, 
+        user, 
+        getDisplayName,
+        campaignId,
+        channelId
+      });
       clearImage();
       if (soundEnabled && playSendSound) playSendSound();
     } catch (err) {
@@ -58,7 +65,7 @@ export function useImageMessage({ storage, firestore, user, getDisplayName, soun
       setUploading(false);
       setError(err);
     }
-  }, [selectedImage, uploading, user, storage, firestore, getDisplayName, soundEnabled, playSendSound, clearImage, pushToast]);
+  }, [selectedImage, uploading, user, storage, firestore, getDisplayName, soundEnabled, playSendSound, clearImage, pushToast, campaignId, channelId]);
 
   return {
     selectedImage,
