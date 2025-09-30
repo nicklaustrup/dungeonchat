@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "superchat-58b43"
-  }
+    "default": "superchat-58b43",
+    "staging": "superchat-58b43"
+  },
+  "targets": {},
+  "etags": {}
 }
