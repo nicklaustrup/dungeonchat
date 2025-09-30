@@ -3,7 +3,6 @@ import React from 'react';
 /**
  * useMessageSearch
  * Optimized filtering of messages by text content with memoization and caching.
- * Images are always included so they can be discovered.
  * Performs case-insensitive substring match. Returns original array when searchTerm falsy.
  *
  * @param {Array} messages - Chronological messages (stable reference best-effort)
@@ -31,7 +30,6 @@ export function useMessageSearch(messages, searchTerm) {
     }
 
     const filtered = messages.filter(msg => {
-      if (msg.type === 'image') return true; // always show images
       if (!msg.text || typeof msg.text !== 'string') return false;
       return msg.text.toLowerCase().includes(term);
     });

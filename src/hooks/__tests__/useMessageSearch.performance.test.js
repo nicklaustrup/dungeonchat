@@ -153,4 +153,38 @@ describe('useMessageSearch performance optimizations', () => {
     // Should handle rapid changes efficiently
     expect(totalTime).toBeLessThan(100);
   });
+
+  test('excludes image messages from search results', () => {
+    const messages = [
+      { id: '1', text: 'Hello world', uid: 'user1' },
+      { id: '2', type: 'image', imageURL: 'http://example.com/image.jpg', uid: 'user2' },
+      { id: '3', text: 'Hello there', uid: 'user1' },
+      { id: '4', type: 'image', imageURL: 'http://example.com/image2.jpg', uid: 'user3' }
+    ];
+
+    const { result } = renderHook(() => useMessageSearch(messages, 'hello'));
+    
+    // Should only return text messages that match search term
+    expect(result.current).toHaveLength(2);
+    expect(result.current[0].text).toBe('Hello world');
+    expect(result.current[1].text).toBe('Hello there');
+    
+    // Verify that no image messages are included
+    expect(result.current.every(msg => msg.type !== 'image')).toBe(true);
+  });
+
+  test('returns all messages including images when no search term', () => {
+    const messages = [
+      { id: '1', text: 'Hello world', uid: 'user1' },
+      { id: '2', type: 'image', imageURL: 'http://example.com/image.jpg', uid: 'user2' },
+      { id: '3', text: 'Hello there', uid: 'user1' },
+      { id: '4', type: 'image', imageURL: 'http://example.com/image2.jpg', uid: 'user3' }
+    ];
+
+    const { result } = renderHook(() => useMessageSearch(messages, ''));
+    
+    // Should return all messages when no search term
+    expect(result.current).toHaveLength(4);
+    expect(result.current).toEqual(messages);
+  });
 });
