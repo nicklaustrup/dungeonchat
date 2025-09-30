@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
 import { useFirebase } from '../services/FirebaseContext';
 import { getUserCampaigns, getCampaignById } from '../services/campaign/campaignService';
 
@@ -75,10 +76,18 @@ export function CampaignProvider({ children }) {
   }, [user, firestore, currentCampaign]);
 
   const switchCampaign = useCallback(async (campaignId) => {
-    if (!firestore || !campaignId) return;
+    if (!firestore || !campaignId || !user) return;
     
     try {
       const campaign = await getCampaignById(firestore, campaignId);
+      
+      // Get user's role in this campaign
+      const memberDocRef = doc(firestore, 'campaigns', campaignId, 'members', user.uid);
+      const memberDoc = await getDoc(memberDocRef);
+      if (memberDoc.exists()) {
+        campaign.userRole = memberDoc.data().role;
+      }
+      
       setCurrentCampaign(campaign);
       setCurrentChannel('general'); // Reset to general channel
       
@@ -88,7 +97,7 @@ export function CampaignProvider({ children }) {
     } catch (error) {
       console.error('Error switching campaign:', error);
     }
-  }, [firestore, recentCampaigns]);
+  }, [firestore, recentCampaigns, user]);
 
   const switchChannel = useCallback((channelId) => {
     setCurrentChannel(channelId);

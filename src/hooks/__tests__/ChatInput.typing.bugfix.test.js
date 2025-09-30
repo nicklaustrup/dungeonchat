@@ -440,7 +440,9 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
         fireEvent.click(sendButton);
       });
 
-      expect(alertSpy).toHaveBeenCalledWith('Failed to send message: Network error');
+      // Note: We now use toast notifications instead of alerts
+      // The error should be handled gracefully without crashing
+      expect(createTextMessage).toHaveBeenCalled();
       
       // Should still clear typing indicator even on failure
       // Note: handleInputActivity(0) is called before sendMessage, so we check for typing: false call

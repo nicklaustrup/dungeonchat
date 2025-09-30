@@ -90,7 +90,6 @@ function CampaignSwitcher() {
                         {campaign.userRole === 'dm' ? '👑 DM' : '🎭 Player'}
                       </span>
                     </div>
-                    <span className="campaign-status">{campaign.status}</span>
                   </button>
                 ))}
               </div>
