@@ -2,9 +2,12 @@ import React from 'react';
 import { isCriticalHit, isCriticalFail, getRollDisplayClass } from '../../services/diceService';
 import './DiceRollDisplay.css';
 
-function DiceRollDisplay({ rollResult, playerName, timestamp, mode = 'full' }) {
+function DiceRollDisplay({ rollResult, rollData, playerName, timestamp, mode = 'full' }) {
+  // Support both rollResult and rollData props for backwards compatibility
+  const rollInfo = rollResult || rollData;
+  
   // Add null checks to prevent runtime errors
-  if (!rollResult || typeof rollResult !== 'object') {
+  if (!rollInfo || typeof rollInfo !== 'object') {
     return (
       <div className="dice-roll-error">
         <span>⚠️ Invalid dice roll data</span>
@@ -12,16 +15,16 @@ function DiceRollDisplay({ rollResult, playerName, timestamp, mode = 'full' }) {
     );
   }
 
-  const rollClass = getRollDisplayClass(rollResult);
-  const isCrit = isCriticalHit(rollResult);
-  const isFail = isCriticalFail(rollResult);
+  const rollClass = getRollDisplayClass(rollInfo);
+  const isCrit = isCriticalHit(rollInfo);
+  const isFail = isCriticalFail(rollInfo);
   const compact = mode === 'compact';
   
   if (compact) {
     return (
       <div className={`dice-roll-compact ${rollClass}`}>
-        <span className="roll-notation">{rollResult.notation || 'N/A'}</span>
-        <span className="roll-result">{rollResult.total || 0}</span>
+        <span className="roll-notation">{rollInfo.notation || 'N/A'}</span>
+        <span className="roll-result">{rollInfo.total || 0}</span>
         {isCrit && <span className="crit-indicator">🔥</span>}
         {isFail && <span className="fail-indicator">💀</span>}
       </div>
@@ -35,7 +38,7 @@ function DiceRollDisplay({ rollResult, playerName, timestamp, mode = 'full' }) {
           <span className="dice-icon">🎲</span>
           <span className="player-name">{playerName}</span>
           <span className="roll-action">rolled</span>
-          <span className="roll-notation">{rollResult.notation || 'N/A'}</span>
+          <span className="roll-notation">{rollInfo.notation || 'N/A'}</span>
         </div>
         {timestamp && (
           <span className="roll-timestamp">
@@ -47,7 +50,7 @@ function DiceRollDisplay({ rollResult, playerName, timestamp, mode = 'full' }) {
       <div className="roll-result-section">
         <div className="result-main">
           <span className="result-label">Result:</span>
-          <span className="result-value">{rollResult.total || 0}</span>
+          <span className="result-value">{rollInfo.total || 0}</span>
           
           {(isCrit || isFail) && (
             <div className="special-result">
@@ -65,21 +68,21 @@ function DiceRollDisplay({ rollResult, playerName, timestamp, mode = 'full' }) {
           )}
         </div>
         
-        {((rollResult.individual && rollResult.individual.length > 1) || (rollResult.modifier && rollResult.modifier !== 0)) && (
+        {((rollInfo.individual && rollInfo.individual.length > 1) || (rollInfo.modifier && rollInfo.modifier !== 0)) && (
           <div className="result-breakdown">
             <span className="breakdown-label">Breakdown:</span>
-            <span className="breakdown-text">{rollResult.breakdown || 'N/A'}</span>
+            <span className="breakdown-text">{rollInfo.breakdown || 'N/A'}</span>
           </div>
         )}
         
-        {rollResult.individual && rollResult.individual.length > 1 && (
+        {rollInfo.individual && rollInfo.individual.length > 1 && (
           <div className="individual-rolls">
             <span className="individual-label">Individual rolls:</span>
             <div className="dice-results">
-              {rollResult.individual.map((roll, index) => (
+              {rollInfo.individual.map((roll, index) => (
                 <span 
                   key={index} 
-                  className={`die-result ${roll === Math.max(...rollResult.individual) ? 'max-roll' : ''} ${roll === 1 ? 'min-roll' : ''}`}
+                  className={`die-result ${roll === Math.max(...rollInfo.individual) ? 'max-roll' : ''} ${roll === 1 ? 'min-roll' : ''}`}
                 >
                   {roll}
                 </span>
