@@ -15,9 +15,42 @@ import { MessageBar } from './MessageBar';
 import { ActionButtons } from './ActionButtons';
 import { diceService } from '../../services/diceService';
 import DiceRoller from '../DiceRoll/DiceRoller';
+import { doc, getDoc } from 'firebase/firestore';
+
+// Custom hook to get campaign member info for current user
+const useCampaignMember = (campaignId, userId) => {
+    const [memberData, setMemberData] = React.useState(null);
+    const { firestore } = useFirebase();
+    
+    React.useEffect(() => {
+        if (!campaignId || !userId || !firestore) {
+            setMemberData(null);
+            return;
+        }
+        
+        const fetchMemberData = async () => {
+            try {
+                const memberDoc = await getDoc(doc(firestore, 'campaigns', campaignId, 'members', userId));
+                if (memberDoc.exists()) {
+                    setMemberData(memberDoc.data());
+                } else {
+                    setMemberData(null);
+                }
+            } catch (error) {
+                console.warn('Could not fetch campaign member data:', error);
+                setMemberData(null);
+            }
+        };
+        
+        fetchMemberData();
+    }, [campaignId, userId, firestore]);
+    
+    return memberData;
+};
 
 function ChatInput({
   getDisplayName,
+  profile,
   soundEnabled,
   forceScrollBottom,
   campaignId = null,
@@ -27,6 +60,29 @@ function ChatInput({
   const user = auth.currentUser;
   const [text, setText] = React.useState('');
   const [showDiceRoller, setShowDiceRoller] = React.useState(false);
+
+  // Get campaign member data for current user if in a campaign
+  const campaignMemberData = useCampaignMember(campaignId, user?.uid);
+
+  // Enhanced function to get player name for dice rolls
+  const getPlayerName = React.useCallback(() => {
+    if (!user) return 'Anonymous';
+    
+    // If in a campaign and have member data, use character name logic
+    if (campaignId && campaignMemberData) {
+      // For DMs, use their username from profile, fallback to display name
+      if (campaignMemberData.role === 'dm') {
+        return profile?.username || profile?.displayName || user.displayName || 'DM';
+      }
+      // For players, use character name if available
+      if (campaignMemberData.characterName) {
+        return campaignMemberData.characterName;
+      }
+    }
+    
+    // Fall back to regular display name
+    return getDisplayName(user.uid, user.displayName);
+  }, [user, campaignId, campaignMemberData, getDisplayName, profile]);
 
   // Use centralized state instead of prop drilling  
   const { replyingTo, setReplyingTo } = useChatReply();
@@ -146,8 +202,8 @@ function ChatInput({
     if (!user || !rollResult) return;
     
     try {
-      // Get player display name
-      const playerName = getDisplayName(user);
+      // Get player display name (character name in campaigns)
+      const playerName = getPlayerName();
       
       // Create a dice roll message with the result
       await createTextMessage({ 
@@ -226,7 +282,7 @@ function ChatInput({
             const rollResult = diceService.rollDice(parsedDice);
             
             // Create a dice roll message with the result
-            const playerName = getDisplayName(user);
+            const playerName = getPlayerName();
             await createTextMessage({ 
               firestore, 
               text: `🎲 **${playerName}** rolled **${rollResult.notation}**: **${rollResult.total}**${rollResult.breakdown ? ` (${rollResult.breakdown})` : ''}`,

@@ -172,6 +172,7 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
             </div>
             <ChatInput
               getDisplayName={getDisplayName}
+              profile={profile}
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
               soundEnabled={soundEnabled}
