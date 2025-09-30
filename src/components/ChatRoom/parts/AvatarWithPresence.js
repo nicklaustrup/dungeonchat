@@ -18,6 +18,12 @@ export default function AvatarWithPresence({
   const fallback = React.useMemo(() => getFallbackAvatar({ uid, displayName, size: size + 4 }), [uid, displayName, size]);
   const initialSrc = photoURL || fallback;
   const [src, setSrc] = React.useState(initialSrc);
+  
+  // Update src when photoURL prop changes
+  React.useEffect(() => {
+    setSrc(photoURL || fallback);
+  }, [photoURL, fallback]);
+  
   const handleError = React.useCallback((e) => {
     if (e.target.dataset.fallbackApplied === 'true') return;
     setSrc(fallback);

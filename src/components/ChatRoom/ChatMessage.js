@@ -30,44 +30,25 @@ import { useUserProfile } from '../../hooks/useUserProfile';
 
 function ChatMessage(props) {
     const { firestore, auth } = useFirebase();
-    const { text, uid, photoURL, reactions = {}, id, createdAt, imageURL, type, displayName, replyTo, editedAt, deleted } = props.message;
+    const { text, uid, photoURL, reactions = {}, createdAt, imageURL, type, displayName, replyTo, editedAt, deleted } = props.message;
     const { searchTerm, onReply, isReplyTarget, onViewProfile, showMeta = true } = props;
-    
+
     // Get enhanced profile data for this user
     const { profileData } = useUserProfileData(uid);
-    
+
     // For the current user, we should use the profile from the global context
     // For other users, we use the fetched profile data
     const { profile: currentUserProfile } = useUserProfile();
     const { user: currentUser } = useFirebase();
-    
-    console.log('🔍 Raw useUserProfile result:', { currentUserProfile });
-    console.log('🔍 Current user UID:', currentUser?.uid);
-    console.log('🔍 Message UID:', uid);
-    
+
     const effectiveProfileData = uid === currentUser?.uid ? currentUserProfile : profileData;
-    
-    // Debug: Focus on the avatar issue with clear separation
-    const isCurrentUser = uid === currentUser?.uid;
-    console.log(`🔍 ${isCurrentUser ? 'CURRENT USER' : 'OTHER USER'} - UID: ${uid}`);
-    
-    if (isCurrentUser) {
-        console.log('✅ Current User Profile Data:', currentUserProfile);
-        console.log('✅ Profile Picture URL:', currentUserProfile?.profilePictureURL);
-    } else {
-        console.log('� Other User Profile Data:', profileData);
-        console.log('� Profile Picture URL:', profileData?.profilePictureURL);
-    }
-    
-    console.log('🎯 Effective Profile Data:', effectiveProfileData);
-    console.log('🎯 Final profilePictureURL:', effectiveProfileData?.profilePictureURL);
-    
+
     // Get user's profanity filter preference from context (will re-render when changed)
     const { profanityFilterEnabled } = useProfanityFilterContext();
-    
+
     // Apply profanity filtering based on user preference
     const displayText = useProfanityFilter(text, profanityFilterEnabled);
-    
+
     const presence = usePresence(uid);
     const isTyping = !!presence.typing;
     const presenceState = isTyping ? 'online' : presence.state; // typing overrides away state label visually
@@ -88,13 +69,10 @@ function ChatMessage(props) {
 
     const messageId = buildMessageId(props.message);
 
-    if (!id && !props.message.documentId && !props.message._id) {
-        console.log('📨 ChatMessage missing ID - Message:', props.message);
-        console.log('📨 Available props:', Object.keys(props.message));
-    }
+
 
     const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
-    
+
     // Implement name priority: displayName (highest) > username (medium) > auth displayName (lowest)
     const getDisplayNameWithPriority = () => {
         // Highest priority: Custom display name from profile
@@ -108,13 +86,12 @@ function ChatMessage(props) {
         // Lowest priority: Original auth display name from message
         return displayName || 'Anonymous';
     };
-    
+
     const userName = getDisplayNameWithPriority();
-    
+
     // Use profile picture from profile data if available, otherwise fallback
     const userPhotoURL = effectiveProfileData?.profilePictureURL || photoURL;
-    console.log('🎯 Final userPhotoURL for avatar:', userPhotoURL);
-    
+
     const fallbackAvatar = React.useMemo(() => getFallbackAvatar({ uid, displayName: userName, size: 40 }), [uid, userName]);
 
     // formatting now handled by utils/messageFormatting.js
@@ -321,53 +298,53 @@ function ChatMessage(props) {
     }
 
     return (
-    <div className={rootClasses} data-message-id={messageId} data-selected={selected ? 'true' : undefined} role="article" aria-label={`Message from ${userName}${isReplyTarget ? ' (reply target)' : ''}`} onClick={isTouch ? (e) => {
+        <div className={rootClasses} data-message-id={messageId} data-selected={selected ? 'true' : undefined} role="article" aria-label={`Message from ${userName}${isReplyTarget ? ' (reply target)' : ''}`} onClick={isTouch ? (e) => {
             const tag = (e.target.tagName || '').toLowerCase();
-            if (['button','img','input','textarea','a'].includes(tag)) return;
+            if (['button', 'img', 'input', 'textarea', 'a'].includes(tag)) return;
             handleSelect();
         } : undefined} onMouseEnter={() => onHoverMessage && onHoverMessage(messageId)} onMouseLeave={() => onHoverMessage && onHoverMessage(null)}>
             <div className="message-inner">
-                                {replyTo && showMeta && (
-                                    <div className="message-top-row" aria-label={`Replying to ${replyTo.displayName || 'user'}`}>
-                                        <div className="avatar-spacer" aria-hidden="true" />
-                                        <div className="reply-contexts">
-                                            <InlineReplyContext
-                                                replyTo={replyTo}
-                                                onViewProfile={handleViewProfileClick}
-                                                onNavigate={(id) => {
-                                                    const selector = `[data-message-id="${id}"]`;
-                                                    const targetEl = document.querySelector(selector);
-                                                    if (targetEl) {
-                                                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                                        targetEl.classList.add('reply-flash');
-                                                        let addedTemp = false;
-                                                        if (!targetEl.classList.contains('reply-target')) { targetEl.classList.add('reply-target'); addedTemp = true; }
-                                                        setTimeout(() => { targetEl.classList.remove('reply-flash'); }, 600);
-                                                        if (addedTemp) setTimeout(() => { targetEl.classList.remove('reply-target'); }, 3000);
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+                {replyTo && showMeta && (
+                    <div className="message-top-row" aria-label={`Replying to ${replyTo.displayName || 'user'}`}>
+                        <div className="avatar-spacer" aria-hidden="true" />
+                        <div className="reply-contexts">
+                            <InlineReplyContext
+                                replyTo={replyTo}
+                                onViewProfile={handleViewProfileClick}
+                                onNavigate={(id) => {
+                                    const selector = `[data-message-id="${id}"]`;
+                                    const targetEl = document.querySelector(selector);
+                                    if (targetEl) {
+                                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        targetEl.classList.add('reply-flash');
+                                        let addedTemp = false;
+                                        if (!targetEl.classList.contains('reply-target')) { targetEl.classList.add('reply-target'); addedTemp = true; }
+                                        setTimeout(() => { targetEl.classList.remove('reply-flash'); }, 600);
+                                        if (addedTemp) setTimeout(() => { targetEl.classList.remove('reply-target'); }, 3000);
+                                    }
+                                }}
+                            />
+                        </div>
+                    </div>
+                )}
                 <div className="message-main-row">
                     {showMeta && (
                         <AvatarWithPresence
-                          uid={uid}
-                          photoURL={userPhotoURL}
-                          displayName={userName}
-                          presenceState={presenceState}
-                          presenceTitle={presenceTitle}
-                          onClick={handleViewProfileClick}
+                            uid={uid}
+                            photoURL={userPhotoURL}
+                            displayName={userName}
+                            presenceState={presenceState}
+                            presenceTitle={presenceTitle}
+                            onClick={handleViewProfileClick}
                         />
                     )}
                     <div className="message-content">
-                        {showMeta && (<MessageHeader 
-                            userName={userName} 
+                        {showMeta && (<MessageHeader
+                            userName={userName}
                             userId={uid}
-                            createdAt={createdAt} 
-                            formatTimestamp={formatTimestamp} 
-                            onViewProfile={handleViewProfileClick} 
+                            createdAt={createdAt}
+                            formatTimestamp={formatTimestamp}
+                            onViewProfile={handleViewProfileClick}
                             profileData={effectiveProfileData}
                         />)}
                         {!showMeta && (<HoverTimestamp createdAt={createdAt} formatTimestamp={formatTimestamp} />)}
