@@ -82,7 +82,7 @@
   border-bottom: 1px solid var(--border-color, #e5e5e5);
 }
 
-.avatar-container {
+.profile-editor .avatar-container {
   position: relative;
   display: inline-block;
   width: 100px;
@@ -127,7 +127,7 @@
   font-weight: 500;
 }
 
-.avatar-container:hover .avatar-overlay {
+.profile-editor .avatar-container:hover .avatar-overlay {
   opacity: 1;
 }
 
@@ -394,7 +394,7 @@
     font-size: 1.125rem;
   }
   
-  .avatar-container {
+  .profile-editor .avatar-container {
     width: 80px;
     height: 80px;
   }

@@ -243,7 +243,7 @@ body.chat-menu-open .reaction-buttons:not(.force-visible) {
   color: #004080;
 }
 
-.avatar-container {
+.message .avatar-container {
   position: relative;
   display: flex;
   align-items: center;
@@ -276,7 +276,7 @@ body.chat-menu-open .reaction-buttons:not(.force-visible) {
   min-height: unset;
 }
 
-.sent .avatar-container {
+.message.sent .avatar-container {
   flex-direction: row-reverse;
 }
 
@@ -396,12 +396,12 @@ body.chat-menu-open .reaction-buttons:not(.force-visible) {
 }
 
 /* Status indicator adjustments: overlap the avatar image */
-.avatar-container .status-indicator {
+.message .avatar-container .status-indicator {
   position: absolute;
   transform: scale(0.8);
   transform-origin: center;
   bottom: -3px;
-  right: 10px;
+  right: -3px;
   z-index: 10;
   border: 1.5px solid var(--bg-color, #2a2a2a);
   border-radius: 50%;

@@ -2,6 +2,7 @@
 jest.mock('firebase/firestore', () => {
   const mockAddDoc = jest.fn();
   const mockSetDoc = jest.fn();
+  const mockUpdateDoc = jest.fn();
   const mockGetDoc = jest.fn();
   const mockGetDocs = jest.fn();
   const mockCollection = jest.fn();
@@ -10,11 +11,14 @@ jest.mock('firebase/firestore', () => {
   const mockWhere = jest.fn();
   const mockOrderBy = jest.fn();
   const mockServerTimestamp = jest.fn();
+  const mockArrayUnion = jest.fn();
+  const mockIncrement = jest.fn();
 
   return {
     collection: mockCollection,
     addDoc: mockAddDoc,
     setDoc: mockSetDoc,
+    updateDoc: mockUpdateDoc,
     getDoc: mockGetDoc,
     getDocs: mockGetDocs,
     doc: mockDoc,
@@ -22,9 +26,12 @@ jest.mock('firebase/firestore', () => {
     where: mockWhere,
     orderBy: mockOrderBy,
     serverTimestamp: mockServerTimestamp,
+    arrayUnion: mockArrayUnion,
+    increment: mockIncrement,
     __mocks__: {
       mockAddDoc,
       mockSetDoc,
+      mockUpdateDoc,
       mockGetDoc,
       mockGetDocs,
       mockCollection,
@@ -32,7 +39,9 @@ jest.mock('firebase/firestore', () => {
       mockQuery,
       mockWhere,
       mockOrderBy,
-      mockServerTimestamp
+      mockServerTimestamp,
+      mockArrayUnion,
+      mockIncrement
     }
   };
 });
@@ -51,12 +60,15 @@ const {
   collection,
   addDoc,
   setDoc,
+  updateDoc,
   getDoc,
   getDocs,
   doc,
   query,
   where,
-  serverTimestamp
+  serverTimestamp,
+  arrayUnion,
+  increment
 } = require('firebase/firestore');
 
 describe('campaignService', () => {
@@ -65,6 +77,8 @@ describe('campaignService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     serverTimestamp.mockReturnValue({ _methodName: 'serverTimestamp' });
+    arrayUnion.mockReturnValue({ _methodName: 'arrayUnion' });
+    increment.mockReturnValue({ _methodName: 'increment' });
   });
 
   describe('createCampaign', () => {
@@ -85,8 +99,14 @@ describe('campaignService', () => {
 
     test('creates campaign with all required data', async () => {
       const mockCampaignRef = { id: 'new-campaign-id' };
+      const mockDmDoc = {
+        exists: () => true,
+        data: () => ({ username: 'testdm', displayName: 'Test DM' })
+      };
+      
       addDoc.mockResolvedValue(mockCampaignRef);
       setDoc.mockResolvedValue(undefined);
+      getDoc.mockResolvedValue(mockDmDoc);
       collection.mockReturnValue('campaigns-collection');
       doc.mockReturnValue('doc-ref');
 
@@ -96,7 +116,9 @@ describe('campaignService', () => {
       expect(addDoc).toHaveBeenCalledWith('campaigns-collection', {
         ...mockCampaignData,
         dmId,
+        dmName: 'testdm',
         currentPlayers: 1,
+        members: [dmId],
         status: 'recruiting',
         createdAt: { _methodName: 'serverTimestamp' },
         updatedAt: { _methodName: 'serverTimestamp' },
@@ -115,6 +137,11 @@ describe('campaignService', () => {
     });
 
     test('handles firestore errors', async () => {
+      const mockDmDoc = {
+        exists: () => false,
+        data: () => ({})
+      };
+      getDoc.mockResolvedValue(mockDmDoc);
       addDoc.mockRejectedValue(new Error('Firestore error'));
 
       await expect(createCampaign(mockFirestore, mockCampaignData, dmId))
@@ -131,8 +158,16 @@ describe('campaignService', () => {
     };
 
     test('successfully adds user to campaign', async () => {
+      // Mock getDocs for getCampaignMembers call
+      const mockMembersSnapshot = {
+        docs: []
+      };
+      getDocs.mockResolvedValue(mockMembersSnapshot);
       setDoc.mockResolvedValue(undefined);
+      updateDoc.mockResolvedValue(undefined);
       doc.mockReturnValue('doc-ref');
+      collection.mockReturnValue('collection-ref');
+      query.mockReturnValue('query-ref');
 
       const result = await joinCampaign(mockFirestore, campaignId, userId, characterInfo);
 
@@ -162,18 +197,29 @@ describe('campaignService', () => {
         { id: 'campaign1', data: () => ({ 
           name: 'Campaign 1', 
           status: 'recruiting',
-          visibility: 'public'
+          visibility: 'public',
+          dmId: 'dm1'
         }) },
         { id: 'campaign2', data: () => ({ 
           name: 'Campaign 2', 
           status: 'active',
-          visibility: 'public'
+          visibility: 'public',
+          dmId: 'dm2'
         }) }
       ];
+      
+      // Mock getDoc for DM profile lookups
+      const mockDmDoc = {
+        exists: () => false,
+        data: () => ({})
+      };
+      
       getDocs.mockResolvedValue({ docs: mockDocs });
+      getDoc.mockResolvedValue(mockDmDoc);
       query.mockReturnValue('query-ref');
       collection.mockReturnValue('campaigns-collection');
       where.mockReturnValue('where-clause');
+      doc.mockReturnValue('doc-ref');
 
       const result = await searchCampaigns(mockFirestore);
 
@@ -183,8 +229,8 @@ describe('campaignService', () => {
       );
 
       expect(result).toEqual([
-        { id: 'campaign1', name: 'Campaign 1', status: 'recruiting', visibility: 'public' },
-        { id: 'campaign2', name: 'Campaign 2', status: 'active', visibility: 'public' }
+        { id: 'campaign1', name: 'Campaign 1', status: 'recruiting', visibility: 'public', dmId: 'dm1', dmName: 'Unknown DM' },
+        { id: 'campaign2', name: 'Campaign 2', status: 'active', visibility: 'public', dmId: 'dm2', dmName: 'Unknown DM' }
       ]);
     });
 
@@ -231,17 +277,26 @@ describe('campaignService', () => {
   describe('getCampaignMembers', () => {
     test('returns campaign members', async () => {
       const mockDocs = [
-        { id: 'member1', data: () => ({ role: 'dm' }) },
-        { id: 'member2', data: () => ({ role: 'player' }) }
+        { id: 'member1', data: () => ({ role: 'dm', userId: 'user1' }) },
+        { id: 'member2', data: () => ({ role: 'player', userId: 'user2' }) }
       ];
+      
+      // Mock user profile document that doesn't exist
+      const mockUserDoc = {
+        exists: () => false,
+        data: () => ({})
+      };
+      
       getDocs.mockResolvedValue({ docs: mockDocs });
+      getDoc.mockResolvedValue(mockUserDoc);
       collection.mockReturnValue('members-collection');
+      doc.mockReturnValue('doc-ref');
 
       const result = await getCampaignMembers(mockFirestore, 'campaign-id');
 
       expect(result).toEqual([
-        { id: 'member1', role: 'dm' },
-        { id: 'member2', role: 'player' }
+        { id: 'member1', role: 'dm', userId: 'user1', displayName: 'Unknown User' },
+        { id: 'member2', role: 'player', userId: 'user2', displayName: 'Unknown User' }
       ]);
     });
   });
