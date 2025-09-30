@@ -90,7 +90,15 @@ function ChatMessage(props) {
     const userName = getDisplayNameWithPriority();
 
     // Use profile picture from profile data if available, otherwise fallback
-    const userPhotoURL = effectiveProfileData?.profilePictureURL || photoURL;
+    // Also check if the profile picture URL is a placeholder and use fallback instead
+    const isPlaceholderURL = (url) => {
+        return !url || url.includes('via.placeholder.com') || url.includes('placeholder');
+    };
+    
+    const profilePictureURL = effectiveProfileData?.profilePictureURL;
+    const userPhotoURL = isPlaceholderURL(profilePictureURL) ? 
+        (isPlaceholderURL(photoURL) ? null : photoURL) : 
+        profilePictureURL;
 
     const fallbackAvatar = React.useMemo(() => getFallbackAvatar({ uid, displayName: userName, size: 40 }), [uid, userName]);
 

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { useFirebase } from '../services/FirebaseContext';
 
 /**
  * Hook to fetch profile data for a specific user ID
  * Used for displaying enhanced profile information in messages
+ * Now uses real-time updates via onSnapshot
  */
 export function useUserProfileData(userId) {
   const { firestore } = useFirebase();
@@ -19,29 +20,31 @@ export function useUserProfileData(userId) {
       return;
     }
 
-    const loadProfile = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const profileRef = doc(firestore, 'userProfiles', userId);
-        const profileSnap = await getDoc(profileRef);
-        
+    setLoading(true);
+    setError(null);
+
+    const profileRef = doc(firestore, 'userProfiles', userId);
+    
+    // Use onSnapshot for real-time updates
+    const unsubscribe = onSnapshot(
+      profileRef,
+      (profileSnap) => {
+        setLoading(false);
         if (profileSnap.exists()) {
           setProfileData(profileSnap.data());
         } else {
           setProfileData(null);
         }
-      } catch (err) {
+      },
+      (err) => {
         console.error('Error loading user profile:', err);
         setError(err);
         setProfileData(null);
-      } finally {
         setLoading(false);
       }
-    };
+    );
 
-    loadProfile();
+    return () => unsubscribe();
   }, [userId, firestore]);
 
   return { profileData, loading, error };
