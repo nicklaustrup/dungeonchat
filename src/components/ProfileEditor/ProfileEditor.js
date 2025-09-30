@@ -11,7 +11,7 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
     profile, 
     updateProfile, 
     checkUsernameAvailability, 
-    // updateProfilePicture, // Removed unused variable
+    uploadProfilePictureFile,
     updatePrivacySettings,
     loading 
   } = useUserProfile();
@@ -82,7 +82,7 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
   };
 
   // Handle profile picture file selection
-  const handleFileSelect = (event) => {
+  const handleFileSelect = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -98,14 +98,35 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
       return;
     }
     
-    // Create preview URL
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-    
-    // TODO: In a real app, upload to Firebase Storage here
-    // For now, we'll just use a placeholder URL
-    const placeholderUrl = `https://via.placeholder.com/150x150?text=${encodeURIComponent(formData.username || 'User')}`;
-    setFormData(prev => ({ ...prev, profilePictureURL: placeholderUrl }));
+    try {
+      // Create preview URL for immediate feedback
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      
+      setSaving(true);
+      
+      // Upload to Firebase Storage and update profile
+      const downloadURL = await uploadProfilePictureFile(file);
+      
+      // Update form data with the real URL
+      setFormData(prev => ({ ...prev, profilePictureURL: downloadURL }));
+      
+      // Clean up preview URL
+      URL.revokeObjectURL(url);
+      setPreviewUrl(null);
+      
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      alert('Error uploading profile picture: ' + error.message);
+      
+      // Clean up preview URL on error
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Handle form submission
