@@ -5,6 +5,9 @@
 import '@testing-library/jest-dom';
 import './tests/jest.setup';
 
+// Set universal test timeout to prevent hanging tests
+jest.setTimeout(30000); // 30 seconds timeout for all tests
+
 // Basic matchMedia polyfill for tests (jsdom lacks implementation)
 if (typeof window !== 'undefined' && !window.matchMedia) {
 	window.matchMedia = (query) => ({

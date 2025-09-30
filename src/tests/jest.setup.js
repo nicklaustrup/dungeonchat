@@ -28,3 +28,29 @@ if (!window.alert) {
 
 // Simple toast collector for tests (will be used by toast hook mock)
 window.__TEST_TOASTS__ = [];
+
+// Mock Firebase Firestore functions to prevent errors
+jest.mock('firebase/firestore', () => ({
+  doc: jest.fn(() => ({ id: 'mock-doc' })),
+  getDoc: jest.fn(() => Promise.resolve({ exists: () => false, data: () => ({}) })),
+  setDoc: jest.fn(() => Promise.resolve()),
+  updateDoc: jest.fn(() => Promise.resolve()),
+  collection: jest.fn(() => ({ id: 'mock-collection' })),
+  query: jest.fn(),
+  where: jest.fn(),
+  orderBy: jest.fn(),
+  limit: jest.fn(),
+  onSnapshot: jest.fn(() => () => {}),
+  serverTimestamp: jest.fn(() => ({ isEqual: () => false }))
+}));
+
+// Mock Firebase Context
+jest.mock('../services/FirebaseContext', () => ({
+  useFirebase: () => ({
+    firestore: {},
+    auth: { currentUser: { uid: 'test-user', displayName: 'Test User' } },
+    user: { uid: 'test-user', displayName: 'Test User' },
+    rtdb: {},
+    storage: {}
+  })
+}));

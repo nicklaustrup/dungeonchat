@@ -16,6 +16,16 @@ jest.mock('../hooks/useUserProfile', () => ({
   default: () => mockProfileData
 }));
 
+// Mock useUserProfileData hook to prevent Firebase errors in tests
+jest.mock('../hooks/useUserProfileData', () => ({
+  __esModule: true,
+  default: () => ({
+    profileData: null,
+    loading: false,
+    error: null
+  })
+}));
+
 // Custom render function that includes necessary providers
 export function renderWithProviders(ui, options = {}) {
   function Wrapper({ children }) {
