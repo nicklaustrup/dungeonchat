@@ -3,7 +3,7 @@ import SignOut from '../SignOut/SignOut';
 import useMenuToggle from './hooks/useMenuToggle';
 import useTruncationObserver from './hooks/useTruncationObserver';
 
-export default function UserMenu({ user, onViewProfile, onOpenSettings, openSettings, children }) {
+export default function UserMenu({ user, onViewProfile, onEditProfile, onOpenSettings, openSettings, children }) {
   const { open, toggle, close, triggerRef, menuRef } = useMenuToggle();
   const { register, recompute } = useTruncationObserver();
 
@@ -13,6 +13,7 @@ export default function UserMenu({ user, onViewProfile, onOpenSettings, openSett
   const isLongUsername = display.length > 30;
 
   const handleProfile = () => { onViewProfile && onViewProfile(user); close(); };
+  const handleEditProfile = () => { onEditProfile && onEditProfile(); close(); };
   const handleSettings = () => { openSettings(); if (onOpenSettings) onOpenSettings(); close(); };
 
   return (
@@ -41,7 +42,8 @@ export default function UserMenu({ user, onViewProfile, onOpenSettings, openSett
             </div>
           </div>
           <div className="user-menu-section user-menu-actions">
-            <button className="user-menu-item actionable" onClick={handleProfile}>Edit Profile</button>
+            <button className="user-menu-item actionable" onClick={handleProfile}>View Profile</button>
+            <button className="user-menu-item actionable" onClick={handleEditProfile}>Edit Profile</button>
             <button className="user-menu-item actionable" onClick={handleSettings}>Settings</button>
           </div>
           <div className="user-menu-section user-menu-signout">

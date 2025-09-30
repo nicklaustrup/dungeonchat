@@ -4,6 +4,7 @@ import SearchBar from './SearchBar';
 
 // Lazy load heavier settings modal
 const SettingsModal = lazy(() => import('../SettingsModal/SettingsModal'));
+const InlineProfileEditor = lazy(() => import('../InlineProfileEditor/InlineProfileEditor'));
 
 function ChatHeader({
   user,
@@ -19,6 +20,7 @@ function ChatHeader({
   onOpenSettings
 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [searchCollapsed, setSearchCollapsed] = useState(true); // default collapsed on mobile
 
@@ -38,6 +40,10 @@ function ChatHeader({
 
   const toggleSearch = () => setSearchCollapsed(c => !c);
 
+  const handleEditProfile = () => {
+    setProfileEditorOpen(true);
+  };
+
   return (
     <>
       <header className={`App-header ${isMobile ? 'mobile-condense' : ''}`}>
@@ -52,6 +58,7 @@ function ChatHeader({
                   onViewProfile={onViewProfile}
                   openSettings={() => setSettingsOpen(true)}
                   onOpenSettings={onOpenSettings}
+                  onEditProfile={handleEditProfile}
                 />
                 <SearchBar value={searchTerm} onChange={setSearchTerm} collapsed={false} onToggle={() => {}} disableClose />
               </div>
@@ -72,6 +79,7 @@ function ChatHeader({
                     onViewProfile={onViewProfile}
                     openSettings={() => setSettingsOpen(true)}
                     onOpenSettings={onOpenSettings}
+                    onEditProfile={handleEditProfile}
                   />
                   <SearchBar
                     value={searchTerm}
@@ -88,14 +96,25 @@ function ChatHeader({
       <Suspense fallback={null}>
         <SettingsModal
           isOpen={settingsOpen}
-            onClose={() => setSettingsOpen(false)}
-            isDarkTheme={isDarkTheme}
-            toggleTheme={toggleTheme}
-            soundEnabled={soundEnabled}
-            toggleSound={toggleSound}
-            awayAfterSeconds={awayAfterSeconds}
-            setAwayAfterSeconds={setAwayAfterSeconds}
+          onClose={() => setSettingsOpen(false)}
+          isDarkTheme={isDarkTheme}
+          toggleTheme={toggleTheme}
+          soundEnabled={soundEnabled}
+          toggleSound={toggleSound}
+          awayAfterSeconds={awayAfterSeconds}
+          setAwayAfterSeconds={setAwayAfterSeconds}
         />
+        {profileEditorOpen && (
+          <div className="modal-overlay" onClick={() => setProfileEditorOpen(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <InlineProfileEditor
+                onSave={() => setProfileEditorOpen(false)}
+                onCancel={() => setProfileEditorOpen(false)}
+                compact={false}
+              />
+            </div>
+          </div>
+        )}
       </Suspense>
     </>
   );

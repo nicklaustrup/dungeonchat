@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
-import './SignIn.css';
+import './AuthModal.css';
 import useAuth from '../../hooks/useAuth';
-import { useChatTheme } from '../../contexts/ChatStateContext';
 
-function SignIn() {
-  const [mode, setMode] = useState('signin'); // 'signin', 'signup', 'reset'
+function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
+  const [mode, setMode] = useState(initialMode); // 'signin', 'signup', 'reset'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [showSetupNotice, setShowSetupNotice] = useState(false);
-
-  const { isDarkTheme, toggleTheme } = useChatTheme();
 
   const {
     loading,
@@ -25,19 +21,28 @@ function SignIn() {
     resetPassword
   } = useAuth();
 
-  // Check if error is related to setup issues
-  const isSetupError = error && error.includes('not enabled');
+  if (!isOpen) return null;
+
+  const handleClose = () => {
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setMode('signin');
+    setResetEmailSent(false);
+    clearError();
+    onClose();
+  };
 
   const handleModeChange = (newMode) => {
     setMode(newMode);
     setResetEmailSent(false);
-    setShowSetupNotice(false);
     clearError();
   };
 
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle();
+      handleClose();
     } catch (error) {
       // Error is handled by the useAuth hook
     }
@@ -46,6 +51,7 @@ function SignIn() {
   const handleGithubSignIn = async () => {
     try {
       await signInWithGithub();
+      handleClose();
     } catch (error) {
       // Error is handled by the useAuth hook
     }
@@ -61,8 +67,10 @@ function SignIn() {
     try {
       if (mode === 'signin') {
         await signInWithEmail(email, password);
+        handleClose();
       } else if (mode === 'signup') {
         await signUpWithEmail(email, password);
+        handleClose();
       } else if (mode === 'reset') {
         await resetPassword(email);
         setResetEmailSent(true);
@@ -76,32 +84,22 @@ function SignIn() {
   const isFormValid = email && password && (mode !== 'signup' || passwordsMatch);
 
   return (
-    <div className="sign-in-container">
-      {/* Theme Toggle */}
-      <button 
-        className="theme-toggle-btn"
-        onClick={toggleTheme}
-        aria-label={`Switch to ${isDarkTheme ? 'light' : 'dark'} theme`}
-        title={`Switch to ${isDarkTheme ? 'light' : 'dark'} theme`}
-      >
-        {isDarkTheme ? '☀️' : '🌙'}
-      </button>
-
-      <div className="sign-in-card">
-        <div className="sign-in-header">
-          <h1>Welcome to Superchat</h1>
-          <p>
-            {mode === 'signin' && 'Sign in to your account'}
-            {mode === 'signup' && 'Create a new account'}
-            {mode === 'reset' && 'Reset your password'}
-          </p>
+    <div className="auth-modal-overlay" onClick={handleClose}>
+      <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="auth-modal-close" onClick={handleClose}>✕</button>
+        
+        <div className="auth-modal-header">
+          <h2>
+            {mode === 'signin' && 'Sign In'}
+            {mode === 'signup' && 'Create Account'}
+            {mode === 'reset' && 'Reset Password'}
+          </h2>
         </div>
 
-        <div className="sign-in-content">
+        <div className="auth-modal-content">
           {mode === 'reset' && resetEmailSent ? (
             <div className="auth-success">
-              <div className="success-icon">✅</div>
-              <h3>Reset email sent!</h3>
+              <p>✅ Reset email sent!</p>
               <p>Check your inbox for password reset instructions.</p>
               <button 
                 className="auth-link-button"
@@ -112,6 +110,33 @@ function SignIn() {
             </div>
           ) : (
             <>
+              {/* OAuth Providers */}
+              {mode !== 'reset' && (
+                <div className="auth-oauth-section">
+                  <button 
+                    className="auth-oauth-button google"
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
+                  >
+                    <span className="oauth-icon">🔍</span>
+                    Continue with Google
+                  </button>
+                  
+                  <button 
+                    className="auth-oauth-button github"
+                    onClick={handleGithubSignIn}
+                    disabled={loading}
+                  >
+                    <span className="oauth-icon">🐙</span>
+                    Continue with GitHub
+                  </button>
+                  
+                  <div className="auth-divider">
+                    <span>or</span>
+                  </div>
+                </div>
+              )}
+
               {/* Email/Password Form */}
               <form onSubmit={handleEmailSubmit} className="auth-form">
                 <div className="auth-field">
@@ -145,7 +170,6 @@ function SignIn() {
                         type="button"
                         className="password-toggle"
                         onClick={() => setShowPassword(!showPassword)}
-                        aria-label="Toggle password visibility"
                       >
                         {showPassword ? '👁️' : '🙈'}
                       </button>
@@ -173,32 +197,8 @@ function SignIn() {
                 )}
 
                 {error && (
-                  <div className={`auth-error ${isSetupError ? 'setup-error' : ''}`}>
+                  <div className="auth-error">
                     {error}
-                    {isSetupError && (
-                      <button 
-                        type="button"
-                        className="setup-help-btn"
-                        onClick={() => setShowSetupNotice(!showSetupNotice)}
-                      >
-                        {showSetupNotice ? 'Hide Help' : 'Setup Help'}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {showSetupNotice && (
-                  <div className="setup-notice">
-                    <h4>🔧 Firebase Setup Required</h4>
-                    <p>To enable email/password authentication:</p>
-                    <ol>
-                      <li>Go to <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer">Firebase Console</a></li>
-                      <li>Select your project</li>
-                      <li>Navigate to <strong>Authentication → Sign-in method</strong></li>
-                      <li>Enable <strong>Email/Password</strong></li>
-                      <li>Optionally enable <strong>GitHub</strong> for more sign-in options</li>
-                    </ol>
-                    <p><small>See docs/FIREBASE_AUTH_SETUP.md for detailed instructions.</small></p>
                   </div>
                 )}
 
@@ -252,35 +252,6 @@ function SignIn() {
                   </button>
                 )}
               </div>
-
-              {/* OAuth Providers - Below forgot password link */}
-              {mode !== 'reset' && (
-                <div className="auth-oauth-section">
-                  <div className="auth-divider">
-                    <span>or continue with</span>
-                  </div>
-                  
-                  <div className="oauth-buttons">
-                    <button 
-                      className="auth-oauth-button google"
-                      onClick={handleGoogleSignIn}
-                      disabled={loading}
-                    >
-                      <span className="oauth-icon">🔍</span>
-                      Google
-                    </button>
-                    
-                    <button 
-                      className="auth-oauth-button github"
-                      onClick={handleGithubSignIn}
-                      disabled={loading}
-                    >
-                      <span className="oauth-icon">🐙</span>
-                      GitHub
-                    </button>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </div>
@@ -289,4 +260,4 @@ function SignIn() {
   );
 }
 
-export default SignIn;
+export default AuthModal;

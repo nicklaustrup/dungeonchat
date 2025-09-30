@@ -5,8 +5,8 @@ service firebase.storage {
     match /profile-pictures/{userId}/{allPaths=**} {
       allow read: if true; // Anyone can view profile pictures
       allow write, delete: if request.auth != null && request.auth.uid == userId
-        && request.resource.size < 5 * 1024 * 1024 // 5MB limit
-        && request.resource.contentType.matches('image/.*'); // Only images
+        && resource.size < 5 * 1024 * 1024 // 5MB limit
+        && resource.contentType.matches('image/.*'); // Only images
     }
     
     // Deny all other storage access

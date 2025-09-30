@@ -1,8 +1,21 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getDatabase } from 'firebase/database';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  updatePassword,
+  EmailAuthProvider,
+  GithubAuthProvider
+} from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
+import { getFunctions } from 'firebase/functions';
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -20,6 +33,7 @@ const auth = getAuth(app);
 const firestore = getFirestore(app);
 const rtdb = getDatabase(app);
 const storage = getStorage(app);
+const functions = getFunctions(app);
 
 export {
   app,
@@ -27,7 +41,15 @@ export {
   firestore,
   rtdb,
   storage,
+  functions,
   GoogleAuthProvider,
+  GithubAuthProvider,
+  EmailAuthProvider,
   signInWithPopup,
-  signOut
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  updatePassword
 };

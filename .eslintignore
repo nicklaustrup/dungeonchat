@@ -1,6 +1,7 @@
 # Generated to speed up ESLint by skipping build artifacts & generated outputs
 build/
 storybook-static/
+.storybook/
 node_modules/
 coverage/
 # Firebase / deployment artifacts (if any future)

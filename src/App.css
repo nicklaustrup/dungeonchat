@@ -1043,6 +1043,107 @@ margin-top: 10px;
   transform: scale(1.02);
 }
 
+/* Profile Editor Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1500;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.modal-content {
+  background: var(--bg-secondary, #ffffff);
+  border-radius: 12px;
+  box-shadow: 0 18px 42px -8px rgba(0,0,0,0.55), 0 6px 14px rgba(0,0,0,0.35);
+  width: 92%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: auto;
+  position: relative;
+  animation: modalPop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Chat room scrollbar styling for modal content */
+.modal-content::-webkit-scrollbar { 
+  width: 8px; 
+  height: 8px; 
+  background: transparent; 
+}
+
+.modal-content::-webkit-scrollbar-track { 
+  background: transparent; 
+  border-radius: 4px; 
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.modal-content:hover::-webkit-scrollbar-thumb,
+.modal-content.scrolling::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+}
+
+.modal-content:hover::-webkit-scrollbar-track,
+.modal-content.scrolling::-webkit-scrollbar-track { 
+  background: var(--bg-primary); 
+}
+
+.modal-content:hover::-webkit-scrollbar-thumb:hover,
+.modal-content.scrolling::-webkit-scrollbar-thumb:hover { 
+  background: var(--primary-dark); 
+}
+
+/* Firefox scrollbar styling */
+@supports (scrollbar-color: auto) {
+  .modal-content { 
+    scrollbar-width: thin; 
+    scrollbar-color: transparent transparent; 
+  }
+  
+  .modal-content:hover,
+  .modal-content.scrolling { 
+    scrollbar-color: var(--primary-color) var(--bg-primary); 
+  }
+}
+
+@keyframes modalPop { 
+  0% { 
+    opacity: 0; 
+    transform: translateY(12px) scale(0.92); 
+  } 
+  70% { 
+    opacity: 1; 
+    transform: translateY(-2px) scale(1.02); 
+  } 
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  } 
+}
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 10px;
+  }
+  
+  .modal-content {
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+}
+
 /* Image Modal */
 .image-modal {
   position: fixed;

@@ -1,11 +1,12 @@
 import React from 'react';
-import { useFirebase } from '../../services/FirebaseContext';
+import useAuth from '../../hooks/useAuth';
 
 function SignOut() {
-    const { auth, signOut } = useFirebase();
-    return auth.currentUser && (
-        <button className="sign-out" onClick={() => signOut(auth)}>Sign Out</button>
-    )
+    const { user, signOut } = useAuth();
+    
+    return user && (
+        <button className="sign-out" onClick={signOut}>Sign Out</button>
+    );
 }
 
 export default SignOut;

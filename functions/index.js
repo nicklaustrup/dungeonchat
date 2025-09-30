@@ -10,28 +10,69 @@
 
 const {setGlobalOptions} = require("firebase-functions");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
-const ProfanityFilter = require("profanity-filter");
+const filter = require("leo-profanity");
 const admin = require("firebase-admin");
 
-admin.initializeApp();
+// Initialize Firebase Admin once for all functions
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 const db = admin.firestore();
 
-exports.detectEvilUsers = onDocumentCreated(
-    "messages/{messageId}",
-    async (event) => {
-        const pf = new ProfanityFilter();
-        const {text, uid} = event.data.data();
-        if (!pf.isProfane(text)) return;
-        const cleaned = pf.clean(text);
-        await event.data.ref.update({
-            text: "[removed: profanity]",
-        });
-        await db.collection("banned").doc(uid).set({});
-        console.log(
-            "Removed profane message by " + uid + ": " + cleaned,
-        );
-    },
-);
+// Import username availability checker (after admin init)
+const { checkUsernameAvailability } = require('./checkUsernameAvailability');
+
+// Export the username availability function
+exports.checkUsernameAvailability = checkUsernameAvailability;
+
+// DISABLED: Profanity filtering moved to client-side for user viewing preferences
+// Server-side filtering was removed to allow content freedom with user-controlled display filtering
+
+// exports.detectEvilUsers = onDocumentCreated(
+//     "messages/{messageId}",
+//     async (event) => {
+//       const {text, uid} = event.data.data();
+
+//       // Check if the message contains profanity
+//       if (!filter.check(text)) return;
+
+//       // Get user profile to check profanity filter preference
+//       let userProfile = null;
+//       try {
+//         const userProfileDoc = await db.collection("userProfiles").doc(uid).get();
+//         userProfile = userProfileDoc.exists ? userProfileDoc.data() : null;
+//       } catch (error) {
+//         console.warn("Could not fetch user profile for profanity check:", error);
+//       }
+
+//       // If user has profanity filter disabled, don't modify the message
+//       if (userProfile && userProfile.profanityFilterEnabled === false) {
+//         console.log("Profanity detected but user has filter disabled:", uid);
+//         return;
+//       }
+
+//       // Get the cleaned version for logging
+//       const cleaned = filter.clean(text);
+
+//       // Update the message to indicate profanity was removed
+//       await event.data.ref.update({
+//         text: "[removed: profanity]",
+//       });
+
+//       // COMMENTED OUT: Banning functionality disabled for now
+//       // Future enhancement: Add back if needed with proper moderation workflow
+//       /*
+//       await db.collection("banned").doc(uid).set({
+//         bannedAt: admin.firestore.FieldValue.serverTimestamp(),
+//         reason: "profanity",
+//       });
+//       */
+
+//       console.log(
+//           "Removed profane message by " + uid + ": " + cleaned,
+//       );
+//     },
+// );
 
 setGlobalOptions({maxInstances: 10});
 

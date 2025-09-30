@@ -16,14 +16,15 @@ describe('UserMenu', () => {
 
   test('invokes profile and settings callbacks then closes', () => {
     const onViewProfile = jest.fn();
+    const onEditProfile = jest.fn();
     const onOpenSettings = jest.fn();
     const openSettings = jest.fn();
-    render(<UserMenu user={user} onViewProfile={onViewProfile} onOpenSettings={onOpenSettings} openSettings={openSettings} />);
+    render(<UserMenu user={user} onViewProfile={onViewProfile} onEditProfile={onEditProfile} onOpenSettings={onOpenSettings} openSettings={openSettings} />);
     const chip = screen.getByRole('button', { name: /test user/i });
     fireEvent.click(chip);
     const profileBtn = screen.getByRole('button', { name: /edit profile/i });
     fireEvent.click(profileBtn);
-    expect(onViewProfile).toHaveBeenCalled();
+    expect(onEditProfile).toHaveBeenCalled();
 
     fireEvent.click(chip); // reopen
     const settingsBtn = screen.getByRole('button', { name: /settings/i });

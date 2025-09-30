@@ -1,6 +1,7 @@
 import React from 'react';
 import { ref as databaseRef, onDisconnect as rtdbOnDisconnect, set as rtdbSet, update as rtdbUpdate } from 'firebase/database';
 import { useFirebase } from '../services/FirebaseContext';
+import useUserProfile from '../hooks/useUserProfile';
 import { useChatState, useChatTheme, useChatSound, useChatSearch, useChatReply, useChatImage, useChatScroll } from '../contexts/ChatStateContext';
 import ChatHeader from '../components/ChatHeader/ChatHeader';
 import ChatRoom from '../components/ChatRoom/ChatRoom';
@@ -13,6 +14,7 @@ const UserProfileModal = React.lazy(() => import('../components/UserProfileModal
 
 function ChatPage() {
   const { user, rtdb } = useFirebase();
+  const { profile, getDisplayInfo } = useUserProfile();
   const { state, actions } = useChatState();
   
   // Convenient hooks for specific state slices
@@ -31,27 +33,44 @@ function ChatPage() {
   // Stable no-op used for disabled callbacks
   const noop = React.useCallback(() => {}, []);
 
+  // Create enhanced user object combining Firebase Auth user with profile data
+  const enhancedUser = React.useMemo(() => {
+    if (!user) return null;
+    
+    const displayInfo = getDisplayInfo();
+    return {
+      ...user,
+      // Override with profile data when available
+      displayName: displayInfo?.displayName || user.displayName,
+      photoURL: profile?.profilePictureURL || user.photoURL,
+      // Add profile-specific fields
+      username: profile?.username,
+      bio: profile?.bio,
+      profileVisibility: profile?.profileVisibility
+    };
+  }, [user, profile, getDisplayInfo]);
+
   // Persistence for away seconds (moved from App.js)
   React.useEffect(() => {
     localStorage.setItem('awayAfterSeconds', String(state.awayAfterSeconds));
   }, [state.awayAfterSeconds]);
 
   React.useEffect(() => {
-    if (!user) return;
+    if (!user || !enhancedUser) return;
     const userPresenceRef = databaseRef(rtdb, `presence/${user.uid}`);
     const writePresence = (online = true) => {
       rtdbUpdate(userPresenceRef, {
         online,
         lastSeen: Date.now(),
-        displayName: user.displayName || 'Anonymous',
-        photoURL: user.photoURL || null
+        displayName: enhancedUser.displayName || 'Anonymous',
+        photoURL: enhancedUser.photoURL || null
       }).catch(() => {
         // fallback to set if update fails (first write)
         rtdbSet(userPresenceRef, {
           online,
           lastSeen: Date.now(),
-          displayName: user.displayName || 'Anonymous',
-          photoURL: user.photoURL || null
+          displayName: enhancedUser.displayName || 'Anonymous',
+          photoURL: enhancedUser.photoURL || null
         });
       });
     };
@@ -60,8 +79,8 @@ function ChatPage() {
     rtdbOnDisconnect(userPresenceRef).set({
       online: false,
       lastSeen: Date.now(),
-      displayName: user.displayName || 'Anonymous',
-      photoURL: user.photoURL || null
+      displayName: enhancedUser.displayName || 'Anonymous',
+      photoURL: enhancedUser.photoURL || null
     });
     const heartbeat = setInterval(() => writePresence(true), 45000); // 45s
     const onFocus = () => writePresence(true);
@@ -73,7 +92,7 @@ function ChatPage() {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [user, rtdb]);
+  }, [user, rtdb, enhancedUser]);
 
   React.useEffect(() => {
     document.body.className = isDarkTheme ? 'dark-theme' : 'light-theme';
@@ -88,7 +107,7 @@ function ChatPage() {
   return (
     <div className="App">
       <ChatHeader
-        user={user}
+        user={enhancedUser}
         isDarkTheme={isDarkTheme}
         toggleTheme={toggleTheme}
         soundEnabled={soundEnabled}

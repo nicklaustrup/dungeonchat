@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import './responsive.css'; // Phase 1 mobile responsiveness
 import { PresenceProvider } from './services/PresenceContext';
@@ -6,9 +6,12 @@ import { EmojiMenuProvider } from './components/ChatInput/EmojiMenu';
 import { ChatStateProvider } from './contexts/ChatStateContext';
 import { ProfanityFilterProvider } from './contexts/ProfanityFilterContext';
 import ChatPage from './pages/ChatPage';
+import { ProfileSetupModal } from './components/ProfileSetupModal/ProfileSetupModal';
 import { useViewportInfo } from './hooks/useViewportInfo';
 import { useVirtualKeyboard } from './hooks/useVirtualKeyboard';
 import { useInitTelemetry } from './hooks/useInitTelemetry';
+import { useUserProfile } from './hooks/useUserProfile';
+import { useFirebase } from './services/FirebaseContext';
 
 function App() {
   // Apply viewport class logic once at app root
@@ -18,6 +21,20 @@ function App() {
   // Initialize Phase 5 environment & interaction telemetry
   useInitTelemetry();
   
+  const { user } = useFirebase();
+  const { needsOnboarding, isProfileComplete } = useUserProfile();
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [forceProfileSetup, setForceProfileSetup] = useState(false);
+  
+  // Show profile setup for authenticated users who need onboarding
+  React.useEffect(() => {
+    if (user && ((needsOnboarding && !isProfileComplete) || forceProfileSetup)) {
+      setShowProfileSetup(true);
+    } else {
+      setShowProfileSetup(false);
+    }
+  }, [user, needsOnboarding, isProfileComplete, forceProfileSetup]);
+  
   // Initialize away seconds from localStorage (moved to ChatStateProvider)
   const [awayAfterSeconds] = React.useState(() => {
     const stored = localStorage.getItem('awayAfterSeconds');
@@ -25,12 +42,27 @@ function App() {
     return isNaN(val) ? 300 : val;
   });
   
+  const handleProfileSetupComplete = () => {
+    setShowProfileSetup(false);
+    setForceProfileSetup(false);
+  };
+
+  // Removed unused handleForceProfileSetup function
+  
   return (
     <ChatStateProvider initialAwaySeconds={awayAfterSeconds}>
       <PresenceProvider awayAfterSeconds={awayAfterSeconds}>
         <ProfanityFilterProvider>
           <ChatPage />
           <EmojiMenuProvider />
+          
+          {/* Profile Setup Modal for new users */}
+          {showProfileSetup && (
+            <ProfileSetupModal 
+              onComplete={handleProfileSetupComplete}
+              canSkip={!forceProfileSetup}
+            />
+          )}
         </ProfanityFilterProvider>
       </PresenceProvider>
     </ChatStateProvider>
