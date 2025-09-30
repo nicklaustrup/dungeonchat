@@ -4,9 +4,12 @@ service firebase.storage {
     // Profile pictures - users can upload/update/delete their own
     match /profile-pictures/{userId}/{allPaths=**} {
       allow read: if true; // Anyone can view profile pictures
-      allow write, delete: if request.auth != null && request.auth.uid == userId
+      // Allow write (upload/update) with size and type restrictions
+      allow write: if request.auth != null && request.auth.uid == userId
         && request.resource.size < 5 * 1024 * 1024 // 5MB limit
         && request.resource.contentType.matches('image/.*'); // Only images
+      // Allow delete without resource restrictions (since delete has no request.resource)
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
     
     // Deny all other storage access

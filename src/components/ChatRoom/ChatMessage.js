@@ -25,11 +25,15 @@ import MessageHeader from './parts/MessageHeader';
 import HoverTimestamp from './parts/HoverTimestamp';
 import { useReactions } from '../../hooks/useReactions';
 import { useMessageMenuPosition } from '../../hooks/useMessageMenuPosition';
+import { useUserProfileData } from '../../hooks/useUserProfileData';
 
 function ChatMessage(props) {
     const { firestore, auth } = useFirebase();
     const { text, uid, photoURL, reactions = {}, id, createdAt, imageURL, type, displayName, replyTo, editedAt, deleted } = props.message;
-    const { searchTerm, getDisplayName, onReply, isReplyTarget, onViewProfile, showMeta = true } = props;
+    const { searchTerm, onReply, isReplyTarget, onViewProfile, showMeta = true } = props;
+    
+    // Get enhanced profile data for this user
+    const { profileData } = useUserProfileData(uid);
     
     // Get user's profanity filter preference from context (will re-render when changed)
     const { profanityFilterEnabled } = useProfanityFilterContext();
@@ -63,7 +67,25 @@ function ChatMessage(props) {
     }
 
     const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
-    const userName = getDisplayName ? getDisplayName(uid, displayName) : (displayName || 'Anonymous');
+    
+    // Implement name priority: displayName (highest) > username (medium) > auth displayName (lowest)
+    const getDisplayNameWithPriority = () => {
+        // Highest priority: Custom display name from profile
+        if (profileData?.displayName) {
+            return profileData.displayName;
+        }
+        // Medium priority: Username from profile
+        if (profileData?.username) {
+            return profileData.username;
+        }
+        // Lowest priority: Original auth display name from message
+        return displayName || 'Anonymous';
+    };
+    
+    const userName = getDisplayNameWithPriority();
+    
+    // Use profile picture from profile data if available, otherwise fallback
+    const userPhotoURL = profileData?.profilePictureURL || photoURL;
     const fallbackAvatar = React.useMemo(() => getFallbackAvatar({ uid, displayName: userName, size: 40 }), [uid, userName]);
 
     // formatting now handled by utils/messageFormatting.js
@@ -74,7 +96,11 @@ function ChatMessage(props) {
             let profileUser = {
                 uid,
                 displayName: userName,
-                photoURL: photoURL || fallbackAvatar,
+                photoURL: userPhotoURL || fallbackAvatar,
+                // Add enhanced profile data if available
+                username: profileData?.username,
+                bio: profileData?.bio,
+                statusMessage: profileData?.statusMessage,
                 // email is not available on the message object by default
             };
 
@@ -299,7 +325,7 @@ function ChatMessage(props) {
                     {showMeta && (
                         <AvatarWithPresence
                           uid={uid}
-                          photoURL={photoURL}
+                          photoURL={userPhotoURL}
                           displayName={userName}
                           presenceState={presenceState}
                           presenceTitle={presenceTitle}
@@ -307,7 +333,14 @@ function ChatMessage(props) {
                         />
                     )}
                     <div className="message-content">
-                        {showMeta && (<MessageHeader userName={userName} createdAt={createdAt} formatTimestamp={formatTimestamp} onViewProfile={handleViewProfileClick} />)}
+                        {showMeta && (<MessageHeader 
+                            userName={userName} 
+                            userId={uid}
+                            createdAt={createdAt} 
+                            formatTimestamp={formatTimestamp} 
+                            onViewProfile={handleViewProfileClick} 
+                            profileData={profileData}
+                        />)}
                         {!showMeta && (<HoverTimestamp createdAt={createdAt} formatTimestamp={formatTimestamp} />)}
                         {type === 'image' && imageURL && (
                             <>

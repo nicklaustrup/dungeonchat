@@ -19,7 +19,12 @@ service cloud.firestore {
     match /messages/{messageId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      // Allow message author to update/delete their own messages
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.uid;
+      // Allow any authenticated user to update reactions field only
+      allow update: if request.auth != null && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']) &&
+        request.resource.data.keys().hasAll(resource.data.keys().removeAll(['reactions']));
     }
     
     // Presence collection - users can read all and write their own
