@@ -33,7 +33,23 @@ function ChatMessage(props) {
     const { searchTerm, onReply, isReplyTarget, onViewProfile, showMeta = true } = props;
     
     // Get enhanced profile data for this user
-    const { profileData } = useUserProfileData(uid);
+    const { profileData, loading: profileLoading, error: profileError } = useUserProfileData(uid);
+    
+    // Debug logging for profile data issues
+    React.useEffect(() => {
+        if (uid && !profileLoading && !profileError) {
+            console.log(`[ChatMessage] Profile data for ${uid}:`, {
+                hasProfileData: !!profileData,
+                profilePictureURL: profileData?.profilePictureURL,
+                username: profileData?.username,
+                displayName: profileData?.displayName,
+                originalPhotoURL: photoURL
+            });
+        }
+        if (profileError) {
+            console.warn(`[ChatMessage] Profile data error for ${uid}:`, profileError);
+        }
+    }, [uid, profileData, profileLoading, profileError, photoURL]);
     
     // Get user's profanity filter preference from context (will re-render when changed)
     const { profanityFilterEnabled } = useProfanityFilterContext();

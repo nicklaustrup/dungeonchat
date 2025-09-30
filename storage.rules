@@ -12,6 +12,17 @@ service firebase.storage {
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
     
+    // Chat message images - users can upload their own, anyone can read
+    match /images/{userId}/{allPaths=**} {
+      allow read: if true; // Anyone can view chat images
+      // Allow write (upload/update) with size and type restrictions
+      allow write: if request.auth != null && request.auth.uid == userId
+        && request.resource.size < 10 * 1024 * 1024 // 10MB limit for chat images
+        && request.resource.contentType.matches('image/.*'); // Only images
+      // Allow delete of own images
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
     // Deny all other storage access
     match /{allPaths=**} {
       allow read, write: if false;
