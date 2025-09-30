@@ -113,12 +113,7 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     };
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('UnifiedScroll: Captured restoration data', {
-        scrollTop: el.scrollTop,
-        scrollHeight: el.scrollHeight,
-        firstId,
-        anchorOffset
-      });
+      // UnifiedScroll: Captured restoration data
     }
   }, [containerRef, messages]);
   
@@ -127,12 +122,12 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     const el = containerRef.current;
     if (!el || !restorationDataRef.current || !classification) return;
     
-    const { didPrepend, prependedCount, didAppend, reset } = classification;
+    const { didPrepend, didAppend, reset } = classification;
     
     // Only restore for pure prepends (loading older messages)
     if (!didPrepend || didAppend || reset) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('UnifiedScroll: Skipping restoration (not pure prepend)', { didPrepend, didAppend, reset });
+        // UnifiedScroll: Skipping restoration (not pure prepend)
       }
       return;
     }
@@ -154,12 +149,7 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
           el.scrollTop = clampedTarget;
           
           if (process.env.NODE_ENV === 'development') {
-            console.log('UnifiedScroll: Restored via delta', {
-              delta,
-              targetScrollTop,
-              clampedTarget,
-              prependedCount
-            });
+            // UnifiedScroll: Restored via delta
           }
         });
       });
@@ -183,12 +173,7 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
                 el.scrollTop = Math.max(0, el.scrollTop - adjustment);
                 
                 if (process.env.NODE_ENV === 'development') {
-                  console.log('UnifiedScroll: Restored via anchor', {
-                    firstId,
-                    anchorOffset,
-                    currentOffset,
-                    adjustment
-                  });
+                  // UnifiedScroll: Restored via anchor
                 }
               });
             });
@@ -239,7 +224,7 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
         setUnreadCount(0);
         
         if (process.env.NODE_ENV === 'development') {
-          console.log('UnifiedScroll: cleared unread count - user at bottom');
+          // UnifiedScroll: cleared unread count - user at bottom
         }
       }
     }
@@ -251,11 +236,7 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     const prevMessages = prevMessagesRef.current;
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('UnifiedScroll: main effect running', { 
-        currentLength: currentMessages.length, 
-        prevLength: prevMessages.length,
-        isInitialLoad: isInitialLoadRef.current
-      });
+      // UnifiedScroll: main effect running
     }
     
     // Handle initial load: scroll to bottom when messages first load
@@ -301,11 +282,7 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     const classification = classifyMessageDiff(prevMessages, currentMessages);
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('UnifiedScroll: classifying message diff', {
-        prevLength: prevMessages.length,
-        currentLength: currentMessages.length,
-        classification
-      });
+      // UnifiedScroll: classifying message diff
     }
     
     // Handle case where classification might be null/undefined
@@ -317,11 +294,11 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     const { didAppend, didPrepend, appendedCount } = classification;
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('UnifiedScroll: classification result', { didAppend, didPrepend, appendedCount });
+      // UnifiedScroll: classification result
     }
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('UnifiedScroll: Message change classified', classification);
+      // UnifiedScroll: Message change classified
     }
     
     // Handle pagination restoration first
@@ -346,21 +323,16 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
       }
       
       if (process.env.NODE_ENV === 'development') {
-        console.log('UnifiedScroll: new message(s) detected', { 
-          appendedCount, 
-          currentlyAtBottom, 
-          stateIsAtBottom: isAtBottom,
-          unreadCount
-        });
+        // UnifiedScroll: new message(s) detected
       }
       
       if (process.env.NODE_ENV === 'development') {
-        console.log('UnifiedScroll: checking auto-scroll condition', { currentlyAtBottom, stateIsAtBottom: isAtBottom });
+        // UnifiedScroll: checking auto-scroll condition
       }
       
       if (currentlyAtBottom) {
         if (process.env.NODE_ENV === 'development') {
-          console.log('UnifiedScroll: auto-scrolling to new messages');
+          // UnifiedScroll: auto-scrolling to new messages
         }
         // Auto-scroll to new messages - use setTimeout for better test compatibility
         setTimeout(() => scrollToBottom('smooth'), 1);
@@ -370,11 +342,7 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
         setUnreadCount(newUnreadCount);
         
         if (process.env.NODE_ENV === 'development') {
-          console.log('UnifiedScroll: incrementing unread count', { 
-            previousCount: unreadCount, 
-            newCount: newUnreadCount,
-            appendedCount
-          });
+          // UnifiedScroll: incrementing unread count
         }
       }
     }
