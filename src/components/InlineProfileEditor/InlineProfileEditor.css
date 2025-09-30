@@ -109,6 +109,8 @@
   left: 0;
   right: 0;
   bottom: 0;
+  width: 128px;
+  height: 128px;
   background: rgba(0, 0, 0, 0.6);
   border-radius: 50%;
   display: flex;
@@ -120,10 +122,6 @@
   color: white;
   font-size: 0.875rem;
   font-weight: 500;
-  /* Ensure overlay covers entire avatar including border */
-  margin: -4px;
-  width: calc(100% + 8px);
-  height: calc(100% + 8px);
 }
 
 .avatar-container:hover .avatar-overlay {
@@ -443,8 +441,13 @@
   }
   
   .profile-avatar {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
+  }
+  
+  .avatar-overlay {
+    width: 108px;
+    height: 108px;
   }
 }
 

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useUserProfile } from '../../hooks/useUserProfile';
-import { InlineProfileEditor } from '../InlineProfileEditor/InlineProfileEditor';
 import { ProfileDisplay } from '../ProfileDisplay/ProfileDisplay';
 import './SettingsMenu.css';
 
@@ -16,7 +15,7 @@ export function SettingsMenu({ isOpen, onClose, onForceProfileSetup }) {
     getDisplayInfo 
   } = useUserProfile();
   
-  const [activeView, setActiveView] = useState('main'); // main, profile, edit-profile
+  const [activeView, setActiveView] = useState('main'); // main, profile
   const [updating, setUpdating] = useState(false);
 
   const displayInfo = getDisplayInfo();
@@ -38,10 +37,6 @@ export function SettingsMenu({ isOpen, onClose, onForceProfileSetup }) {
   };
 
   const handleEditProfile = () => {
-    setActiveView('edit-profile');
-  };
-
-  const handleProfileSaved = () => {
     setActiveView('profile');
   };
 
@@ -218,27 +213,7 @@ export function SettingsMenu({ isOpen, onClose, onForceProfileSetup }) {
           <ProfileDisplay
             userId={profile.uid}
             onClose={handleBackToMain}
-            onEdit={handleEditProfile}
           />
-        )}
-
-        {activeView === 'edit-profile' && (
-          <div className="edit-profile-container">
-            <div className="edit-profile-header">
-              <button 
-                className="back-button"
-                onClick={handleBackToMain}
-                aria-label="Back to settings"
-              >
-                ← Back
-              </button>
-            </div>
-            <InlineProfileEditor
-              onSave={handleProfileSaved}
-              onCancel={handleBackToMain}
-              compact={false}
-            />
-          </div>
         )}
       </div>
     </div>

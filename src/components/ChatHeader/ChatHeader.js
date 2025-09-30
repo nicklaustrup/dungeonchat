@@ -1,10 +1,10 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import UserMenu from './UserMenu';
 import SearchBar from './SearchBar';
+import { ProfileDisplay } from '../ProfileDisplay/ProfileDisplay';
 
 // Lazy load heavier settings modal
 const SettingsModal = lazy(() => import('../SettingsModal/SettingsModal'));
-const InlineProfileEditor = lazy(() => import('../InlineProfileEditor/InlineProfileEditor'));
 
 function ChatHeader({
   user,
@@ -105,15 +105,10 @@ function ChatHeader({
           setAwayAfterSeconds={setAwayAfterSeconds}
         />
         {profileEditorOpen && (
-          <div className="modal-overlay" onClick={() => setProfileEditorOpen(false)}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <InlineProfileEditor
-                onSave={() => setProfileEditorOpen(false)}
-                onCancel={() => setProfileEditorOpen(false)}
-                compact={false}
-              />
-            </div>
-          </div>
+          <ProfileDisplay
+            userId={user?.uid}
+            onClose={() => setProfileEditorOpen(false)}
+          />
         )}
       </Suspense>
     </>
