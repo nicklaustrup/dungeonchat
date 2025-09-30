@@ -372,3 +372,54 @@ export async function deleteCampaignChannel(firestore, campaignId, channelId) {
     throw error;
   }
 }
+
+/**
+ * Get all campaigns for a specific user
+ */
+export async function getUserCampaigns(firestore, userId) {
+  try {
+    const q = query(
+      collection(firestore, 'campaigns'),
+      where('members', 'array-contains', userId)
+    );
+    
+    const snapshot = await getDocs(q);
+    const campaigns = [];
+    
+    for (const docSnapshot of snapshot.docs) {
+      const campaignData = { id: docSnapshot.id, ...docSnapshot.data() };
+      
+      // Get user's role in this campaign
+      const memberDocRef = doc(firestore, 'campaigns', docSnapshot.id, 'members', userId);
+      const memberDoc = await getDoc(memberDocRef);
+      if (memberDoc.exists()) {
+        campaignData.userRole = memberDoc.data().role;
+      }
+      
+      campaigns.push(campaignData);
+    }
+    
+    return campaigns;
+  } catch (error) {
+    console.error('Error getting user campaigns:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get a specific campaign by ID
+ */
+export async function getCampaignById(firestore, campaignId) {
+  try {
+    const campaignDoc = await getDoc(doc(firestore, 'campaigns', campaignId));
+    
+    if (!campaignDoc.exists()) {
+      throw new Error('Campaign not found');
+    }
+    
+    return { id: campaignDoc.id, ...campaignDoc.data() };
+  } catch (error) {
+    console.error('Error getting campaign by ID:', error);
+    throw error;
+  }
+}

@@ -65,12 +65,7 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
   // Debug logging
   React.useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('ChatRoom: scroll state changed', { 
-        isAtBottom, 
-        hasNewMessages, 
-        newMessagesCount,
-        messageCount: sortedMessages.length 
-      });
+      // Debug logging removed for performance
     }
   }, [isAtBottom, hasNewMessages, newMessagesCount, sortedMessages.length]);
 

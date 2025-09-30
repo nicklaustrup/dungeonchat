@@ -1,0 +1,225 @@
+/* Dice Roller Component Styles */
+.dice-roller {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.dice-input-section {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.dice-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: 'Courier New', monospace;
+}
+
+.dice-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.roll-button {
+  padding: 0.75rem 1.5rem;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.roll-button:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.roll-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.quick-rolls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.quick-rolls-label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-right: 0.5rem;
+}
+
+.quick-roll-button {
+  padding: 0.4rem 0.8rem;
+  background: var(--card-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-roll-button:hover:not(:disabled) {
+  background: var(--accent-light);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.quick-roll-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dice-help {
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.dice-help details {
+  color: var(--text-muted);
+}
+
+.dice-help summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+}
+
+.dice-help summary:hover {
+  color: var(--accent-hover);
+}
+
+.help-content {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--card-hover);
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.help-content p {
+  margin: 0 0 0.5rem 0;
+}
+
+.help-content ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+}
+
+.help-content li {
+  margin-bottom: 0.25rem;
+}
+
+.help-content code {
+  background: var(--bg-color);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.2rem;
+  font-family: 'Courier New', monospace;
+  color: var(--accent-color);
+  border: 1px solid var(--border-color);
+}
+
+/* Inline Dice Roller */
+.dice-roller-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dice-input-inline {
+  width: 100px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: 'Courier New', monospace;
+}
+
+.dice-input-inline:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.roll-button-inline {
+  padding: 0.4rem;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roll-button-inline:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: scale(1.05);
+}
+
+.roll-button-inline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .dice-roller {
+    padding: 1rem;
+  }
+  
+  .dice-input-section {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .roll-button {
+    padding: 0.75rem;
+  }
+  
+  .quick-rolls {
+    justify-content: center;
+  }
+  
+  .quick-roll-button {
+    flex: 1;
+    min-width: 60px;
+    text-align: center;
+  }
+}

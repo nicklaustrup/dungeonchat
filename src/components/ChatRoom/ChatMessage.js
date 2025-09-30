@@ -27,6 +27,7 @@ import { useReactions } from '../../hooks/useReactions';
 import { useMessageMenuPosition } from '../../hooks/useMessageMenuPosition';
 import { useUserProfileData } from '../../hooks/useUserProfileData';
 import { useUserProfile } from '../../hooks/useUserProfile';
+import DiceRollDisplay from '../DiceRoll/DiceRollDisplay';
 
 // Custom hook to get campaign member info for a specific user
 const useCampaignMember = (campaignId, userId) => {
@@ -63,7 +64,7 @@ function ChatMessage(props) {
     // Extract the campaignId from props
     const { campaignId } = props;
     const { firestore, auth } = useFirebase();
-    const { text, uid, photoURL, reactions = {}, createdAt, imageURL, type, displayName, replyTo, editedAt, deleted } = props.message;
+    const { text, uid, photoURL, reactions = {}, createdAt, imageURL, type, displayName, replyTo, editedAt, deleted, diceData } = props.message;
     const { searchTerm, onReply, isReplyTarget, onViewProfile, showMeta = true } = props;
 
     // Get enhanced profile data for this user
@@ -82,8 +83,21 @@ function ChatMessage(props) {
     // Get user's profanity filter preference from context (will re-render when changed)
     const { profanityFilterEnabled } = useProfanityFilterContext();
 
+    // Ensure text is a string (defensive programming for legacy data)
+    const safeText = typeof text === 'string' ? text : typeof text === 'object' && text?.text ? text.text : '';
+    
+    // Debug logging
+    if (text && !safeText) {
+        console.log('DEBUG: Text processing issue:', { originalText: text, typeOfText: typeof text, safeText });
+    }
+
     // Apply profanity filtering based on user preference
-    const displayText = useProfanityFilter(text, profanityFilterEnabled);
+    const displayText = useProfanityFilter(safeText, profanityFilterEnabled);
+    
+    // More debug logging
+    if (safeText && !displayText) {
+        console.log('DEBUG: Profanity filter issue:', { safeText, profanityFilterEnabled, displayText });
+    }
 
     const presence = usePresence(uid);
     const isTyping = !!presence.typing;
@@ -307,10 +321,20 @@ function ChatMessage(props) {
                             </div>
                             <ImagePreviewModal open={showFullImage} src={imageURL} onClose={() => setShowFullImage(false)} />
                         </>
+                    ) : type === 'dice_roll' && diceData ? (
+                        <>
+                            {displayText && (
+                                <p>
+                                    {processMessageText(displayText, searchTerm)}{' '}
+                                    {editedAt && (<sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>)}
+                                </p>
+                            )}
+                            <DiceRollDisplay rollResult={diceData} mode="full" />
+                        </>
                     ) : (
-                        displayText && (
+                        (displayText || safeText) && (
                             <p>
-                                {processMessageText(displayText, searchTerm)}{' '}
+                                {processMessageText(displayText || safeText || 'DEBUG: No text', searchTerm)}{' '}
                                 {editedAt && (<sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>)}
                             </p>
                         )
@@ -415,13 +439,24 @@ function ChatMessage(props) {
                                 <ImagePreviewModal open={showFullImage} src={imageURL} onClose={() => setShowFullImage(false)} />
                             </>
                         )}
+                        {type === 'dice_roll' && diceData && (
+                            <>
+                                {displayText && (
+                                    <p>
+                                        {processMessageText(displayText, searchTerm)}{' '}
+                                        {editedAt && (<sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>)}
+                                    </p>
+                                )}
+                                <DiceRollDisplay rollResult={diceData} mode="full" />
+                            </>
+                        )}
                         {deleted && <p className="deleted-message" aria-label="Message deleted">This message was deleted.</p>}
-                        {!deleted && (isEditing ? (
+                        {!deleted && type !== 'image' && type !== 'dice_roll' && (isEditing ? (
                             <EditMessageForm value={editText} onChange={setEditText} onSave={saveEdit} onCancel={cancelEditing} onKeyDown={onEditKeyDown} />
                         ) : (
-                            displayText && (
+                            (displayText || safeText) && (
                                 <p>
-                                    {processMessageText(displayText, searchTerm)}{' '}
+                                    {processMessageText(displayText || safeText || 'DEBUG: No text', searchTerm)}{' '}
                                     {editedAt && (<sub className="edited-label" title={`Edited ${formatFullTimestamp(editedAt)}`}> (edited)</sub>)}
                                 </p>
                             )

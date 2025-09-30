@@ -1,52 +1,13 @@
 import React from 'react';
-import { FaPlus } from 'react-icons/fa6';
-import { VscSmiley } from 'react-icons/vsc';
 
 export function MessageBar({
   text,
   onChange,
   onKeyDown,
-  onPickEmoji,
-  onTriggerFile,
-  onTriggerFiles,
-  emojiOpen,
-  emojiButtonRef,
   textareaRef
 }) {
   return (
     <div className="message-bar" role="group" aria-label="Message input">
-      <input
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={(e) => {
-          const fileInput = e.target;
-          const files = fileInput.files;
-          if (files && files.length > 0) {
-            if (files.length === 1) {
-              onTriggerFile(files[0]);
-            } else {
-              onTriggerFiles && onTriggerFiles(files);
-            }
-          }
-          // Allow selecting the same file again (mobile browsers often cache last selection)
-          fileInput.value = '';
-        }}
-        style={{ display: 'none' }}
-        id="image-upload"
-      />
-      <button
-        type="button"
-        className="bar-icon-btn"
-        aria-label="Upload image"
-        data-tip="Upload image"
-        onClick={() => {
-          const fileInput = document.getElementById('image-upload');
-          if (fileInput) fileInput.click();
-        }}
-      >
-        <FaPlus size={18} aria-hidden="true" />
-      </button>
       <textarea
         ref={textareaRef}
         value={text}
@@ -58,16 +19,6 @@ export function MessageBar({
         rows={1}
         spellCheck={true}
       />
-      <button
-        type="button"
-        ref={emojiButtonRef}
-        className={`bar-icon-btn ${emojiOpen ? 'emoji-active' : ''}`}
-        aria-label="Add emoji"
-        data-tip="Add emoji"
-        onClick={onPickEmoji}
-      >
-        <VscSmiley size={20} aria-hidden="true" />
-      </button>
     </div>
   );
 }

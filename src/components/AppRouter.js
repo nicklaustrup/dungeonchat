@@ -6,6 +6,7 @@ import CampaignBrowser from '../components/Campaign/CampaignBrowser';
 import CampaignDashboard from '../components/Campaign/CampaignDashboard';
 import CampaignCreator from '../components/Campaign/CampaignCreator';
 import AppNavigation from '../components/Navigation/AppNavigation';
+import Breadcrumb from '../components/Navigation/Breadcrumb';
 import { useFirebase } from '../services/FirebaseContext';
 
 function AppRouter() {
@@ -20,6 +21,7 @@ function AppRouter() {
     <BrowserRouter>
       <div className="app-router-layout">
         <AppNavigation />
+        <Breadcrumb />
         <Routes>
           {/* Landing page - default route */}
           <Route path="/" element={<LandingPage />} />

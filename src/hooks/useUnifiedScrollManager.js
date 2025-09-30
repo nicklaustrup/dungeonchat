@@ -203,16 +203,7 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
     if (process.env.NODE_ENV === 'development') {
       const el = containerRef.current;
       if (el) {
-        const distance = computeDistanceFromBottom();
-        console.log('UnifiedScroll: scroll event', { 
-          nowAtBottom, 
-          prevAtBottom: isAtBottom, 
-          distance, 
-          threshold,
-          scrollTop: el.scrollTop,
-          scrollHeight: el.scrollHeight,
-          clientHeight: el.clientHeight
-        });
+        // Debug logging removed for performance
       }
     }
     
@@ -228,7 +219,7 @@ export function useUnifiedScrollManager({ containerRef, anchorRef, messages, thr
         }
       }
     }
-  }, [checkIfAtBottom, isAtBottom, computeDistanceFromBottom, threshold, containerRef]);
+  }, [checkIfAtBottom, isAtBottom, containerRef]);
   
   // Main effect: handle message changes
   React.useEffect(() => {

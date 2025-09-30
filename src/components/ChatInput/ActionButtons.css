@@ -1,0 +1,125 @@
+/* ================================================
+ * ActionButtons Component Styles
+ * Message input action buttons (upload, dice, emoji)
+ * ================================================ */
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0;
+  position: relative;
+}
+
+.action-btn svg {
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.action-btn:hover {
+  border-color: var(--border-color);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.action-btn:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.light-theme .action-btn:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .action-btn:active {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Active states */
+.action-btn.emoji-active,
+.action-btn.dice-active {
+  border-color: var(--primary-color);
+  background: rgba(11, 147, 246, 0.12);
+  color: var(--primary-color);
+}
+
+.light-theme .action-btn.emoji-active,
+.light-theme .action-btn.dice-active {
+  background: rgba(11, 147, 246, 0.15);
+}
+
+/* Tooltips */
+.action-btn[data-tip] {
+  position: relative;
+}
+
+.action-btn[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-tooltip);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn[data-tip]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--bg-tooltip);
+  z-index: 1000;
+}
+
+.light-theme .action-btn[data-tip]:hover::after {
+  background: var(--bg-tooltip);
+  color: var(--text-primary);
+}
+
+.light-theme .action-btn[data-tip]:hover::before {
+  border-top-color: var(--bg-tooltip);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .action-buttons {
+    padding: 6px 10px;
+    gap: 2px;
+  }
+  
+  .action-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}

@@ -12,6 +12,9 @@ import { ReplyPreview } from './ReplyPreview';
 import { ImagePreviewModal } from './ImagePreviewModal';
 import { BulkImagePreviewModal } from './BulkImagePreviewModal';
 import { MessageBar } from './MessageBar';
+import { ActionButtons } from './ActionButtons';
+import { diceService } from '../../services/diceService';
+import DiceRoller from '../DiceRoll/DiceRoller';
 
 function ChatInput({
   getDisplayName,
@@ -23,6 +26,7 @@ function ChatInput({
   const { auth, firestore, rtdb, storage } = useFirebase();
   const user = auth.currentUser;
   const [text, setText] = React.useState('');
+  const [showDiceRoller, setShowDiceRoller] = React.useState(false);
 
   // Use centralized state instead of prop drilling  
   const { replyingTo, setReplyingTo } = useChatReply();
@@ -137,6 +141,47 @@ function ChatInput({
   const { open: emojiOpen, toggle: toggleEmoji, buttonRef: emojiButtonRef, setOnSelect } = useEmojiPicker();
   const inputRef = React.useRef(null);
 
+  // Dice roll handler
+  const handleDiceRoll = async (rollResult) => {
+    if (!user || !rollResult) return;
+    
+    try {
+      // Get player display name
+      const playerName = getDisplayName(user);
+      
+      // Create a dice roll message with the result
+      await createTextMessage({ 
+        firestore, 
+        text: `🎲 **${playerName}** rolled **${rollResult.notation}**: **${rollResult.total}**${rollResult.breakdown ? ` (${rollResult.breakdown})` : ''}`,
+        user, 
+        getDisplayName, 
+        replyTo: replyingTo,
+        campaignId,
+        channelId,
+        messageType: 'dice_roll',
+        diceData: rollResult
+      });
+      
+      // Clear reply state and provide user feedback
+      setReplyingTo(null);
+      setShowDiceRoller(false);
+      if (soundEnabled) playSendMessageSound(true);
+      if (forceScrollBottom) setTimeout(() => forceScrollBottom(), 10);
+    } catch (err) {
+      console.error('Error sending dice roll', err);
+      pushToast('Failed to send dice roll: ' + err.message, { type: 'error' });
+    }
+  };
+
+  // Handle file uploads from ActionButtons
+  const handleFileUpload = (files) => {
+    if (files.length === 1) {
+      handleLocalFile(files[0]);
+    } else {
+      handleLocalFiles(files);
+    }
+  };
+
   // Auto-focus on initial mount / when user becomes available
   React.useEffect(() => {
     if (user && inputRef.current) {
@@ -169,22 +214,61 @@ function ChatInput({
     handleInputActivity(0);
     
     try {
-      await createTextMessage({ 
-        firestore, 
-        text, 
-        user, 
-        getDisplayName, 
-        replyTo: replyingTo,
-        campaignId,
-        channelId
-      });
+      const trimmedText = text.trim();
+      
+      // Check if this is a dice command
+      if (trimmedText.startsWith('/roll ')) {
+        const diceNotation = trimmedText.substring(6).trim();
+        if (diceNotation) {
+          try {
+            // Parse and roll the dice
+            const parsedDice = diceService.parseDiceNotation(diceNotation);
+            const rollResult = diceService.rollDice(parsedDice);
+            
+            // Create a dice roll message with the result
+            const playerName = getDisplayName(user);
+            await createTextMessage({ 
+              firestore, 
+              text: `🎲 **${playerName}** rolled **${rollResult.notation}**: **${rollResult.total}**${rollResult.breakdown ? ` (${rollResult.breakdown})` : ''}`,
+              user, 
+              getDisplayName, 
+              replyTo: replyingTo,
+              campaignId,
+              channelId,
+              messageType: 'dice_roll',
+              diceData: rollResult
+            });
+          } catch (error) {
+            pushToast(`Invalid dice notation: ${error.message}`, { type: 'error' });
+            return;
+          }
+        } else {
+          pushToast('Please specify dice notation after /roll (e.g., /roll 1d20+5)', { type: 'error' });
+          return;
+        }
+      } else {
+        // For regular text messages, just use the original text
+        // (processInlineDiceCommands is only for detecting dice commands, not processing regular text)
+        
+        // Create regular text message
+        await createTextMessage({ 
+          firestore, 
+          text: trimmedText, 
+          user, 
+          getDisplayName, 
+          replyTo: replyingTo,
+          campaignId,
+          channelId
+        });
+      }
+      
       setText('');
       setReplyingTo(null);
       if (soundEnabled) playSendMessageSound(true);
       if (forceScrollBottom) setTimeout(() => forceScrollBottom(), 10);
     } catch (err) {
       console.error('Error sending message', err);
-      alert('Failed to send message: ' + err.message);
+      pushToast('Failed to send message: ' + err.message, { type: 'error' });
     }
   };
 
@@ -269,19 +353,31 @@ function ChatInput({
         onCancel={() => setReplyingTo(null)}
         onJump={jumpToMessage}
       />
+      {showDiceRoller && (
+        <DiceRoller 
+          onRoll={handleDiceRoll}
+          onClose={() => setShowDiceRoller(false)}
+          mode="inline"
+        />
+      )}
       <form onSubmit={onSubmit} className="message-form">
-        <MessageBar
-          text={text}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onPickEmoji={toggleEmoji}
+        <ActionButtons
+          onUploadImage={handleFileUpload}
+          onToggleDice={() => setShowDiceRoller(prev => !prev)}
+          onToggleEmoji={toggleEmoji}
+          showDiceRoller={showDiceRoller}
           emojiOpen={emojiOpen}
           emojiButtonRef={emojiButtonRef}
-          onTriggerFile={(file) => { if (file) handleLocalFile(file); }}
-          onTriggerFiles={(files) => { if (files) handleLocalFiles(files); }}
-          textareaRef={inputRef}
         />
-        <button type="submit" disabled={!text} className="send-btn" aria-label="Send message">➤</button>
+        <div className="input-row">
+          <MessageBar
+            text={text}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            textareaRef={inputRef}
+          />
+          <button type="submit" disabled={!text} className="send-btn" aria-label="Send message">➤</button>
+        </div>
       </form>
     </div>
   );

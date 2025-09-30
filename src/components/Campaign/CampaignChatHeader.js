@@ -35,9 +35,6 @@ function CampaignChatHeader({ campaign, channelName = 'General', onBackToDashboa
           <span className="member-count">
             {campaign.currentPlayers || 0} members
           </span>
-          <span className={`campaign-status status-${campaign.status}`}>
-            {campaign.status}
-          </span>
         </div>
       </div>
     </div>

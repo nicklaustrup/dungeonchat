@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useFirebase } from '../../services/FirebaseContext';
 import { getCampaignChannels, createCampaignChannel, deleteCampaignChannel } from '../../services/campaign/campaignService';
 import './ChannelSidebar.css';
 
 function ChannelSidebar({ campaignId, isUserDM }) {
   const navigate = useNavigate();
+  const { channelId: currentChannelId } = useParams();
   const { firestore } = useFirebase();
   
   const [channels, setChannels] = useState([]);
@@ -16,6 +17,7 @@ function ChannelSidebar({ campaignId, isUserDM }) {
   const [newChannelDescription, setNewChannelDescription] = useState('');
   const [newChannelVisibility, setNewChannelVisibility] = useState('all');
   const [creating, setCreating] = useState(false);
+  const [expandedChannels, setExpandedChannels] = useState(new Set(['general']));
 
   useEffect(() => {
     if (!campaignId || !firestore) return;
@@ -24,7 +26,15 @@ function ChannelSidebar({ campaignId, isUserDM }) {
       try {
         setLoading(true);
         const channelsData = await getCampaignChannels(firestore, campaignId);
-        setChannels(channelsData);
+        
+        // Sort channels by order (general first, then by display order)
+        const sortedChannels = channelsData.sort((a, b) => {
+          if (a.id === 'general') return -1;
+          if (b.id === 'general') return 1;
+          return (a.order || 0) - (b.order || 0);
+        });
+        
+        setChannels(sortedChannels);
         setError(null);
       } catch (err) {
         console.error('Error loading channels:', err);
@@ -47,7 +57,8 @@ function ChannelSidebar({ campaignId, isUserDM }) {
         name: newChannelName.trim(),
         description: newChannelDescription.trim(),
         type: 'text',
-        visibility: newChannelVisibility
+        visibility: newChannelVisibility,
+        order: channels.length // Add to end
       };
 
       const newChannel = await createCampaignChannel(firestore, campaignId, channelData);
@@ -84,6 +95,18 @@ function ChannelSidebar({ campaignId, isUserDM }) {
     navigate(`/campaign/${campaignId}/chat/${channelId}`);
   };
 
+  const toggleChannelExpand = (channelId) => {
+    setExpandedChannels(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(channelId)) {
+        newSet.delete(channelId);
+      } else {
+        newSet.add(channelId);
+      }
+      return newSet;
+    });
+  };
+
   const getChannelIcon = (type) => {
     switch (type) {
       case 'text': return '#️⃣';
@@ -99,6 +122,15 @@ function ChannelSidebar({ campaignId, isUserDM }) {
       case 'players-only': return '🎭';
       case 'dm-only': return '👑';
       default: return '👥';
+    }
+  };
+
+  const getVisibilityLabel = (visibility) => {
+    switch (visibility) {
+      case 'all': return 'All Members';
+      case 'players-only': return 'Players Only';
+      case 'dm-only': return 'DM Only';
+      default: return 'All Members';
     }
   };
 
@@ -134,47 +166,75 @@ function ChannelSidebar({ campaignId, isUserDM }) {
       )}
 
       <div className="channel-list">
-        {channels.map(channel => (
-          <div key={channel.id} className="channel-item">
-            <div 
-              className="channel-info"
-              onClick={() => handleJoinChannel(channel.id)}
-            >
-              <div className="channel-icon">
-                {getChannelIcon(channel.type)}
-              </div>
-              <div className="channel-details">
-                <div className="channel-name">
-                  {channel.name}
-                  <span 
-                    className="visibility-icon" 
-                    title={`Visible to: ${channel.visibility}`}
-                  >
-                    {getVisibilityIcon(channel.visibility)}
-                  </span>
+        {channels.map(channel => {
+          const isActive = currentChannelId === channel.id || (!currentChannelId && channel.id === 'general');
+          const isExpanded = expandedChannels.has(channel.id);
+          
+          return (
+            <div key={channel.id} className={`channel-item ${isActive ? 'active' : ''}`}>
+              <div 
+                className="channel-info"
+                onClick={() => handleJoinChannel(channel.id)}
+              >
+                <div className="channel-icon">
+                  {getChannelIcon(channel.type)}
                 </div>
-                {channel.description && (
-                  <div className="channel-description">
-                    {channel.description}
+                <div className="channel-details">
+                  <div className="channel-name">
+                    {channel.name}
+                    {isActive && <span className="active-indicator">●</span>}
                   </div>
-                )}
+                  <div className="channel-meta">
+                    <span 
+                      className="visibility-badge" 
+                      title={getVisibilityLabel(channel.visibility)}
+                    >
+                      {getVisibilityIcon(channel.visibility)}
+                    </span>
+                    {channel.messageCount > 0 && (
+                      <span className="message-count">
+                        {channel.messageCount} messages
+                      </span>
+                    )}
+                  </div>
+                  {channel.description && isExpanded && (
+                    <div className="channel-description">
+                      {channel.description}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="channel-actions">
+                  {channel.description && (
+                    <button
+                      className="expand-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleChannelExpand(channel.id);
+                      }}
+                      title={isExpanded ? 'Collapse' : 'Expand'}
+                    >
+                      {isExpanded ? '▼' : '▶'}
+                    </button>
+                  )}
+                  
+                  {isUserDM && channel.id !== 'general' && (
+                    <button
+                      className="delete-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteChannel(channel.id);
+                      }}
+                      title="Delete Channel"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-            
-            {isUserDM && channel.id !== 'general' && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteChannel(channel.id);
-                }}
-                className="btn btn-danger btn-xs"
-                title="Delete Channel"
-              >
-                🗑️
-              </button>
-            )}
-          </div>
-        ))}
+          );
+        })}
 
         {channels.length === 0 && (
           <div className="empty-state">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import UserMenu from '../ChatHeader/UserMenu';
 import SearchBar from '../ChatHeader/SearchBar';
+import CampaignSwitcher from './CampaignSwitcher';
 import { useFirebase } from '../../services/FirebaseContext';
 import './AppNavigation.css';
 
@@ -68,6 +69,10 @@ function AppNavigation() {
         >
           Create Campaign
         </Link>
+      </div>
+      
+      <div className="nav-center">
+        {user && <CampaignSwitcher />}
       </div>
       
       <div className="nav-right">
