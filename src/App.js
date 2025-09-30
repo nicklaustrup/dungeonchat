@@ -4,8 +4,9 @@ import './responsive.css'; // Phase 1 mobile responsiveness
 import { PresenceProvider } from './services/PresenceContext';
 import { EmojiMenuProvider } from './components/ChatInput/EmojiMenu';
 import { ChatStateProvider } from './contexts/ChatStateContext';
+import { CampaignProvider } from './contexts/CampaignContext';
 import { ProfanityFilterProvider } from './contexts/ProfanityFilterContext';
-import ChatPage from './pages/ChatPage';
+import AppRouter from './components/AppRouter';
 import { ProfileSetupModal } from './components/ProfileSetupModal/ProfileSetupModal';
 import { useViewportInfo } from './hooks/useViewportInfo';
 import { useVirtualKeyboard } from './hooks/useVirtualKeyboard';
@@ -53,16 +54,18 @@ function App() {
     <ChatStateProvider initialAwaySeconds={awayAfterSeconds}>
       <PresenceProvider awayAfterSeconds={awayAfterSeconds}>
         <ProfanityFilterProvider>
-          <ChatPage />
-          <EmojiMenuProvider />
-          
-          {/* Profile Setup Modal for new users */}
-          {showProfileSetup && (
-            <ProfileSetupModal 
-              onComplete={handleProfileSetupComplete}
-              canSkip={!forceProfileSetup}
-            />
-          )}
+          <CampaignProvider>
+            <AppRouter />
+            <EmojiMenuProvider />
+            
+            {/* Profile Setup Modal for new users */}
+            {showProfileSetup && (
+              <ProfileSetupModal 
+                onComplete={handleProfileSetupComplete}
+                canSkip={!forceProfileSetup}
+              />
+            )}
+          </CampaignProvider>
         </ProfanityFilterProvider>
       </PresenceProvider>
     </ChatStateProvider>

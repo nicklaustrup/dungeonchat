@@ -181,6 +181,13 @@ body {
   background-color: var(--bg-secondary);
 }
 
+/* When App is used as a page component inside AppRouter layout */
+.app-router-layout .App {
+  height: calc(100vh - var(--header-height, 80px));
+  max-height: calc(100vh - var(--header-height, 80px));
+  overflow: hidden;
+}
+
 .App header {
   background-color: var(--bg-header);
   color: var(--text-primary);

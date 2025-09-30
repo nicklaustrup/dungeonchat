@@ -7,21 +7,38 @@ import { useCollection } from 'react-firebase-hooks/firestore';
  * Optimized Firestore message retrieval with incremental limit, normalization, and ordering.
  * Messages are returned in chronological (oldest -> newest) order.
  * Enhanced with memoization and performance optimizations.
+ * Now supports campaign-specific messages.
  *
  * @param {Object} params
  * @param {import('firebase/firestore').Firestore} params.firestore
+ * @param {string} [params.campaignId=null] - If provided, loads campaign-specific messages
+ * @param {string} [params.channelId='general'] - Channel within campaign (only used if campaignId provided)
  * @param {number} [params.limitBatchSize=25]
  * @param {number} [params.maxLimit=100]
  * @returns {{ messages: Array, loadMore: Function, hasMore: boolean, isInitialLoading: boolean, currentLimit: number }}
  */
-export function useChatMessages({ firestore, limitBatchSize = 25, maxLimit = 100, preserveDuringPagination = true } = {}) {
+export function useChatMessages({ 
+  firestore, 
+  campaignId = null,
+  channelId = 'general',
+  limitBatchSize = 25, 
+  maxLimit = 100, 
+  preserveDuringPagination = true 
+} = {}) {
   const [messageLimit, setMessageLimit] = React.useState(limitBatchSize);
   
-  // Memoize collection reference with more specific dependency
+  // Memoize collection reference with campaign context
   const messagesRef = React.useMemo(() => {
     if (!firestore) return null;
-    return collection(firestore, 'messages');
-  }, [firestore]);
+    
+    if (campaignId) {
+      // Campaign-specific messages
+      return collection(firestore, 'campaigns', campaignId, 'channels', channelId, 'messages');
+    } else {
+      // Global lobby messages (existing behavior)
+      return collection(firestore, 'messages');
+    }
+  }, [firestore, campaignId, channelId]);
   
   // Optimize query memoization
   const q = React.useMemo(() => {

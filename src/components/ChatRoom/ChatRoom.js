@@ -11,7 +11,7 @@ import { useMessageSearch } from '../../hooks/useMessageSearch';
 import DragOverlay from './DragOverlay';
 import MessageList from './MessageList';
 
-function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, onViewProfile, onScrollMeta, soundEnabled = true }) {
+function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, onViewProfile, onScrollMeta, soundEnabled = true, campaignId = null, channelId = 'general' }) {
   const { firestore, auth /* rtdb */ } = useFirebase();
   const dummy = React.useRef();
   const mainRef = React.useRef();
@@ -20,7 +20,13 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
   const { replyingTo, setReplyingTo } = useChatReply();
   // Allow deeper history than the previous hard cap of 100. Defaults to 1000 (configurable via env).
   const historyCap = Number(process.env.REACT_APP_CHAT_MAX_HISTORY) || 1000; // can be raised safely; consider virtualization > ~1500
-  const { messages, loadMore, hasMore } = useChatMessages({ firestore, limitBatchSize: 25, maxLimit: historyCap });
+  const { messages, loadMore, hasMore } = useChatMessages({ 
+    firestore, 
+    campaignId, 
+    channelId,
+    limitBatchSize: 25, 
+    maxLimit: historyCap 
+  });
 
   // const typingUsers = useTypingUsers({ rtdb, currentUid: auth.currentUser?.uid }); // reserved for future feature
 

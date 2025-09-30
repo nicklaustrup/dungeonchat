@@ -34,6 +34,62 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
+    // Campaign collection - new for campaign system
+    match /campaigns/{campaignId} {
+      // Anyone can read public campaigns, members can read their campaigns
+      allow read: if request.auth != null && 
+        (resource.data.visibility == 'public' || 
+         resource.data.dmId == request.auth.uid ||
+         request.auth.uid in resource.data.get('playerIds', []));
+      
+      // Only authenticated users can create campaigns (they become DM)
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.dmId;
+      
+      // Only DM can update campaign
+      allow update: if request.auth != null && 
+        request.auth.uid == resource.data.dmId;
+        
+      // Campaign members subcollection
+      match /members/{userId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && 
+          (request.auth.uid == userId || 
+           request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId);
+      }
+      
+      // Campaign channels subcollection
+      match /channels/{channelId} {
+        allow read: if request.auth != null && 
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+        allow write: if request.auth != null && 
+          request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+          
+        // Campaign channel messages
+        match /messages/{messageId} {
+          allow read: if request.auth != null && 
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          allow create: if request.auth != null && 
+            request.auth.uid == request.resource.data.uid &&
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          // Allow message author to update/delete their own messages
+          allow update, delete: if request.auth != null && 
+            request.auth.uid == resource.data.uid &&
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          // Allow any campaign member to update reactions field only
+          allow update: if request.auth != null && 
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)) &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']) &&
+            request.resource.data.keys().hasAll(resource.data.keys().removeAll(['reactions']));
+        }
+      }
+    }
+    
+    // User campaigns tracking
+    match /userCampaigns/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
     // Deny all other reads/writes
     match /{document=**} {
       allow read, write: if false;

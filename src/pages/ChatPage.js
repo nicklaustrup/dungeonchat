@@ -1,7 +1,9 @@
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import { ref as databaseRef, onDisconnect as rtdbOnDisconnect, set as rtdbSet, update as rtdbUpdate } from 'firebase/database';
 import { useFirebase } from '../services/FirebaseContext';
 import useUserProfile from '../hooks/useUserProfile';
+import { useCampaign } from '../contexts/CampaignContext';
 import { useChatState, useChatTheme, useChatSound, useChatSearch, useChatReply, useChatImage, useChatScroll } from '../contexts/ChatStateContext';
 import ChatHeader from '../components/ChatHeader/ChatHeader';
 import ChatRoom from '../components/ChatRoom/ChatRoom';
@@ -12,9 +14,11 @@ import ScrollToBottomButton from '../components/ChatRoom/ScrollToBottomButton';
 // Lazy load rarely used profile modal for bundle splitting (Phase 2)
 const UserProfileModal = React.lazy(() => import('../components/UserProfileModal/UserProfileModal'));
 
-function ChatPage() {
+function ChatPage({ campaignContext = false, showHeader = true }) {
+  const { campaignId, channelId } = useParams();
   const { user, rtdb } = useFirebase();
   const { profile, getDisplayInfo } = useUserProfile();
+  const { currentChannel } = useCampaign();
   const { state, actions } = useChatState();
   
   // Convenient hooks for specific state slices
@@ -24,6 +28,10 @@ function ChatPage() {
   const { replyingTo, setReplyingTo } = useChatReply();
   const { handleMultipleImageDrop } = useChatImage();
   const { scrollMeta, setScrollMeta } = useChatScroll();
+
+  // Determine current context
+  const isInCampaign = campaignContext && campaignId;
+  const activeChannelId = channelId || currentChannel || 'general';
 
   const getDisplayName = React.useCallback((uid, originalName) => {
     if (uid === user?.uid) return originalName || 'You';
@@ -106,20 +114,22 @@ function ChatPage() {
 
   return (
     <div className="App">
-      <ChatHeader
-        user={enhancedUser}
-        isDarkTheme={isDarkTheme}
-        toggleTheme={toggleTheme}
-        soundEnabled={soundEnabled}
-        toggleSound={toggleSound}
-        showSearch={showSearch}
-        setShowSearch={(show) => setSearch(searchTerm, show)}
-        searchTerm={searchTerm}
-        setSearchTerm={(term) => setSearch(term, showSearch)}
-        onViewProfile={handleViewProfile}
-        awayAfterSeconds={state.awayAfterSeconds}
-        setAwayAfterSeconds={actions.setAwaySeconds}
-      />
+      {showHeader && (
+        <ChatHeader
+          user={enhancedUser}
+          isDarkTheme={isDarkTheme}
+          toggleTheme={toggleTheme}
+          soundEnabled={soundEnabled}
+          toggleSound={toggleSound}
+          showSearch={showSearch}
+          setShowSearch={(show) => setSearch(searchTerm, show)}
+          searchTerm={searchTerm}
+          setSearchTerm={(term) => setSearch(term, showSearch)}
+          onViewProfile={handleViewProfile}
+          awayAfterSeconds={state.awayAfterSeconds}
+          setAwayAfterSeconds={actions.setAwaySeconds}
+        />
+      )}
       <section>
         {user ? (
           <>
@@ -128,12 +138,12 @@ function ChatPage() {
               getDisplayName={getDisplayName}
               searchTerm={searchTerm}
               onDragStateChange={noop}
-              replyingTo={replyingTo}
-              setReplyingTo={setReplyingTo}
               onImageDrop={handleMultipleImageDrop}
               onViewProfile={handleViewProfile}
               onScrollMeta={setScrollMeta}
               soundEnabled={soundEnabled}
+              campaignId={isInCampaign ? campaignId : null}
+              channelId={activeChannelId}
             />
             <div className="chatroom-overlays">
               <TypingBubble soundEnabled={soundEnabled} />
