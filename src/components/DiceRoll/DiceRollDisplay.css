@@ -343,3 +343,93 @@
     margin-top: 0.25rem;
   }
 }
+
+/* Dice Roll History Styles */
+.dice-roll-history {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.dice-roll-history h4 {
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dice-history-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+}
+
+.dice-history-empty h4 {
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.dice-history-empty p {
+  margin-bottom: 0.5rem;
+}
+
+.dice-history-empty code {
+  background: var(--bg-secondary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.history-item {
+  position: relative;
+}
+
+.history-item .dice-roll-display {
+  margin: 0;
+  padding: 0.75rem;
+  border-width: 1px;
+}
+
+.channel-indicator {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  padding-left: 0.5rem;
+}
+
+.channel-indicator::before {
+  content: "#";
+  color: var(--accent-color);
+  margin-right: 0.25rem;
+}
+
+/* Compact history scrollbar */
+.history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 3px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.history-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

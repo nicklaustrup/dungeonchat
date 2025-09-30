@@ -456,3 +456,54 @@
     gap: 0.5rem;
   }
 }
+
+/* Dice History Tab Styles */
+.dice-history-tab {
+  padding: 0;
+}
+
+.dice-history-tab h2 {
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dice-history-tab .tab-description {
+  color: var(--text-muted);
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.dice-history-tab .dice-history-panel {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.dice-history-tab .panel-header {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px 8px 0 0;
+}
+
+.dice-history-tab .panel-content {
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  background: var(--bg-primary);
+}
+
+/* Mobile responsive adjustments for dice history tab */
+@media (max-width: 768px) {
+  .dice-history-tab h2 {
+    font-size: 1.25rem;
+  }
+  
+  .dice-history-tab .tab-description {
+    font-size: 0.9rem;
+  }
+}

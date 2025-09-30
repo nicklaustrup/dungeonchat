@@ -93,12 +93,13 @@ function DiceRollDisplay({ rollResult, playerName, timestamp, mode = 'full' }) {
 }
 
 // Component for displaying roll history/statistics
-export function DiceRollHistory({ rolls, maxDisplayed = 10 }) {
+export function DiceRollHistory({ rolls, maxDisplayed = 10, showChannelNames = false }) {
   const recentRolls = rolls.slice(-maxDisplayed).reverse();
   
   if (recentRolls.length === 0) {
     return (
       <div className="dice-history-empty">
+        <h4>🎲 No Dice Rolls Yet</h4>
         <p>No dice rolls yet. Use the dice roller or type <code>/roll 1d20</code> in chat!</p>
       </div>
     );
@@ -106,16 +107,22 @@ export function DiceRollHistory({ rolls, maxDisplayed = 10 }) {
 
   return (
     <div className="dice-roll-history">
-      <h4>Recent Rolls</h4>
+      <h4>Recent Rolls ({recentRolls.length})</h4>
       <div className="history-list">
         {recentRolls.map((roll, index) => (
-          <DiceRollDisplay 
-            key={index}
-            rollData={roll.rollData}
-            playerName={roll.playerName}
-            timestamp={roll.timestamp}
-            compact={true}
-          />
+          <div key={roll.id || index} className="history-item">
+            {showChannelNames && roll.channelName && (
+              <div className="channel-indicator">
+                {roll.channelName}
+              </div>
+            )}
+            <DiceRollDisplay 
+              rollData={roll.rollData}
+              playerName={roll.playerName}
+              timestamp={roll.timestamp}
+              compact={true}
+            />
+          </div>
         ))}
       </div>
     </div>

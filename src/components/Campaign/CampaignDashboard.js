@@ -8,6 +8,7 @@ import CampaignMemberList from './CampaignMemberList';
 import ChannelSidebar from './ChannelSidebar';
 import CampaignSettings from './CampaignSettings';
 import CampaignRules from './CampaignRules';
+import DiceHistoryPanel from '../DiceRoll/DiceHistoryPanel';
 import './CampaignDashboard.css';
 
 function CampaignDashboard() {
@@ -169,6 +170,12 @@ function CampaignDashboard() {
               Channels
             </button>
             <button 
+              className={`nav-item ${activeTab === 'dice-history' ? 'active' : ''}`}
+              onClick={() => setActiveTab('dice-history')}
+            >
+              🎲 Dice History
+            </button>
+            <button 
               className={`nav-item ${activeTab === 'rules' ? 'active' : ''}`}
               onClick={() => setActiveTab('rules')}
             >
@@ -272,6 +279,20 @@ function CampaignDashboard() {
               campaignId={campaignId}
               isUserDM={isUserDM}
             />
+          )}
+
+          {activeTab === 'dice-history' && (
+            <div className="dice-history-tab">
+              <h2>🎲 Dice Roll History & Statistics</h2>
+              <p className="tab-description">
+                View campaign dice roll history, statistics, and player performance across all channels.
+              </p>
+              <DiceHistoryPanel 
+                firestore={firestore}
+                campaignId={campaignId}
+                userId={null} // Show all users' rolls
+              />
+            </div>
           )}
 
           {activeTab === 'rules' && (
