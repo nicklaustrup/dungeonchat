@@ -26,6 +26,7 @@ import HoverTimestamp from './parts/HoverTimestamp';
 import { useReactions } from '../../hooks/useReactions';
 import { useMessageMenuPosition } from '../../hooks/useMessageMenuPosition';
 import { useUserProfileData } from '../../hooks/useUserProfileData';
+import { useUserProfile } from '../../hooks/useUserProfile';
 
 function ChatMessage(props) {
     const { firestore, auth } = useFirebase();
@@ -33,23 +34,14 @@ function ChatMessage(props) {
     const { searchTerm, onReply, isReplyTarget, onViewProfile, showMeta = true } = props;
     
     // Get enhanced profile data for this user
-    const { profileData, loading: profileLoading, error: profileError } = useUserProfileData(uid);
+    const { profileData } = useUserProfileData(uid);
     
-    // Debug logging for profile data issues
-    React.useEffect(() => {
-        if (uid && !profileLoading && !profileError) {
-            console.log(`[ChatMessage] Profile data for ${uid}:`, {
-                hasProfileData: !!profileData,
-                profilePictureURL: profileData?.profilePictureURL,
-                username: profileData?.username,
-                displayName: profileData?.displayName,
-                originalPhotoURL: photoURL
-            });
-        }
-        if (profileError) {
-            console.warn(`[ChatMessage] Profile data error for ${uid}:`, profileError);
-        }
-    }, [uid, profileData, profileLoading, profileError, photoURL]);
+    // For the current user, we should use the profile from the global context
+    // For other users, we use the fetched profile data
+    const { profile: currentUserProfile } = useUserProfile();
+    const { user: currentUser } = useFirebase();
+    
+    const effectiveProfileData = uid === currentUser?.uid ? currentUserProfile : profileData;
     
     // Get user's profanity filter preference from context (will re-render when changed)
     const { profanityFilterEnabled } = useProfanityFilterContext();
@@ -87,12 +79,12 @@ function ChatMessage(props) {
     // Implement name priority: displayName (highest) > username (medium) > auth displayName (lowest)
     const getDisplayNameWithPriority = () => {
         // Highest priority: Custom display name from profile
-        if (profileData?.displayName) {
-            return profileData.displayName;
+        if (effectiveProfileData?.displayName) {
+            return effectiveProfileData.displayName;
         }
         // Medium priority: Username from profile
-        if (profileData?.username) {
-            return profileData.username;
+        if (effectiveProfileData?.username) {
+            return effectiveProfileData.username;
         }
         // Lowest priority: Original auth display name from message
         return displayName || 'Anonymous';
@@ -101,7 +93,7 @@ function ChatMessage(props) {
     const userName = getDisplayNameWithPriority();
     
     // Use profile picture from profile data if available, otherwise fallback
-    const userPhotoURL = profileData?.profilePictureURL || photoURL;
+    const userPhotoURL = effectiveProfileData?.profilePictureURL || photoURL;
     const fallbackAvatar = React.useMemo(() => getFallbackAvatar({ uid, displayName: userName, size: 40 }), [uid, userName]);
 
     // formatting now handled by utils/messageFormatting.js
@@ -114,9 +106,9 @@ function ChatMessage(props) {
                 displayName: userName,
                 photoURL: userPhotoURL || fallbackAvatar,
                 // Add enhanced profile data if available
-                username: profileData?.username,
-                bio: profileData?.bio,
-                statusMessage: profileData?.statusMessage,
+                username: effectiveProfileData?.username,
+                bio: effectiveProfileData?.bio,
+                statusMessage: effectiveProfileData?.statusMessage,
                 // email is not available on the message object by default
             };
 
@@ -355,7 +347,7 @@ function ChatMessage(props) {
                             createdAt={createdAt} 
                             formatTimestamp={formatTimestamp} 
                             onViewProfile={handleViewProfileClick} 
-                            profileData={profileData}
+                            profileData={effectiveProfileData}
                         />)}
                         {!showMeta && (<HoverTimestamp createdAt={createdAt} formatTimestamp={formatTimestamp} />)}
                         {type === 'image' && imageURL && (

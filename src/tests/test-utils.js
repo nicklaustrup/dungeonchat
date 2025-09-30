@@ -16,6 +16,29 @@ jest.mock('../hooks/useUserProfile', () => ({
   default: () => mockProfileData
 }));
 
+// Mock useUserProfile hook to prevent Firebase errors in tests
+jest.mock('../hooks/useUserProfile', () => ({
+  __esModule: true,
+  useUserProfile: () => ({
+    profile: mockProfileData,
+    loading: false,
+    error: null,
+    needsOnboarding: false,
+    isProfileComplete: true,
+    profanityFilterEnabled: false,
+    toggleProfanityFilter: jest.fn()
+  }),
+  default: () => ({
+    profile: mockProfileData,
+    loading: false,
+    error: null,
+    needsOnboarding: false,
+    isProfileComplete: true,
+    profanityFilterEnabled: false,
+    toggleProfanityFilter: jest.fn()
+  })
+}));
+
 // Mock useUserProfileData hook to prevent Firebase errors in tests
 jest.mock('../hooks/useUserProfileData', () => ({
   __esModule: true,
