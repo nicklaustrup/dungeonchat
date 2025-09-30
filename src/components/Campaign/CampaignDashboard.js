@@ -9,6 +9,9 @@ import ChannelSidebar from './ChannelSidebar';
 import CampaignSettings from './CampaignSettings';
 import CampaignRules from './CampaignRules';
 import DiceHistoryPanel from '../DiceRoll/DiceHistoryPanel';
+import { CharacterCreationModal } from '../CharacterCreationModal';
+import { CharacterSheet } from '../CharacterSheet';
+import { useCharacterSheet, useCampaignCharacters } from '../../hooks/useCharacterSheet';
 import './CampaignDashboard.css';
 
 function CampaignDashboard() {
@@ -21,9 +24,16 @@ function CampaignDashboard() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showCharacterCreation, setShowCharacterCreation] = useState(false);
+  const [selectedCharacter, setSelectedCharacter] = useState(null);
+  const [showCharacterSheet, setShowCharacterSheet] = useState(false);
 
   // Use the custom hook for members with real-time updates
   const { members, loading: membersLoading, setMembers } = useCampaignMembers(firestore, campaignId);
+  
+  // Character sheet hooks
+  const { hasCharacter } = useCharacterSheet(firestore, campaignId, user?.uid);
+  const { characters: campaignCharacters, refreshCharacters } = useCampaignCharacters(firestore, campaignId);
 
   useEffect(() => {
     if (!campaignId || !firestore || !user) return;
@@ -170,6 +180,12 @@ function CampaignDashboard() {
               Channels
             </button>
             <button 
+              className={`nav-item ${activeTab === 'characters' ? 'active' : ''}`}
+              onClick={() => setActiveTab('characters')}
+            >
+              📋 Characters ({campaignCharacters.length})
+            </button>
+            <button 
               className={`nav-item ${activeTab === 'dice-history' ? 'active' : ''}`}
               onClick={() => setActiveTab('dice-history')}
             >
@@ -281,6 +297,105 @@ function CampaignDashboard() {
             />
           )}
 
+          {activeTab === 'characters' && (
+            <div className="characters-tab">
+              <div className="characters-header">
+                <h2>📋 Campaign Characters</h2>
+                <div className="characters-actions">
+                  {!hasCharacter && (
+                    <button 
+                      onClick={() => setShowCharacterCreation(true)}
+                      className="btn btn-primary"
+                    >
+                      Create Character
+                    </button>
+                  )}
+                  {hasCharacter && (
+                    <button 
+                      onClick={() => setShowCharacterSheet(true)}
+                      className="btn btn-secondary"
+                    >
+                      View My Character
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="characters-content">
+                {campaignCharacters.length === 0 ? (
+                  <div className="no-characters">
+                    <div className="no-characters-icon">📋</div>
+                    <h3>No Characters Yet</h3>
+                    <p>Be the first to create a character for this campaign!</p>
+                    {!hasCharacter && (
+                      <button 
+                        onClick={() => setShowCharacterCreation(true)}
+                        className="btn btn-primary"
+                      >
+                        Create Your Character
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="characters-grid">
+                    {campaignCharacters.map(character => {
+                      const member = members.find(m => m.userId === character.userId);
+                      const isOwnCharacter = character.userId === user?.uid;
+                      
+                      return (
+                        <div key={character.id} className={`character-card ${isOwnCharacter ? 'own-character' : ''}`}>
+                          <div className="character-card-header">
+                            <h4>{character.name}</h4>
+                            {isOwnCharacter && <span className="own-badge">Your Character</span>}
+                          </div>
+                          
+                          <div className="character-card-info">
+                            <div className="character-level">Level {character.level}</div>
+                            <div className="character-class-race">
+                              {character.race} {character.class}
+                            </div>
+                            <div className="character-player">
+                              Player: {member?.username || member?.displayName || character.playerName || 'Unknown'}
+                            </div>
+                          </div>
+                          
+                          <div className="character-card-stats">
+                            <div className="stat-item">
+                              <span>HP:</span>
+                              <span>{character.hitPoints.current}/{character.hitPoints.maximum}</span>
+                            </div>
+                            <div className="stat-item">
+                              <span>AC:</span>
+                              <span>{character.armorClass}</span>
+                            </div>
+                            <div className="stat-item">
+                              <span>XP:</span>
+                              <span>{character.experiencePoints.toLocaleString()}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="character-card-actions">
+                            {(isOwnCharacter || isUserDM) && (
+                              <button 
+                                onClick={() => {
+                                  setSelectedCharacter(character);
+                                  setShowCharacterSheet(true);
+                                }}
+                                className="btn btn-small btn-secondary"
+                              >
+                                View Sheet
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'dice-history' && (
             <div className="dice-history-tab">
               <h2>🎲 Dice Roll History & Statistics</h2>
@@ -310,6 +425,40 @@ function CampaignDashboard() {
           )}
         </div>
       </div>
+
+      {/* Character Creation Modal */}
+      {showCharacterCreation && (
+        <CharacterCreationModal 
+          isOpen={showCharacterCreation}
+          onClose={() => setShowCharacterCreation(false)}
+          firestore={firestore}
+          campaignId={campaignId}
+          userId={user?.uid}
+          onCharacterCreated={() => {
+            setShowCharacterCreation(false);
+            refreshCharacters();
+          }}
+        />
+      )}
+      
+      {/* Character Sheet Modal */}
+      {showCharacterSheet && (
+        <div className="modal-overlay" onClick={() => {
+          setShowCharacterSheet(false);
+          setSelectedCharacter(null);
+        }}>
+          <CharacterSheet 
+            firestore={firestore}
+            campaignId={campaignId}
+            userId={selectedCharacter?.userId || user?.uid}
+            isModal={true}
+            onClose={() => {
+              setShowCharacterSheet(false);
+              setSelectedCharacter(null);
+            }}
+          />
+        </div>
+      )}
 
       {/* Leave Campaign Modal */}
       {showLeaveModal && (

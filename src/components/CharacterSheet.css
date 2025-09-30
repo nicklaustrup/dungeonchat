@@ -1,0 +1,507 @@
+/* Character Sheet Styles */
+
+.character-sheet {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.character-sheet.modal-content {
+  width: 95%;
+  max-width: 1000px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.character-sheet-content {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.modal-content .character-sheet-content {
+  flex: 1;
+  padding: 20px;
+}
+
+/* Loading and Error States */
+.loading-state,
+.error-state,
+.no-character {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+.error-state {
+  color: #dc2626;
+}
+
+/* Character Header */
+.character-header {
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.character-title h1 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.character-subtitle {
+  color: #6b7280;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.character-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-item label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.detail-item span {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+/* Main Stats Grid */
+.character-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+/* Ability Scores */
+.ability-scores-section h3 {
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.ability-scores-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.ability-score-block {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.ability-score-block:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.ability-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.ability-score {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.ability-modifier {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Combat Stats */
+.combat-stats-section h3 {
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.combat-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-block {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-block label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* Hit Points */
+.hit-points-section h4 {
+  color: #1f2937;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.hit-points-display {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.hp-current,
+.hp-maximum,
+.hp-temp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hp-current label,
+.hp-maximum label,
+.hp-temp label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.hp-input {
+  width: 60px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 8px;
+  background: white;
+}
+
+.hp-input:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.hp-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.hp-separator {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+/* Skills */
+.skills-section h3 {
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 24px 0 16px 0;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+}
+
+.skill-item {
+  display: grid;
+  grid-template-columns: 20px 40px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.skill-item:hover {
+  background: #f9fafb;
+}
+
+.skill-item.proficient {
+  background: #ecfdf5;
+  border-left: 3px solid #10b981;
+}
+
+.skill-proficiency {
+  font-size: 1rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+.skill-item.proficient .skill-proficiency {
+  color: #10b981;
+}
+
+.skill-modifier {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+}
+
+.skill-name {
+  font-size: 0.875rem;
+  color: #374151;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skill-ability {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+/* Saving Throws */
+.saving-throws-section h3 {
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 24px 0 16px 0;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.saving-throws-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+}
+
+.saving-throw-item {
+  display: grid;
+  grid-template-columns: 20px 40px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.saving-throw-item:hover {
+  background: #f9fafb;
+}
+
+.saving-throw-item.proficient {
+  background: #ecfdf5;
+  border-left: 3px solid #10b981;
+}
+
+.save-proficiency {
+  font-size: 1rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+.saving-throw-item.proficient .save-proficiency {
+  color: #10b981;
+}
+
+.save-modifier {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+}
+
+.save-name {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+/* Experience */
+.experience-section h3 {
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 24px 0 16px 0;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.xp-display {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.xp-current {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.xp-bar {
+  background: #e5e7eb;
+  border-radius: 4px;
+  height: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.xp-progress {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  height: 100%;
+  transition: width 0.3s;
+}
+
+.xp-next {
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* Other Stats */
+.other-stats-section h3 {
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 24px 0 16px 0;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.other-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.stat-item label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.stat-item span {
+  font-size: 0.875rem;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .character-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .ability-scores-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .combat-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .character-sheet-content {
+    padding: 16px;
+  }
+  
+  .character-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .ability-scores-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  
+  .combat-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .hit-points-display {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .hp-separator {
+    display: none;
+  }
+  
+  .character-title h1 {
+    font-size: 1.5rem;
+  }
+}

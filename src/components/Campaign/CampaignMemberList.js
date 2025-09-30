@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useFirebase } from '../../services/FirebaseContext';
 import { updateCampaignMember, removeCampaignMember } from '../../services/campaign/campaignService';
+import { useCampaignCharacters } from '../../hooks/useCharacterSheet';
 import './CampaignMemberList.css';
 
 function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) {
   const { firestore } = useFirebase();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Get character information for all campaign members
+  const { characters } = useCampaignCharacters(firestore, campaignId);
 
   const handleMemberAction = async (memberId, action, newStatus = null) => {
     if (!isUserDM) return;
@@ -54,6 +58,11 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
       default: return '#6b7280';
     }
   };
+  
+  // Helper function to get character data for a member
+  const getMemberCharacter = (userId) => {
+    return characters.find(char => char.userId === userId);
+  };
 
   // Sort members: DM first, then by role, then by display name
   const sortedMembers = [...members].sort((a, b) => {
@@ -90,8 +99,11 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
       )}
 
       <div className="member-list">
-        {sortedMembers.map(member => (
-          <div key={member.userId} className="member-item">
+        {sortedMembers.map(member => {
+          const memberCharacter = getMemberCharacter(member.userId);
+          
+          return (
+            <div key={member.userId} className="member-item">
             <div className="member-info">
               <div className="member-avatar">
                 <span className="role-icon" title={member.role}>
@@ -102,19 +114,31 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
                 <div className="member-name">
                   {member.role === 'dm' 
                     ? (member.username || member.displayName || 'Unknown DM')
-                    : (member.characterName || member.username || member.displayName || 'Unknown Player')
+                    : (memberCharacter?.name || member.characterName || member.username || member.displayName || 'Unknown Player')
                   }
                   {member.role === 'dm' && <span className="dm-badge">DM</span>}
                 </div>
                 {member.role !== 'dm' && (
                   <div className="character-info">
-                    {member.characterName ? (
-                      <>
-                        <span className="character-label">Character:</span> {member.characterName}
-                        {member.characterClass && ` (${member.characterClass})`}
-                      </>
+                    {memberCharacter ? (
+                      <div className="character-details">
+                        <div className="character-basic">
+                          <span className="character-label">Character:</span> 
+                          <span className="character-name">{memberCharacter.name}</span>
+                          <span className="character-class-race">
+                            Level {memberCharacter.level} {memberCharacter.race} {memberCharacter.class}
+                          </span>
+                        </div>
+                        <div className="character-stats">
+                          <span className="stat-item">HP: {memberCharacter.hitPoints.current}/{memberCharacter.hitPoints.maximum}</span>
+                          <span className="stat-item">AC: {memberCharacter.armorClass}</span>
+                          <span className="stat-item">XP: {memberCharacter.experiencePoints.toLocaleString()}</span>
+                        </div>
+                      </div>
                     ) : (
-                      <span className="no-character">No character name set</span>
+                      <div className="no-character-sheet">
+                        <span className="no-character">📝 No character sheet created</span>
+                      </div>
                     )}
                   </div>
                 )}
@@ -196,7 +220,8 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
               </div>
             )}
           </div>
-        ))}
+        );
+        })}
 
         {members.length === 0 && (
           <div className="empty-state">
