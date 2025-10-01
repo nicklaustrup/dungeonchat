@@ -180,6 +180,21 @@ function MapCanvas({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showFXLibrary]);
 
+  // Handle light deletion from context menu
+  useEffect(() => {
+    const handleDeleteLight = (e) => {
+      const lightId = e.detail;
+      if (window.confirm('Delete this light source?')) {
+        deleteLight(lightId).catch(error => {
+          console.error('Error deleting light:', error);
+        });
+      }
+    };
+    
+    window.addEventListener('deleteLight', handleDeleteLight);
+    return () => window.removeEventListener('deleteLight', handleDeleteLight);
+  }, [deleteLight]);
+
   // Helper to optionally snap any point to grid when global snap is enabled
   const maybeSnapPoint = useCallback((pt) => {
     if (snapToGrid && gMap?.gridSize) {
@@ -1022,6 +1037,82 @@ function MapCanvas({
               />
             );
           })}
+
+          {/* Light Control Markers - draggable for DMs */}
+          {isDM && globalLighting.enabled && lights.map(light => (
+            <React.Fragment key={`light-control-${light.id}`}>
+              {/* Light center marker */}
+              <Circle
+                x={light.position.x}
+                y={light.position.y}
+                radius={6}
+                fill={light.color || '#FF8800'}
+                stroke="white"
+                strokeWidth={2}
+                opacity={0.9}
+                draggable={activeTool === 'pointer'}
+                onDragEnd={(e) => {
+                  const newPos = maybeSnapPoint({ x: e.target.x(), y: e.target.y() });
+                  updateLight(light.id, { position: newPos });
+                }}
+                onMouseEnter={(e) => {
+                  e.target.getStage().container().style.cursor = 'move';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.getStage().container().style.cursor = 'default';
+                }}
+                onClick={(e) => {
+                  if (e.evt.button === 2) { // Right click
+                    e.cancelBubble = true;
+                    e.evt.preventDefault();
+                  }
+                }}
+                onContextMenu={(e) => {
+                  e.cancelBubble = true;
+                  const stage = e.target.getStage();
+                  const pos = stage.getPointerPosition();
+                  
+                  // Show custom context menu
+                  const menu = document.createElement('div');
+                  menu.style.position = 'fixed';
+                  menu.style.left = pos.x + 'px';
+                  menu.style.top = pos.y + 'px';
+                  menu.style.background = '#2a2a3e';
+                  menu.style.border = '1px solid #444';
+                  menu.style.borderRadius = '8px';
+                  menu.style.padding = '8px 0';
+                  menu.style.zIndex = '10000';
+                  menu.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                  menu.style.minWidth = '150px';
+                  menu.innerHTML = `
+                    <div style="padding: 8px 16px; cursor: pointer; color: #e0e0f0; font-size: 14px;" onmouseover="this.style.background='#3a3a4e'" onmouseout="this.style.background='transparent'" onclick="window.dispatchEvent(new CustomEvent('deleteLight', { detail: '${light.id}' })); this.parentElement.remove();">
+                      🗑️ Delete Light
+                    </div>
+                  `;
+                  document.body.appendChild(menu);
+                  
+                  // Remove menu on next click
+                  const removeMenu = () => {
+                    menu.remove();
+                    document.removeEventListener('click', removeMenu);
+                  };
+                  setTimeout(() => document.addEventListener('click', removeMenu), 100);
+                }}
+                shadowColor={light.color || '#FF8800'}
+                shadowBlur={10}
+                shadowOpacity={0.8}
+              />
+              {/* Light icon overlay */}
+              <Circle
+                x={light.position.x}
+                y={light.position.y}
+                radius={3}
+                fill="white"
+                opacity={0.9}
+                listening={false}
+              />
+            </React.Fragment>
+          ))}
   </Layer>}
 
   {/* Lighting Layer - renders dynamic lighting effects */}
