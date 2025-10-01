@@ -14,14 +14,15 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: var(--btn-bg, #f1f5f9);
+  background: var(--btn-bg, var(--surface-muted, #f1f5f9));
   border: 1px solid var(--border-color, #d1d5db);
   border-radius: 6px;
   padding: 0.4rem 0.65rem;
   font-size: 0.85rem;
   cursor: pointer;
   position: relative;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  color: var(--text-primary, #1e293b);
 }
 
 .session-quick-nav .quick-nav-btn:hover {
@@ -30,8 +31,9 @@
 
 .session-quick-nav .quick-nav-btn.active {
   background: var(--accent-bg, #2563eb);
-  color: #fff;
+  color: var(--accent-on, #ffffff);
   border-color: var(--accent-bg, #2563eb);
+  box-shadow: 0 0 0 1px var(--accent-bg, #2563eb), 0 2px 4px rgba(0,0,0,0.15);
 }
 
 .session-quick-nav .quick-nav-btn .icon {
@@ -56,21 +58,32 @@
 }
 
 [data-theme='dark'] .session-quick-nav {
-  background: var(--bg-dark, #1e293b);
+  background: var(--bg-dark, #0f172a);
   border-color: var(--border-dark, #334155);
 }
 
 [data-theme='dark'] .session-quick-nav .quick-nav-btn {
-  background: #334155;
-  border-color: #475569;
-  color: #f1f5f9;
+  background: var(--btn-bg-dark, #1e293b);
+  border-color: #334155;
+  color: var(--text-dark-primary, #f1f5f9);
 }
 
 [data-theme='dark'] .session-quick-nav .quick-nav-btn:hover {
-  background: #475569;
+  background: #334155;
+  border-color: #475569;
 }
 
 [data-theme='dark'] .session-quick-nav .quick-nav-btn.active {
   background: var(--accent-bg, #2563eb);
   border-color: var(--accent-bg, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 0 0 1px var(--accent-bg, #2563eb), 0 2px 6px rgba(0,0,0,0.4);
+}
+
+/* Improve badge contrast in both themes */
+.session-quick-nav .quick-nav-btn .badge.turn {
+  background: var(--turn-badge-bg, #7c3aed);
+}
+[data-theme='dark'] .session-quick-nav .quick-nav-btn .badge.turn {
+  background: var(--turn-badge-bg-dark, #6d28d9);
 }
