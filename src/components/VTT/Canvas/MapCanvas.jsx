@@ -853,7 +853,7 @@ function MapCanvas({
                   isDragging ? 'grabbing' : 'grab' 
         }}
       >
-        {/* Background Layer */}
+        {/* Background Layer - includes map image and token snap highlight */}
         <Layer>
           {mapImage && (
             <KonvaImage
@@ -863,19 +863,17 @@ function MapCanvas({
               listening={false}
             />
           )}
-        </Layer>
-
-        {/* Token snap highlight (shows target footprint while dragging) */}
-  {gMap.gridEnabled && tokenSnapHighlight && (() => {
-          // Pulse parameters
-          const periodMs = 900; // full cycle
+          
+          {/* Token snap highlight (shows target footprint while dragging) */}
+          {gMap.gridEnabled && tokenSnapHighlight && (() => {
+            // Pulse parameters
+            const periodMs = 900; // full cycle
             const phase = (tokenSnapPulse % periodMs) / periodMs; // 0..1
-          const sine = Math.sin(phase * Math.PI * 2); // -1..1
-          const intensity = 0.45 + (sine * 0.25); // 0.2 range
-          const strokeWidth = 2 + (sine + 1) * 1.5; // 2..5
-          const glow = 8 + (sine + 1) * 6; // 8..20
-          return (
-            <Layer>
+            const sine = Math.sin(phase * Math.PI * 2); // -1..1
+            const intensity = 0.45 + (sine * 0.25); // 0.2 range
+            const strokeWidth = 2 + (sine + 1) * 1.5; // 2..5
+            const glow = 8 + (sine + 1) * 6; // 8..20
+            return (
               <Rect
                 x={tokenSnapHighlight.x}
                 y={tokenSnapHighlight.y}
@@ -891,9 +889,9 @@ function MapCanvas({
                 shadowOpacity={0.9}
                 opacity={0.95}
               />
-            </Layer>
-          );
-        })()}
+            );
+          })()}
+        </Layer>
 
   {/* Grid Layer */}
   {gMap.gridEnabled && layerVisibility.grid && (
@@ -1009,8 +1007,8 @@ function MapCanvas({
     />
   )}
 
-  {/* Drawing Layer */}
-  {layerVisibility.shapes && <Layer>
+  {/* Drawing & Effects Layer - Shapes, Drawings, Rulers, Pings */}
+  {(layerVisibility.shapes || layerVisibility.pings) && <Layer>
           {/* Shapes (persisted) */}
           {visibleShapes.map(shape => {
             if (shape.type === 'circle') {
@@ -1278,11 +1276,9 @@ function MapCanvas({
               shadowBlur={10}
             />
           )}
-  </Layer>}
 
-  {/* Ping Layer - X shape with vertical line */}
-  {layerVisibility.pings && <Layer>
-          {pings.map(ping => {
+          {/* Pings - X shape with vertical line */}
+          {layerVisibility.pings && pings.map(ping => {
             // Calculate ping animation phases
             const pingAge = Date.now() - (ping.createdAt?.toMillis?.() || Date.now());
             const flashDuration = 200; // 0.2s bright flash

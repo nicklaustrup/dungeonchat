@@ -175,6 +175,16 @@ service cloud.firestore {
           allow create, update, delete: if request.auth != null && 
             request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
         }
+
+        // Lights collection - Dynamic lighting system
+        match /lights/{lightId} {
+          // Campaign members can read lights
+          allow read: if request.auth != null && 
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          // Only DM can create/update/delete lights
+          allow create, update, delete: if request.auth != null && 
+            request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+        }
       }
 
       // Ambient audio tracks for the campaign
