@@ -452,9 +452,12 @@ function MapCanvas({
       let finalPos = newPosition;
       if (snapToGrid && map?.gridSize) {
         const g = map.gridSize;
+        // Snap token center to the center of the containing grid cell (inside the square)
+        const cellX = Math.floor(newPosition.x / g);
+        const cellY = Math.floor(newPosition.y / g);
         finalPos = {
-          x: Math.round(newPosition.x / g) * g,
-          y: Math.round(newPosition.y / g) * g
+          x: cellX * g + g / 2,
+          y: cellY * g + g / 2
         };
       }
       // Update position in Firestore

@@ -73,8 +73,11 @@ function TokenSprite({
     const node = e.target;
     const x = node.x();
     const y = node.y();
-    const snappedX = Math.round(x / gridSize) * gridSize;
-    const snappedY = Math.round(y / gridSize) * gridSize;
+    // Snap to center of the grid cell containing the token's current center
+    const cellX = Math.floor(x / gridSize);
+    const cellY = Math.floor(y / gridSize);
+    const snappedX = cellX * gridSize + gridSize / 2;
+    const snappedY = cellY * gridSize + gridSize / 2;
     node.x(snappedX);
     node.y(snappedY);
   };
