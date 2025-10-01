@@ -65,7 +65,7 @@
 .view-mode-selector {
   display: flex;
   gap: 0.5rem;
-  background: white;
+  background: var(--bg-light, #ffffff);
   border-radius: 6px;
   padding: 0.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -102,7 +102,7 @@
 .calendar-navigation button {
   padding: 0.5rem 1rem;
   border: 1px solid var(--border-color, #e5e7eb);
-  background: white;
+  background: var(--bg-light, #ffffff);
   color: var(--text-primary, #1f2937);
   border-radius: 6px;
   cursor: pointer;
@@ -124,7 +124,7 @@
 .calendar-actions button {
   padding: 0.5rem 1rem;
   border: 1px solid var(--border-color, #e5e7eb);
-  background: white;
+  background: var(--bg-light, #ffffff);
   color: var(--text-primary, #1f2937);
   border-radius: 6px;
   cursor: pointer;
@@ -182,7 +182,7 @@
 
 /* Calendar cells */
 .calendar-cell {
-  background: white;
+  background: var(--bg-light, #ffffff);
   min-height: 120px;
   padding: 0.5rem;
   display: flex;
@@ -316,7 +316,7 @@
 }
 
 .upcoming-event {
-  background: white;
+  background: var(--bg-light, #ffffff);
   padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -425,7 +425,7 @@
 .availability-btn {
   padding: 0.5rem 1rem;
   border: 2px solid var(--border-color, #e5e7eb);
-  background: white;
+  background: var(--bg-light, #ffffff);
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;

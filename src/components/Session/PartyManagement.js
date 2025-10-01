@@ -332,23 +332,20 @@ function PartyManagement({ campaignId }) {
       </div>
 
       {/* Party Composition Analysis */}
-      {composition && (
+      {composition && composition.roles && (
         <div className="party-composition">
           <h3>Party Composition</h3>
           <div className="composition-roles">
-            {composition.roles.map(role => (
-              <div key={role.role} className={`role-card ${role.role}`}>
-                <div className="role-header">
-                  <span className="role-icon">{getRoleIcon(role.role)}</span>
-                  <span className="role-name">{role.role}</span>
-                  <span className="role-count">{role.count}</span>
+            {Object.entries(composition.roles).map(([roleName, count]) => (
+              count > 0 && (
+                <div key={roleName} className={`role-card ${roleName}`}>
+                  <div className="role-header">
+                    <span className="role-icon">{getRoleIcon(roleName)}</span>
+                    <span className="role-name">{roleName.charAt(0).toUpperCase() + roleName.slice(1)}</span>
+                    <span className="role-count">{count}</span>
+                  </div>
                 </div>
-                <div className="role-characters">
-                  {role.characters.map(char => (
-                    <span key={char} className="character-tag">{char}</span>
-                  ))}
-                </div>
-              </div>
+              )
             ))}
           </div>
 
