@@ -1,0 +1,250 @@
+/* TokenPalette.css - Token palette and creation interface styles */
+
+.token-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.palette-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.palette-label {
+  color: #e0e0f0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Token Name Input */
+.token-name-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: #2a2a3e;
+  border: 2px solid #3a3a4e;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.token-name-input:focus {
+  outline: none;
+  border-color: #667eea;
+  background: #323248;
+}
+
+.token-name-input::placeholder {
+  color: #6a6a7a;
+}
+
+.token-name-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Token Type Grid */
+.token-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.token-type-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: #2a2a3e;
+  border: 2px solid #3a3a4e;
+  border-radius: 8px;
+  color: #a0a0b0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.token-type-button:hover {
+  background: #323248;
+  border-color: #4a4a5e;
+  transform: translateY(-2px);
+}
+
+.token-type-button.selected {
+  background: rgba(102, 126, 234, 0.15);
+  border-color: #667eea;
+  color: #667eea;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+}
+
+.token-type-icon {
+  font-size: 2rem;
+}
+
+.token-type-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.token-type-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Color Picker */
+.color-picker-container {
+  position: relative;
+}
+
+.color-preview-button {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #3a3a4e;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.color-preview-button:hover {
+  border-color: #4a4a5e;
+  transform: scale(1.02);
+}
+
+.color-preview-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.color-picker-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  z-index: 1000;
+}
+
+.color-picker-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+/* Size Selector */
+.size-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+}
+
+.size-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  background: #2a2a3e;
+  border: 2px solid #3a3a4e;
+  border-radius: 6px;
+  color: #a0a0b0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.size-button:hover {
+  background: #323248;
+  border-color: #4a4a5e;
+  transform: translateY(-2px);
+}
+
+.size-button.selected {
+  background: rgba(102, 126, 234, 0.15);
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.size-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.size-grid {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.size-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Create Button */
+.create-token-button {
+  width: 100%;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.create-token-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+.create-token-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Help Section */
+.palette-help {
+  padding: 16px;
+  background: rgba(102, 126, 234, 0.1);
+  border-left: 4px solid #667eea;
+  border-radius: 6px;
+  color: #a0a0b0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.palette-help strong {
+  color: #667eea;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .token-type-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+  }
+
+  .token-type-button {
+    padding: 12px 8px;
+  }
+
+  .token-type-icon {
+    font-size: 1.5rem;
+  }
+
+  .size-selector {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+}

@@ -1,0 +1,53 @@
+/* SessionNotes.css */
+.session-notes {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.notes-placeholder {
+  padding: 16px;
+  background: rgba(102, 126, 234, 0.1);
+  border-left: 4px solid #667eea;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.notes-placeholder p {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: #e0e0f0;
+}
+
+.notes-placeholder small {
+  color: #a0a0b0;
+  font-size: 0.85rem;
+}
+
+.notes-editor {
+  width: 100%;
+  flex: 1;
+  padding: 14px;
+  background: #1e1e2e;
+  border: 2px solid #2a2a3e;
+  border-radius: 8px;
+  color: #e0e0f0;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  resize: none;
+}
+
+.notes-editor:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.notes-editor:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notes-editor::placeholder {
+  color: #6a6a7a;
+}

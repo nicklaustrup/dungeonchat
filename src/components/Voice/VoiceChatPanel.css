@@ -366,10 +366,11 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 4px 8px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   min-width: 280px;
+  gap: 4px;
 }
 
 .voice-minimized-bar .drag-handle {
@@ -389,15 +390,25 @@
   border: none;
   color: white;
   cursor: pointer;
-  padding: 6px;
+  padding: 4px;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
   font-size: 14px;
-  min-width: 32px;
-  height: 32px;
+  min-width: 28px;
+  height: 28px;
+}
+
+.voice-minimized-bar .btn-leave-voice {
+  background: rgba(244, 67, 54, 0.3);
+  color: #f44336;
+}
+
+.voice-minimized-bar .btn-leave-voice:hover {
+  background: rgba(244, 67, 54, 0.6);
+  color: #ff5252;
 }
 
 .voice-minimized-bar button:hover {

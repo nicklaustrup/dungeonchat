@@ -237,6 +237,28 @@
   justify-content: center;
 }
 
+.btn-vtt-session {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 180px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-vtt-session:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-vtt-session:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #555;
+}
+
 .btn-open-chat {
   padding: 0.75rem 2rem;
   font-size: 1rem;

@@ -6,6 +6,8 @@ import CampaignBrowser from '../components/Campaign/CampaignBrowser';
 import CampaignDashboard from '../components/Campaign/CampaignDashboard';
 import CampaignCreator from '../components/Campaign/CampaignCreator';
 import VoiceChatDemo from '../pages/VoiceChatDemo/VoiceChatDemo';
+import MapEditorPage from '../pages/MapEditorPage';
+import VTTSession from '../components/VTT/VTTSession/VTTSession';
 import AppNavigation from '../components/Navigation/AppNavigation';
 import Breadcrumb from '../components/Navigation/Breadcrumb';
 import { useFirebase } from '../services/FirebaseContext';
@@ -51,6 +53,13 @@ function AppRouter() {
           {/* Voice Chat Demo */}
           <Route path="/voice-demo" element={<VoiceChatDemo />} />
           <Route path="/voice-demo/:campaignId" element={<VoiceChatDemo />} />
+          
+          {/* VTT Map Editor */}
+          <Route path="/map-editor" element={<MapEditorPage />} />
+          <Route path="/campaign/:campaignId/map-editor" element={<MapEditorPage />} />
+          
+          {/* VTT Session Room */}
+          <Route path="/campaign/:campaignId/session" element={<VTTSession />} />
           
           {/* Fallback to lobby */}
           <Route path="*" element={<Navigate to="/lobby" replace />} />

@@ -1,0 +1,83 @@
+.map-editor-page {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #0d0d0d;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #fff;
+  text-align: center;
+  padding: 40px;
+}
+
+.editor-message h2 {
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.editor-message p {
+  margin: 0 0 24px 0;
+  color: #888;
+  font-size: 16px;
+}
+
+.create-campaign-button {
+  padding: 12px 24px;
+  background-color: #4a9eff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.create-campaign-button:hover {
+  background-color: #5ba8ff;
+}
+
+.campaign-selector-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #333;
+}
+
+.campaign-selector-bar label {
+  color: #ccc;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.campaign-selector-bar select {
+  padding: 8px 12px;
+  background-color: #0d0d0d;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  min-width: 200px;
+  transition: border-color 0.2s;
+}
+
+.campaign-selector-bar select:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.campaign-selector-bar select:hover {
+  border-color: #444;
+}

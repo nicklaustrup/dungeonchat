@@ -19,6 +19,8 @@ import VoiceChatPanel from '../Voice/VoiceChatPanel';
 import { CharacterCreationModal } from '../CharacterCreationModal';
 import { CharacterSheet } from '../CharacterSheet';
 import { useCharacterSheet, useCampaignCharacters } from '../../hooks/useCharacterSheet';
+import MapLibrary from '../VTT/MapLibrary/MapLibrary';
+import MapEditor from '../VTT/MapEditor/MapEditor';
 import './CampaignDashboard.css';
 import SessionQuickNav from '../Session/SessionQuickNav';
 
@@ -35,6 +37,8 @@ function CampaignDashboard() {
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
+  const [showMapEditor, setShowMapEditor] = useState(false);
+  const [editingMap, setEditingMap] = useState(null);
 
   // Use the custom hook for members with real-time updates
   const { members, loading: membersLoading, setMembers } = useCampaignMembers(firestore, campaignId);
@@ -236,6 +240,12 @@ function CampaignDashboard() {
               🎙️ Voice Chat
             </button>
             <button 
+              className={`nav-item ${activeTab === 'maps' ? 'active' : ''}`}
+              onClick={() => setActiveTab('maps')}
+            >
+              🗺️ Maps
+            </button>
+            <button 
               className={`nav-item ${activeTab === 'rules' ? 'active' : ''}`}
               onClick={() => setActiveTab('rules')}
             >
@@ -285,8 +295,16 @@ function CampaignDashboard() {
                   <div className="detail-item detail-item-action">
                     <div className="campaign-quick-actions">
                       <button 
+                        onClick={() => navigate(`/campaign/${campaignId}/session`)}
+                        className="btn btn-primary btn-vtt-session"
+                        disabled={!userMember || userMember.status !== 'active'}
+                        title="Launch Virtual Tabletop Session"
+                      >
+                        🎲 Go to Session
+                      </button>
+                      <button 
                         onClick={handleJoinChat}
-                        className="btn btn-primary btn-open-chat"
+                        className="btn btn-secondary btn-open-chat"
                         disabled={!userMember || userMember.status !== 'active'}
                       >
                         Open Chat
@@ -529,6 +547,53 @@ function CampaignDashboard() {
                   roomId="voice-general" 
                 />
               </div>
+            </div>
+          )}
+
+          {activeTab === 'maps' && (
+            <div className="maps-tab">
+              {!showMapEditor ? (
+                <>
+                  <h2>🗺️ Virtual Tabletop Maps</h2>
+                  <p className="tab-description">
+                    Upload battle maps, configure grids, and manage your map library. {isUserDM ? 'As DM, you can create and edit maps.' : 'View maps shared by your DM.'}
+                  </p>
+                  <MapLibrary 
+                    campaignId={campaignId}
+                    onSelectMap={(map) => {
+                      // TODO: Open map viewer
+                      console.log('Selected map:', map);
+                    }}
+                    onEditMap={(map) => {
+                      if (isUserDM) {
+                        setEditingMap(map);
+                        setShowMapEditor(true);
+                      }
+                    }}
+                    onDeleteMap={(mapId) => {
+                      console.log('Deleted map:', mapId);
+                    }}
+                    onCreateNew={isUserDM ? () => {
+                      setEditingMap(null);
+                      setShowMapEditor(true);
+                    } : null}
+                  />
+                </>
+              ) : (
+                <MapEditor 
+                  campaignId={campaignId}
+                  existingMap={editingMap}
+                  onSave={(savedMap) => {
+                    console.log('Map saved:', savedMap);
+                    setShowMapEditor(false);
+                    setEditingMap(null);
+                  }}
+                  onCancel={() => {
+                    setShowMapEditor(false);
+                    setEditingMap(null);
+                  }}
+                />
+              )}
             </div>
           )}
 

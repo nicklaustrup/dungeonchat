@@ -1,0 +1,145 @@
+/* EncounterBuilder.css */
+.encounter-builder {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.encounter-info {
+  padding: 14px;
+  background: rgba(243, 156, 18, 0.1);
+  border-left: 4px solid #f39c12;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.encounter-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #e0e0f0;
+}
+
+.no-map-warning {
+  padding: 20px;
+  background: rgba(231, 76, 60, 0.1);
+  border: 2px solid rgba(231, 76, 60, 0.3);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.no-map-warning p {
+  margin: 0;
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.staging-area {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #1e1e2e;
+  border-radius: 8px;
+  border: 2px solid #2a2a3e;
+}
+
+.staging-area h4 {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e0e0f0;
+}
+
+.empty-staging {
+  padding: 24px;
+  text-align: center;
+  color: #6a6a7a;
+  border: 2px dashed #3a3a4e;
+  border-radius: 6px;
+}
+
+.empty-staging p {
+  margin: 0 0 8px;
+  color: #a0a0b0;
+}
+
+.empty-staging small {
+  font-size: 0.85rem;
+}
+
+.staged-token-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.staged-token-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #16213e;
+  border: 1px solid #2a2a3e;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.staged-token-item:hover {
+  border-color: #3a3a4e;
+  transform: translateX(4px);
+}
+
+.token-color-preview {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #3a3a4e;
+  flex-shrink: 0;
+}
+
+.token-name {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e0e0f0;
+}
+
+.token-type {
+  padding: 4px 8px;
+  background: rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #667eea;
+  text-transform: uppercase;
+}
+
+.reveal-button {
+  padding: 6px 14px;
+  background: #f39c12;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.reveal-button:hover {
+  background: #e67e22;
+  transform: translateY(-1px);
+}
+
+.encounter-creator {
+  padding: 16px;
+  background: #1e1e2e;
+  border-radius: 8px;
+  border: 2px solid #2a2a3e;
+}
+
+.encounter-creator h4 {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e0e0f0;
+}

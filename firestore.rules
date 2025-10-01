@@ -156,6 +156,85 @@ service cloud.firestore {
           request.resource.data.keys().hasAll(resource.data.keys().removeAll(['availability']));
       }
       
+      // VTT Maps collection
+      match /maps/{mapId} {
+        // Campaign members can read maps
+        allow read: if request.auth != null && 
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+        
+        // Only DM can create, update, and delete maps
+        allow create, update, delete: if request.auth != null && 
+          request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+      }
+      
+      // VTT Map Tokens collection (legacy)
+      match /mapTokens/{mapId}/tokens/{tokenId} {
+        // Campaign members can read tokens
+        allow read: if request.auth != null && 
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+        
+        // Only DM can create, update, and delete tokens
+        allow create, update, delete: if request.auth != null && 
+          request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+      }
+      
+      // VTT collection (new structure for tokens, pings, fog of war)
+      match /vtt/{mapId} {
+        // Tokens subcollection
+        match /tokens/{tokenId} {
+          // Campaign members can read tokens
+          allow read: if request.auth != null && 
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          
+          // Only DM can create, update, and delete tokens
+          allow create, update, delete: if request.auth != null && 
+            request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+        }
+        
+        // Pings subcollection (temporary map markers)
+        match /pings/{pingId} {
+          // Campaign members can read pings
+          allow read: if request.auth != null && 
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          
+          // Campaign members can create and delete their own pings
+          allow create: if request.auth != null && 
+            request.auth.uid == request.resource.data.userId &&
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          
+          allow delete: if request.auth != null && 
+            (request.auth.uid == resource.data.userId || 
+             request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId);
+        }
+        
+        // Fog of war subcollection
+        match /fog/{fogDocId} {
+          // Campaign members can read fog of war
+          allow read: if request.auth != null && 
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          
+          // Only DM can create, update, and delete fog of war
+          allow create, update, delete: if request.auth != null && 
+            request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+        }
+        
+        // Drawings subcollection (pen strokes and arrows)
+        match /drawings/{drawingId} {
+          // Campaign members can read drawings
+          allow read: if request.auth != null && 
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          
+          // Campaign members can create and delete their own drawings
+          allow create: if request.auth != null && 
+            request.auth.uid == request.resource.data.createdBy &&
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          
+          allow delete: if request.auth != null && 
+            (request.auth.uid == resource.data.createdBy || 
+             request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId);
+        }
+      }
+      
       // Voice rooms within campaigns
       match /voiceRooms/{roomId} {
         // Special rule for demo campaigns - any authenticated user can access
