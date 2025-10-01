@@ -1,0 +1,316 @@
+// Firestore Security Rules for Dynamic Lighting System
+// Add these rules to your firestore.rules file
+
+// ============================================================================
+// LIGHTING SYSTEM RULES
+// ============================================================================
+
+// Add this under campaigns/{campaignId}/maps/{mapId}/ collections:
+
+// Lights Collection - Point light sources on the map
+match /lights/{lightId} {
+  // Allow read if user is in the campaign
+  allow read: if isInCampaign(campaignId);
+  
+  // Allow create/update/delete if user is the DM
+  allow create, update, delete: if isDM(campaignId);
+  
+  // Data validation for light documents
+  allow create, update: if validateLightData();
+}
+
+// Global Lighting Settings - Stored in the map document
+// Add this validation to your existing maps/{mapId} rule:
+match /maps/{mapId} {
+  // ... existing rules ...
+  
+  // Allow DM to update lighting settings
+  allow update: if isDM(campaignId) && validateLightingSettings();
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+// Check if user is in the campaign
+function isInCampaign(campaignId) {
+  return exists(/databases/$(database)/documents/campaigns/$(campaignId)/players/$(request.auth.uid))
+    || get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId == request.auth.uid;
+}
+
+// Check if user is the DM
+function isDM(campaignId) {
+  return get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId == request.auth.uid;
+}
+
+// Validate light data structure
+function validateLightData() {
+  let data = request.resource.data;
+  return data.keys().hasAll(['type', 'position', 'radius', 'intensity', 'color'])
+    && data.type is string
+    && data.type in ['point', 'ambient'] // Only point lights in Phase 1
+    && data.position is map
+    && data.position.keys().hasAll(['x', 'y'])
+    && data.position.x is number
+    && data.position.y is number
+    && data.radius is number
+    && data.radius >= 0
+    && data.radius <= 200 // Max 200 feet
+    && data.intensity is number
+    && data.intensity >= 0
+    && data.intensity <= 1
+    && data.color is string
+    && data.color.matches('^#[0-9A-Fa-f]{6}$') // Hex color validation
+    && (!data.keys().hasAny(['flicker']) || data.flicker is bool)
+    && (!data.keys().hasAny(['animated']) || data.animated is bool)
+    && (!data.keys().hasAny(['falloff']) || data.falloff in ['linear', 'quadratic', 'realistic'])
+    && (!data.keys().hasAny(['attachedTo']) || data.attachedTo is string)
+    && data.createdAt is timestamp
+    && data.createdBy == request.auth.uid;
+}
+
+// Validate global lighting settings in map document
+function validateLightingSettings() {
+  let data = request.resource.data;
+  return (!data.keys().hasAny(['lighting']) || (
+    data.lighting is map
+    && data.lighting.keys().hasAll(['enabled', 'timeOfDay', 'ambientLight'])
+    && data.lighting.enabled is bool
+    && data.lighting.timeOfDay is number
+    && data.lighting.timeOfDay >= 0
+    && data.lighting.timeOfDay <= 24
+    && data.lighting.ambientLight is number
+    && data.lighting.ambientLight >= 0
+    && data.lighting.ambientLight <= 1
+    && (!data.lighting.keys().hasAny(['outdoorLighting']) || data.lighting.outdoorLighting is bool)
+  ));
+}
+
+// ============================================================================
+// COMPLETE EXAMPLE RULES FILE
+// ============================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Campaigns
+    match /campaigns/{campaignId} {
+      // ... your existing campaign rules ...
+      
+      // Maps
+      match /maps/{mapId} {
+        allow read: if isInCampaign(campaignId);
+        allow create, update, delete: if isDM(campaignId);
+        allow update: if isDM(campaignId) && validateLightingSettings();
+        
+        // Lights - NEW COLLECTION
+        match /lights/{lightId} {
+          allow read: if isInCampaign(campaignId);
+          allow create, update, delete: if isDM(campaignId) && validateLightData();
+        }
+        
+        // ... other map subcollections (tokens, fog, etc.) ...
+      }
+    }
+    
+    // Helper functions
+    function isInCampaign(campaignId) {
+      return exists(/databases/$(database)/documents/campaigns/$(campaignId)/players/$(request.auth.uid))
+        || get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId == request.auth.uid;
+    }
+    
+    function isDM(campaignId) {
+      return get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId == request.auth.uid;
+    }
+    
+    function validateLightData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['type', 'position', 'radius', 'intensity', 'color'])
+        && data.type is string
+        && data.type in ['point', 'ambient']
+        && data.position is map
+        && data.position.keys().hasAll(['x', 'y'])
+        && data.position.x is number
+        && data.position.y is number
+        && data.radius is number
+        && data.radius >= 0
+        && data.radius <= 200
+        && data.intensity is number
+        && data.intensity >= 0
+        && data.intensity <= 1
+        && data.color is string
+        && data.color.matches('^#[0-9A-Fa-f]{6}$')
+        && (!data.keys().hasAny(['flicker']) || data.flicker is bool)
+        && (!data.keys().hasAny(['animated']) || data.animated is bool)
+        && (!data.keys().hasAny(['falloff']) || data.falloff in ['linear', 'quadratic', 'realistic'])
+        && (!data.keys().hasAny(['attachedTo']) || data.attachedTo is string)
+        && data.createdAt is timestamp
+        && data.createdBy == request.auth.uid;
+    }
+    
+    function validateLightingSettings() {
+      let data = request.resource.data;
+      return (!data.keys().hasAny(['lighting']) || (
+        data.lighting is map
+        && data.lighting.keys().hasAll(['enabled', 'timeOfDay', 'ambientLight'])
+        && data.lighting.enabled is bool
+        && data.lighting.timeOfDay is number
+        && data.lighting.timeOfDay >= 0
+        && data.lighting.timeOfDay <= 24
+        && data.lighting.ambientLight is number
+        && data.lighting.ambientLight >= 0
+        && data.lighting.ambientLight <= 1
+        && (!data.lighting.keys().hasAny(['outdoorLighting']) || data.lighting.outdoorLighting is bool)
+      ));
+    }
+  }
+}
+
+// ============================================================================
+// TESTING YOUR RULES
+// ============================================================================
+
+// Use the Firebase Console Rules Playground to test:
+
+// Test 1: DM can create a light
+// Auth: DM user
+// Location: /campaigns/testCampaign/maps/testMap/lights/light1
+// Operation: create
+// Data: {
+//   type: 'point',
+//   position: { x: 100, y: 100 },
+//   radius: 40,
+//   intensity: 0.8,
+//   color: '#FF8800',
+//   flicker: true,
+//   animated: false,
+//   falloff: 'realistic',
+//   createdAt: timestamp,
+//   createdBy: 'dmUserId'
+// }
+// Expected: ALLOW
+
+// Test 2: Player cannot create a light
+// Auth: Player user (not DM)
+// Location: /campaigns/testCampaign/maps/testMap/lights/light1
+// Operation: create
+// Data: [same as above]
+// Expected: DENY
+
+// Test 3: Player can read lights
+// Auth: Player user
+// Location: /campaigns/testCampaign/maps/testMap/lights/light1
+// Operation: read
+// Expected: ALLOW (if player is in campaign)
+
+// Test 4: DM can update lighting settings
+// Auth: DM user
+// Location: /campaigns/testCampaign/maps/testMap
+// Operation: update
+// Data: {
+//   lighting: {
+//     enabled: true,
+//     timeOfDay: 12,
+//     ambientLight: 0.7,
+//     outdoorLighting: true
+//   }
+// }
+// Expected: ALLOW
+
+// Test 5: Invalid light data is rejected
+// Auth: DM user
+// Location: /campaigns/testCampaign/maps/testMap/lights/light1
+// Operation: create
+// Data: { type: 'point', radius: -10 } // Invalid: negative radius
+// Expected: DENY
+
+// ============================================================================
+// DATA STRUCTURE REFERENCE
+// ============================================================================
+
+// Light Document:
+// campaigns/{campaignId}/maps/{mapId}/lights/{lightId}
+{
+  type: 'point',              // 'point' or 'ambient'
+  position: {
+    x: 100,                   // X coordinate on map
+    y: 100                    // Y coordinate on map
+  },
+  radius: 40,                 // Light radius in feet (0-200)
+  intensity: 0.8,             // Light intensity (0-1)
+  color: '#FF8800',           // Hex color code
+  flicker: true,              // Enable flicker animation (optional)
+  animated: false,            // Enable pulse animation (optional)
+  falloff: 'realistic',       // 'linear', 'quadratic', or 'realistic' (optional)
+  attachedTo: 'token123',     // Token ID if attached (optional)
+  createdAt: timestamp,       // Creation timestamp
+  createdBy: 'userId',        // Creator user ID
+  updatedAt: timestamp        // Last update timestamp (optional)
+}
+
+// Map Document - Lighting Settings:
+// campaigns/{campaignId}/maps/{mapId}
+{
+  // ... other map fields ...
+  lighting: {
+    enabled: true,            // Lighting system on/off
+    timeOfDay: 12,            // Time in hours (0-24)
+    ambientLight: 0.7,        // Ambient light level (0-1)
+    outdoorLighting: true     // Enable outdoor lighting (optional)
+  }
+}
+
+// ============================================================================
+// DEPLOYMENT INSTRUCTIONS
+// ============================================================================
+
+// 1. Open Firebase Console: https://console.firebase.google.com
+// 2. Select your project
+// 3. Navigate to Firestore Database → Rules
+// 4. Add the lighting rules to your existing rules file
+// 5. Click "Publish" to deploy
+// 6. Test using the Rules Playground
+
+// OR use Firebase CLI:
+// 1. Update your local firestore.rules file
+// 2. Run: firebase deploy --only firestore:rules
+// 3. Verify deployment in console
+
+// ============================================================================
+// MIGRATION NOTES
+// ============================================================================
+
+// If you already have maps with lights:
+// - Existing lights will need createdBy and createdAt fields
+// - Run this migration script in Firebase Console:
+
+/*
+const admin = require('firebase-admin');
+const db = admin.firestore();
+
+async function migrateLights() {
+  const campaigns = await db.collection('campaigns').get();
+  
+  for (const campaign of campaigns.docs) {
+    const maps = await campaign.ref.collection('maps').get();
+    
+    for (const map of maps.docs) {
+      const lights = await map.ref.collection('lights').get();
+      
+      for (const light of lights.docs) {
+        const data = light.data();
+        if (!data.createdAt || !data.createdBy) {
+          await light.ref.update({
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdBy: campaign.data().dmId,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }
+    }
+  }
+}
+*/
+
+// ============================================================================

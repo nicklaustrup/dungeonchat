@@ -10,8 +10,8 @@
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background: #1a1a2e;
-  color: #e0e0f0;
+  background: var(--bg-primary, #1a1a2e);
+  color: var(--text-primary, #e0e0f0);
   overflow: hidden;
   z-index: 9999;
 }
@@ -72,12 +72,12 @@
   color: white;
   width: 36px;
   height: 36px;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   font-size: 1.2rem;
 }
 
@@ -115,12 +115,12 @@
   padding: 8px 16px;
   background: rgba(255, 255, 255, 0.15);
   border: 2px solid transparent;
-  border-radius: 6px;
+  border-radius: 8px;
   color: white;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   white-space: nowrap;
 }
 
@@ -181,8 +181,8 @@
 .vtt-sidebar,
 .vtt-token-sidebar {
   width: 420px;
-  background: #16213e;
-  border-right: 1px solid #2a2a3e;
+  background: var(--bg-secondary, #16213e);
+  border-right: 1px solid var(--border-color, #2a2a3e);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -399,7 +399,7 @@
 /* Animation for panel transitions */
 .vtt-sidebar,
 .vtt-token-sidebar {
-  animation: slideIn 0.3s ease;
+  animation: slideIn 0.18s ease;
 }
 
 @keyframes slideIn {
@@ -411,4 +411,42 @@
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+/* Keyboard Navigation & Accessibility */
+button:focus-visible,
+.toolbar-button:focus-visible,
+.sidebar-toggle:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Light Theme Support */
+.light-theme .vtt-session {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.light-theme .vtt-toolbar {
+  background: linear-gradient(135deg, #7c8fe6 0%, #8a63b8 100%);
+}
+
+.light-theme .vtt-sidebar,
+.light-theme .vtt-token-sidebar {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+.light-theme .sidebar-placeholder {
+  color: var(--text-secondary);
 }

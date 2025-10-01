@@ -1,0 +1,38 @@
+.token-context-menu { position:absolute; z-index:250; background:#1e1e24; border:1px solid #444; border-radius:8px; width:240px; font-family:system-ui,sans-serif; color:#eee; box-shadow:0 6px 24px rgba(0,0,0,0.5); padding:4px 0 8px; }
+.tcm-header { display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:#26262d; border-bottom:1px solid #333; font-size:13px; }
+.tcm-header button { background:transparent; border:none; color:#aaa; font-size:16px; cursor:pointer; }
+.tcm-header button:hover { color:#fff; }
+.tcm-section { padding:8px 10px 4px; border-bottom:1px solid #2f2f37; }
+.tcm-section:last-of-type { border-bottom:none; }
+.tcm-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.tcm-label { font-size:12px; opacity:0.8; }
+.tcm-value { font-size:12px; font-weight:600; }
+.hp-adjust input { flex:1; background:#111; border:1px solid #333; color:#eee; padding:4px 6px; border-radius:4px; font-size:12px; }
+.hp-adjust button { background:#3d6df2; color:#fff; border:1px solid #3d6df2; padding:4px 8px; font-size:12px; border-radius:4px; cursor:pointer; }
+.hp-adjust button:hover { background:#335ad0; }
+.tcm-subheader { font-size:12px; font-weight:600; margin-bottom:4px; opacity:0.85; }
+.tcm-status-list { max-height:80px; overflow-y:auto; background:#15151a; border:1px solid #2a2a31; border-radius:4px; padding:4px; display:flex; flex-wrap:wrap; gap:4px; }
+.tcm-status-item { background:#2d2d35; border:1px solid #444; border-radius:4px; padding:2px 4px; display:flex; align-items:center; gap:4px; font-size:11px; }
+.tcm-status-item button { background:transparent; border:none; color:#aaa; cursor:pointer; font-size:12px; }
+.tcm-status-item button:hover { color:#fff; }
+.tcm-empty { font-size:11px; opacity:0.6; width:100%; text-align:center; padding:4px 0; }
+.add-status input { background:#111; border:1px solid #333; color:#eee; padding:4px 6px; border-radius:4px; font-size:11px; }
+.add-status button { background:#555; color:#eee; border:1px solid #666; padding:4px 8px; font-size:11px; border-radius:4px; cursor:pointer; }
+.add-status button:hover { background:#666; }
+.actions { display:flex; gap:8px; justify-content:space-between; padding-top:4px; }
+.actions button { flex:1; background:#333; color:#eee; border:1px solid #444; padding:6px 8px; font-size:12px; border-radius:4px; cursor:pointer; }
+.actions button:hover { background:#444; }
+.actions button.danger { background:#7a1f1f; border-color:#8c2727; }
+.actions button.danger:hover { background:#9a2d2d; }
+
+/* Icon Picker */
+.icon-picker-wrapper { position:relative; }
+.icon-picker-trigger { background:#222; border:1px solid #444; color:#eee; width:40px; height:32px; border-radius:4px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; }
+.icon-picker-trigger:hover { background:#2e2e2e; }
+.icon-picker-pop { position:absolute; top:38px; left:0; background:#1e1e24; border:1px solid #444; border-radius:6px; padding:6px; width:220px; max-height:200px; overflow:auto; display:flex; flex-wrap:wrap; gap:4px; box-shadow:0 4px 18px rgba(0,0,0,0.45); z-index:500; }
+.icon-choice { background:#2b2b33; border:1px solid #444; color:#eee; width:38px; height:38px; border-radius:4px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; }
+.icon-choice:hover { background:#383840; }
+.icon-choice.active { outline:2px solid #5d8dff; background:#34405a; }
+.icon-picker-actions { width:100%; display:flex; justify-content:flex-end; margin-top:4px; }
+.icon-picker-actions button { background:#333; border:1px solid #555; color:#ccc; font-size:11px; padding:2px 6px; border-radius:4px; cursor:pointer; }
+.icon-picker-actions button:hover { background:#444; color:#fff; }

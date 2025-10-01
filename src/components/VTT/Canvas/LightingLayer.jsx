@@ -1,0 +1,122 @@
+import React, { useMemo } from 'react';
+import { Layer, Circle, Rect } from 'react-konva';
+
+/**
+ * LightingLayer Component
+ * Renders dynamic lighting effects on the canvas
+ */
+const LightingLayer = ({ 
+  lights = [], 
+  globalLighting = {}, 
+  mapWidth, 
+  mapHeight,
+  visible = true 
+}) => {
+  // Calculate flicker offset for animated lights
+  const flickerPhase = useMemo(() => Date.now() / 100, []);
+
+  if (!visible || !globalLighting.enabled) {
+    return null;
+  }
+
+  // Calculate darkness overlay opacity based on ambient light
+  const darknessOpacity = 1 - (globalLighting.ambientLight || 0.7);
+
+  return (
+    <Layer name="lighting-layer" listening={false}>
+      {/* Render each light source as a radial gradient */}
+      {lights.map((light, index) => {
+        // Calculate flicker effect
+        let radiusMultiplier = 1.0;
+        let intensityMultiplier = 1.0;
+        
+        if (light.flicker) {
+          const flicker = Math.sin(flickerPhase + index) * 0.1 + 0.9;
+          radiusMultiplier = flicker;
+          intensityMultiplier = flicker;
+        }
+
+        // Calculate animated pulse effect
+        if (light.animated) {
+          const pulse = Math.sin(Date.now() / 1000 + index) * 0.15 + 0.85;
+          radiusMultiplier *= pulse;
+          intensityMultiplier *= pulse;
+        }
+
+        const effectiveRadius = light.radius * radiusMultiplier;
+        const effectiveIntensity = (light.intensity || 0.8) * intensityMultiplier;
+
+        // Create radial gradient for light
+        return (
+          <React.Fragment key={light.id}>
+            {/* Outer glow (dim light) */}
+            <Circle
+              x={light.position.x}
+              y={light.position.y}
+              radius={effectiveRadius}
+              fillRadialGradientStartPoint={{ x: 0, y: 0 }}
+              fillRadialGradientStartRadius={0}
+              fillRadialGradientEndPoint={{ x: 0, y: 0 }}
+              fillRadialGradientEndRadius={effectiveRadius}
+              fillRadialGradientColorStops={[
+                0,
+                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.8),
+                0.5,
+                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.4),
+                1,
+                'rgba(0, 0, 0, 0)'
+              ]}
+              listening={false}
+              globalCompositeOperation="lighten"
+            />
+
+            {/* Inner bright light */}
+            <Circle
+              x={light.position.x}
+              y={light.position.y}
+              radius={effectiveRadius * 0.3}
+              fillRadialGradientStartPoint={{ x: 0, y: 0 }}
+              fillRadialGradientStartRadius={0}
+              fillRadialGradientEndPoint={{ x: 0, y: 0 }}
+              fillRadialGradientEndRadius={effectiveRadius * 0.3}
+              fillRadialGradientColorStops={[
+                0,
+                hexToRgba(light.color || '#FFFFFF', effectiveIntensity),
+                1,
+                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.5)
+              ]}
+              listening={false}
+              globalCompositeOperation="lighten"
+            />
+          </React.Fragment>
+        );
+      })}
+
+      {/* Darkness overlay (reduced in lit areas by the lights above) */}
+      {darknessOpacity > 0 && (
+        <Rect
+          x={0}
+          y={0}
+          width={mapWidth}
+          height={mapHeight}
+          fill="black"
+          opacity={darknessOpacity}
+          listening={false}
+          globalCompositeOperation="multiply"
+        />
+      )}
+    </Layer>
+  );
+};
+
+/**
+ * Convert hex color to rgba
+ */
+const hexToRgba = (hex, alpha = 1) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return `rgba(255, 255, 255, ${alpha})`;
+  
+  return `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${alpha})`;
+};
+
+export default React.memo(LightingLayer);

@@ -13,6 +13,7 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
   const [currentTurn, setCurrentTurn] = useState(0);
   const [round, setRound] = useState(1);
   const [isActive, setIsActive] = useState(false);
+  const [collectingInitiative, setCollectingInitiative] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddCombatant, setShowAddCombatant] = useState(false);
@@ -39,6 +40,7 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
             setCurrentTurn(data.currentTurn || 0);
             setRound(data.round || 1);
             setIsActive(data.isActive || false);
+            setCollectingInitiative(!!data.collectingInitiative);
           } else {
             // Initialize empty initiative tracker
             setCombatants([]);
@@ -69,11 +71,34 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
 
     try {
       await initiativeService.startCombat(firestore, campaignId);
+      // Clear collection phase flag
+      setCollectingInitiative(false);
     } catch (error) {
       console.error('Error starting combat:', error);
       setError('Failed to start combat');
     }
   }, [firestore, campaignId, isDM, combatants.length]);
+
+  // Begin initiative collection
+  const handleInitiateCollection = useCallback(async () => {
+    if (!isDM) return;
+    try {
+      await initiativeService.initiateInitiativeCheck(firestore, campaignId);
+    } catch (error) {
+      console.error('Error initiating initiative check:', error);
+      setError('Failed to initiate initiative collection');
+    }
+  }, [firestore, campaignId, isDM]);
+
+  const handleCancelCollection = useCallback(async () => {
+    if (!isDM) return;
+    try {
+      await initiativeService.cancelInitiativeCollection(firestore, campaignId);
+    } catch (error) {
+      console.error('Error cancelling initiative collection:', error);
+      setError('Failed to cancel initiative collection');
+    }
+  }, [firestore, campaignId, isDM]);
 
   // End combat
   const handleEndCombat = useCallback(async () => {
@@ -246,13 +271,31 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
           <div className="dm-controls">
             {!isActive ? (
               <div className="pre-combat-controls">
-                <button 
-                  onClick={handleStartCombat}
-                  disabled={combatants.length === 0}
-                  className="start-combat-button"
-                >
-                  Start Combat
-                </button>
+                {!collectingInitiative && (
+                  <button
+                    onClick={handleInitiateCollection}
+                    className="start-combat-button"
+                  >
+                    Roll Initiative
+                  </button>
+                )}
+                {collectingInitiative && (
+                  <button 
+                    onClick={handleStartCombat}
+                    disabled={combatants.length === 0 || combatants.every(c => typeof c.initiative !== 'number')}
+                    className="start-combat-button"
+                  >
+                    Start Combat
+                  </button>
+                )}
+                {collectingInitiative && (
+                  <button
+                    onClick={handleCancelCollection}
+                    className="end-combat-button"
+                  >
+                    Cancel
+                  </button>
+                )}
                 <button 
                   onClick={() => setShowAddCombatant(true)}
                   className="add-combatant-button"
@@ -339,6 +382,12 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
         {sortedCombatants.length === 0 && (
           <div className="empty-state">
             <p>No combatants added yet. Click "Add Combatant" to begin setting up initiative order.</p>
+          </div>
+        )}
+
+        {collectingInitiative && !isActive && (
+          <div className="collection-banner">
+            <p>Waiting for players to roll initiative in chat using <code>/init</code>. Enemies auto-rolled.</p>
           </div>
         )}
 

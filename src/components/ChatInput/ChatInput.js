@@ -14,6 +14,7 @@ import { BulkImagePreviewModal } from './BulkImagePreviewModal';
 import { MessageBar } from './MessageBar';
 import { ActionButtons } from './ActionButtons';
 import { diceService, parseInlineDiceCommand, formatRollForChat } from '../../services/diceService';
+import { initiativeService } from '../../services/initiativeService';
 import { getCharacterContext, getMessageContextType, cleanMessageText } from '../../services/characterContextService';
 import DiceRoller from '../DiceRoll/DiceRoller';
 import CharacterCommandsHelp from './CharacterCommandsHelp';
@@ -297,6 +298,49 @@ function ChatInput({
     try {
       const trimmedText = text.trim();
       
+      // Initiative command (/init optionalModifier) - only in campaign context
+      if (campaignId && trimmedText.startsWith('/init')) {
+        try {
+          // Extract optional modifier e.g. /init +3 or /init -1
+            const parts = trimmedText.split(/\s+/);
+            let mod = 0;
+            if (parts.length > 1) {
+              const m = parseInt(parts[1], 10);
+              if (!isNaN(m)) mod = m;
+            } else if (characterData) {
+              // Use dex modifier if character sheet present
+              const dex = characterData?.abilityScores?.dexterity;
+              if (typeof dex === 'number') {
+                mod = Math.floor((dex - 10) / 2);
+              }
+            }
+            const roll = Math.floor(Math.random() * 20) + 1;
+            const total = roll + mod;
+            // Record in initiative tracker
+            await initiativeService.recordPlayerInitiativeRoll(firestore, campaignId, user.uid, total, characterData);
+            const playerName = getPlayerName();
+            await createTextMessage({
+              firestore,
+              text: `⚔️ **${playerName}** rolls initiative: **${total}** (d20=${roll}${mod !== 0 ? (mod > 0 ? `+${mod}` : mod) : ''})`,
+              user,
+              getDisplayName,
+              replyTo: replyingTo,
+              campaignId,
+              channelId,
+              messageType: 'dice_roll',
+              diceData: { total, rollSum: roll, modifier: mod, individual: [roll], breakdown: mod !== 0 ? `${roll}${mod>0?`+${mod}`:mod}`: `${roll}`, notation: mod!==0?`1d20${mod>0?`+${mod}`:mod}`:'1d20', timestamp: Date.now(), initiative: true }
+            });
+            setText('');
+            setReplyingTo(null);
+            if (soundEnabled) playSendMessageSound(true);
+            if (forceScrollBottom) setTimeout(() => forceScrollBottom(), 10);
+            return; // handled
+        } catch (error) {
+          pushToast('Failed to record initiative: ' + error.message, { type: 'error' });
+          return;
+        }
+      }
+
       // Check for character-aware dice commands first (if in campaign with character)
       const diceCommand = parseInlineDiceCommand(trimmedText, characterData);
       

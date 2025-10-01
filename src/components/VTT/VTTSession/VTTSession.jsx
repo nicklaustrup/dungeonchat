@@ -17,7 +17,9 @@ import MapQueue from './MapQueue';
 import EncounterBuilder from './EncounterBuilder';
 import ResizablePanel from './ResizablePanel';
 import CharacterSheetPanel from './CharacterSheetPanel';
+import LightingPanel from '../Lighting/LightingPanel';
 import useTokens from '../../../hooks/vtt/useTokens';
+import useLighting from '../../../hooks/vtt/useLighting';
 import { 
   FiMessageSquare, 
   FiFileText, 
@@ -80,6 +82,12 @@ function VTTSession() {
   
   // Fog of War state
   const [fogOfWarEnabled, setFogOfWarEnabled] = useState(false);
+  
+  // Lighting state
+  const [showLightingPanel, setShowLightingPanel] = useState(false);
+  
+  // Load lighting system for active map
+  const lightingHook = useLighting(firestore, campaignId, activeMap?.id, activeMap?.lighting);
   
   // Help tooltip state
   const [helpTooltipDismissed, setHelpTooltipDismissed] = useState(false);
@@ -353,6 +361,8 @@ function VTTSession() {
             className="sidebar-toggle"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             title={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+            aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+            aria-pressed={isSidebarOpen}
           >
             {isSidebarOpen ? <FiX /> : <FiMenu />}
           </button>
@@ -391,6 +401,8 @@ function VTTSession() {
               }
             }}
             title="Session Chat (Click to toggle, Right-click to pop out)"
+            aria-label="Session Chat"
+            aria-pressed={activePanel === 'chat' || floatingPanels.chat}
           >
             <FiMessageSquare />
             <span>Chat {floatingPanels.chat && '⬜'}</span>
@@ -400,6 +412,8 @@ function VTTSession() {
             className={`toolbar-button ${activePanel === 'rules' ? 'active' : ''}`}
             onClick={() => togglePanel('rules')}
             title="Campaign Rules"
+            aria-label="Campaign Rules"
+            aria-pressed={activePanel === 'rules'}
           >
             <FiFileText />
             <span>Rules</span>
@@ -432,6 +446,8 @@ function VTTSession() {
               }
             }}
             title="Party Management (Click to toggle, Right-click to pop out)"
+            aria-label="Party Management"
+            aria-pressed={activePanel === 'party' || floatingPanels.party}
           >
             <FiUsers />
             <span>Party {floatingPanels.party && '⬜'}</span>
@@ -441,6 +457,8 @@ function VTTSession() {
             className={`toolbar-button ${activePanel === 'initiative' ? 'active' : ''}`}
             onClick={() => togglePanel('initiative')}
             title="Initiative Tracker"
+            aria-label="Initiative Tracker"
+            aria-pressed={activePanel === 'initiative'}
           >
             <FiTarget />
             <span>Initiative</span>
@@ -450,6 +468,8 @@ function VTTSession() {
             className={`toolbar-button ${floatingPanels.characters ? 'active' : ''}`}
             onClick={() => toggleFloatingPanel('characters')}
             title="Character Sheets"
+            aria-label="Character Sheets"
+            aria-pressed={floatingPanels.characters}
           >
             <FiUser />
             <span>Characters</span>
@@ -461,6 +481,8 @@ function VTTSession() {
                 className={`toolbar-button ${activePanel === 'maps' ? 'active' : ''}`}
                 onClick={() => togglePanel('maps')}
                 title="Map Queue"
+                aria-label="Map Queue"
+                aria-pressed={activePanel === 'maps'}
               >
                 <FiMap />
                 <span>Maps</span>
@@ -470,6 +492,8 @@ function VTTSession() {
                 className={`toolbar-button ${activePanel === 'encounter' ? 'active' : ''}`}
                 onClick={() => togglePanel('encounter')}
                 title="Encounter Builder"
+                aria-label="Encounter Builder"
+                aria-pressed={activePanel === 'encounter'}
               >
                 <FiSettings />
                 <span>Encounters</span>
@@ -483,6 +507,17 @@ function VTTSession() {
                 {fogOfWarEnabled ? <FiEyeOff /> : <FiEye />}
                 <span>Fog</span>
               </button>
+
+              <button
+                className={`toolbar-button ${showLightingPanel ? 'active' : ''}`}
+                onClick={() => setShowLightingPanel(!showLightingPanel)}
+                title={showLightingPanel ? 'Hide Lighting Controls' : 'Show Lighting Controls'}
+                aria-label="Lighting Controls"
+                aria-pressed={showLightingPanel}
+              >
+                💡
+                <span>Lighting</span>
+              </button>
             </>
           )}
         </div>
@@ -493,6 +528,7 @@ function VTTSession() {
               className="toolbar-button danger"
               onClick={handleDeleteToken}
               title="Delete Selected Token"
+              aria-label="Delete Selected Token"
             >
               <FiTrash />
               <span>Delete Token</span>
@@ -504,6 +540,8 @@ function VTTSession() {
               className={`toolbar-button primary ${showTokenManager ? 'active' : ''}`}
               onClick={() => setShowTokenManager(!showTokenManager)}
               title="Token Manager"
+              aria-label="Token Manager"
+              aria-pressed={showTokenManager}
             >
               🎭 Tokens
             </button>
@@ -513,6 +551,7 @@ function VTTSession() {
             className="toolbar-button exit-button"
             onClick={() => navigate(`/campaign/${campaignId}`)}
             title="Exit Session"
+            aria-label="Exit VTT Session and return to campaign"
           >
             <FiLogOut />
             <span>Exit</span>
@@ -702,6 +741,20 @@ function VTTSession() {
             setActivePanel('party');
             setIsSidebarOpen(true);
           }}
+        />
+      )}
+
+      {/* Lighting Control Panel */}
+      {isUserDM && showLightingPanel && activeMap && (
+        <LightingPanel
+          lights={lightingHook.lights}
+          globalLighting={lightingHook.globalLighting}
+          onCreateLight={lightingHook.createLight}
+          onUpdateLight={lightingHook.updateLight}
+          onDeleteLight={lightingHook.deleteLight}
+          onUpdateGlobalLighting={lightingHook.updateGlobalLighting}
+          onClose={() => setShowLightingPanel(false)}
+          isDM={isUserDM}
         />
       )}
 

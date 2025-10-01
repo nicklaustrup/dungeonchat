@@ -4,7 +4,7 @@
  * Supports persistent and temporary shapes with customizable colors and opacity
  */
 
-import { collection, addDoc, deleteDoc, doc, onSnapshot, query, where, Timestamp, getDocs } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, onSnapshot, query, where, Timestamp, getDocs, setDoc } from 'firebase/firestore';
 
 export const shapeService = {
   /**
@@ -173,5 +173,23 @@ export const shapeService = {
     const snapshot = await getDocs(shapesRef);
     const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
     await Promise.all(deletePromises);
+  },
+
+  /**
+   * Restore an array of shapes (used for undo). Shape objects should include original id and fields.
+   */
+  async restoreShapes(firestore, campaignId, mapId, shapes) {
+    if (!Array.isArray(shapes) || !shapes.length) return;
+    const tasks = shapes.map(s => {
+      const ref = doc(firestore, 'campaigns', campaignId, 'maps', mapId, 'shapes', s.id);
+      // Persist original timestamps if present; otherwise set new createdAt.
+      const { id, ...rest } = s;
+      return setDoc(ref, {
+        ...rest,
+        createdAt: rest.createdAt || Timestamp.now(),
+        expiresAt: rest.expiresAt || (rest.persistent ? null : (rest.expiresAt ?? Timestamp.fromMillis(Date.now() + 10000)))
+      });
+    });
+    await Promise.all(tasks);
   }
 };

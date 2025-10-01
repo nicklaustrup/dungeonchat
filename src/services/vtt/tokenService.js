@@ -44,6 +44,10 @@ export const tokenService = {
       ownerId: tokenData.ownerId || null,
       isHidden: tokenData.isHidden || false,
       staged: tokenData.staged || false,
+      // VTT Enhancements
+      hp: tokenData.hp ?? null, // null means no HP tracking
+      maxHp: tokenData.maxHp ?? null,
+      statusEffects: tokenData.statusEffects || [], // array of { id, name, icon? }
       createdBy: tokenData.createdBy || '',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
@@ -118,6 +122,60 @@ export const tokenService = {
       position,
       lastMovedAt: serverTimestamp()
     });
+  },
+
+  /**
+   * Add a status effect to a token (idempotent by name)
+   */
+  async addStatusEffect(firestore, campaignId, mapId, tokenId, effect) {
+    const tokenRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'tokens', tokenId);
+    const snap = await getDoc(tokenRef);
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const existing = data.statusEffects || [];
+    if (existing.some(e => e.name === effect.name)) return; // no duplicate names
+    await updateDoc(tokenRef, {
+      statusEffects: [...existing, { id: effect.id || effect.name, ...effect }],
+      updatedAt: serverTimestamp()
+    });
+  },
+
+  /**
+   * Remove a status effect by id or name
+   */
+  async removeStatusEffect(firestore, campaignId, mapId, tokenId, effectIdOrName) {
+    const tokenRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'tokens', tokenId);
+    const snap = await getDoc(tokenRef);
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const existing = data.statusEffects || [];
+    const filtered = existing.filter(e => e.id !== effectIdOrName && e.name !== effectIdOrName);
+    await updateDoc(tokenRef, {
+      statusEffects: filtered,
+      updatedAt: serverTimestamp()
+    });
+  },
+
+  /**
+   * Update HP (clamped 0..maxHp when maxHp provided)
+   */
+  async updateHP(firestore, campaignId, mapId, tokenId, deltaOrValue, isAbsolute = false) {
+    const tokenRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'tokens', tokenId);
+    const snap = await getDoc(tokenRef);
+    if (!snap.exists()) return;
+    const data = snap.data();
+    let hp = data.hp ?? 0;
+    const maxHp = data.maxHp ?? null;
+    if (isAbsolute) {
+      hp = deltaOrValue;
+    } else {
+      hp += deltaOrValue;
+    }
+    if (maxHp != null) {
+      hp = Math.min(maxHp, hp);
+    }
+    hp = Math.max(0, hp);
+    await updateDoc(tokenRef, { hp, updatedAt: serverTimestamp() });
   },
 
   /**

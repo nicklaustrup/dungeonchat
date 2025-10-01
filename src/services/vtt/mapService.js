@@ -135,6 +135,24 @@ export const mapService = {
   },
 
   /**
+   * Activate a map and return a snapshot of previous active states for undo.
+   */
+  async activateMapWithSnapshot(firestore, campaignId, mapId) {
+    const maps = await this.getMaps(firestore, campaignId);
+    const snapshot = maps.map(m => ({ id: m.id, isActive: m.isActive }));
+    await this.setActiveMap(firestore, campaignId, mapId);
+    return snapshot;
+  },
+
+  /**
+   * Restore map active states from a snapshot.
+   */
+  async restoreActiveSnapshot(firestore, campaignId, snapshot) {
+    if (!Array.isArray(snapshot)) return;
+    await Promise.all(snapshot.map(s => this.updateMap(firestore, campaignId, s.id, { isActive: s.isActive })));
+  },
+
+  /**
    * Upload map image to Firebase Storage
    * @param {Object} storage - Firebase Storage instance
    * @param {File} file - Image file

@@ -154,6 +154,8 @@ const MapToolbar = ({
             className="toolbar-control-btn"
             onClick={() => setShowSettings(!showSettings)}
             title="Settings"
+            aria-label="Toggle toolbar settings"
+            aria-pressed={showSettings}
           >
             <FiSettings size={14} />
           </button>
@@ -161,6 +163,8 @@ const MapToolbar = ({
             className="toolbar-control-btn"
             onClick={() => setIsMinimized(!isMinimized)}
             title={isMinimized ? "Expand" : "Minimize"}
+            aria-label={isMinimized ? "Expand toolbar" : "Minimize toolbar"}
+            aria-pressed={isMinimized}
           >
             {isMinimized ? <FiMaximize2 size={14} /> : <FiMinus size={14} />}
           </button>
@@ -168,7 +172,7 @@ const MapToolbar = ({
       </div>
 
       {!isMinimized && (
-        <>
+        <div className="scrollable-body">
           <div className="toolbar-buttons">
             {tools.map(tool => {
               const Icon = tool.icon;
@@ -178,6 +182,8 @@ const MapToolbar = ({
                   className={`toolbar-button ${activeTool === tool.id ? 'active' : ''}`}
                   onClick={() => onToolChange(tool.id)}
                   title={tool.description}
+                  aria-label={`${tool.label} - ${tool.description}`}
+                  aria-pressed={activeTool === tool.id}
                 >
                   <Icon size={20} />
                   <span className="toolbar-label">{tool.label}</span>
@@ -191,6 +197,7 @@ const MapToolbar = ({
                 className="toolbar-button"
                 onClick={() => onOpenGridConfig?.()}
                 title="Grid Settings"
+                aria-label="Open Grid Configuration Settings"
               >
                 <FiGrid size={20} />
                 <span className="toolbar-label">Grid</span>
@@ -339,7 +346,7 @@ const MapToolbar = ({
               )}
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

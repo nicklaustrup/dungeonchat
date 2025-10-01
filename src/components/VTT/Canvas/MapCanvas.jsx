@@ -1,12 +1,23 @@
-import React, { useRef, useState, useEffect, useContext, Fragment } from 'react';
+import React, { useRef, useState, useEffect, useContext, Fragment, useMemo, useCallback } from 'react';
 import { Stage, Layer, Image as KonvaImage, Rect, Line, Arrow, Circle, Text as KonvaText } from 'react-konva';
 import useImage from 'use-image';
 import GridLayer from './GridLayer';
 import TokenSprite from '../TokenManager/TokenSprite';
 import MapToolbar from './MapToolbar';
 import GridConfigurator from './GridConfigurator';
+import LayerManager from './LayerManager';
+import MapLibraryPanel from '../MapLibrary/MapLibraryPanel';
+import AudioController from '../Audio/AudioController';
+import TokenExtendedEditor from '../TokenManager/TokenExtendedEditor';
+import TokenContextMenu from '../TokenManager/TokenContextMenu';
+import LightingLayer from './LightingLayer';
+import { initiativeService } from '../../../services/initiativeService';
 import { mapService } from '../../../services/vtt/mapService';
 import useTokens from '../../../hooks/vtt/useTokens';
+import useCanvasTools from '../../../hooks/vtt/useCanvasTools';
+import useDrawingState from '../../../hooks/vtt/useDrawingState';
+import useCanvasViewport from '../../../hooks/vtt/useCanvasViewport';
+import useLighting from '../../../hooks/vtt/useLighting';
 import { tokenService } from '../../../services/vtt/tokenService';
 import { pingService } from '../../../services/vtt/pingService';
 import { fogOfWarService } from '../../../services/vtt/fogOfWarService';
@@ -34,32 +45,63 @@ function MapCanvas({
 }) {
   const { firestore, user } = useContext(FirebaseContext);
   const stageRef = useRef(null);
-  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
-  const [stageScale, setStageScale] = useState(1);
   const [mapImage] = useImage(map?.imageUrl || '', 'anonymous');
-  const [isDragging, setIsDragging] = useState(false);
+  
+  // Custom hooks for organized state management
+  const {
+    stagePos,
+    stageScale,
+    isDragging,
+    setStagePos,
+    setStageScale,
+    setIsDragging
+  } = useCanvasViewport({ minScale: 0.2, maxScale: 5, scaleBy: 1.05 });
+  
+  const {
+    activeTool,
+    pingColor,
+    penColor,
+    shapeColor,
+    shapeOpacity,
+    shapePersistent,
+    shapeVisibility,
+    setActiveTool,
+    setPingColor,
+    setPenColor,
+    setShapeColor,
+    setShapeOpacity,
+    setShapePersistent,
+    setShapeVisibility
+  } = useCanvasTools();
+  
+  const {
+    drawings,
+    isDrawing,
+    currentDrawing,
+    arrowStart,
+    shapes,
+    shapeStart,
+    shapePreview,
+    setDrawings,
+    setShapes,
+    setIsDrawing,
+    setCurrentDrawing,
+    setArrowStart,
+    setShapeStart,
+    setShapePreview
+  } = useDrawingState();
   
   // Load tokens with real-time sync
   const { tokens, updateToken } = useTokens(campaignId, map?.id);
+  
+  // Load lighting system
+  const { lights, globalLighting } = useLighting(firestore, campaignId, map?.id, map?.lighting);
   
   // Ping state
   const [pings, setPings] = useState([]);
   
   // Fog of War state
   const [fogData, setFogData] = useState(null);
-  
-  // Tool state
-  const [activeTool, setActiveTool] = useState('ping');
-  
-  // Color settings
-  const [pingColor, setPingColor] = useState('#ffff00'); // Yellow
-  const [penColor, setPenColor] = useState('#ffffff');   // White
-  
-  // Drawing state
-  const [drawings, setDrawings] = useState([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [currentDrawing, setCurrentDrawing] = useState([]);
-  const [arrowStart, setArrowStart] = useState(null);
   
   // Ruler state
   const [rulerStart, setRulerStart] = useState(null);
@@ -68,19 +110,34 @@ function MapCanvas({
   const [rulerPersistent, setRulerPersistent] = useState(false);
   const [pinnedRulers, setPinnedRulers] = useState([]); // Array of pinned measurements
   
-  // Shape drawing state
-  const [shapes, setShapes] = useState([]);
-  const [shapeStart, setShapeStart] = useState(null);
-  const [shapePreview, setShapePreview] = useState(null);
-  const [shapeColor, setShapeColor] = useState('#ff0000');
-  const [shapeOpacity, setShapeOpacity] = useState(0.5);
-  const [shapePersistent, setShapePersistent] = useState(false);
-  const [shapeVisibility, setShapeVisibility] = useState('all'); // 'all' | 'dm'
   // Token-specific snapping toggle & drag highlight footprint
   const [tokenSnap, setTokenSnap] = useState(true);
   const [tokenSnapHighlight, setTokenSnapHighlight] = useState(null); // {x,y,w,h}
   const [tokenSnapPulse, setTokenSnapPulse] = useState(0); // animation ticker for highlight pulse
   const [showGridConfig, setShowGridConfig] = useState(false);
+  const [contextMenu, setContextMenu] = useState(null); // { tokenId, x, y }
+  const [layerVisibility, setLayerVisibility] = useState({ grid: true, fog: true, tokens: true, shapes: true, drawings: true, pings: true, rulers: true });
+  // Undo/Redo state (future enhancement)
+  // const [undoStack, setUndoStack] = useState([]);
+  // const [redoStack, setRedoStack] = useState([]);
+  const [showLayerManager, setShowLayerManager] = useState(false);
+  const [showMapLibrary, setShowMapLibrary] = useState(false);
+  const [showAudio, setShowAudio] = useState(false);
+  const [showTokenEditor, setShowTokenEditor] = useState(false);
+  // Local optimistic map state for immediate grid visual response
+  const [mapLive, setMapLive] = useState(map);
+  useEffect(() => { setMapLive(map); }, [map]);
+  const gMap = mapLive || map;
+
+  // Performance optimization: Memoize filtered shapes
+  const visibleShapes = useMemo(() => {
+    return shapes.filter(s => (s.visibleTo === 'all') || isDM);
+  }, [shapes, isDM]);
+
+  // Performance optimization: Memoize player tokens for fog reveal
+  const playerTokens = useMemo(() => {
+    return tokens ? tokens.filter(t => t.type === 'pc' && !t.staged && t.position) : [];
+  }, [tokens]);
 
   // Animate token snap highlight while dragging
   useEffect(() => {
@@ -95,15 +152,30 @@ function MapCanvas({
   }, [tokenSnapHighlight]);
 
   // Helper to optionally snap any point to grid when global snap is enabled
-  const maybeSnapPoint = (pt) => {
-    if (snapToGrid && map?.gridSize) {
-      const g = map.gridSize;
+  const maybeSnapPoint = useCallback((pt) => {
+    if (snapToGrid && gMap?.gridSize) {
+      const g = gMap.gridSize;
       return { x: Math.round(pt.x / g) * g, y: Math.round(pt.y / g) * g };
     }
     return pt;
-  };
+  }, [snapToGrid, gMap?.gridSize]);
 
-  // Keyboard shortcut handler for ruler (R key) and ESC to clear
+  // Clamp a token center position so the token stays fully on the map
+  const clampTokenCenter = useCallback((pos, token) => {
+    if (!gMap) return pos;
+    const w = gMap.width || 0;
+    const h = gMap.height || 0;
+    const tw = token?.size?.width || gMap.gridSize || 50;
+    const th = token?.size?.height || gMap.gridSize || 50;
+    const halfW = tw / 2;
+    const halfH = th / 2;
+    return {
+      x: Math.min(Math.max(pos.x, halfW), Math.max(halfW, w - halfW)),
+      y: Math.min(Math.max(pos.y, halfH), Math.max(halfH, h - halfH))
+    };
+  }, [gMap]);
+
+  // Keyboard shortcut handler (R ruler, G grid, S snap, T token snap, Ctrl+Z undo, Ctrl+Shift+Z redo)
   useEffect(() => {
     const handleKeyPress = (e) => {
       // Only for DM
@@ -116,16 +188,61 @@ function MapCanvas({
         setActiveTool(prev => prev === 'ruler' ? 'pointer' : 'ruler');
       }
       
-      // ESC key to clear ruler
-      if (e.key === 'Escape' && activeTool === 'ruler') {
+      // ESC key to clear ruler or close context menu
+      if (e.key === 'Escape') {
+        if (contextMenu) {
+          setContextMenu(null);
+          return;
+        }
+        if (activeTool === 'ruler') {
         setRulerStart(null);
         setRulerEnd(null);
+        }
+      }
+
+      // Grid toggle G
+      if (e.key === 'g' || e.key === 'G') {
+        if (gMap?.id) {
+          const next = !gMap.gridEnabled;
+          setMapLive(m => m ? { ...m, gridEnabled: next } : m);
+          mapService.updateMap(firestore, campaignId, gMap.id, { gridEnabled: next }).catch(()=>{});
+        }
+      }
+      // Global snap S
+      if (e.key === 's' || e.key === 'S') {
+        setSnapToGrid(prev => !prev);
+      }
+      // Token snap T
+      if (e.key === 't' || e.key === 'T') {
+        setTokenSnap(prev => !prev);
+      }
+      // Undo/Redo
+      if ((e.key === 'z' || e.key === 'Z') && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        const redo = e.shiftKey;
+        if (!redo) {
+          // setUndoStack(prev => {
+            if (!prev.length) return prev;
+            const last = prev[prev.length - 1];
+            if (last.undo) last.undo();
+            // setRedoStack(r => [...r, last]);
+            return prev.slice(0, -1);
+          });
+        } else {
+          // setRedoStack(prev => {
+            if (!prev.length) return prev;
+            const last = prev[prev.length - 1];
+            if (last.redo) last.redo();
+            // setUndoStack(u => [...u, last]);
+            return prev.slice(0, -1);
+          });
+        }
       }
     };
     
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isDM, activeTool]);
+  }, [isDM, activeTool, contextMenu, gMap, firestore, campaignId]);
 
   // Reset position and scale when map changes
   useEffect(() => {
@@ -134,7 +251,7 @@ function MapCanvas({
       setStageScale(1);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map?.mapId]);
+  }, [gMap?.id]);
 
   // Subscribe to pings
   useEffect(() => {
@@ -154,7 +271,6 @@ function MapCanvas({
     console.log('Setting up fog subscription for map:', map.id);
     
     const unsubscribe = fogOfWarService.subscribeFogOfWar(firestore, campaignId, map.id, (data) => {
-      console.log('Fog data received:', data);
       setFogData(data);
     });
 
@@ -173,6 +289,7 @@ function MapCanvas({
     });
 
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firestore, campaignId, map?.id]);
 
   // Subscribe to shapes
@@ -185,17 +302,15 @@ function MapCanvas({
       (loadedShapes) => setShapes(loadedShapes)
     );
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firestore, campaignId, map?.id]);
 
   // Reveal fog around all player tokens when tokens or fog data changes
   useEffect(() => {
-    if (!firestore || !campaignId || !map?.id || !fogOfWarEnabled || !fogData?.enabled || !map.gridEnabled || !tokens) return;
+  if (!firestore || !campaignId || !gMap?.id || !fogOfWarEnabled || !fogData?.enabled || !playerTokens.length) return;
 
     const revealAroundPlayerTokens = async () => {
       try {
-        // Find all player character tokens that are not staged
-        const playerTokens = tokens.filter(t => t.type === 'pc' && !t.staged && t.position);
-        
         // Reveal fog around each player token
         for (const token of playerTokens) {
           const gridX = Math.floor(token.position.x / map.gridSize);
@@ -208,7 +323,7 @@ function MapCanvas({
     };
 
     revealAroundPlayerTokens();
-  }, [firestore, campaignId, map?.id, map?.gridSize, fogOfWarEnabled, fogData?.enabled, map?.gridEnabled, tokens]);
+  }, [firestore, campaignId, gMap?.id, gMap?.gridSize, fogOfWarEnabled, fogData?.enabled, gMap?.gridEnabled, playerTokens, map.gridSize, map.id]);
 
   // Force re-render for fade animations (drawings)
   useEffect(() => {
@@ -220,6 +335,7 @@ function MapCanvas({
     }, 100); // Update every 100ms for smooth fading
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawings.length]);
   
   // Force re-render for ping animations
@@ -359,17 +475,21 @@ function MapCanvas({
               const dx = end.x - shapeStart.x;
               const dy = end.y - shapeStart.y;
               const radius = Math.sqrt(dx*dx + dy*dy);
-              await shapeService.createCircle(firestore, campaignId, map.id, shapeStart, radius, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                const created = await shapeService.createCircle(firestore, campaignId, map.id, shapeStart, radius, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                // setUndoStack(u => [...u, { undo: () => shapeService.deleteShape(firestore, campaignId, map.id, created.id), redo: () => shapeService.createCircle(firestore, campaignId, map.id, shapeStart, radius, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid) }]);
             } else if (activeTool === 'rectangle') {
-              await shapeService.createRectangle(firestore, campaignId, map.id, shapeStart, end.x - shapeStart.x, end.y - shapeStart.y, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                const created = await shapeService.createRectangle(firestore, campaignId, map.id, shapeStart, end.x - shapeStart.x, end.y - shapeStart.y, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                // setUndoStack(u => [...u, { undo: () => shapeService.deleteShape(firestore, campaignId, map.id, created.id), redo: () => shapeService.createRectangle(firestore, campaignId, map.id, shapeStart, end.x - shapeStart.x, end.y - shapeStart.y, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid) }]);
             } else if (activeTool === 'cone') {
               const dx = end.x - shapeStart.x;
               const dy = end.y - shapeStart.y;
               const length = Math.sqrt(dx*dx + dy*dy);
               const direction = (Math.atan2(dy, dx) * 180) / Math.PI;
-              await shapeService.createCone(firestore, campaignId, map.id, shapeStart, direction, length, 60, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                const created = await shapeService.createCone(firestore, campaignId, map.id, shapeStart, direction, length, 60, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                // setUndoStack(u => [...u, { undo: () => shapeService.deleteShape(firestore, campaignId, map.id, created.id), redo: () => shapeService.createCone(firestore, campaignId, map.id, shapeStart, direction, length, 60, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid) }]);
             } else if (activeTool === 'line') {
-              await shapeService.createLine(firestore, campaignId, map.id, shapeStart, end, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                const created = await shapeService.createLine(firestore, campaignId, map.id, shapeStart, end, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                // setUndoStack(u => [...u, { undo: () => shapeService.deleteShape(firestore, campaignId, map.id, created.id), redo: () => shapeService.createLine(firestore, campaignId, map.id, shapeStart, end, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid) }]);
             }
           } catch (err) {
             console.error('Error creating shape:', err);
@@ -465,35 +585,30 @@ function MapCanvas({
   };
 
   // Handle token drag end
-  const handleTokenDragEnd = async (tokenId, newPosition) => {
+  const handleTokenDragEnd = useCallback(async (tokenId, newPosition) => {
     try {
+      const token = tokens.find(t => t.id === tokenId);
+      const beforePos = token?.position ? { ...token.position } : null;
       // Apply snap if enabled
       let finalPos = newPosition;
       if (snapToGrid && map?.gridSize) {
         const g = map.gridSize;
-        // Snap token center to the center of the containing grid cell (inside the square)
         const cellX = Math.floor(newPosition.x / g);
         const cellY = Math.floor(newPosition.y / g);
-        finalPos = {
-          x: cellX * g + g / 2,
-          y: cellY * g + g / 2
-        };
+        finalPos = { x: cellX * g + g / 2, y: cellY * g + g / 2 };
       }
-      // Update position in Firestore
-      await tokenService.updateTokenPosition(
-        firestore,
-        campaignId, 
-        map.id, 
-        tokenId, 
-        finalPos
-      );
-      
-      // Optimistic update
+      // Clamp to map bounds
+      finalPos = clampTokenCenter(finalPos, token);
+      await tokenService.updateTokenPosition(firestore, campaignId, map.id, tokenId, finalPos);
       updateToken(tokenId, { position: finalPos });
-      
-      // Reveal fog of war around token for player tokens
+      if (beforePos) {
+        const afterPos = { ...finalPos };
+        // setUndoStack(u => [...u, {
+          undo: () => tokenService.updateTokenPosition(firestore, campaignId, map.id, tokenId, beforePos),
+          redo: () => tokenService.updateTokenPosition(firestore, campaignId, map.id, tokenId, afterPos)
+        }]);
+      }
       if (fogOfWarEnabled && fogData?.enabled && map.gridEnabled) {
-        const token = tokens.find(t => t.id === tokenId);
         if (token && token.type === 'pc') {
           const gridX = Math.floor(finalPos.x / map.gridSize);
           const gridY = Math.floor(finalPos.y / map.gridSize);
@@ -503,10 +618,10 @@ function MapCanvas({
     } catch (err) {
       console.error('Error updating token position:', err);
     }
-  };
+  }, [tokens, snapToGrid, map?.gridSize, map?.id, map?.gridEnabled, clampTokenCenter, firestore, campaignId, updateToken, fogOfWarEnabled, fogData?.enabled]);
 
   // Handle token selection
-  const handleTokenClick = (tokenId, e) => {
+  const handleTokenClick = useCallback((tokenId, e) => {
     // Don't select tokens when using drawing tools (ruler, pen, arrow, shapes)
     if (activeTool !== 'pointer') {
       if (e && e.cancelBubble !== undefined) {
@@ -521,24 +636,24 @@ function MapCanvas({
     if (onTokenSelect) {
       onTokenSelect(tokenId);
     }
-  };
+  }, [activeTool, onTokenSelect]);
 
-  const handleZoomIn = () => {
+  const handleZoomIn = useCallback(() => {
     const newScale = Math.min(stageScale * 1.2, 3);
     setStageScale(newScale);
-  };
+  }, [stageScale, setStageScale]);
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     const newScale = Math.max(stageScale / 1.2, 0.25);
     setStageScale(newScale);
-  };
+  }, [stageScale, setStageScale]);
 
-  const handleResetView = () => {
+  const handleResetView = useCallback(() => {
     setStageScale(1);
     setStagePos({ x: 0, y: 0 });
-  };
+  }, [setStageScale, setStagePos]);
 
-  if (!map) {
+  if (!gMap) {
     return (
       <div className="map-canvas-empty" style={{ width, height }}>
         <p>No map loaded. Upload a map to get started.</p>
@@ -575,13 +690,53 @@ function MapCanvas({
         onShapePersistentToggle={() => setShapePersistent(prev => !prev)}
         onShapeVisibilityChange={setShapeVisibility}
         onClearTempShapes={async () => {
-          try { await shapeService.clearTemporaryShapes(firestore, campaignId, map.id); } catch (err) { console.error('Error clearing temp shapes:', err); }
+          try {
+            // snapshot current temporary shapes for undo
+            const temp = shapes.filter(s => !s.persistent).map(s => ({ ...s }));
+            if (!temp.length) return;
+            await shapeService.clearTemporaryShapes(firestore, campaignId, map.id);
+            // setUndoStack(u => [...u, { undo: () => shapeService.restoreShapes(firestore, campaignId, map.id, temp), redo: () => shapeService.clearTemporaryShapes(firestore, campaignId, map.id) }]);
+          } catch (err) { console.error('Error clearing temp shapes:', err); }
         }}
         onClearAllShapes={async () => {
           if (!window.confirm('Clear ALL shapes (including persistent)?')) return;
-          try { await shapeService.clearAllShapes(firestore, campaignId, map.id); } catch (err) { console.error('Error clearing all shapes:', err); }
+          try {
+            const all = shapes.map(s => ({ ...s }));
+            if (!all.length) return;
+            await shapeService.clearAllShapes(firestore, campaignId, map.id);
+            // setUndoStack(u => [...u, { undo: () => shapeService.restoreShapes(firestore, campaignId, map.id, all), redo: () => shapeService.clearAllShapes(firestore, campaignId, map.id) }]);
+          } catch (err) { console.error('Error clearing all shapes:', err); }
         }}
       />
+      {isDM && (
+        <button
+          style={{ position:'absolute', top:20, left:220, zIndex:130, background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
+          onClick={() => setShowLayerManager(v=>!v)}
+          title="Toggle Layer Manager"
+        >Layers</button>
+      )}
+      {isDM && (
+        <button
+          style={{ position:'absolute', top:20, left:290, zIndex:130, background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
+          onClick={() => setShowMapLibrary(v=>!v)}
+          title="Toggle Map Library"
+        >Maps</button>
+      )}
+      {isDM && (
+        <button
+          style={{ position:'absolute', top:20, left:350, zIndex:130, background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
+          onClick={() => setShowAudio(v=>!v)}
+          title="Toggle Ambient Audio"
+        >Audio</button>
+      )}
+      {isDM && (
+        <button
+          style={{ position:'absolute', top:20, left:410, zIndex:130, background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
+          onClick={() => setShowTokenEditor(v=>!v)}
+          title="Edit Selected Token Stats"
+          disabled={!selectedTokenId}
+        >Edit Token</button>
+      )}
       
       <Stage
         ref={stageRef}
@@ -611,15 +766,15 @@ function MapCanvas({
           {mapImage && (
             <KonvaImage
               image={mapImage}
-              width={map.width}
-              height={map.height}
+              width={gMap.width}
+              height={gMap.height}
               listening={false}
             />
           )}
         </Layer>
 
         {/* Token snap highlight (shows target footprint while dragging) */}
-        {map.gridEnabled && tokenSnapHighlight && (() => {
+  {gMap.gridEnabled && tokenSnapHighlight && (() => {
           // Pulse parameters
           const periodMs = 900; // full cycle
             const phase = (tokenSnapPulse % periodMs) / periodMs; // 0..1
@@ -648,39 +803,35 @@ function MapCanvas({
           );
         })()}
 
-        {/* Grid Layer */}
-        {map.gridEnabled && (
+  {/* Grid Layer */}
+  {gMap.gridEnabled && layerVisibility.grid && (
           <GridLayer
-            width={map.width}
-            height={map.height}
-            gridSize={map.gridSize}
-            gridColor={map.gridColor}
-            gridOpacity={map.gridOpacity}
-            enabled={map.gridEnabled}
+            width={gMap.width}
+            height={gMap.height}
+            gridSize={gMap.gridSize}
+            gridColor={gMap.gridColor}
+            gridOpacity={gMap.gridOpacity}
+            enabled={gMap.gridEnabled}
           />
         )}
 
-        {/* Fog of War Layer (below tokens) - Enhanced for visibility */}
-        {fogData?.enabled && map.gridEnabled && (() => {
-          console.log('Rendering fog of war:', {
-            enabled: fogData.enabled,
-            gridEnabled: map.gridEnabled,
-            isDM,
-            visibilityRows: fogData.visibility?.length,
-            visibilityCols: fogData.visibility?.[0]?.length
-          });
+  {/* Fog of War Layer (below tokens) - Enhanced for visibility */}
+        {fogData?.enabled && layerVisibility.fog && (() => {
           return (
           <Layer>
             {fogData.visibility && fogData.visibility.map((row, y) => 
               row.map((isVisible, x) => {
+                const cellX = x * gMap.gridSize;
+                const cellY = y * gMap.gridSize;
+                if (cellX >= gMap.width || cellY >= gMap.height) return null;
                 if (!isVisible) {
                   return (
                     <Rect
                       key={`fog-${x}-${y}`}
-                      x={x * map.gridSize}
-                      y={y * map.gridSize}
-                      width={map.gridSize}
-                      height={map.gridSize}
+                      x={cellX}
+                      y={cellY}
+                      width={gMap.gridSize}
+                      height={gMap.gridSize}
                       fill="black"
                       opacity={isDM ? 0.35 : 0.95}
                       stroke={isDM ? "#ff6b6b" : "#1a1a1a"}
@@ -695,12 +846,35 @@ function MapCanvas({
                 return null;
               })
             )}
+            {/* Dimmer pattern when grid disabled: outline faint cells to help DM orient fog */}
+            {!gMap.gridEnabled && isDM && fogData.visibility && fogData.visibility.map((row, y) =>
+              row.map((isVisible, x) => {
+                if (!isVisible) return null; // only outline revealed cells lightly
+                const cellX = x * gMap.gridSize;
+                const cellY = y * gMap.gridSize;
+                if (cellX >= gMap.width || cellY >= gMap.height) return null;
+                return (
+                  <Rect
+                    key={`fog-dimmer-${x}-${y}`}
+                    x={cellX}
+                    y={cellY}
+                    width={gMap.gridSize}
+                    height={gMap.gridSize}
+                    fill={null}
+                    stroke="#ff6b6b"
+                    strokeWidth={0.4}
+                    opacity={0.15}
+                    listening={false}
+                  />
+                );
+              })
+            )}
           </Layer>
           );
         })()}
 
-        {/* Token Layer */}
-        <Layer>
+  {/* Token Layer */}
+  {layerVisibility.tokens && <Layer>
           {tokens && tokens.map(token => {
             // Skip staged tokens (they're in EncounterBuilder)
             if (token.staged) {
@@ -723,15 +897,30 @@ function MapCanvas({
                 gridSize={map?.gridSize}
                 onDragMovePreview={(data) => setTokenSnapHighlight(data)}
                 listening={activeTool === 'pointer'}
+                onContextMenu={(evt) => {
+                  evt.cancelBubble = true;
+                  const raw = evt.evt;
+                  setContextMenu({ tokenId: token.id, x: raw.clientX, y: raw.clientY });
+                }}
               />
             );
           })}
-        </Layer>
+  </Layer>}
 
-        {/* Drawing Layer */}
-        <Layer>
+  {/* Lighting Layer - renders dynamic lighting effects */}
+  {lights && globalLighting && (
+    <LightingLayer
+      lights={lights}
+      globalLighting={globalLighting}
+      mapWidth={gMap?.width || width}
+      mapHeight={gMap?.height || height}
+    />
+  )}
+
+  {/* Drawing Layer */}
+  {layerVisibility.shapes && <Layer>
           {/* Shapes (persisted) */}
-          {shapes.filter(s => (s.visibleTo === 'all') || isDM).map(shape => {
+          {visibleShapes.map(shape => {
             if (shape.type === 'circle') {
               return <Circle key={shape.id} x={shape.geometry.x} y={shape.geometry.y} radius={shape.geometry.radius} fill={shape.color} opacity={shape.opacity} listening={false} />;
             }
@@ -859,9 +1048,9 @@ function MapCanvas({
             const dx = ruler.end.x - ruler.start.x;
             const dy = ruler.end.y - ruler.start.y;
             const pixelDistance = Math.sqrt(dx * dx + dy * dy);
-            const gridSize = map?.gridSize || 50;
+            const gridSize = gMap?.gridSize || 50;
             const gridSquares = (pixelDistance / gridSize).toFixed(1);
-            const feetPerSquare = map?.scaleInFeet || 5;
+            const feetPerSquare = gMap?.scaleInFeet || 5;
             const feet = (parseFloat(gridSquares) * feetPerSquare).toFixed(0);
             const midX = (ruler.start.x + ruler.end.x) / 2;
             const midY = (ruler.start.y + ruler.end.y) / 2;
@@ -932,9 +1121,9 @@ function MapCanvas({
                 const dx = rulerEnd.x - rulerStart.x;
                 const dy = rulerEnd.y - rulerStart.y;
                 const pixelDistance = Math.sqrt(dx * dx + dy * dy);
-                const gridSize = map?.gridSize || 50;
+                const gridSize = gMap?.gridSize || 50;
                 const gridSquares = (pixelDistance / gridSize).toFixed(1);
-                const feetPerSquare = map?.scaleInFeet || 5;
+                const feetPerSquare = gMap?.scaleInFeet || 5;
                 const feet = (parseFloat(gridSquares) * feetPerSquare).toFixed(0);
                 const midX = (rulerStart.x + rulerEnd.x) / 2;
                 const midY = (rulerStart.y + rulerEnd.y) / 2;
@@ -997,10 +1186,10 @@ function MapCanvas({
               shadowBlur={10}
             />
           )}
-        </Layer>
+  </Layer>}
 
-        {/* Ping Layer - X shape with vertical line */}
-        <Layer>
+  {/* Ping Layer - X shape with vertical line */}
+  {layerVisibility.pings && <Layer>
           {pings.map(ping => {
             // Calculate ping animation phases
             const pingAge = Date.now() - (ping.createdAt?.toMillis?.() || Date.now());
@@ -1078,7 +1267,7 @@ function MapCanvas({
             </Fragment>
             );
           })}
-        </Layer>
+  </Layer>}
 
         {/* Additional layers */}
         {children}
@@ -1101,14 +1290,145 @@ function MapCanvas({
         <GridConfigurator
           open={showGridConfig}
           onClose={() => setShowGridConfig(false)}
-          map={map}
+          map={gMap}
           onUpdate={async (updates) => {
+            const before = { gridSize: gMap.gridSize, gridColor: gMap.gridColor, gridOpacity: gMap.gridOpacity, gridEnabled: gMap.gridEnabled };
+            setMapLive(m => m ? { ...m, ...updates } : m);
             try {
-              await mapService.updateMap(firestore, campaignId, map.id, updates);
+              await mapService.updateMap(firestore, campaignId, gMap.id, updates);
+              // setUndoStack(u => [...u, { undo: () => { setMapLive(m => m ? { ...m, ...before } : m); mapService.updateMap(firestore, campaignId, gMap.id, before).catch(()=>{}); }, redo: () => { setMapLive(m => m ? { ...m, ...updates } : m); mapService.updateMap(firestore, campaignId, gMap.id, updates).catch(()=>{}); } }]);
             } catch (e) { console.error('Failed to update grid settings', e); }
           }}
+          //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
         />
       )}
+      {isDM && (
+        <LayerManager
+          open={showLayerManager}
+          onClose={() => setShowLayerManager(false)}
+          visibility={layerVisibility}
+          onToggle={(key) => setLayerVisibility(v => ({ ...v, [key]: !v[key] }))}
+        />
+      )}
+      {isDM && (
+        <MapLibraryPanel
+          firestore={firestore}
+          campaignId={campaignId}
+          open={showMapLibrary}
+          onClose={() => setShowMapLibrary(false)}
+          onSelect={(m) => { /* selection hook placeholder */ setShowMapLibrary(false); }}
+        />
+      )}
+      {isDM && (
+        <AudioController
+          firestore={firestore}
+          campaignId={campaignId}
+          open={showAudio}
+          onClose={() => setShowAudio(false)}
+          isDM={isDM}
+          //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
+        />
+      )}
+      {isDM && showTokenEditor && selectedTokenId && (() => {
+        const token = tokens.find(t => t.id === selectedTokenId);
+        if (!token) return null;
+        return (
+          <TokenExtendedEditor
+            token={token}
+            open={showTokenEditor}
+            onClose={() => setShowTokenEditor(false)}
+            onSave={async ({ hp, maxHp, presetStatus }) => {
+              try {
+                const before = { hp: token.hp, maxHp: token.maxHp };
+                const updates = {};
+                if (typeof maxHp === 'number' && maxHp !== token.maxHp) updates.maxHp = maxHp;
+                if (typeof hp === 'number' && hp !== token.hp) updates.hp = hp;
+                let statusAdded = null;
+                if (presetStatus) {
+                  await tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, presetStatus);
+                  statusAdded = presetStatus;
+                }
+                if (Object.keys(updates).length) {
+                  await tokenService.updateToken(firestore, campaignId, map.id, token.id, updates);
+                }
+                if (Object.keys(updates).length || statusAdded) {
+                  // setUndoStack(u => [...u, { 
+                    undo: async () => {
+                      if (statusAdded) await tokenService.removeStatusEffect(firestore, campaignId, map.id, token.id, statusAdded.name);
+                      if (Object.keys(updates).length) await tokenService.updateToken(firestore, campaignId, map.id, token.id, { hp: before.hp, maxHp: before.maxHp });
+                    },
+                    redo: async () => {
+                      if (Object.keys(updates).length) await tokenService.updateToken(firestore, campaignId, map.id, token.id, updates);
+                      if (statusAdded) await tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, statusAdded);
+                    }
+                  }]);
+                }
+              } catch (e) { console.error('Save token stats failed', e); }
+            }}
+          />
+        );
+      })()}
+      {contextMenu && (() => {
+        const token = tokens.find(t => t.id === contextMenu.tokenId);
+        if (!token) return null;
+        const rect = stageRef.current?.container()?.getBoundingClientRect();
+        const pos = { x: contextMenu.x - (rect?.left || 0), y: contextMenu.y - (rect?.top || 0) };
+        return (
+          <TokenContextMenu
+            token={token}
+            isDM={isDM}
+            position={pos}
+            onClose={() => setContextMenu(null)}
+            onAdjustHP={async (value, isAbsolute) => {
+              try {
+                const before = { hp: token.hp };
+                await tokenService.updateHP(firestore, campaignId, map.id, token.id, value, isAbsolute);
+                // setUndoStack(u => [...u, { undo: () => tokenService.updateToken(firestore, campaignId, map.id, token.id, { hp: before.hp }), redo: () => tokenService.updateHP(firestore, campaignId, map.id, token.id, value, isAbsolute) }]);
+              } catch (e) { console.error('HP update failed', e); }
+            }}
+            onAddStatus={async (effect) => {
+              try {
+                await tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, effect);
+                // setUndoStack(u => [...u, { undo: () => tokenService.removeStatusEffect(firestore, campaignId, map.id, token.id, effect.name), redo: () => tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, effect) }]);
+              } catch (e) { console.error('Add status failed', e); }
+            }}
+            onRemoveStatus={async (idOrName) => {
+              try {
+                const removed = (token.statusEffects || []).find(se => se.id === idOrName || se.name === idOrName);
+                await tokenService.removeStatusEffect(firestore, campaignId, map.id, token.id, idOrName);
+                if (removed) {
+                  // setUndoStack(u => [...u, { undo: () => tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, removed), redo: () => tokenService.removeStatusEffect(firestore, campaignId, map.id, token.id, idOrName) }]);
+                }
+              } catch (e) { console.error('Remove status failed', e); }
+            }}
+            onToggleHidden={async () => {
+              try { await tokenService.updateToken(firestore, campaignId, map.id, token.id, { hidden: !token.hidden }); } catch (e) { console.error('Toggle hidden failed', e); }
+            }}
+            onDelete={async () => {
+              if (!window.confirm('Delete token?')) return;
+              try { await tokenService.deleteToken(firestore, campaignId, map.id, token.id); setContextMenu(null); } catch (e) { console.error('Delete token failed', e); }
+            }}
+            onAddToInitiative={async () => {
+              try {
+                const combatant = {
+                  id: `token_${token.id}`,
+                  name: token.name || 'Token',
+                  initiative: typeof token.initiative === 'number' ? token.initiative : 0,
+                  maxHP: token.maxHp || null,
+                  currentHP: token.hp || token.maxHp || null,
+                  type: token.type === 'pc' ? 'character' : (token.type || 'enemy'),
+                  isPlayer: token.type === 'pc',
+                  tokenId: token.id,
+                  addedAt: new Date()
+                };
+                await initiativeService.addCombatant(firestore, campaignId, combatant);
+              } catch (e) {
+                console.error('Failed to add token to initiative', e);
+              }
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }

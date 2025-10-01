@@ -398,6 +398,117 @@ export const initiativeService = {
     return roll + modifier;
   },
 
+  /**
+   * Begin an initiative collection phase.
+   * - Ensures initiative document exists
+   * - Auto-rolls initiative for all existing non-player (enemy/npc) combatants
+   * - Resets turn/round/isActive flags
+   * - Sets collectingInitiative=true so UI can prompt players to roll
+   * Players then roll using /init in chat which will call recordPlayerInitiativeRoll
+   */
+  initiateInitiativeCheck: async (firestore, campaignId) => {
+    try {
+      const ref = initiativeService.getInitiativeRef(firestore, campaignId);
+      await runTransaction(firestore, async (tx) => {
+        const snap = await tx.get(ref);
+        let data;
+        if (!snap.exists()) {
+          data = {
+            combatants: [],
+            currentTurn: 0,
+            round: 1,
+            isActive: false,
+            collectingInitiative: true,
+            createdAt: serverTimestamp(),
+            lastModified: serverTimestamp()
+          };
+          tx.set(ref, data, { merge: true });
+          return;
+        }
+        data = snap.data();
+        const updatedCombatants = (data.combatants || []).map(c => {
+          if (!c.isPlayer) {
+            // Auto-roll initiative for enemies / NPCs
+            const roll = Math.floor(Math.random() * 20) + 1; // Simple d20, no modifier yet
+            return { ...c, initiative: roll };
+          }
+          return c; // players will supply their own roll via chat
+        });
+        tx.update(ref, {
+          combatants: updatedCombatants,
+          currentTurn: 0,
+            round: 1,
+            isActive: false,
+            collectingInitiative: true,
+            lastModified: serverTimestamp()
+        });
+      });
+    } catch (error) {
+      console.error('Error initiating initiative check:', error);
+      throw new Error('Failed to begin initiative check');
+    }
+  },
+
+  /**
+   * Record or update a player's initiative roll during collection phase.
+   * If the player combatant does not yet exist it will be created.
+   * @param {object} character optional character sheet for name/HP & dex modifier
+   */
+  recordPlayerInitiativeRoll: async (firestore, campaignId, userId, rollTotal, character) => {
+    try {
+      const ref = initiativeService.getInitiativeRef(firestore, campaignId);
+      await runTransaction(firestore, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) {
+          throw new Error('Initiative tracker not found');
+        }
+        const data = snap.data();
+        let combatants = Array.isArray(data.combatants) ? [...data.combatants] : [];
+        const existingIndex = combatants.findIndex(c => c.isPlayer && c.userId === userId);
+        if (existingIndex >= 0) {
+          combatants[existingIndex] = { ...combatants[existingIndex], initiative: rollTotal };
+        } else {
+          combatants.push({
+            id: `character_${userId}_${Date.now()}`,
+            name: character?.name || character?.characterName || 'Player',
+            initiative: rollTotal,
+            maxHP: character?.hitPoints?.current || character?.hitPoints?.max || null,
+            currentHP: character?.hitPoints?.current || character?.hitPoints?.max || null,
+            type: 'character',
+            conditions: [],
+            isPlayer: true,
+            userId,
+            characterId: character?.id || userId,
+            addedBy: userId,
+            addedAt: new Date()
+          });
+        }
+        tx.update(ref, {
+          combatants,
+          lastModified: serverTimestamp()
+        });
+      });
+    } catch (error) {
+      console.error('Error recording player initiative roll:', error);
+      throw new Error('Failed to record initiative');
+    }
+  },
+  /**
+   * Cancel an ongoing initiative collection (does not clear existing combatants or initiatives)
+   */
+  cancelInitiativeCollection: async (firestore, campaignId) => {
+    try {
+      const ref = initiativeService.getInitiativeRef(firestore, campaignId);
+      await updateDoc(ref, {
+        collectingInitiative: false,
+        lastModified: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error cancelling initiative collection:', error);
+      throw new Error('Failed to cancel initiative collection');
+    }
+  },
+
   // Add character from campaign to initiative
   addCharacterToInitiative: async (firestore, campaignId, character, userId) => {
     try {

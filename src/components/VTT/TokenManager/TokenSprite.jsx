@@ -16,7 +16,8 @@ function TokenSprite({
   listening = true,
   tokenSnap = true,
   gridSize = 50,
-  onDragMovePreview
+  onDragMovePreview,
+  onContextMenu
 }) {
   const [image] = useImage(token.imageUrl || '', 'anonymous');
 
@@ -136,6 +137,7 @@ function TokenSprite({
       onDragMove={handleDragMove}
       onClick={handleClick}
       onTap={handleClick}
+      onContextMenu={(e) => { e.evt?.preventDefault(); e.cancelBubble = true; onContextMenu && onContextMenu(e); }}
       listening={listening}
     >
       {/* Token background circle */}
@@ -184,6 +186,70 @@ function TokenSprite({
             y={tokenSize / 2 + 8}
           />
         </>
+      )}
+
+      {/* HP Bar (if hp & maxHp defined) */}
+      {token.maxHp != null && token.hp != null && token.maxHp > 0 && (
+        <Group y={-tokenSize / 2 - 14}>
+          <Rect
+            x={-tokenSize / 2}
+            y={0}
+            width={tokenSize}
+            height={8}
+            fill="#222"
+            cornerRadius={3}
+            opacity={0.8}
+          />
+          <Rect
+            x={-tokenSize / 2}
+            y={0}
+            width={(token.hp / token.maxHp) * tokenSize}
+            height={8}
+            fill={token.hp / token.maxHp < 0.35 ? '#ef4444' : '#16a34a'}
+            cornerRadius={3}
+            opacity={0.9}
+          />
+          <Text
+            text={`${token.hp}/${token.maxHp}`}
+            fontSize={9}
+            fill="#fff"
+            align="center"
+            width={tokenSize}
+            x={-tokenSize / 2}
+            y={1}
+          />
+        </Group>
+      )}
+
+      {/* Status Effects Row */}
+      {Array.isArray(token.statusEffects) && token.statusEffects.length > 0 && (
+        <Group y={-tokenSize / 2 - (token.maxHp != null ? 26 : 14)}>
+          {token.statusEffects.slice(0,6).map((effect, idx) => (
+            <Group key={effect.id || effect.name} x={-tokenSize / 2 + idx * 14}>
+              <Rect
+                x={0}
+                y={0}
+                width={12}
+                height={12}
+                fill="#333"
+                cornerRadius={3}
+                opacity={0.85}
+                stroke="#888"
+                strokeWidth={1}
+              />
+              <Text
+                text={(effect.icon || effect.name || '?').slice(0,2)}
+                fontSize={8}
+                fill="#fff"
+                width={12}
+                height={12}
+                align="center"
+                x={0}
+                y={2}
+              />
+            </Group>
+          ))}
+        </Group>
       )}
 
       {/* Selection indicator */}

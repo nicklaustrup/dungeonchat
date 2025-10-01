@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1e1e2e;
+  background: var(--bg-secondary, #1e1e2e);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -34,7 +34,7 @@
   border-radius: 50%;
   font-size: 1.25rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,26 +48,26 @@
 /* Tabs */
 .token-manager-tabs {
   display: flex;
-  background: #2a2a3e;
-  border-bottom: 2px solid #3a3a4e;
+  background: var(--bg-light, #2a2a3e);
+  border-bottom: 2px solid var(--border-color, #3a3a4e);
   padding: 0 12px;
 }
 
 .tab-button {
   background: none;
   border: none;
-  color: #a0a0b0;
+  color: var(--text-secondary, #a0a0b0);
   padding: 12px 20px;
   cursor: pointer;
   font-size: 0.95rem;
   font-weight: 500;
   border-bottom: 3px solid transparent;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   white-space: nowrap;
 }
 
 .tab-button:hover {
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -82,7 +82,7 @@
 .token-manager-success {
   padding: 12px 20px;
   margin: 12px 20px 0;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.9rem;
   animation: slideDown 0.3s ease;
 }
@@ -266,6 +266,80 @@
 .delete-button-small:hover {
   background: #b91c1c;
   transform: translateY(-1px);
+}
+
+/* Focus indicators for accessibility */
+.close-button:focus-visible,
+.tab-button:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+/* Reduced motion support for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Light theme overrides */
+.light-theme .token-manager {
+  background: var(--bg-secondary, #f8f8fc);
+}
+
+.light-theme .token-manager-header {
+  background: linear-gradient(135deg, #7c8fe6 0%, #8a63b8 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.light-theme .close-button {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.light-theme .close-button:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.light-theme .token-manager-tabs {
+  background: var(--bg-primary, #ffffff);
+  border-bottom-color: var(--border-color, #d0d0e0);
+}
+
+.light-theme .tab-button {
+  color: var(--text-secondary, #666666);
+}
+
+.light-theme .tab-button:hover {
+  color: var(--text-primary, #2a2a3e);
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.light-theme .tab-button.active {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.15);
+}
+
+.light-theme .token-manager-content {
+  color: var(--text-primary, #2a2a3e);
+}
+
+.light-theme .no-token-selected {
+  color: var(--text-secondary, #666666);
+}
+
+.light-theme .token-manager-content::-webkit-scrollbar-track {
+  background: #f0f0f4;
+}
+
+.light-theme .token-manager-content::-webkit-scrollbar-thumb {
+  background: #c0c0d0;
+}
+
+.light-theme .token-manager-content::-webkit-scrollbar-thumb:hover {
+  background: #a0a0b0;
 }
 
 /* Responsive adjustments */

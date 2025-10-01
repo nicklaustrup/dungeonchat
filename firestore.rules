@@ -165,6 +165,26 @@ service cloud.firestore {
         // Only DM can create, update, and delete maps
         allow create, update, delete: if request.auth != null && 
           request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+
+        // Shapes drawn on a map (circles, rectangles, cones, lines)
+        match /shapes/{shapeId} {
+          // Members can see shapes
+          allow read: if request.auth != null && 
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          // Only DM can create/update/delete shapes
+          allow create, update, delete: if request.auth != null && 
+            request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+        }
+      }
+
+      // Ambient audio tracks for the campaign
+      match /audio/{trackId} {
+        // Members can read the audio playlist
+        allow read: if request.auth != null && 
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+        // Only DM manages tracks
+        allow create, update, delete: if request.auth != null && 
+          request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
       }
       
       // VTT Map Tokens collection (legacy)

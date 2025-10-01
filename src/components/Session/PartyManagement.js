@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useFirebase } from '../../services/FirebaseContext';
 import { useCampaign } from '../../hooks/useCampaign';
 import {
@@ -9,7 +9,8 @@ import {
   longRest,
   shortRest,
   analyzePartyComposition,
-  calculatePartyWealth
+  calculatePartyWealth,
+  updateCharacterHP
 } from '../../services/partyService';
 import './PartyManagement.css';
 
@@ -51,6 +52,27 @@ function PartyManagement({ campaignId }) {
   const [showShortRestModal, setShowShortRestModal] = useState(false);
   const [shortRestCharacter, setShortRestCharacter] = useState(null);
   const [hitDiceToUse, setHitDiceToUse] = useState(1);
+
+  // UI enhancement state
+  const [minimized, setMinimized] = useState(false);
+  const [detailsCollapsed, setDetailsCollapsed] = useState(false);
+  const [highlightedId, setHighlightedId] = useState(null);
+  const [editingHPCharacterId, setEditingHPCharacterId] = useState(null);
+  const [editingHPValue, setEditingHPValue] = useState('');
+  const [chipMenu, setChipMenu] = useState(null); // {x,y, character}
+
+  // Refs to character cards for scroll/highlight
+  const cardRefs = useRef({});
+  const registerCardRef = useCallback((id, el) => {
+    if (el) cardRefs.current[id] = el;
+  }, []);
+
+  // Close context menu on global click
+  useEffect(() => {
+    const handler = () => setChipMenu(null);
+    window.addEventListener('click', handler);
+    return () => window.removeEventListener('click', handler);
+  }, []);
 
   // Subscribe to party characters
   useEffect(() => {
@@ -231,6 +253,94 @@ function PartyManagement({ campaignId }) {
     return (amount || 0).toLocaleString();
   }, []);
 
+  const getPassivePerception = useCallback((character) => {
+    if (character.passivePerception) return character.passivePerception;
+    const wis = character.abilityScores?.wisdom || 10;
+    const wisMod = Math.floor((wis - 10) / 2);
+    const proficiency = character.proficiencyBonus || Math.ceil((character.level || 1) / 4) + 1; // rough approx
+    // Assume proficient in perception if flag present
+    const proficient = character.skills?.perception?.proficient || false;
+    return 10 + wisMod + (proficient ? proficiency : 0);
+  }, []);
+
+  const buildChipTooltip = useCallback((ch) => {
+    const subclass = ch.subclass || ch.subClass || ch.subClassName || '';
+    const passive = getPassivePerception(ch);
+    return `Lv ${ch.level} ${ch.class}${subclass ? ' ('+subclass+')' : ''} | PP ${passive}`;
+  }, [getPassivePerception]);
+
+  const handleChipClick = useCallback((ch) => {
+    // Scroll to card and highlight
+    const el = cardRefs.current[ch.id];
+    if (el && el.scrollIntoView) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedId(ch.id);
+      setTimeout(() => {
+        setHighlightedId(prev => (prev === ch.id ? null : prev));
+      }, 1700);
+    }
+  }, []);
+
+  const startInlineHPEdit = useCallback((ch) => {
+    if (!isUserDM) return;
+    setEditingHPCharacterId(ch.id);
+    setEditingHPValue(String(ch.currentHP ?? ch.maxHP ?? ch.hitPoints ?? 0));
+  }, [isUserDM]);
+
+  const commitInlineHPEdit = useCallback(async () => {
+    if (!editingHPCharacterId) return;
+    const character = characters.find(c => c.id === editingHPCharacterId);
+    if (!character) return;
+    let val = parseInt(editingHPValue, 10);
+    if (isNaN(val)) val = character.currentHP || 0;
+    const maxHP = character.maxHP || character.hitPoints || 0;
+    val = Math.max(0, Math.min(val, maxHP));
+    try {
+      await updateCharacterHP(firestore, campaignId, editingHPCharacterId, val);
+    } catch (e) {
+      console.error('HP update failed', e);
+      alert('Failed to update HP');
+    }
+    setEditingHPCharacterId(null);
+    setEditingHPValue('');
+  }, [editingHPCharacterId, editingHPValue, characters, firestore, campaignId]);
+
+  const cancelInlineHPEdit = useCallback(() => {
+    setEditingHPCharacterId(null);
+    setEditingHPValue('');
+  }, []);
+
+  const handleChipContextMenu = useCallback((e, ch) => {
+    e.preventDefault();
+    setChipMenu({ x: e.clientX, y: e.clientY, character: ch });
+  }, []);
+
+  const handleChipMenuAction = useCallback(async (action) => {
+    if (!chipMenu) return;
+    const ch = chipMenu.character;
+    if (action === 'short-rest') {
+      openShortRestModal(ch);
+    } else if (action === 'heal') {
+      const input = prompt(`Heal ${ch.name} by how many HP?`);
+      if (!input) return;
+      const healVal = parseInt(input, 10);
+      if (isNaN(healVal) || healVal <= 0) return;
+      const maxHP = ch.maxHP || ch.hitPoints || 0;
+      const current = ch.currentHP ?? maxHP;
+      const newHP = Math.min(current + healVal, maxHP);
+      try {
+        await updateCharacterHP(firestore, campaignId, ch.id, newHP);
+      } catch (err) {
+        console.error('Heal failed', err);
+        alert('Heal failed');
+      }
+    }
+    setChipMenu(null);
+  }, [chipMenu, openShortRestModal, firestore, campaignId]);
+
+  const toggleMinimized = useCallback(() => setMinimized(m => !m), []);
+  const toggleDetailsCollapsed = useCallback(() => setDetailsCollapsed(c => !c), []);
+
   if (loading) {
     return <div className="party-loading">Loading party data...</div>;
   }
@@ -243,151 +353,110 @@ function PartyManagement({ campaignId }) {
       </div>
     );
   }
-
   return (
-    <div className="party-management">
-      {/* Party Statistics Dashboard */}
-      <div className="party-dashboard">
-        <div className="dashboard-header">
-          <h2>Party Overview</h2>
+    <div className={`party-management ${minimized ? 'minimized' : ''}`}>
+      <div className="party-compact-header">
+        <div className="pch-row">
+          <h2 className="pch-title">Party</h2>
+          <div className="pch-row-right">
+            <button
+              className="pm-btn pm-btn-toggle"
+              onClick={toggleDetailsCollapsed}
+              title={detailsCollapsed ? 'Expand details' : 'Collapse details'}
+            >{detailsCollapsed ? '▸ Details' : '▾ Details'}</button>
+            <button
+              className="pm-btn pm-btn-toggle"
+              onClick={toggleMinimized}
+              title={minimized ? 'Expand panel' : 'Minimize panel'}
+            >{minimized ? '⬜' : '🗕'}</button>
+          </div>
           {isUserDM && (
-            <div className="dashboard-actions">
-              <button className="btn-primary" onClick={openXPModal}>
-                ⭐ Award XP
-              </button>
-              <button className="btn-success" onClick={openHealModal}>
-                ❤️ Heal Party
-              </button>
-              <button className="btn-secondary" onClick={handleLongRest}>
-                🌙 Long Rest
-              </button>
+            <div className="pch-actions">
+              <button className="pm-btn pm-btn-xp" onClick={openXPModal}>⭐ XP</button>
+              <button className="pm-btn pm-btn-heal" onClick={openHealModal}>❤️ Heal</button>
+              <button className="pm-btn pm-btn-rest" onClick={handleLongRest}>🌙 Long Rest</button>
             </div>
           )}
         </div>
-
-        {/* Overall stats */}
-        {partyStats && (
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon">👥</div>
-              <div className="stat-content">
-                <div className="stat-label">Party Size</div>
-                <div className="stat-value">{partyStats.totalMembers}</div>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">📊</div>
-              <div className="stat-content">
-                <div className="stat-label">Average Level</div>
-                <div className="stat-value">{partyStats.averageLevel}</div>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">❤️</div>
-              <div className="stat-content">
-                <div className="stat-label">Party HP</div>
-                <div className="stat-value">
-                  {partyStats.currentHP} / {partyStats.totalHP}
-                </div>
-                <div className="stat-subtext">{partyStats.hpPercentage}%</div>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">🛡️</div>
-              <div className="stat-content">
-                <div className="stat-label">Average AC</div>
-                <div className="stat-value">{partyStats.averageAC}</div>
-              </div>
-            </div>
-
-            {wealth && (
-              <div className="stat-card">
-                <div className="stat-icon">💰</div>
-                <div className="stat-content">
-                  <div className="stat-label">Party Wealth</div>
-                  <div className="stat-value">{formatGold(wealth.totalGoldEquivalent)} gp</div>
-                  <div className="stat-subtext">{formatGold(wealth.averagePerMember)} gp each</div>
+        <div className="member-strip">
+          {characters.map(ch => {
+            const pct = getHPPercentage(ch.currentHP, ch.maxHP);
+            const hpClass = getHPColorClass(pct);
+            return (
+              <div
+                key={ch.id}
+                className={`member-chip ${hpClass} ${highlightedId === ch.id ? 'highlight' : ''}`}
+                title={buildChipTooltip(ch)}
+                onClick={() => handleChipClick(ch)}
+                onContextMenu={(e) => isUserDM && handleChipContextMenu(e, ch)}
+              >
+                <div className="mc-top"><span className="mc-name">{ch.name}</span><span className="mc-level">L{ch.level}</span></div>
+                <div className="mc-meta"><span className="mc-class">{ch.class}</span><span className="mc-ac">AC {ch.armorClass || 10}</span></div>
+                <div className="mc-hp-bar">
+                  <div className="mc-hp-fill" style={{width: `${pct}%`}} />
+                  {editingHPCharacterId === ch.id ? (
+                    <input
+                      className="mc-hp-input"
+                      type="number"
+                      value={editingHPValue}
+                      min={0}
+                      max={ch.maxHP || ch.hitPoints || 0}
+                      onChange={(e)=>setEditingHPValue(e.target.value)}
+                      onBlur={commitInlineHPEdit}
+                      onKeyDown={(e)=>{
+                        if(e.key==='Enter') commitInlineHPEdit();
+                        else if(e.key==='Escape') cancelInlineHPEdit();
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      className="mc-hp-text editable"
+                      onClick={(e)=>{e.stopPropagation(); startInlineHPEdit(ch);}}
+                      title={isUserDM ? 'Click to edit HP' : 'HP'}
+                    >{ch.currentHP}/{ch.maxHP}</span>
+                  )}
                 </div>
               </div>
-            )}
-
-            <div className="stat-card classes-card">
-              <div className="stat-icon">🎭</div>
-              <div className="stat-content">
-                <div className="stat-label">Classes</div>
-                <div className="classes-list">
-                  {Object.entries(partyStats.classes).map(([className, count]) => (
-                    <span key={className} className="class-badge">
-                      {className} ({count})
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
-
-      {/* Party Composition Analysis */}
-      {composition && composition.roles && (
-        <div className="party-composition">
-          <h3>Party Composition</h3>
-          <div className="composition-roles">
-            {Object.entries(composition.roles).map(([roleName, count]) => (
-              count > 0 && (
-                <div key={roleName} className={`role-card ${roleName}`}>
-                  <div className="role-header">
-                    <span className="role-icon">{getRoleIcon(roleName)}</span>
-                    <span className="role-name">{roleName.charAt(0).toUpperCase() + roleName.slice(1)}</span>
-                    <span className="role-count">{count}</span>
-                  </div>
-                </div>
-              )
+      {!minimized && partyStats && (
+        <div className="party-overview-compact">
+          <div className="po-metrics">
+            <div className="po-metric"><span className="po-label">Avg Lvl</span><span className="po-value">{partyStats.averageLevel}</span></div>
+            <div className="po-metric"><span className="po-label">HP</span><span className="po-value">{partyStats.currentHP}/{partyStats.totalHP} ({partyStats.hpPercentage}%)</span></div>
+            <div className="po-metric"><span className="po-label">Avg AC</span><span className="po-value">{partyStats.averageAC}</span></div>
+            {wealth && <div className="po-metric"><span className="po-label">Wealth</span><span className="po-value">{formatGold(wealth.totalGoldEquivalent)} gp ({formatGold(wealth.averagePerMember)} ea)</span></div>}
+            <div className="po-metric classes"><span className="po-label">Classes</span><span className="po-value">{Object.entries(partyStats.classes).map(([c,n])=>`${c.slice(0,3)}×${n}`).join(' · ')}</span></div>
+          </div>
+        </div>
+      )}
+      {!minimized && composition && composition.roles && (
+        <div className="party-composition compact">
+          <div className="composition-inline-roles">
+            {Object.entries(composition.roles).filter(([,c])=>c>0).map(([roleName,count]) => (
+              <span key={roleName} className="role-pill" title={roleName}>{getRoleIcon(roleName)} {roleName.slice(0,3)}:{count}</span>
             ))}
           </div>
-
-          {/* Balance analysis */}
-          {(composition.warnings.length > 0 || composition.recommendations.length > 0) && (
-            <div className="composition-analysis">
-              {composition.warnings.length > 0 && (
-                <div className="analysis-section warnings">
-                  <h4>⚠️ Warnings</h4>
-                  <ul>
-                    {composition.warnings.map((warning, index) => (
-                      <li key={index}>{warning}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {composition.recommendations.length > 0 && (
-                <div className="analysis-section recommendations">
-                  <h4>💡 Recommendations</h4>
-                  <ul>
-                    {composition.recommendations.map((rec, index) => (
-                      <li key={index}>{rec}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+          {(composition.warnings.length>0 || composition.recommendations.length>0) && (
+            <div className="composition-flags">
+              {composition.warnings.slice(0,2).map((w,i)=>(<span key={i} className="flag warn" title={w}>⚠ {w}</span>))}
+              {composition.recommendations.slice(0,2).map((r,i)=>(<span key={i} className="flag rec" title={r}>💡 {r}</span>))}
             </div>
           )}
         </div>
       )}
-
-      {/* Character List */}
-      <div className="party-characters">
-        <h3>Party Members</h3>
+      {!minimized && !detailsCollapsed && (
+      <div className="party-characters condensed">
         <div className="characters-grid">
           {characters.map(character => {
             const hpPercentage = getHPPercentage(character.currentHP, character.maxHP);
             const hpColorClass = getHPColorClass(hpPercentage);
 
             return (
-              <div key={character.id} className="character-card">
+              <div key={character.id} ref={(el)=>registerCardRef(character.id, el)} className={`character-card ${highlightedId===character.id ? 'highlight' : ''}`}>
                 <div className="character-header">
                   <div className="character-info">
                     <h4>{character.name}</h4>
@@ -438,20 +507,26 @@ function PartyManagement({ campaignId }) {
 
                 {/* Character actions (DM only) */}
                 {isUserDM && (
-                  <div className="character-actions">
+                  <div className="character-actions inline">
                     <button
-                      className="btn-small btn-secondary"
+                      className="btn-tiny"
                       onClick={() => openShortRestModal(character)}
-                    >
-                      ☀️ Short Rest
-                    </button>
+                      title="Short Rest"
+                    >☀️ Rest</button>
                   </div>
                 )}
               </div>
             );
           })}
         </div>
-      </div>
+      </div>) }
+
+      {chipMenu && isUserDM && (
+        <div className="chip-context-menu" style={{ top: chipMenu.y, left: chipMenu.x }}>
+          <button onClick={()=>handleChipMenuAction('short-rest')}>☀️ Short Rest</button>
+          <button onClick={()=>handleChipMenuAction('heal')}>❤️ Heal...</button>
+        </div>
+      )}
 
       {/* XP Distribution Modal */}
       {showXPModal && (
