@@ -22,7 +22,6 @@ import useLighting from '../../../hooks/vtt/useLighting';
 import { tokenService } from '../../../services/vtt/tokenService';
 import { pingService } from '../../../services/vtt/pingService';
 import { fogOfWarService } from '../../../services/vtt/fogOfWarService';
-import * as lightingService from '../../../services/vtt/lightingService';
 import { drawingService } from '../../../services/vtt/drawingService';
 import { shapeService } from '../../../services/vtt/shapeService';
 import { FirebaseContext } from '../../../services/FirebaseContext';
@@ -97,7 +96,14 @@ function MapCanvas({
   const { tokens, updateToken } = useTokens(campaignId, map?.id);
   
   // Load lighting system
-  const { lights, globalLighting } = useLighting(firestore, campaignId, map?.id, map?.lighting);
+  const { 
+    lights, 
+    globalLighting,
+    createLight,
+    updateLight,
+    deleteLight,
+    updateGlobalLighting 
+  } = useLighting(firestore, campaignId, map?.id, map?.lighting);
   
   // Ping state
   const [pings, setPings] = useState([]);
@@ -1421,34 +1427,10 @@ function MapCanvas({
         <LightingPanel
           lights={lights}
           globalLighting={globalLighting}
-          onCreateLight={async (lightData) => {
-            try {
-              await lightingService.createLightSource(firestore, campaignId, map.id, lightData);
-            } catch (error) {
-              console.error('Error creating light:', error);
-            }
-          }}
-          onUpdateLight={async (lightId, updates) => {
-            try {
-              await lightingService.updateLightSource(firestore, campaignId, map.id, lightId, updates);
-            } catch (error) {
-              console.error('Error updating light:', error);
-            }
-          }}
-          onDeleteLight={async (lightId) => {
-            try {
-              await lightingService.deleteLightSource(firestore, campaignId, map.id, lightId);
-            } catch (error) {
-              console.error('Error deleting light:', error);
-            }
-          }}
-          onUpdateGlobalLighting={async (updates) => {
-            try {
-              await lightingService.updateGlobalLighting(firestore, campaignId, map.id, updates);
-            } catch (error) {
-              console.error('Error updating global lighting:', error);
-            }
-          }}
+          onCreateLight={createLight}
+          onUpdateLight={updateLight}
+          onDeleteLight={deleteLight}
+          onUpdateGlobalLighting={updateGlobalLighting}
           open={showLightingPanel}
           onClose={() => setShowLightingPanel(false)}
           isDM={isDM}
