@@ -33,7 +33,7 @@
   align-items: center;
   padding: 1rem;
   border-bottom: 1px solid var(--border-color);
-  background: var(--secondary-bg);
+  background: var(--bg-secondary);
 }
 
 .session-notes-header h2 {
@@ -67,7 +67,7 @@
 
 /* Session List Sidebar */
 .session-list {
-  background: var(--secondary-bg);
+  background: var(--bg-secondary);
   border-radius: 8px;
   padding: 1rem;
   border: 1px solid var(--border-color);
@@ -178,7 +178,7 @@
 
 /* Session Editor */
 .session-editor {
-  background: var(--secondary-bg);
+  background: var(--bg-secondary);
   border-radius: 8px;
   padding: 1.5rem;
   border: 1px solid var(--border-color);
@@ -385,7 +385,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--secondary-bg);
+  background: var(--bg-secondary);
   border-radius: 8px;
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
@@ -408,7 +408,7 @@
 }
 
 .modal-content {
-  background: var(--secondary-bg);
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
   min-width: 400px;

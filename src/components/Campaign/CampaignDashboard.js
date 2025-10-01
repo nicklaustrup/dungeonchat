@@ -12,6 +12,7 @@ import DiceHistoryPanel from '../DiceRoll/DiceHistoryPanel';
 import InitiativeTracker from '../Session/InitiativeTracker';
 import InitiativeButton from '../Session/InitiativeButton';
 import SessionNotes from '../Session/SessionNotes';
+import Encounters from '../Session/Encounters';
 import { CharacterCreationModal } from '../CharacterCreationModal';
 import { CharacterSheet } from '../CharacterSheet';
 import { useCharacterSheet, useCampaignCharacters } from '../../hooks/useCharacterSheet';
@@ -205,6 +206,12 @@ function CampaignDashboard() {
               onClick={() => setActiveTab('session-notes')}
             >
               Session Notes
+            </button>
+            <button 
+              className={`nav-item ${activeTab === 'encounters' ? 'active' : ''}`}
+              onClick={() => setActiveTab('encounters')}
+            >
+              Encounters
             </button>
             <button 
               className={`nav-item ${activeTab === 'rules' ? 'active' : ''}`}
@@ -454,6 +461,16 @@ function CampaignDashboard() {
                 Record session summaries, important events, and track campaign narrative. DMs can keep private notes while sharing key details with players.
               </p>
               <SessionNotes campaignId={campaignId} />
+            </div>
+          )}
+
+          {activeTab === 'encounters' && (
+            <div className="encounters-tab">
+              <h2>Encounter Management</h2>
+              <p className="tab-description">
+                Create and manage encounter templates with monsters, environmental effects, and loot. Scale encounters to your party and start them when ready.
+              </p>
+              <Encounters campaignId={campaignId} />
             </div>
           )}
 

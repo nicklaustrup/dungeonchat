@@ -127,6 +127,17 @@ service cloud.firestore {
         // - The dmNotes field should only be accessible to DM (enforced in client code)
         // Security rule already covers this through DM-only write permissions above
       }
+      
+      // Campaign encounters subcollection (encounter templates and active encounters)
+      match /encounters/{encounterId} {
+        // Campaign members can read all encounters
+        allow read: if request.auth != null && 
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+        
+        // DM can create, update, and delete encounters
+        allow create, update, delete: if request.auth != null && 
+          request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+      }
     }
     
     // User campaigns tracking
