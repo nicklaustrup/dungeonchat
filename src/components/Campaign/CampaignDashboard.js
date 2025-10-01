@@ -19,6 +19,7 @@ import { CharacterCreationModal } from '../CharacterCreationModal';
 import { CharacterSheet } from '../CharacterSheet';
 import { useCharacterSheet, useCampaignCharacters } from '../../hooks/useCharacterSheet';
 import './CampaignDashboard.css';
+import SessionQuickNav from '../Session/SessionQuickNav';
 
 function CampaignDashboard() {
   const { campaignId } = useParams();
@@ -523,6 +524,15 @@ function CampaignDashboard() {
           )}
         </div>
       </div>
+      {/* Quick navigation bar for session-related tabs */}
+      {['session-notes','encounters','initiative','calendar','party'].includes(activeTab) && (
+        <SessionQuickNav
+          activeTab={activeTab}
+          onNavigate={setActiveTab}
+          campaignId={campaignId}
+          firestore={firestore}
+        />
+      )}
 
       {/* Character Creation Modal */}
       {showCharacterCreation && (

@@ -239,6 +239,21 @@ const SessionEditor = ({ session, campaignId, isDM }) => {
         <h3>{session.title}</h3>
         {saving && <span className="saving-indicator">Saving...</span>}
       </div>
+      {session.activeEncounters && session.activeEncounters.length > 0 && (
+        <div className="active-encounters-panel">
+          <h4>Active Encounters</h4>
+          <ul className="active-encounters-list">
+            {session.activeEncounters.map(e => (
+              <li key={e.encounterId} className="active-encounter-item">
+                <span className="encounter-name">{e.name}</span>
+                {e.difficulty && <span className={`encounter-diff diff-${e.difficulty}`}>{e.difficulty}</span>}
+                {!e.completedAt && <span className="encounter-status ongoing">ongoing</span>}
+                {e.completedAt && <span className="encounter-status completed">completed</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       
       {/* Session Info */}
       <div className="session-info">

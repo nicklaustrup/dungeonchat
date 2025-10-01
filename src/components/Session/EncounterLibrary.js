@@ -7,13 +7,15 @@ import {
   duplicateEncounter,
   startEncounter
 } from '../../services/encounterService';
+import { sessionService } from '../../services/sessionService';
+import { initiativeService } from '../../services/initiativeService';
 import './EncounterLibrary.css';
 
 /**
  * EncounterLibrary Component
  * Displays saved encounter templates with filtering, searching, and quick actions
  */
-function EncounterLibrary({ campaignId, onEditEncounter, onStartEncounter }) {
+function EncounterLibrary({ campaignId, onEditEncounter, onStartEncounter, sessionId = null, seedInitiative = true }) {
   const { firestore } = useFirebase();
   const { isUserDM } = useCampaign(campaignId);
   
@@ -107,10 +109,32 @@ function EncounterLibrary({ campaignId, onEditEncounter, onStartEncounter }) {
     if (!isUserDM) return;
 
     try {
-      const activeEncounter = await startEncounter(firestore, campaignId, encounterId);
-      if (onStartEncounter) {
-        onStartEncounter(activeEncounter);
+      const activeEncounter = await startEncounter(firestore, campaignId, encounterId, sessionId || undefined);
+
+      // Link to session if provided
+      if (sessionId) {
+        try {
+          await sessionService.addEncounterReference(firestore, campaignId, sessionId, {
+            encounterId: activeEncounter.id,
+            name: activeEncounter.name,
+            startedAt: activeEncounter.startedAt ? activeEncounter.startedAt.toDate?.() || activeEncounter.startedAt : new Date(),
+            difficulty: activeEncounter.difficulty
+          });
+        } catch (linkErr) {
+          console.error('Failed to link encounter to session:', linkErr);
+        }
       }
+
+      // Seed initiative tracker
+      if (seedInitiative) {
+        try {
+          await initiativeService.seedFromEncounter(firestore, campaignId, activeEncounter);
+        } catch (seedErr) {
+          console.error('Failed to seed initiative from encounter:', seedErr);
+        }
+      }
+
+      if (onStartEncounter) onStartEncounter(activeEncounter);
     } catch (err) {
       setError('Failed to start encounter: ' + err.message);
     }

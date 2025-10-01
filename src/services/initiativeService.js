@@ -447,6 +447,71 @@ export const initiativeService = {
         currentCombatant: null
       };
     }
+  },
+
+  // Seed initiative tracker combatants from an active encounter (without auto-starting combat)
+  seedFromEncounter: async (firestore, campaignId, encounter) => {
+    try {
+      if (!encounter || !Array.isArray(encounter.participants)) return;
+      const initiativeRef = initiativeService.getInitiativeRef(firestore, campaignId);
+      await runTransaction(firestore, async (tx) => {
+        const snap = await tx.get(initiativeRef);
+        let data;
+        if (!snap.exists()) {
+          data = {
+            combatants: [],
+            currentTurn: 0,
+            round: 1,
+            isActive: false,
+            createdAt: serverTimestamp(),
+            lastModified: serverTimestamp()
+          };
+          tx.set(initiativeRef, data, { merge: true });
+        } else {
+          data = snap.data();
+        }
+        const existing = Array.isArray(data.combatants) ? data.combatants : [];
+
+        const newCombatants = [];
+        encounter.participants.forEach(p => {
+          const qty = Math.max(1, p.quantity || 1);
+          for (let i = 0; i < qty; i++) {
+            const baseId = `${encounter.id || encounter.encounterId || 'enc'}_${p.id}_${i}`;
+            if (!existing.some(c => c.id === baseId) && !newCombatants.some(c => c.id === baseId)) {
+              newCombatants.push({
+                id: baseId,
+                name: qty > 1 ? `${p.name || 'Creature'} #${i + 1}` : (p.name || 'Creature'),
+                initiative: p.initiative || 0,
+                maxHP: p.maxHp || p.hp || null,
+                currentHP: p.hp || p.maxHp || null,
+                type: p.type || 'enemy',
+                sourceEncounterId: encounter.id || encounter.encounterId,
+                participantId: p.id,
+                conditions: p.conditions || [],
+                isPlayer: false,
+                addedAt: new Date()
+              });
+            }
+          }
+        });
+
+        if (newCombatants.length > 0) {
+          tx.set(initiativeRef, {
+            ...data,
+            combatants: [...existing, ...newCombatants],
+            encounterContext: {
+              encounterId: encounter.id || encounter.encounterId,
+              name: encounter.name || 'Encounter',
+              startedAt: encounter.startedAt || new Date()
+            },
+            lastModified: serverTimestamp()
+          }, { merge: true });
+        }
+      });
+    } catch (error) {
+      console.error('Error seeding initiative from encounter:', error);
+      throw new Error('Failed to seed initiative');
+    }
   }
 };
 

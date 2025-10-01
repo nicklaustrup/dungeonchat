@@ -325,6 +325,61 @@ export const sessionService = {
     }
     
     return markdown;
+  },
+
+  // Add encounter reference to a session (tracks active encounters within a session)
+  addEncounterReference: async (firestore, campaignId, sessionId, encounterMeta) => {
+    try {
+      const sessionRef = sessionService.getSessionRef(firestore, campaignId, sessionId);
+      const snap = await getDoc(sessionRef);
+      if (!snap.exists()) throw new Error('Session not found');
+      const data = snap.data();
+      const activeEncounters = Array.isArray(data.activeEncounters) ? data.activeEncounters : [];
+      // Avoid duplicate by encounterId
+      if (!activeEncounters.some(e => e.encounterId === encounterMeta.encounterId)) {
+        activeEncounters.push({
+          encounterId: encounterMeta.encounterId,
+            name: encounterMeta.name || 'Encounter',
+            startedAt: encounterMeta.startedAt || new Date(),
+            // Optional fields for future expansion
+            difficulty: encounterMeta.difficulty || null
+        });
+        await updateDoc(sessionRef, {
+          activeEncounters,
+          lastModified: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      console.error('Error adding encounter reference to session:', error);
+      throw new Error('Failed to link encounter to session');
+    }
+  },
+
+  // Remove (or mark completed) encounter reference from a session
+  removeEncounterReference: async (firestore, campaignId, sessionId, encounterId, options = {}) => {
+    try {
+      const sessionRef = sessionService.getSessionRef(firestore, campaignId, sessionId);
+      const snap = await getDoc(sessionRef);
+      if (!snap.exists()) return; // silently ignore
+      const data = snap.data();
+      let activeEncounters = Array.isArray(data.activeEncounters) ? data.activeEncounters : [];
+      const updated = activeEncounters.map(e => {
+        if (e.encounterId === encounterId) {
+          if (options.markCompleted) {
+            return { ...e, completedAt: options.completedAt || new Date() };
+          }
+          return null; // removal
+        }
+        return e;
+      }).filter(Boolean);
+      await updateDoc(sessionRef, {
+        activeEncounters: updated,
+        lastModified: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error removing encounter reference from session:', error);
+      throw new Error('Failed to unlink encounter from session');
+    }
   }
 };
 
