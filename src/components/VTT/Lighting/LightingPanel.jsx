@@ -343,7 +343,9 @@ const LightEditor = ({ light, onSave, onCancel }) => {
     intensity: light?.intensity || 0.8,
     color: light?.color || '#FF8800',
     flicker: light?.flicker || false,
+    flickerIntensity: light?.flickerIntensity || 0.5, // 0.0 to 1.0, default medium
     animated: light?.animated || false,
+    pulseIntensity: light?.pulseIntensity || 0.5, // 0.0 to 1.0, default medium
     falloff: light?.falloff || 'realistic',
     position: light?.position || { x: 0, y: 0 },
     attachedTo: light?.attachedTo || null
@@ -470,6 +472,60 @@ const LightEditor = ({ light, onSave, onCancel }) => {
               </label>
             </div>
           </div>
+
+          {/* Flicker Intensity - only show if flicker is enabled */}
+          {formData.flicker && (
+            <div className="form-group">
+              <label>
+                Flicker Intensity
+                <span className="control-value">
+                  {formData.flickerIntensity <= 0.33 ? 'Subtle' : 
+                   formData.flickerIntensity <= 0.66 ? 'Medium' : 'Strong'}
+                </span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="10"
+                value={Math.round(formData.flickerIntensity * 100)}
+                onChange={(e) => handleChange('flickerIntensity', parseInt(e.target.value) / 100)}
+                className="slider"
+              />
+              <div className="slider-labels">
+                <span>Subtle</span>
+                <span>Medium</span>
+                <span>Strong</span>
+              </div>
+            </div>
+          )}
+
+          {/* Pulse Intensity - only show if animated is enabled */}
+          {formData.animated && (
+            <div className="form-group">
+              <label>
+                Pulse Intensity
+                <span className="control-value">
+                  {formData.pulseIntensity <= 0.33 ? 'Gentle' : 
+                   formData.pulseIntensity <= 0.66 ? 'Medium' : 'Dramatic'}
+                </span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="10"
+                value={Math.round(formData.pulseIntensity * 100)}
+                onChange={(e) => handleChange('pulseIntensity', parseInt(e.target.value) / 100)}
+                className="slider"
+              />
+              <div className="slider-labels">
+                <span>Gentle</span>
+                <span>Medium</span>
+                <span>Dramatic</span>
+              </div>
+            </div>
+          )}
 
           {/* Form Actions */}
           <div className="form-actions">

@@ -67,7 +67,7 @@ This phase ensures the fix is clean, well-documented, and ready for integration.
 * Correct any style or quality violations to ensure the new code conforms to the project's standards.
 
 ### 7. Generate the Final Report 
-* **Commit Message:** Prepare a clear and descriptive commit message following conventional standards (e.g., `fix(module): resolve type error on null email field`).
+* **Commit Message:** Prepare a clear and descriptive but very brief commit message following conventional standards (e.g., `fix(module): resolve type error on null email field`).
 * **Summary of Changes:** Send a messsage including (Do not create a document unless asked to):
     * **Root Cause Analysis:** A brief explanation of the bug's origin.
     * **Solution Implemented:** A concise summary of the code changes made. A code diff is highly effective here.
