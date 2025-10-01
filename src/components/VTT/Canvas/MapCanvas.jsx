@@ -137,6 +137,8 @@ function MapCanvas({
   // Light placement state
   const [placingLight, setPlacingLight] = useState(null); // Light data to be placed
   const [lightPreviewPos, setLightPreviewPos] = useState(null); // { x, y } for preview
+  // Light dragging state
+  const [draggingLight, setDraggingLight] = useState(null); // { id, light data, currentPos }
   // Local optimistic map state for immediate grid visual response
   const [mapLive, setMapLive] = useState(map);
   useEffect(() => { setMapLive(map); }, [map]);
@@ -1051,9 +1053,23 @@ function MapCanvas({
                 strokeWidth={2}
                 opacity={0.9}
                 draggable={activeTool === 'pointer'}
+                onDragStart={(e) => {
+                  setDraggingLight({
+                    id: light.id,
+                    light: light,
+                    currentPos: { x: e.target.x(), y: e.target.y() }
+                  });
+                }}
+                onDragMove={(e) => {
+                  setDraggingLight(prev => prev ? {
+                    ...prev,
+                    currentPos: { x: e.target.x(), y: e.target.y() }
+                  } : null);
+                }}
                 onDragEnd={(e) => {
                   const newPos = maybeSnapPoint({ x: e.target.x(), y: e.target.y() });
                   updateLight(light.id, { position: newPos });
+                  setDraggingLight(null);
                 }}
                 onMouseEnter={(e) => {
                   e.target.getStage().container().style.cursor = 'move';
@@ -1429,6 +1445,44 @@ function MapCanvas({
                 dash={[10, 5]}
                 opacity={0.6}
                 listening={false}
+              />
+            </Fragment>
+          )}
+
+          {/* Light dragging radius indicator */}
+          {draggingLight && (
+            <Fragment>
+              {/* Outer glow ring showing light radius */}
+              <Circle
+                x={draggingLight.currentPos.x}
+                y={draggingLight.currentPos.y}
+                radius={draggingLight.light.radius || 40}
+                fill={draggingLight.light.color || '#FF8800'}
+                opacity={0.1}
+                listening={false}
+              />
+              {/* Dashed radius border */}
+              <Circle
+                x={draggingLight.currentPos.x}
+                y={draggingLight.currentPos.y}
+                radius={draggingLight.light.radius || 40}
+                stroke={draggingLight.light.color || '#FF8800'}
+                strokeWidth={2}
+                dash={[10, 5]}
+                opacity={0.7}
+                listening={false}
+              />
+              {/* Center dot indicator */}
+              <Circle
+                x={draggingLight.currentPos.x}
+                y={draggingLight.currentPos.y}
+                radius={10}
+                fill={draggingLight.light.color || '#FF8800'}
+                opacity={0.5}
+                listening={false}
+                shadowColor={draggingLight.light.color || '#FF8800'}
+                shadowBlur={15}
+                shadowOpacity={0.6}
               />
             </Fragment>
           )}
