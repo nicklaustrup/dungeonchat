@@ -13,6 +13,7 @@ const LightingPanel = ({
   onDeleteLight,
   onUpdateGlobalLighting,
   onClose,
+  open = false,
   isDM = false
 }) => {
   const [showEditor, setShowEditor] = useState(false);
@@ -83,6 +84,10 @@ const LightingPanel = ({
 
   if (!isDM) {
     return null; // Only DM can control lighting
+  }
+
+  if (!open) {
+    return null; // Panel is closed
   }
 
   return (
