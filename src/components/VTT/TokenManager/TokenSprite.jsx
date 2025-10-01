@@ -13,7 +13,9 @@ function TokenSprite({
   onDragStart,
   isSelected = false,
   isDraggable = true,
-  listening = true
+  listening = true,
+  snapToGrid = false,
+  gridSize = 50
 }) {
   const [image] = useImage(token.imageUrl || '', 'anonymous');
 
@@ -66,6 +68,17 @@ function TokenSprite({
   const tokenColor = getTokenColor();
   const tokenSize = token.size?.width || 50;
 
+  const handleDragMove = (e) => {
+    if (!snapToGrid || !gridSize) return;
+    const node = e.target;
+    const x = node.x();
+    const y = node.y();
+    const snappedX = Math.round(x / gridSize) * gridSize;
+    const snappedY = Math.round(y / gridSize) * gridSize;
+    node.x(snappedX);
+    node.y(snappedY);
+  };
+
   return (
     <Group
       x={token.position.x}
@@ -73,6 +86,7 @@ function TokenSprite({
       draggable={isDraggable}
       onDragEnd={handleDragEnd}
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onClick={handleClick}
       onTap={handleClick}
       listening={listening}

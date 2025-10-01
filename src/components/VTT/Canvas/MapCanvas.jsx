@@ -62,7 +62,7 @@ function MapCanvas({
   // Ruler state
   const [rulerStart, setRulerStart] = useState(null);
   const [rulerEnd, setRulerEnd] = useState(null);
-  const [rulerSnapToGrid, setRulerSnapToGrid] = useState(false);
+  const [snapToGrid, setSnapToGrid] = useState(false); // global snap
   const [rulerPersistent, setRulerPersistent] = useState(false);
   const [pinnedRulers, setPinnedRulers] = useState([]); // Array of pinned measurements
   
@@ -74,6 +74,15 @@ function MapCanvas({
   const [shapeOpacity, setShapeOpacity] = useState(0.5);
   const [shapePersistent, setShapePersistent] = useState(false);
   const [shapeVisibility, setShapeVisibility] = useState('all'); // 'all' | 'dm'
+
+  // Helper to optionally snap any point to grid when global snap is enabled
+  const maybeSnapPoint = (pt) => {
+    if (snapToGrid && map?.gridSize) {
+      const g = map.gridSize;
+      return { x: Math.round(pt.x / g) * g, y: Math.round(pt.y / g) * g };
+    }
+    return pt;
+  };
 
   // Keyboard shortcut handler for ruler (R key) and ESC to clear
   useEffect(() => {
@@ -275,12 +284,11 @@ function MapCanvas({
   // Handle based on active tool
       if (activeTool === 'arrow') {
         if (!arrowStart) {
-          // Set arrow start point
-          setArrowStart({ x: mapX, y: mapY });
+          setArrowStart(maybeSnapPoint({ x: mapX, y: mapY }));
         } else {
-          // Create arrow with start and end points
           try {
-            await drawingService.createArrow(firestore, campaignId, map.id, arrowStart, { x: mapX, y: mapY }, '#ffff00', user.uid);
+            const end = maybeSnapPoint({ x: mapX, y: mapY });
+            await drawingService.createArrow(firestore, campaignId, map.id, arrowStart, end, '#ffff00', user.uid);
             setArrowStart(null);
           } catch (err) {
             console.error('Error creating arrow:', err);
@@ -294,7 +302,7 @@ function MapCanvas({
         let endY = mapY;
         
         // Snap to grid if enabled
-        if (rulerSnapToGrid) {
+        if (snapToGrid) {
           startX = Math.round(mapX / gridSize) * gridSize;
           startY = Math.round(mapY / gridSize) * gridSize;
           endX = Math.round(mapX / gridSize) * gridSize;
@@ -324,9 +332,9 @@ function MapCanvas({
         return; // Don't deselect tokens when using ruler
       } else if (['circle','rectangle','cone','line'].includes(activeTool) && isDM) {
         if (!shapeStart) {
-          setShapeStart({ x: mapX, y: mapY });
+          setShapeStart(maybeSnapPoint({ x: mapX, y: mapY }));
         } else {
-          const end = { x: mapX, y: mapY };
+          const end = maybeSnapPoint({ x: mapX, y: mapY });
           try {
             if (activeTool === 'circle') {
               const dx = end.x - shapeStart.x;
@@ -393,14 +401,14 @@ function MapCanvas({
       let endY = mapY;
       
       // Snap to grid if enabled
-      if (rulerSnapToGrid) {
+      if (snapToGrid) {
         endX = Math.round(mapX / gridSize) * gridSize;
         endY = Math.round(mapY / gridSize) * gridSize;
       }
       
       setRulerEnd({ x: endX, y: endY });
     } else if (['circle','rectangle','cone','line'].includes(activeTool) && isDM && shapeStart) {
-      const end = { x: mapX, y: mapY };
+      const end = maybeSnapPoint({ x: mapX, y: mapY });
       if (activeTool === 'circle') {
         const dx = end.x - shapeStart.x;
         const dy = end.y - shapeStart.y;
@@ -440,24 +448,33 @@ function MapCanvas({
   // Handle token drag end
   const handleTokenDragEnd = async (tokenId, newPosition) => {
     try {
+      // Apply snap if enabled
+      let finalPos = newPosition;
+      if (snapToGrid && map?.gridSize) {
+        const g = map.gridSize;
+        finalPos = {
+          x: Math.round(newPosition.x / g) * g,
+          y: Math.round(newPosition.y / g) * g
+        };
+      }
       // Update position in Firestore
       await tokenService.updateTokenPosition(
         firestore,
         campaignId, 
         map.id, 
         tokenId, 
-        newPosition
+        finalPos
       );
       
       // Optimistic update
-      updateToken(tokenId, { position: newPosition });
+      updateToken(tokenId, { position: finalPos });
       
       // Reveal fog of war around token for player tokens
       if (fogOfWarEnabled && fogData?.enabled && map.gridEnabled) {
         const token = tokens.find(t => t.id === tokenId);
         if (token && token.type === 'pc') {
-          const gridX = Math.floor(newPosition.x / map.gridSize);
-          const gridY = Math.floor(newPosition.y / map.gridSize);
+          const gridX = Math.floor(finalPos.x / map.gridSize);
+          const gridY = Math.floor(finalPos.y / map.gridSize);
           await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, 3);
         }
       }
@@ -518,9 +535,9 @@ function MapCanvas({
         penColor={penColor}
         onPingColorChange={setPingColor}
         onPenColorChange={setPenColor}
-        rulerSnapToGrid={rulerSnapToGrid}
+  snapToGrid={snapToGrid}
         rulerPersistent={rulerPersistent}
-        onRulerSnapToggle={() => setRulerSnapToGrid(prev => !prev)}
+  onRulerSnapToggle={() => setSnapToGrid(prev => !prev)}
         onRulerPersistentToggle={() => setRulerPersistent(prev => !prev)}
         onClearPinnedRulers={() => setPinnedRulers([])}
         pinnedRulersCount={pinnedRulers.length}
@@ -640,13 +657,15 @@ function MapCanvas({
             }
 
             return (
-              <TokenSprite
+                <TokenSprite
                 key={token.id}
                 token={token}
                 isSelected={selectedTokenId === token.id}
                 isDraggable={isDM && activeTool === 'pointer'} // Only DM can drag, only in pointer mode
                 onClick={handleTokenClick}
                 onDragEnd={handleTokenDragEnd}
+                  snapToGrid={snapToGrid}
+                  gridSize={map?.gridSize}
                 listening={activeTool === 'pointer'} // Click-through when using drawing tools
               />
             );
