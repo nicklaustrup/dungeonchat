@@ -138,6 +138,23 @@ service cloud.firestore {
         allow create, update, delete: if request.auth != null && 
           request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
       }
+      
+      // Campaign schedule subcollection (sessions, milestones, events)
+      match /schedule/{eventId} {
+        // Campaign members can read all scheduled events
+        allow read: if request.auth != null && 
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+        
+        // DM can create, update, and delete events
+        allow create, update, delete: if request.auth != null && 
+          request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+        
+        // Campaign members can update availability field only
+        allow update: if request.auth != null && 
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['availability']) &&
+          request.resource.data.keys().hasAll(resource.data.keys().removeAll(['availability']));
+      }
     }
     
     // User campaigns tracking

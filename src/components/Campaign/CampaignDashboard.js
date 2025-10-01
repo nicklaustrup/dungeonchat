@@ -13,6 +13,8 @@ import InitiativeTracker from '../Session/InitiativeTracker';
 import InitiativeButton from '../Session/InitiativeButton';
 import SessionNotes from '../Session/SessionNotes';
 import Encounters from '../Session/Encounters';
+import CampaignCalendar from '../Session/CampaignCalendar';
+import PartyManagement from '../Session/PartyManagement';
 import { CharacterCreationModal } from '../CharacterCreationModal';
 import { CharacterSheet } from '../CharacterSheet';
 import { useCharacterSheet, useCampaignCharacters } from '../../hooks/useCharacterSheet';
@@ -212,6 +214,18 @@ function CampaignDashboard() {
               onClick={() => setActiveTab('encounters')}
             >
               Encounters
+            </button>
+            <button 
+              className={`nav-item ${activeTab === 'calendar' ? 'active' : ''}`}
+              onClick={() => setActiveTab('calendar')}
+            >
+              Calendar
+            </button>
+            <button 
+              className={`nav-item ${activeTab === 'party' ? 'active' : ''}`}
+              onClick={() => setActiveTab('party')}
+            >
+              Party Management
             </button>
             <button 
               className={`nav-item ${activeTab === 'rules' ? 'active' : ''}`}
@@ -471,6 +485,26 @@ function CampaignDashboard() {
                 Create and manage encounter templates with monsters, environmental effects, and loot. Scale encounters to your party and start them when ready.
               </p>
               <Encounters campaignId={campaignId} />
+            </div>
+          )}
+
+          {activeTab === 'calendar' && (
+            <div className="calendar-tab">
+              <h2>Campaign Calendar</h2>
+              <p className="tab-description">
+                Schedule sessions, track availability, manage milestones, and maintain an in-game calendar. Export events to your personal calendar.
+              </p>
+              <CampaignCalendar campaignId={campaignId} />
+            </div>
+          )}
+
+          {activeTab === 'party' && (
+            <div className="party-tab">
+              <h2>Party Management</h2>
+              <p className="tab-description">
+                Track party statistics, distribute XP, manage HP and rest mechanics, analyze party composition, and monitor wealth.
+              </p>
+              <PartyManagement campaignId={campaignId} />
             </div>
           )}
 
