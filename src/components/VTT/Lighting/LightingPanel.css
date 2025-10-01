@@ -582,3 +582,43 @@
 .light-editor-form::-webkit-scrollbar-thumb:hover {
   background: #444;
 }
+
+/* Quick Place Light Presets */
+.section-hint {
+  font-size: 11px;
+  color: var(--text-secondary, #aaa);
+  margin: 0 0 12px 0;
+  font-style: italic;
+}
+
+.light-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.preset-card {
+  padding: 12px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+  border: 2px solid var(--border-color, #333);
+  border-radius: 12px;
+  background: var(--bg-tertiary, #2a2a3e);
+  color: var(--text-primary, #e0e0f0);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-card:hover {
+  border-color: #667eea;
+  background: var(--bg-hover, #3a3a4e);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.preset-card:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}

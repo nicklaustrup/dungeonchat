@@ -14,7 +14,8 @@ const LightingPanel = ({
   onUpdateGlobalLighting,
   onClose,
   open = false,
-  isDM = false
+  isDM = false,
+  onStartPlacingLight = null // Callback to enter "place light" mode
 }) => {
   const [showEditor, setShowEditor] = useState(false);
   const [editingLight, setEditingLight] = useState(null);
@@ -160,6 +161,100 @@ const LightingPanel = ({
             </>
           )}
         </div>
+
+        {/* Quick Place Light Palette */}
+        {globalLighting.enabled && onStartPlacingLight && (
+          <div className="lighting-section">
+            <h4>Quick Place Lights</h4>
+            <p className="section-hint">Click a preset, then click the map to place</p>
+            <div className="light-presets-grid">
+              <button
+                className="preset-card"
+                onClick={() => onStartPlacingLight({ 
+                  type: 'point',
+                  color: '#FF8800', 
+                  radius: 40, 
+                  intensity: 0.8, 
+                  flicker: true,
+                  falloff: 'realistic'
+                })}
+                title="Click to place torch"
+              >
+                🔥<br/>Torch
+              </button>
+              <button
+                className="preset-card"
+                onClick={() => onStartPlacingLight({ 
+                  type: 'point',
+                  color: '#FFB366', 
+                  radius: 30, 
+                  intensity: 0.9, 
+                  flicker: false,
+                  falloff: 'realistic'
+                })}
+                title="Click to place lantern"
+              >
+                🏮<br/>Lantern
+              </button>
+              <button
+                className="preset-card"
+                onClick={() => onStartPlacingLight({ 
+                  type: 'point',
+                  color: '#FFD700', 
+                  radius: 10, 
+                  intensity: 0.6, 
+                  flicker: true,
+                  falloff: 'realistic'
+                })}
+                title="Click to place candle"
+              >
+                🕯️<br/>Candle
+              </button>
+              <button
+                className="preset-card"
+                onClick={() => onStartPlacingLight({ 
+                  type: 'point',
+                  color: '#FFFFFF', 
+                  radius: 40, 
+                  intensity: 1.0, 
+                  flicker: false,
+                  falloff: 'realistic'
+                })}
+                title="Click to place light spell"
+              >
+                ✨<br/>Light Spell
+              </button>
+              <button
+                className="preset-card"
+                onClick={() => onStartPlacingLight({ 
+                  type: 'point',
+                  color: '#4444FF', 
+                  radius: 30, 
+                  intensity: 0.9, 
+                  animated: true,
+                  falloff: 'realistic'
+                })}
+                title="Click to place magical light"
+              >
+                🔵<br/>Magical
+              </button>
+              <button
+                className="preset-card"
+                onClick={() => onStartPlacingLight({ 
+                  type: 'point',
+                  color: '#AA44FF', 
+                  radius: 30, 
+                  intensity: 0.9, 
+                  animated: true,
+                  falloff: 'realistic'
+                })}
+                title="Click to place purple magical light"
+              >
+                🟣<br/>Purple
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Light Sources List */}
         {globalLighting.enabled && (

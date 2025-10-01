@@ -134,6 +134,9 @@ function MapCanvas({
   const [showTokenEditor, setShowTokenEditor] = useState(false);
   const [showFXLibrary, setShowFXLibrary] = useState(false);
   const [showLightingPanel, setShowLightingPanel] = useState(false);
+  // Light placement state
+  const [placingLight, setPlacingLight] = useState(null); // Light data to be placed
+  const [lightPreviewPos, setLightPreviewPos] = useState(null); // { x, y } for preview
   // Local optimistic map state for immediate grid visual response
   const [mapLive, setMapLive] = useState(map);
   useEffect(() => { setMapLive(map); }, [map]);
@@ -472,6 +475,20 @@ function MapCanvas({
           setRulerEnd(null);
         }
         return; // Don't deselect tokens when using ruler
+      } else if (activeTool === 'placeLight' && isDM && placingLight) {
+        // Place the light at clicked position
+        const position = maybeSnapPoint({ x: mapX, y: mapY });
+        createLight({
+          ...placingLight,
+          position
+        }).then(() => {
+          setPlacingLight(null);
+          setLightPreviewPos(null);
+          setActiveTool('pointer');
+        }).catch(error => {
+          console.error('Error placing light:', error);
+        });
+        return;
       } else if (['circle','rectangle','cone','line'].includes(activeTool) && isDM) {
         if (!shapeStart) {
           setShapeStart(maybeSnapPoint({ x: mapX, y: mapY }));
@@ -538,7 +555,11 @@ function MapCanvas({
     const mapX = (pointer.x - stage.x()) / stage.scaleX();
     const mapY = (pointer.y - stage.y()) / stage.scaleY();
     
-    if (activeTool === 'pen' && isDrawing) {
+    if (activeTool === 'placeLight' && placingLight) {
+      // Update light preview position
+      const previewPos = maybeSnapPoint({ x: mapX, y: mapY });
+      setLightPreviewPos(previewPos);
+    } else if (activeTool === 'pen' && isDrawing) {
       setCurrentDrawing(prev => [...prev, mapX, mapY]);
   } else if (activeTool === 'ruler' && rulerStart) {
       // Update ruler end point while dragging
@@ -1283,6 +1304,44 @@ function MapCanvas({
             />
           )}
 
+          {/* Light placement preview */}
+          {activeTool === 'placeLight' && lightPreviewPos && placingLight && (
+            <Fragment>
+              {/* Outer glow ring */}
+              <Circle
+                x={lightPreviewPos.x}
+                y={lightPreviewPos.y}
+                radius={placingLight.radius || 40}
+                fill={placingLight.color || '#FF8800'}
+                opacity={0.1}
+                listening={false}
+              />
+              {/* Inner bright center */}
+              <Circle
+                x={lightPreviewPos.x}
+                y={lightPreviewPos.y}
+                radius={8}
+                fill={placingLight.color || '#FF8800'}
+                opacity={0.8}
+                listening={false}
+                shadowColor={placingLight.color || '#FF8800'}
+                shadowBlur={20}
+                shadowOpacity={0.8}
+              />
+              {/* Placement indicator */}
+              <Circle
+                x={lightPreviewPos.x}
+                y={lightPreviewPos.y}
+                radius={placingLight.radius || 40}
+                stroke={placingLight.color || '#FF8800'}
+                strokeWidth={2}
+                dash={[10, 5]}
+                opacity={0.6}
+                listening={false}
+              />
+            </Fragment>
+          )}
+
           {/* Pings - X shape with vertical line */}
           {layerVisibility.pings && pings.map(ping => {
             // Calculate ping animation phases
@@ -1431,6 +1490,10 @@ function MapCanvas({
           onUpdateLight={updateLight}
           onDeleteLight={deleteLight}
           onUpdateGlobalLighting={updateGlobalLighting}
+          onStartPlacingLight={(lightData) => {
+            setPlacingLight(lightData);
+            setActiveTool('placeLight');
+          }}
           open={showLightingPanel}
           onClose={() => setShowLightingPanel(false)}
           isDM={isDM}
