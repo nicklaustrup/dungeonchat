@@ -427,15 +427,15 @@ function PartyManagement({ campaignId }) {
                 <div className="character-stats">
                   <div className="stat-item">
                     <span className="stat-label">AC</span>
-                    <span className="stat-value">{character.armorClass}</span>
+                    <span className="stat-value">{character.armorClass || 10}</span>
                   </div>
                   <div className="stat-item">
                     <span className="stat-label">XP</span>
-                    <span className="stat-value">{character.experience?.toLocaleString() || 0}</span>
+                    <span className="stat-value">{(character.experience || 0).toLocaleString()}</span>
                   </div>
                   <div className="stat-item">
                     <span className="stat-label">Gold</span>
-                    <span className="stat-value">{character.gold?.toLocaleString() || 0}</span>
+                    <span className="stat-value">{(character.gold || 0).toLocaleString()}</span>
                   </div>
                 </div>
 
