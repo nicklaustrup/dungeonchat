@@ -216,32 +216,13 @@ function MapCanvas({
       if (e.key === 't' || e.key === 'T') {
         setTokenSnap(prev => !prev);
       }
-      // Undo/Redo
-      if ((e.key === 'z' || e.key === 'Z') && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        const redo = e.shiftKey;
-        if (!redo) {
-          // setUndoStack(prev => {
-            if (!prev.length) return prev;
-            const last = prev[prev.length - 1];
-            if (last.undo) last.undo();
-            // setRedoStack(r => [...r, last]);
-            return prev.slice(0, -1);
-          });
-        } else {
-          // setRedoStack(prev => {
-            if (!prev.length) return prev;
-            const last = prev[prev.length - 1];
-            if (last.redo) last.redo();
-            // setUndoStack(u => [...u, last]);
-            return prev.slice(0, -1);
-          });
-        }
-      }
+      // Undo/Redo - Disabled (future enhancement)
+      // TODO: Re-enable when undo/redo stack is implemented
     };
     
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDM, activeTool, contextMenu, gMap, firestore, campaignId]);
 
   // Reset position and scale when map changes
@@ -475,21 +456,21 @@ function MapCanvas({
               const dx = end.x - shapeStart.x;
               const dy = end.y - shapeStart.y;
               const radius = Math.sqrt(dx*dx + dy*dy);
-                const created = await shapeService.createCircle(firestore, campaignId, map.id, shapeStart, radius, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
-                // setUndoStack(u => [...u, { undo: () => shapeService.deleteShape(firestore, campaignId, map.id, created.id), redo: () => shapeService.createCircle(firestore, campaignId, map.id, shapeStart, radius, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid) }]);
+                await shapeService.createCircle(firestore, campaignId, map.id, shapeStart, radius, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                // TODO: Undo/redo for shape creation (future enhancement)
             } else if (activeTool === 'rectangle') {
-                const created = await shapeService.createRectangle(firestore, campaignId, map.id, shapeStart, end.x - shapeStart.x, end.y - shapeStart.y, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
-                // setUndoStack(u => [...u, { undo: () => shapeService.deleteShape(firestore, campaignId, map.id, created.id), redo: () => shapeService.createRectangle(firestore, campaignId, map.id, shapeStart, end.x - shapeStart.x, end.y - shapeStart.y, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid) }]);
+                await shapeService.createRectangle(firestore, campaignId, map.id, shapeStart, end.x - shapeStart.x, end.y - shapeStart.y, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                // TODO: Undo/redo for shape creation (future enhancement)
             } else if (activeTool === 'cone') {
               const dx = end.x - shapeStart.x;
               const dy = end.y - shapeStart.y;
               const length = Math.sqrt(dx*dx + dy*dy);
               const direction = (Math.atan2(dy, dx) * 180) / Math.PI;
-                const created = await shapeService.createCone(firestore, campaignId, map.id, shapeStart, direction, length, 60, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
-                // setUndoStack(u => [...u, { undo: () => shapeService.deleteShape(firestore, campaignId, map.id, created.id), redo: () => shapeService.createCone(firestore, campaignId, map.id, shapeStart, direction, length, 60, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid) }]);
+                await shapeService.createCone(firestore, campaignId, map.id, shapeStart, direction, length, 60, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                // TODO: Undo/redo for shape creation (future enhancement)
             } else if (activeTool === 'line') {
-                const created = await shapeService.createLine(firestore, campaignId, map.id, shapeStart, end, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
-                // setUndoStack(u => [...u, { undo: () => shapeService.deleteShape(firestore, campaignId, map.id, created.id), redo: () => shapeService.createLine(firestore, campaignId, map.id, shapeStart, end, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid) }]);
+                await shapeService.createLine(firestore, campaignId, map.id, shapeStart, end, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+                // TODO: Undo/redo for shape creation (future enhancement)
             }
           } catch (err) {
             console.error('Error creating shape:', err);
@@ -588,7 +569,7 @@ function MapCanvas({
   const handleTokenDragEnd = useCallback(async (tokenId, newPosition) => {
     try {
       const token = tokens.find(t => t.id === tokenId);
-      const beforePos = token?.position ? { ...token.position } : null;
+      // TODO: Track beforePos for undo/redo (future enhancement)
       // Apply snap if enabled
       let finalPos = newPosition;
       if (snapToGrid && map?.gridSize) {
@@ -601,13 +582,7 @@ function MapCanvas({
       finalPos = clampTokenCenter(finalPos, token);
       await tokenService.updateTokenPosition(firestore, campaignId, map.id, tokenId, finalPos);
       updateToken(tokenId, { position: finalPos });
-      if (beforePos) {
-        const afterPos = { ...finalPos };
-        // setUndoStack(u => [...u, {
-          undo: () => tokenService.updateTokenPosition(firestore, campaignId, map.id, tokenId, beforePos),
-          redo: () => tokenService.updateTokenPosition(firestore, campaignId, map.id, tokenId, afterPos)
-        }]);
-      }
+      // Undo/redo disabled for token moves (future enhancement)
       if (fogOfWarEnabled && fogData?.enabled && map.gridEnabled) {
         if (token && token.type === 'pc') {
           const gridX = Math.floor(finalPos.x / map.gridSize);
@@ -1292,11 +1267,11 @@ function MapCanvas({
           onClose={() => setShowGridConfig(false)}
           map={gMap}
           onUpdate={async (updates) => {
-            const before = { gridSize: gMap.gridSize, gridColor: gMap.gridColor, gridOpacity: gMap.gridOpacity, gridEnabled: gMap.gridEnabled };
+            // TODO: Track before state for undo/redo (future enhancement)
             setMapLive(m => m ? { ...m, ...updates } : m);
             try {
               await mapService.updateMap(firestore, campaignId, gMap.id, updates);
-              // setUndoStack(u => [...u, { undo: () => { setMapLive(m => m ? { ...m, ...before } : m); mapService.updateMap(firestore, campaignId, gMap.id, before).catch(()=>{}); }, redo: () => { setMapLive(m => m ? { ...m, ...updates } : m); mapService.updateMap(firestore, campaignId, gMap.id, updates).catch(()=>{}); } }]);
+              // TODO: Undo/redo for grid updates (future enhancement)
             } catch (e) { console.error('Failed to update grid settings', e); }
           }}
           //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
@@ -1339,30 +1314,18 @@ function MapCanvas({
             onClose={() => setShowTokenEditor(false)}
             onSave={async ({ hp, maxHp, presetStatus }) => {
               try {
-                const before = { hp: token.hp, maxHp: token.maxHp };
+                // TODO: Track before state for undo/redo (future enhancement)
                 const updates = {};
                 if (typeof maxHp === 'number' && maxHp !== token.maxHp) updates.maxHp = maxHp;
                 if (typeof hp === 'number' && hp !== token.hp) updates.hp = hp;
-                let statusAdded = null;
                 if (presetStatus) {
                   await tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, presetStatus);
-                  statusAdded = presetStatus;
+                  // TODO: Track status for undo/redo (future enhancement)
                 }
                 if (Object.keys(updates).length) {
                   await tokenService.updateToken(firestore, campaignId, map.id, token.id, updates);
                 }
-                if (Object.keys(updates).length || statusAdded) {
-                  // setUndoStack(u => [...u, { 
-                    undo: async () => {
-                      if (statusAdded) await tokenService.removeStatusEffect(firestore, campaignId, map.id, token.id, statusAdded.name);
-                      if (Object.keys(updates).length) await tokenService.updateToken(firestore, campaignId, map.id, token.id, { hp: before.hp, maxHp: before.maxHp });
-                    },
-                    redo: async () => {
-                      if (Object.keys(updates).length) await tokenService.updateToken(firestore, campaignId, map.id, token.id, updates);
-                      if (statusAdded) await tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, statusAdded);
-                    }
-                  }]);
-                }
+                // TODO: Undo/redo for token updates (future enhancement)
               } catch (e) { console.error('Save token stats failed', e); }
             }}
           />
@@ -1381,9 +1344,9 @@ function MapCanvas({
             onClose={() => setContextMenu(null)}
             onAdjustHP={async (value, isAbsolute) => {
               try {
-                const before = { hp: token.hp };
+                // TODO: Track before state for undo/redo (future enhancement)
                 await tokenService.updateHP(firestore, campaignId, map.id, token.id, value, isAbsolute);
-                // setUndoStack(u => [...u, { undo: () => tokenService.updateToken(firestore, campaignId, map.id, token.id, { hp: before.hp }), redo: () => tokenService.updateHP(firestore, campaignId, map.id, token.id, value, isAbsolute) }]);
+                // TODO: Undo/redo for HP updates (future enhancement)
               } catch (e) { console.error('HP update failed', e); }
             }}
             onAddStatus={async (effect) => {
