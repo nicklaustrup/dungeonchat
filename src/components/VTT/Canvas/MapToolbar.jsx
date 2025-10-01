@@ -29,12 +29,14 @@ const MapToolbar = ({
   penColor = '#ffffff',
   onPingColorChange,
   onPenColorChange,
-  rulerSnapToGrid = false,
+  snapToGrid = false,
   rulerPersistent = false,
   onRulerSnapToggle,
   onRulerPersistentToggle,
   onClearPinnedRulers,
   pinnedRulersCount = 0,
+  tokenSnap = true,
+  onTokenSnapToggle,
   // Shape tool props
   shapeColor = '#ff0000',
   shapeOpacity = 0.5,
@@ -218,10 +220,18 @@ const MapToolbar = ({
                       <label className="checkbox-label">
                         <input
                           type="checkbox"
-                          checked={rulerSnapToGrid}
+                          checked={snapToGrid}
                           onChange={() => onRulerSnapToggle?.()}
                         />
-                        <span>Snap to Grid</span>
+                        <span>Snap to Grid (All Tools)</span>
+                      </label>
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={tokenSnap}
+                          onChange={() => onTokenSnapToggle?.()}
+                        />
+                        <span>Token Snap</span>
                       </label>
                       <label className="checkbox-label">
                         <input

@@ -14,20 +14,34 @@ function TokenSprite({
   isSelected = false,
   isDraggable = true,
   listening = true,
-  snapToGrid = false,
-  gridSize = 50
+  tokenSnap = true,
+  gridSize = 50,
+  onDragMovePreview
 }) {
   const [image] = useImage(token.imageUrl || '', 'anonymous');
 
   const handleDragEnd = (e) => {
-    // Prevent stage from being dragged when dragging token
     e.cancelBubble = true;
+    const node = e.target;
+    let x = node.x();
+    let y = node.y();
+    if (gridSize) {
+      const altPressed = e.evt?.altKey;
+      const snapActive = tokenSnap ? !altPressed : altPressed;
+      if (snapActive) {
+        const cellX = Math.floor(x / gridSize);
+        const cellY = Math.floor(y / gridSize);
+        x = cellX * gridSize + (tokenSize === gridSize ? gridSize / 2 : (tokenSize / squares) / 2 + (squares > 1 ? 0 : 0));
+        y = cellY * gridSize + (tokenSize === gridSize ? gridSize / 2 : (tokenSize / squares) / 2 + (squares > 1 ? 0 : 0));
+        node.x(x);
+        node.y(y);
+      }
+    }
     if (onDragEnd) {
-      const newPosition = {
-        x: e.target.x(),
-        y: e.target.y()
-      };
-      onDragEnd(token.id, newPosition);
+      onDragEnd(token.id, { x, y });
+    }
+    if (onDragMovePreview) {
+      onDragMovePreview(null); // clear highlight
     }
   };
 
@@ -66,26 +80,56 @@ function TokenSprite({
   };
 
   const tokenColor = getTokenColor();
-  const tokenSize = token.size?.width || 50;
+  const baseSize = token.size?.width || 50;
+  // Support multi-square tokens: size may be multiple of gridSize. If not exact, fall back to base size.
+  const squares = gridSize ? Math.max(1, Math.round(baseSize / gridSize)) : 1;
+  const tokenSize = squares * gridSize;
 
   const handleDragMove = (e) => {
-    if (!snapToGrid || !gridSize) return;
+    if (!gridSize) return;
     const node = e.target;
-    const x = node.x();
-    const y = node.y();
-    // Snap to center of the grid cell containing the token's current center
-    const cellX = Math.floor(x / gridSize);
-    const cellY = Math.floor(y / gridSize);
-    const snappedX = cellX * gridSize + gridSize / 2;
-    const snappedY = cellY * gridSize + gridSize / 2;
-    node.x(snappedX);
-    node.y(snappedY);
+    const rawX = node.x();
+    const rawY = node.y();
+    const altPressed = e.evt?.altKey;
+
+    // Determine whether snapping is active: if tokenSnap is true, Alt disables; if false, Alt enables.
+    const snapActive = tokenSnap ? !altPressed : altPressed;
+
+    if (snapActive) {
+      // For large tokens (multiple squares), align top-left corner to grid, not center.
+      const cellX = Math.floor(rawX / gridSize);
+      const cellY = Math.floor(rawY / gridSize);
+      const snappedX = cellX * gridSize + (tokenSize === gridSize ? gridSize / 2 : tokenSize / squares / 2);
+      const snappedY = cellY * gridSize + (tokenSize === gridSize ? gridSize / 2 : tokenSize / squares / 2);
+      node.x(snappedX);
+      node.y(snappedY);
+      if (onDragMovePreview) {
+        onDragMovePreview({
+          x: cellX * gridSize,
+            y: cellY * gridSize,
+          w: tokenSize,
+          h: tokenSize
+        });
+      }
+    } else {
+      // Free move: still show highlight of current cell footprint (top-left cell containing center)
+      const cellX = Math.floor(rawX / gridSize);
+      const cellY = Math.floor(rawY / gridSize);
+      if (onDragMovePreview) {
+        onDragMovePreview({
+          x: cellX * gridSize,
+          y: cellY * gridSize,
+          w: tokenSize,
+          h: tokenSize
+        });
+      }
+    }
   };
 
   return (
     <Group
-      x={token.position.x}
-      y={token.position.y}
+  x={token.position.x}
+  y={token.position.y}
       draggable={isDraggable}
       onDragEnd={handleDragEnd}
       onDragStart={handleDragStart}

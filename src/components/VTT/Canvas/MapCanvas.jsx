@@ -74,6 +74,22 @@ function MapCanvas({
   const [shapeOpacity, setShapeOpacity] = useState(0.5);
   const [shapePersistent, setShapePersistent] = useState(false);
   const [shapeVisibility, setShapeVisibility] = useState('all'); // 'all' | 'dm'
+  // Token-specific snapping toggle & drag highlight footprint
+  const [tokenSnap, setTokenSnap] = useState(true);
+  const [tokenSnapHighlight, setTokenSnapHighlight] = useState(null); // {x,y,w,h}
+  const [tokenSnapPulse, setTokenSnapPulse] = useState(0); // animation ticker for highlight pulse
+
+  // Animate token snap highlight while dragging
+  useEffect(() => {
+    if (!tokenSnapHighlight) return; // only animate while active
+    let frameId;
+    const animate = (t) => {
+      setTokenSnapPulse(t);
+      frameId = requestAnimationFrame(animate);
+    };
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
+  }, [tokenSnapHighlight]);
 
   // Helper to optionally snap any point to grid when global snap is enabled
   const maybeSnapPoint = (pt) => {
@@ -544,6 +560,8 @@ function MapCanvas({
         onRulerPersistentToggle={() => setRulerPersistent(prev => !prev)}
         onClearPinnedRulers={() => setPinnedRulers([])}
         pinnedRulersCount={pinnedRulers.length}
+  tokenSnap={tokenSnap}
+  onTokenSnapToggle={() => setTokenSnap(prev => !prev)}
         shapeColor={shapeColor}
         shapeOpacity={shapeOpacity}
         shapePersistent={shapePersistent}
@@ -595,6 +613,36 @@ function MapCanvas({
             />
           )}
         </Layer>
+
+        {/* Token snap highlight (shows target footprint while dragging) */}
+        {map.gridEnabled && tokenSnapHighlight && (() => {
+          // Pulse parameters
+          const periodMs = 900; // full cycle
+            const phase = (tokenSnapPulse % periodMs) / periodMs; // 0..1
+          const sine = Math.sin(phase * Math.PI * 2); // -1..1
+          const intensity = 0.45 + (sine * 0.25); // 0.2 range
+          const strokeWidth = 2 + (sine + 1) * 1.5; // 2..5
+          const glow = 8 + (sine + 1) * 6; // 8..20
+          return (
+            <Layer>
+              <Rect
+                x={tokenSnapHighlight.x}
+                y={tokenSnapHighlight.y}
+                width={tokenSnapHighlight.w}
+                height={tokenSnapHighlight.h}
+                stroke="#ffffff"
+                strokeWidth={strokeWidth}
+                cornerRadius={4}
+                fill={`rgba(255,255,255,${intensity * 0.35})`}
+                listening={false}
+                shadowColor="#ffffff"
+                shadowBlur={glow}
+                shadowOpacity={0.9}
+                opacity={0.95}
+              />
+            </Layer>
+          );
+        })()}
 
         {/* Grid Layer */}
         {map.gridEnabled && (
@@ -660,16 +708,17 @@ function MapCanvas({
             }
 
             return (
-                <TokenSprite
+              <TokenSprite
                 key={token.id}
                 token={token}
                 isSelected={selectedTokenId === token.id}
-                isDraggable={isDM && activeTool === 'pointer'} // Only DM can drag, only in pointer mode
+                isDraggable={isDM && activeTool === 'pointer'}
                 onClick={handleTokenClick}
                 onDragEnd={handleTokenDragEnd}
-                  snapToGrid={snapToGrid}
-                  gridSize={map?.gridSize}
-                listening={activeTool === 'pointer'} // Click-through when using drawing tools
+                tokenSnap={tokenSnap}
+                gridSize={map?.gridSize}
+                onDragMovePreview={(data) => setTokenSnapHighlight(data)}
+                listening={activeTool === 'pointer'}
               />
             );
           })}
