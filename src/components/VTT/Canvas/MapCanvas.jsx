@@ -11,6 +11,7 @@ import AudioController from '../Audio/AudioController';
 import TokenExtendedEditor from '../TokenManager/TokenExtendedEditor';
 import TokenContextMenu from '../TokenManager/TokenContextMenu';
 import LightingLayer from './LightingLayer';
+import LightingPanel from '../Lighting/LightingPanel';
 import { initiativeService } from '../../../services/initiativeService';
 import { mapService } from '../../../services/vtt/mapService';
 import useTokens from '../../../hooks/vtt/useTokens';
@@ -21,6 +22,7 @@ import useLighting from '../../../hooks/vtt/useLighting';
 import { tokenService } from '../../../services/vtt/tokenService';
 import { pingService } from '../../../services/vtt/pingService';
 import { fogOfWarService } from '../../../services/vtt/fogOfWarService';
+import * as lightingService from '../../../services/vtt/lightingService';
 import { drawingService } from '../../../services/vtt/drawingService';
 import { shapeService } from '../../../services/vtt/shapeService';
 import { FirebaseContext } from '../../../services/FirebaseContext';
@@ -124,6 +126,8 @@ function MapCanvas({
   const [showMapLibrary, setShowMapLibrary] = useState(false);
   const [showAudio, setShowAudio] = useState(false);
   const [showTokenEditor, setShowTokenEditor] = useState(false);
+  const [showFXLibrary, setShowFXLibrary] = useState(false);
+  const [showLightingPanel, setShowLightingPanel] = useState(false);
   // Local optimistic map state for immediate grid visual response
   const [mapLive, setMapLive] = useState(map);
   useEffect(() => { setMapLive(map); }, [map]);
@@ -150,6 +154,22 @@ function MapCanvas({
     frameId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frameId);
   }, [tokenSnapHighlight]);
+
+  // Close FX Library dropdown when clicking outside
+  useEffect(() => {
+    if (!showFXLibrary) return;
+    
+    const handleClickOutside = (e) => {
+      // Check if click is outside the FX Library dropdown
+      const fxLibraryElement = document.querySelector('[data-fx-library]');
+      if (fxLibraryElement && !fxLibraryElement.contains(e.target)) {
+        setShowFXLibrary(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showFXLibrary]);
 
   // Helper to optionally snap any point to grid when global snap is enabled
   const maybeSnapPoint = useCallback((pt) => {
@@ -711,6 +731,103 @@ function MapCanvas({
           title="Edit Selected Token Stats"
           disabled={!selectedTokenId}
         >Edit Token</button>
+      )}
+      {isDM && (
+        <div style={{ position:'absolute', top:20, left:495, zIndex:130 }} data-fx-library>
+          <button
+            style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+            onClick={() => setShowFXLibrary(v=>!v)}
+            title="FX Library - Lighting, Weather, Ambience"
+          >
+            ✨ FX Library
+            <span style={{ fontSize:10, marginLeft:2 }}>{showFXLibrary ? '▲' : '▼'}</span>
+          </button>
+          {showFXLibrary && (
+            <div style={{
+              position:'absolute',
+              top:'100%',
+              left:0,
+              marginTop:4,
+              background:'#2d2d35',
+              border:'1px solid #444',
+              borderRadius:6,
+              boxShadow:'0 4px 12px rgba(0,0,0,0.3)',
+              minWidth:180,
+              overflow:'hidden',
+              zIndex:140
+            }}>
+              <button
+                style={{
+                  width:'100%',
+                  background: showLightingPanel ? '#3a3a45' : 'transparent',
+                  color:'#ddd',
+                  border:'none',
+                  padding:'10px 12px',
+                  cursor:'pointer',
+                  fontSize:12,
+                  textAlign:'left',
+                  display:'flex',
+                  alignItems:'center',
+                  gap:'8px',
+                  transition:'background 0.2s'
+                }}
+                onClick={() => {
+                  setShowLightingPanel(v=>!v);
+                  // Keep dropdown open for multiple selections
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#3a3a45'}
+                onMouseLeave={(e) => e.currentTarget.style.background = showLightingPanel ? '#3a3a45' : 'transparent'}
+                title="Dynamic Lighting System"
+              >
+                <span style={{ fontSize:14 }}>💡</span>
+                <span>Lighting</span>
+                {showLightingPanel && <span style={{ marginLeft:'auto', fontSize:10 }}>●</span>}
+              </button>
+              <button
+                style={{
+                  width:'100%',
+                  background:'transparent',
+                  color:'#888',
+                  border:'none',
+                  padding:'10px 12px',
+                  cursor:'not-allowed',
+                  fontSize:12,
+                  textAlign:'left',
+                  display:'flex',
+                  alignItems:'center',
+                  gap:'8px'
+                }}
+                disabled
+                title="Weather Effects - Coming Soon"
+              >
+                <span style={{ fontSize:14 }}>🌧️</span>
+                <span>Weather</span>
+                <span style={{ marginLeft:'auto', fontSize:9, opacity:0.6 }}>Soon</span>
+              </button>
+              <button
+                style={{
+                  width:'100%',
+                  background:'transparent',
+                  color:'#888',
+                  border:'none',
+                  padding:'10px 12px',
+                  cursor:'not-allowed',
+                  fontSize:12,
+                  textAlign:'left',
+                  display:'flex',
+                  alignItems:'center',
+                  gap:'8px'
+                }}
+                disabled
+                title="Ambience & Audio - Coming Soon"
+              >
+                <span style={{ fontSize:14 }}>🎵</span>
+                <span>Ambience</span>
+                <span style={{ marginLeft:'auto', fontSize:9, opacity:0.6 }}>Soon</span>
+              </button>
+            </div>
+          )}
+        </div>
       )}
       
       <Stage
@@ -1302,6 +1419,43 @@ function MapCanvas({
           onClose={() => setShowAudio(false)}
           isDM={isDM}
           //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
+        />
+      )}
+      {isDM && (
+        <LightingPanel
+          lights={lights}
+          globalLighting={globalLighting}
+          onCreateLight={async (lightData) => {
+            try {
+              await lightingService.createLightSource(firestore, campaignId, map.id, lightData);
+            } catch (error) {
+              console.error('Error creating light:', error);
+            }
+          }}
+          onUpdateLight={async (lightId, updates) => {
+            try {
+              await lightingService.updateLightSource(firestore, campaignId, map.id, lightId, updates);
+            } catch (error) {
+              console.error('Error updating light:', error);
+            }
+          }}
+          onDeleteLight={async (lightId) => {
+            try {
+              await lightingService.deleteLightSource(firestore, campaignId, map.id, lightId);
+            } catch (error) {
+              console.error('Error deleting light:', error);
+            }
+          }}
+          onUpdateGlobalLighting={async (updates) => {
+            try {
+              await lightingService.updateGlobalLighting(firestore, campaignId, map.id, updates);
+            } catch (error) {
+              console.error('Error updating global lighting:', error);
+            }
+          }}
+          open={showLightingPanel}
+          onClose={() => setShowLightingPanel(false)}
+          isDM={isDM}
         />
       )}
       {isDM && showTokenEditor && selectedTokenId && (() => {
