@@ -1,5 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiCrosshair, FiEdit2, FiArrowRight, FiMousePointer, FiSettings, FiMinus, FiMaximize2 } from 'react-icons/fi';
+import { 
+  FiCrosshair, 
+  FiEdit2, 
+  FiArrowRight, 
+  FiMousePointer, 
+  FiSettings, 
+  FiMinus, 
+  FiMaximize2,
+  FiCircle,
+  FiSquare,
+  FiTriangle
+} from 'react-icons/fi';
 import './MapToolbar.css';
 
 /**
@@ -23,7 +34,18 @@ const MapToolbar = ({
   onRulerSnapToggle,
   onRulerPersistentToggle,
   onClearPinnedRulers,
-  pinnedRulersCount = 0
+  pinnedRulersCount = 0,
+  // Shape tool props
+  shapeColor = '#ff0000',
+  shapeOpacity = 0.5,
+  shapePersistent = false,
+  shapeVisibility = 'all', // 'dm' | 'all'
+  onShapeColorChange,
+  onShapeOpacityChange,
+  onShapePersistentToggle,
+  onShapeVisibilityChange,
+  onClearTempShapes,
+  onClearAllShapes
 }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -42,6 +64,11 @@ const MapToolbar = ({
   // Add ruler tool for DM
   if (isDM) {
     tools.push({ id: 'ruler', icon: FiCrosshair, label: 'Ruler', description: 'Measure distance in grid squares' });
+    // Shape tools
+    tools.push({ id: 'circle', icon: FiCircle, label: 'Circle', description: 'Draw circle (AOE radius)' });
+    tools.push({ id: 'rectangle', icon: FiSquare, label: 'Rectangle', description: 'Draw rectangle area' });
+    tools.push({ id: 'cone', icon: FiTriangle, label: 'Cone', description: 'Draw cone (breath / spell)' });
+    tools.push({ id: 'line', icon: FiMinus, label: 'Line', description: 'Draw line / wall' });
   }
 
   // Handle dragging
@@ -214,6 +241,75 @@ const MapToolbar = ({
                         Clear {pinnedRulersCount} Pinned Ruler{pinnedRulersCount !== 1 ? 's' : ''}
                       </button>
                     )}
+                  </div>
+                </>
+              )}
+
+              {isDM && (
+                <>
+                  <div className="setting-divider" />
+                  <div className="setting-group">
+                    <label>Shape Settings</label>
+                    <div className="color-picker-row">
+                      <div className="color-picker-container">
+                        <input
+                          type="color"
+                          value={shapeColor}
+                          onChange={(e) => onShapeColorChange?.(e.target.value)}
+                          className="color-picker"
+                        />
+                        <span className="color-value">{shapeColor}</span>
+                      </div>
+                      <div className="opacity-slider">
+                        <input
+                          type="range"
+                          min={0.1}
+                          max={1}
+                          step={0.05}
+                          value={shapeOpacity}
+                          onChange={(e) => onShapeOpacityChange?.(parseFloat(e.target.value))}
+                        />
+                        <span>{Math.round(shapeOpacity * 100)}% opacity</span>
+                      </div>
+                    </div>
+                    <div className="checkbox-group">
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={shapePersistent}
+                          onChange={() => onShapePersistentToggle?.()}
+                        />
+                        <span>Persistent (no auto-expire)</span>
+                      </label>
+                    </div>
+                    <div className="visibility-select">
+                      <label>
+                        Visibility:
+                        <select
+                          value={shapeVisibility}
+                          onChange={(e) => onShapeVisibilityChange?.(e.target.value)}
+                        >
+                          <option value="all">All Players</option>
+                          <option value="dm">DM Only</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div className="shape-actions">
+                      <button
+                        className="clear-rulers-btn"
+                        onClick={() => onClearTempShapes?.()}
+                        title="Clear temporary shapes"
+                      >
+                        Clear Temp Shapes
+                      </button>
+                      <button
+                        className="clear-rulers-btn danger"
+                        onClick={() => onClearAllShapes?.()}
+                        title="Clear all shapes"
+                      >
+                        Clear All Shapes
+                      </button>
+                    </div>
                   </div>
                 </>
               )}

@@ -9,6 +9,7 @@ import { tokenService } from '../../../services/vtt/tokenService';
 import { pingService } from '../../../services/vtt/pingService';
 import { fogOfWarService } from '../../../services/vtt/fogOfWarService';
 import { drawingService } from '../../../services/vtt/drawingService';
+import { shapeService } from '../../../services/vtt/shapeService';
 import { FirebaseContext } from '../../../services/FirebaseContext';
 import './MapCanvas.css';
 
@@ -65,7 +66,14 @@ function MapCanvas({
   const [rulerPersistent, setRulerPersistent] = useState(false);
   const [pinnedRulers, setPinnedRulers] = useState([]); // Array of pinned measurements
   
-  // Shape tool placeholders (feature pending) - removed until implemented to avoid lint warnings
+  // Shape drawing state
+  const [shapes, setShapes] = useState([]);
+  const [shapeStart, setShapeStart] = useState(null);
+  const [shapePreview, setShapePreview] = useState(null);
+  const [shapeColor, setShapeColor] = useState('#ff0000');
+  const [shapeOpacity, setShapeOpacity] = useState(0.5);
+  const [shapePersistent, setShapePersistent] = useState(false);
+  const [shapeVisibility, setShapeVisibility] = useState('all'); // 'all' | 'dm'
 
   // Keyboard shortcut handler for ruler (R key) and ESC to clear
   useEffect(() => {
@@ -136,6 +144,18 @@ function MapCanvas({
       setDrawings(newDrawings);
     });
 
+    return () => unsubscribe();
+  }, [firestore, campaignId, map?.id]);
+
+  // Subscribe to shapes
+  useEffect(() => {
+    if (!firestore || !campaignId || !map?.id) return;
+    const unsubscribe = shapeService.subscribeToShapes(
+      firestore,
+      campaignId,
+      map.id,
+      (loadedShapes) => setShapes(loadedShapes)
+    );
     return () => unsubscribe();
   }, [firestore, campaignId, map?.id]);
 
@@ -252,7 +272,7 @@ function MapCanvas({
         return; // Don't handle other tools if Alt was pressed
       }
       
-      // Handle based on active tool
+  // Handle based on active tool
       if (activeTool === 'arrow') {
         if (!arrowStart) {
           // Set arrow start point
@@ -266,7 +286,7 @@ function MapCanvas({
             console.error('Error creating arrow:', err);
           }
         }
-      } else if (activeTool === 'ruler') {
+  } else if (activeTool === 'ruler') {
         const gridSize = map?.gridSize || 50;
         let startX = mapX;
         let startY = mapY;
@@ -302,6 +322,36 @@ function MapCanvas({
           setRulerEnd(null);
         }
         return; // Don't deselect tokens when using ruler
+      } else if (['circle','rectangle','cone','line'].includes(activeTool) && isDM) {
+        if (!shapeStart) {
+          setShapeStart({ x: mapX, y: mapY });
+        } else {
+          const end = { x: mapX, y: mapY };
+          try {
+            if (activeTool === 'circle') {
+              const dx = end.x - shapeStart.x;
+              const dy = end.y - shapeStart.y;
+              const radius = Math.sqrt(dx*dx + dy*dy);
+              await shapeService.createCircle(firestore, campaignId, map.id, shapeStart, radius, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+            } else if (activeTool === 'rectangle') {
+              await shapeService.createRectangle(firestore, campaignId, map.id, shapeStart, end.x - shapeStart.x, end.y - shapeStart.y, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+            } else if (activeTool === 'cone') {
+              const dx = end.x - shapeStart.x;
+              const dy = end.y - shapeStart.y;
+              const length = Math.sqrt(dx*dx + dy*dy);
+              const direction = (Math.atan2(dy, dx) * 180) / Math.PI;
+              await shapeService.createCone(firestore, campaignId, map.id, shapeStart, direction, length, 60, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+            } else if (activeTool === 'line') {
+              await shapeService.createLine(firestore, campaignId, map.id, shapeStart, end, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+            }
+          } catch (err) {
+            console.error('Error creating shape:', err);
+          } finally {
+            setShapeStart(null);
+            setShapePreview(null);
+          }
+        }
+        return; // Prevent token deselect
       }
       
       // Deselect token
@@ -336,7 +386,7 @@ function MapCanvas({
     
     if (activeTool === 'pen' && isDrawing) {
       setCurrentDrawing(prev => [...prev, mapX, mapY]);
-    } else if (activeTool === 'ruler' && rulerStart) {
+  } else if (activeTool === 'ruler' && rulerStart) {
       // Update ruler end point while dragging
       const gridSize = map?.gridSize || 50;
       let endX = mapX;
@@ -349,6 +399,24 @@ function MapCanvas({
       }
       
       setRulerEnd({ x: endX, y: endY });
+    } else if (['circle','rectangle','cone','line'].includes(activeTool) && isDM && shapeStart) {
+      const end = { x: mapX, y: mapY };
+      if (activeTool === 'circle') {
+        const dx = end.x - shapeStart.x;
+        const dy = end.y - shapeStart.y;
+        const radius = Math.sqrt(dx*dx + dy*dy);
+        setShapePreview({ type: 'circle', geometry: { x: shapeStart.x, y: shapeStart.y, radius } });
+      } else if (activeTool === 'rectangle') {
+        setShapePreview({ type: 'rectangle', geometry: { x: shapeStart.x, y: shapeStart.y, width: end.x - shapeStart.x, height: end.y - shapeStart.y } });
+      } else if (activeTool === 'cone') {
+        const dx = end.x - shapeStart.x;
+        const dy = end.y - shapeStart.y;
+        const length = Math.sqrt(dx*dx + dy*dy);
+        const direction = (Math.atan2(dy, dx) * 180) / Math.PI;
+        setShapePreview({ type: 'cone', geometry: { x: shapeStart.x, y: shapeStart.y, direction, length, angle: 60 } });
+      } else if (activeTool === 'line') {
+        setShapePreview({ type: 'line', geometry: { x1: shapeStart.x, y1: shapeStart.y, x2: end.x, y2: end.y } });
+      }
     }
   };
 
@@ -456,6 +524,21 @@ function MapCanvas({
         onRulerPersistentToggle={() => setRulerPersistent(prev => !prev)}
         onClearPinnedRulers={() => setPinnedRulers([])}
         pinnedRulersCount={pinnedRulers.length}
+        shapeColor={shapeColor}
+        shapeOpacity={shapeOpacity}
+        shapePersistent={shapePersistent}
+        shapeVisibility={shapeVisibility}
+        onShapeColorChange={setShapeColor}
+        onShapeOpacityChange={setShapeOpacity}
+        onShapePersistentToggle={() => setShapePersistent(prev => !prev)}
+        onShapeVisibilityChange={setShapeVisibility}
+        onClearTempShapes={async () => {
+          try { await shapeService.clearTemporaryShapes(firestore, campaignId, map.id); } catch (err) { console.error('Error clearing temp shapes:', err); }
+        }}
+        onClearAllShapes={async () => {
+          if (!window.confirm('Clear ALL shapes (including persistent)?')) return;
+          try { await shapeService.clearAllShapes(firestore, campaignId, map.id); } catch (err) { console.error('Error clearing all shapes:', err); }
+        }}
       />
       
       <Stage
@@ -572,6 +655,58 @@ function MapCanvas({
 
         {/* Drawing Layer */}
         <Layer>
+          {/* Shapes (persisted) */}
+          {shapes.filter(s => (s.visibleTo === 'all') || isDM).map(shape => {
+            if (shape.type === 'circle') {
+              return <Circle key={shape.id} x={shape.geometry.x} y={shape.geometry.y} radius={shape.geometry.radius} fill={shape.color} opacity={shape.opacity} listening={false} />;
+            }
+            if (shape.type === 'rectangle') {
+              return <Rect key={shape.id} x={shape.geometry.x} y={shape.geometry.y} width={shape.geometry.width} height={shape.geometry.height} fill={shape.color} opacity={shape.opacity} listening={false} />;
+            }
+            if (shape.type === 'line') {
+              return <Line key={shape.id} points={[shape.geometry.x1, shape.geometry.y1, shape.geometry.x2, shape.geometry.y2]} stroke={shape.color} strokeWidth={4} opacity={shape.opacity} listening={false} lineCap="round" />;
+            }
+            if (shape.type === 'cone') {
+              const { x, y, direction, length, angle } = shape.geometry;
+              const half = (angle || 60)/2;
+              const startAngle = (direction - half) * (Math.PI/180);
+              const endAngle = (direction + half) * (Math.PI/180);
+              const x2 = x + Math.cos(startAngle) * length;
+              const y2 = y + Math.sin(startAngle) * length;
+              const x3 = x + Math.cos(endAngle) * length;
+              const y3 = y + Math.sin(endAngle) * length;
+              return <Line key={shape.id} points={[x,y,x2,y2,x3,y3]} fill={shape.color} closed opacity={shape.opacity} listening={false} />;
+            }
+            return null;
+          })}
+
+          {/* Shape preview */}
+          {shapePreview && (() => {
+            const preview = shapePreview;
+            if (preview.type === 'circle') {
+              return <Circle x={preview.geometry.x} y={preview.geometry.y} radius={preview.geometry.radius} stroke={shapeColor} strokeWidth={2} dash={[6,4]} opacity={0.8} listening={false} />;
+            }
+            if (preview.type === 'rectangle') {
+              const { x,y,width,height } = preview.geometry;
+              return <Rect x={x} y={y} width={width} height={height} stroke={shapeColor} strokeWidth={2} dash={[6,4]} opacity={0.8} listening={false} />;
+            }
+            if (preview.type === 'line') {
+              const { x1,y1,x2,y2 } = preview.geometry;
+              return <Line points={[x1,y1,x2,y2]} stroke={shapeColor} strokeWidth={3} dash={[6,4]} opacity={0.8} listening={false} />;
+            }
+            if (preview.type === 'cone') {
+              const { x,y,direction,length,angle } = preview.geometry;
+              const half = (angle || 60)/2;
+              const startAngle = (direction - half) * (Math.PI/180);
+              const endAngle = (direction + half) * (Math.PI/180);
+              const x2 = x + Math.cos(startAngle) * length;
+              const y2 = y + Math.sin(startAngle) * length;
+              const x3 = x + Math.cos(endAngle) * length;
+              const y3 = y + Math.sin(endAngle) * length;
+              return <Line points={[x,y,x2,y2,x3,y3]} stroke={shapeColor} strokeWidth={2} dash={[6,4]} opacity={0.8} closed listening={false} />;
+            }
+            return null;
+          })()}
           {/* Pen strokes with fade */}
           {drawings.filter(d => d.type === 'pen').map(drawing => {
             const flatPoints = drawing.points.flatMap(p => [p.x, p.y]);
