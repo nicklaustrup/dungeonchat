@@ -4,6 +4,8 @@
 **Commits:** 
 - `ec66105` - Initial bug fixes (indexes, permissions, null safety)
 - `99eccb8` - Additional fixes (formatGold, calendar dark mode)
+- `5ad8999` - Documentation (comprehensive report)
+- `08b39e3` - Critical fixes (roles TypeError, calendar light mode, encounter dark mode)
 
 ---
 
@@ -157,6 +159,94 @@ TypeError at line 231: amount.toLocaleString()
 ```
 
 **Status:** ✅ **FULLY RESOLVED** - Complete dark mode support
+
+---
+
+### 6. PartyManagement composition.roles TypeError (RESOLVED)
+**Error:**
+```
+composition.roles.map is not a function
+TypeError: composition.roles.map is not a function at PartyManagement line 339
+```
+
+**Root Cause:**
+- `analyzePartyComposition()` in `partyService.js` returns `roles` as an **object** with keys: `{tank: 0, healer: 0, damage: 0, support: 0, controller: 0}`
+- `PartyManagement.js` tried to call `.map()` on this object, which doesn't have a `.map()` method
+- Component expected an array of role objects with `{role, count, characters}` structure
+
+**Solution:**
+- ✅ Fixed lines 335-351 in `PartyManagement.js`:
+  ```javascript
+  // BEFORE:
+  {composition.roles.map(role => (...))}
+  
+  // AFTER:
+  {Object.entries(composition.roles).map(([roleName, count]) => (
+    count > 0 && (...)
+  ))}
+  ```
+- ✅ Converts object to array using `Object.entries()`
+- ✅ Filters out roles with 0 count
+- ✅ Displays role name (capitalized), icon, and count
+
+**Status:** ✅ **FULLY RESOLVED** - Party composition displays correctly
+
+---
+
+### 7. Calendar White Backgrounds in Light Mode (RESOLVED)
+**Issue:** "The Calendar elements are all white with white text which is a light theme styling"
+
+**Root Cause:**
+- Multiple calendar elements had hardcoded `background: white` instead of using CSS variables
+- This prevented theme colors from being applied correctly
+- Elements affected:
+  - `.view-mode-selector` (line 68)
+  - `.calendar-navigation button` (line 105)
+  - `.calendar-actions button` (line 127)
+  - `.calendar-cell` (line 185)
+  - `.upcoming-event` (line 319)
+  - `.availability-btn` (line 428)
+
+**Solution:**
+- ✅ Replaced all hardcoded `background: white` with `background: var(--bg-light, #ffffff)`
+- ✅ CSS variables now properly inherit from theme system
+- ✅ Light mode uses `#ffffff`, dark mode uses `--bg-light` override (defined in dark mode section)
+- 6 elements fixed in `CampaignCalendar.css`
+
+**Status:** ✅ **FULLY RESOLVED** - Calendar now respects theme colors
+
+---
+
+### 8. Encounter Form Dark Mode Support (RESOLVED)
+**Request:** "The form for adding Encounters does not support dark theme. Please update."
+
+**Solution:**
+- ✅ Added 150+ lines of comprehensive dark mode CSS to `EncounterBuilder.css`
+- ✅ All form elements now support `[data-theme="dark"]`:
+  - Modal background and header
+  - Form inputs, selects, textareas with focus states
+  - Builder sections and containers
+  - Participant and effect cards
+  - Tags and type badges
+  - Form actions and buttons
+  - Footer navigation
+
+**Dark Mode Elements:**
+```css
+[data-theme="dark"] .encounter-builder-modal {
+  background-color: var(--bg-dark, #1f2937);
+}
+
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-textarea {
+  background-color: var(--bg-dark, #1f2937);
+  border-color: var(--border-dark, #4b5563);
+  color: var(--text-light, #f3f4f6);
+}
+```
+
+**Status:** ✅ **FULLY RESOLVED** - Complete dark mode support for encounter forms
 
 ---
 
@@ -315,6 +405,28 @@ firebase deploy --only firestore:rules,firestore:indexes
 - `src/components/Session/PartyManagement.js` - Fixed formatGold function
 - `src/components/Session/CampaignCalendar.css` - Added dark mode styles
 
+### Commit 3: `5ad8999`
+**Title:** "docs: Sprint 3 bug fixes comprehensive report"
+
+**Changes:**
+- Added comprehensive bug fix documentation (338 lines)
+
+**Files Modified:**
+- `docs/SPRINT_3_BUG_FIXES.md` - Complete bug fix report
+
+### Commit 4: `08b39e3`
+**Title:** "fix: Critical fixes - PartyManagement roles, Calendar light mode, Encounter dark mode"
+
+**Changes:**
+- Fixed PartyManagement composition.roles TypeError (object-to-array conversion)
+- Fixed Calendar hardcoded white backgrounds (5 elements)
+- Added 150+ lines of EncounterBuilder dark mode CSS
+
+**Files Modified:**
+- `src/components/Session/PartyManagement.js` - Fixed roles rendering (lines 335-351)
+- `src/components/Session/CampaignCalendar.css` - Replaced hardcoded white with CSS variables
+- `src/components/Session/EncounterBuilder.css` - Added comprehensive dark mode support
+
 ---
 
 ## ✅ Resolution Summary
@@ -326,13 +438,16 @@ firebase deploy --only firestore:rules,firestore:indexes
 | Character Stats TypeError | ✅ Resolved | Immediate |
 | formatGold TypeError | ✅ Resolved | Immediate |
 | Calendar Dark Mode | ✅ Resolved | Immediate |
+| composition.roles TypeError | ✅ Resolved | Immediate |
+| Calendar White Backgrounds | ✅ Resolved | Immediate |
+| Encounter Form Dark Mode | ✅ Resolved | Immediate |
 
-**Overall Status:** 4/5 issues fully resolved, 1 waiting for Firebase (automatic, no action needed)
+**Overall Status:** 7/8 issues fully resolved, 1 waiting for Firebase (automatic, no action needed)
 
 ---
 
 **Report Generated:** September 30, 2025  
 **Sprint:** Phase 2F Sprint 3 (Calendar & Party Management)  
-**Total Fixes:** 5 issues across 3 commits  
-**Build Status:** ✅ Clean  
+**Total Fixes:** 8 issues across 4 commits  
+**Build Status:** ✅ Clean (324.22 kB gzipped)  
 **Production Status:** ✅ Deployed (index building)
