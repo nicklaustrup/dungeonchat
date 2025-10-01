@@ -9,7 +9,8 @@ import {
   FiMaximize2,
   FiCircle,
   FiSquare,
-  FiTriangle
+  FiTriangle,
+  FiGrid
 } from 'react-icons/fi';
 import './MapToolbar.css';
 
@@ -47,7 +48,8 @@ const MapToolbar = ({
   onShapePersistentToggle,
   onShapeVisibilityChange,
   onClearTempShapes,
-  onClearAllShapes
+  onClearAllShapes,
+  onOpenGridConfig
 }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -183,6 +185,18 @@ const MapToolbar = ({
               );
             })}
           </div>
+          {isDM && (
+            <div className="toolbar-extra-row">
+              <button
+                className="toolbar-button"
+                onClick={() => onOpenGridConfig?.()}
+                title="Grid Settings"
+              >
+                <FiGrid size={20} />
+                <span className="toolbar-label">Grid</span>
+              </button>
+            </div>
+          )}
 
           {showSettings && (
             <div className="toolbar-settings">

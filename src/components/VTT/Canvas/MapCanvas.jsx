@@ -4,6 +4,8 @@ import useImage from 'use-image';
 import GridLayer from './GridLayer';
 import TokenSprite from '../TokenManager/TokenSprite';
 import MapToolbar from './MapToolbar';
+import GridConfigurator from './GridConfigurator';
+import { mapService } from '../../../services/vtt/mapService';
 import useTokens from '../../../hooks/vtt/useTokens';
 import { tokenService } from '../../../services/vtt/tokenService';
 import { pingService } from '../../../services/vtt/pingService';
@@ -78,6 +80,7 @@ function MapCanvas({
   const [tokenSnap, setTokenSnap] = useState(true);
   const [tokenSnapHighlight, setTokenSnapHighlight] = useState(null); // {x,y,w,h}
   const [tokenSnapPulse, setTokenSnapPulse] = useState(0); // animation ticker for highlight pulse
+  const [showGridConfig, setShowGridConfig] = useState(false);
 
   // Animate token snap highlight while dragging
   useEffect(() => {
@@ -562,6 +565,7 @@ function MapCanvas({
         pinnedRulersCount={pinnedRulers.length}
   tokenSnap={tokenSnap}
   onTokenSnapToggle={() => setTokenSnap(prev => !prev)}
+  onOpenGridConfig={() => setShowGridConfig(true)}
         shapeColor={shapeColor}
         shapeOpacity={shapeOpacity}
         shapePersistent={shapePersistent}
@@ -1093,6 +1097,18 @@ function MapCanvas({
           ⟲
         </button>
       </div>
+      {isDM && (
+        <GridConfigurator
+          open={showGridConfig}
+          onClose={() => setShowGridConfig(false)}
+          map={map}
+          onUpdate={async (updates) => {
+            try {
+              await mapService.updateMap(firestore, campaignId, map.id, updates);
+            } catch (e) { console.error('Failed to update grid settings', e); }
+          }}
+        />
+      )}
     </div>
   );
 }
