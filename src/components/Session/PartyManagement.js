@@ -228,7 +228,7 @@ function PartyManagement({ campaignId }) {
   }, []);
 
   const formatGold = useCallback((amount) => {
-    return amount.toLocaleString();
+    return (amount || 0).toLocaleString();
   }, []);
 
   if (loading) {
