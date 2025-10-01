@@ -15,6 +15,7 @@ import SessionNotes from '../Session/SessionNotes';
 import Encounters from '../Session/Encounters';
 import CampaignCalendar from '../Session/CampaignCalendar';
 import PartyManagement from '../Session/PartyManagement';
+import VoiceChatPanel from '../Voice/VoiceChatPanel';
 import { CharacterCreationModal } from '../CharacterCreationModal';
 import { CharacterSheet } from '../CharacterSheet';
 import { useCharacterSheet, useCampaignCharacters } from '../../hooks/useCharacterSheet';
@@ -227,6 +228,12 @@ function CampaignDashboard() {
               onClick={() => setActiveTab('party')}
             >
               Party Management
+            </button>
+            <button 
+              className={`nav-item ${activeTab === 'voice' ? 'active' : ''}`}
+              onClick={() => setActiveTab('voice')}
+            >
+              🎙️ Voice Chat
             </button>
             <button 
               className={`nav-item ${activeTab === 'rules' ? 'active' : ''}`}
@@ -506,6 +513,21 @@ function CampaignDashboard() {
                 Track party statistics, distribute XP, manage HP and rest mechanics, analyze party composition, and monitor wealth.
               </p>
               <PartyManagement campaignId={campaignId} />
+            </div>
+          )}
+
+          {activeTab === 'voice' && (
+            <div className="voice-tab">
+              <h2>🎙️ Voice Chat</h2>
+              <p className="tab-description">
+                Join voice chat to communicate with your party in real-time. Perfect for sessions, combat encounters, and roleplay.
+              </p>
+              <div className="voice-content">
+                <VoiceChatPanel 
+                  campaignId={campaignId} 
+                  roomId="voice-general" 
+                />
+              </div>
             </div>
           )}
 

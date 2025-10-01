@@ -8,6 +8,13 @@ This folder contains the current, active documentation for the SuperChat applica
 - **`scroll-behavior-spec.md`** - Definitive specification for chat scroll behavior and unread message handling
 - **`final-scroll-architecture.md`** - Current scroll system architecture and implementation details
 
+### Virtual Tabletop System 🗺️
+- **`VTT_README.md`** - 📋 **START HERE** - Overview and navigation guide for VTT documentation
+- **`VTT_MVP_SCOPE.md`** - MVP feature set, 6-week implementation plan
+- **`VTT_TECH_STACK_COMPARISON.md`** - Library comparisons and recommendations (Konva.js)
+- **`VTT_QUICK_START_GUIDE.md`** - Step-by-step guide to begin implementation
+- **`VIRTUAL_TABLETOP_STRATEGY.md`** - Comprehensive technical strategy (full vision)
+
 ### Testing & Quality Assurance  
 - **`core-test-scenarios.md`** - Essential test scenarios for validating chat functionality
 - **`manual-testing-guide.md`** - Manual testing procedures and checklists

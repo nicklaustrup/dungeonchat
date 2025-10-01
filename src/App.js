@@ -14,6 +14,7 @@ import { useInitTelemetry } from './hooks/useInitTelemetry';
 import { useUserProfile } from './hooks/useUserProfile';
 import { useFirebase } from './services/FirebaseContext';
 
+
 function App() {
   // Apply viewport class logic once at app root
   useViewportInfo();

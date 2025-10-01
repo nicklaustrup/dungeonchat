@@ -5,6 +5,7 @@ import LandingPage from '../components/Landing/LandingPage';
 import CampaignBrowser from '../components/Campaign/CampaignBrowser';
 import CampaignDashboard from '../components/Campaign/CampaignDashboard';
 import CampaignCreator from '../components/Campaign/CampaignCreator';
+import VoiceChatDemo from '../pages/VoiceChatDemo/VoiceChatDemo';
 import AppNavigation from '../components/Navigation/AppNavigation';
 import Breadcrumb from '../components/Navigation/Breadcrumb';
 import { useFirebase } from '../services/FirebaseContext';
@@ -28,6 +29,8 @@ function AppRouter() {
           
           {/* Lobby - existing general chat */}
           <Route path="/lobby" element={<ChatPage showHeader={false} />} />
+          <Route path="/voice-demo" element={<VoiceChatDemo />} />
+<Route path="/voice-demo/:campaignId" element={<VoiceChatDemo />} />
           
           {/* Campaign routes */}
           <Route path="/campaigns" element={<CampaignBrowser />} />
@@ -44,6 +47,10 @@ function AppRouter() {
             path="/campaign/:campaignId/chat/:channelId" 
             element={<ChatPage campaignContext={true} showHeader={false} />} 
           />
+          
+          {/* Voice Chat Demo */}
+          <Route path="/voice-demo" element={<VoiceChatDemo />} />
+          <Route path="/voice-demo/:campaignId" element={<VoiceChatDemo />} />
           
           {/* Fallback to lobby */}
           <Route path="*" element={<Navigate to="/lobby" replace />} />

@@ -9,6 +9,34 @@
     "typing": {
       ".read": "auth != null",
       ".write": "auth != null"
+    },
+    "voiceSignaling": {
+      "$campaignId": {
+        "$roomId": {
+          ".read": "auth != null",
+          "$userId": {
+            ".write": "auth != null && auth.uid === $userId",
+            "offers": {
+              "$fromUserId": {
+                ".write": "auth != null && auth.uid === $fromUserId"
+              }
+            },
+            "answers": {
+              "$fromUserId": {
+                ".write": "auth != null && auth.uid === $fromUserId"
+              }
+            },
+            "iceCandidates": {
+              "$fromUserId": {
+                ".write": "auth != null && auth.uid === $fromUserId"
+              }
+            },
+            "presence": {
+              ".write": "auth != null && auth.uid === $userId"
+            }
+          }
+        }
+      }
     }
   }
 }

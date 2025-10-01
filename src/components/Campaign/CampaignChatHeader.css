@@ -1,7 +1,7 @@
 /* Campaign Chat Header Styles */
 .campaign-chat-header {
   background: var(--bg-secondary);
-  border-bottom: 2px solid var(--accent-color);
+  border-bottom: 2px solid var(--border-color);
   padding: 1rem 0;
   position: sticky;
   top: 0;
@@ -102,6 +102,128 @@
 .status-paused {
   background: #f59e0b;
   color: white;
+}
+
+/* Voice Toggle Button */
+.voice-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-light, #2d3033);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.voice-toggle-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--primary-color, #0b93f6);
+  color: var(--primary-color, #0b93f6);
+  transform: translateY(-1px);
+}
+
+.voice-toggle-btn.active {
+  background: var(--primary-color, #0b93f6);
+  color: white;
+  border-color: var(--primary-color, #0b93f6);
+}
+
+.voice-label {
+  font-weight: 500;
+}
+
+/* Floating Voice Panel */
+.floating-voice-panel {
+  position: fixed;
+  width: 380px;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 140px);
+  background: var(--bg-secondary, #242628);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+}
+
+.floating-voice-panel.dragging {
+  user-select: none;
+  transition: none;
+}
+
+.floating-voice-panel.dragging * {
+  user-select: none;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.floating-voice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.1rem;
+  background: var(--bg-light, #2d3033);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.floating-voice-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.floating-voice-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-voice-action {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.btn-voice-action:hover {
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary);
+}
+
+.btn-voice-action:active {
+  transform: scale(0.95);
+}
+
+.floating-voice-panel .voice-chat-panel {
+  flex: 1;
+  overflow-y: auto;
+  border-radius: 0;
+  box-shadow: none;
+  max-height: none;
 }
 
 /* Responsive Design */
