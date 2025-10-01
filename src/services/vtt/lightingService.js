@@ -89,13 +89,26 @@ export const subscribeToLights = (firestore, campaignId, mapId, callback) => {
 export const updateGlobalLighting = async (firestore, campaignId, mapId, settings) => {
   try {
     const mapRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId);
-    await updateDoc(mapRef, {
-      'lighting.enabled': settings.enabled ?? true,
-      'lighting.timeOfDay': settings.timeOfDay ?? 12.0,
-      'lighting.ambientLight': settings.ambientLight ?? 0.7,
-      'lighting.outdoorLighting': settings.outdoorLighting ?? true,
+    
+    // Build update object with only the fields provided
+    const updates = {
       'lighting.updatedAt': serverTimestamp()
-    });
+    };
+    
+    if (settings.enabled !== undefined) {
+      updates['lighting.enabled'] = settings.enabled;
+    }
+    if (settings.timeOfDay !== undefined) {
+      updates['lighting.timeOfDay'] = settings.timeOfDay;
+    }
+    if (settings.ambientLight !== undefined) {
+      updates['lighting.ambientLight'] = settings.ambientLight;
+    }
+    if (settings.outdoorLighting !== undefined) {
+      updates['lighting.outdoorLighting'] = settings.outdoorLighting;
+    }
+    
+    await updateDoc(mapRef, updates);
   } catch (error) {
     console.error('Error updating global lighting:', error);
     throw error;
