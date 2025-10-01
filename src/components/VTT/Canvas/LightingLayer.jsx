@@ -24,7 +24,20 @@ const LightingLayer = ({
 
   return (
     <Layer name="lighting-layer" listening={false}>
-      {/* Render each light source as a radial gradient */}
+      {/* Darkness overlay - render first as base layer */}
+      {darknessOpacity > 0 && (
+        <Rect
+          x={0}
+          y={0}
+          width={mapWidth}
+          height={mapHeight}
+          fill="black"
+          opacity={darknessOpacity}
+          listening={false}
+        />
+      )}
+
+      {/* Render each light source as a radial gradient - these lighten the darkness */}
       {lights.map((light, index) => {
         // Calculate flicker effect
         let radiusMultiplier = 1.0;
@@ -49,7 +62,7 @@ const LightingLayer = ({
         // Create radial gradient for light
         return (
           <React.Fragment key={light.id}>
-            {/* Outer glow (dim light) */}
+            {/* Outer glow (dim light) - cuts through darkness */}
             <Circle
               x={light.position.x}
               y={light.position.y}
@@ -60,9 +73,9 @@ const LightingLayer = ({
               fillRadialGradientEndRadius={effectiveRadius}
               fillRadialGradientColorStops={[
                 0,
-                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.8),
+                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.9),
                 0.5,
-                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.4),
+                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.5),
                 1,
                 'rgba(0, 0, 0, 0)'
               ]}
@@ -70,7 +83,7 @@ const LightingLayer = ({
               globalCompositeOperation="lighten"
             />
 
-            {/* Inner bright light */}
+            {/* Inner bright light - maximum brightness at center */}
             <Circle
               x={light.position.x}
               y={light.position.y}
@@ -83,7 +96,7 @@ const LightingLayer = ({
                 0,
                 hexToRgba(light.color || '#FFFFFF', effectiveIntensity),
                 1,
-                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.5)
+                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.6)
               ]}
               listening={false}
               globalCompositeOperation="lighten"
@@ -91,20 +104,6 @@ const LightingLayer = ({
           </React.Fragment>
         );
       })}
-
-      {/* Darkness overlay (reduced in lit areas by the lights above) */}
-      {darknessOpacity > 0 && (
-        <Rect
-          x={0}
-          y={0}
-          width={mapWidth}
-          height={mapHeight}
-          fill="black"
-          opacity={darknessOpacity}
-          listening={false}
-          globalCompositeOperation="multiply"
-        />
-      )}
     </Layer>
   );
 };
