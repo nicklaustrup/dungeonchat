@@ -113,7 +113,7 @@
 
 .class-badge {
   padding: 0.25rem 0.75rem;
-  background: white;
+  background: var(--bg-light, #ffffff);
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 600;
@@ -144,7 +144,7 @@
 }
 
 .role-card {
-  background: white;
+  background: var(--bg-light, #ffffff);
   padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -275,7 +275,7 @@
 
 /* Character Cards */
 .character-card {
-  background: white;
+  background: var(--bg-light, #ffffff);
   padding: 1.25rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -517,7 +517,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: white;
+  background: var(--bg-light, #ffffff);
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s;

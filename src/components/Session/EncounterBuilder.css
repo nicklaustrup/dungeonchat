@@ -16,7 +16,7 @@
 }
 
 .encounter-builder-modal {
-  background-color: white;
+  background-color: var(--bg-light, #ffffff);
   border-radius: 12px;
   width: 100%;
   max-width: 900px;
@@ -130,7 +130,7 @@
   font-size: 0.95rem;
   font-family: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
-  background-color: white;
+  background-color: var(--bg-light, #ffffff);
 }
 
 .form-input:focus,
@@ -287,7 +287,7 @@
 }
 
 .participant-card {
-  background-color: white;
+  background-color: var(--bg-light, #ffffff);
   border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 8px;
   padding: 1rem;
@@ -360,7 +360,7 @@
 /* Forms */
 .participant-form,
 .effect-form {
-  background-color: white;
+  background-color: var(--bg-light, #ffffff);
   border: 2px solid var(--primary-color, #3b82f6);
   border-radius: 8px;
   padding: 1.25rem;
@@ -415,7 +415,7 @@
 }
 
 .effect-card {
-  background-color: white;
+  background-color: var(--bg-light, #ffffff);
   border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 8px;
   padding: 1rem;
