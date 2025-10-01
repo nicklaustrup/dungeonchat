@@ -1,0 +1,199 @@
+rules_version = '2';
+
+/**
+ * Firestore Security Rules for Voice Chat System
+ * 
+ * These rules secure voice chat data including:
+ * - Voice participants in campaigns
+ * - User voice settings
+ * - Voice room configurations
+ * 
+ * Security principles:
+ * 1. Authentication required for all operations
+ * 2. Users can only modify their own data
+ * 3. DMs have additional moderation permissions
+ * 4. Campaign members can read participant data
+ * 5. Rate limiting through validation rules
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    
+    /**
+     * Check if user is authenticated
+     */
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    /**
+     * Check if user owns the document
+     */
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    /**
+     * Check if user is a member of the campaign
+     */
+    function isCampaignMember(campaignId) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+    }
+    
+    /**
+     * Check if user is the DM of the campaign
+     */
+    function isCampaignDM(campaignId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId == request.auth.uid;
+    }
+    
+    /**
+     * Validate voice participant data structure
+     */
+    function isValidParticipant() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['userId', 'username', 'isMuted', 'joinedAt']) &&
+        data.userId is string &&
+        data.username is string &&
+        data.isMuted is bool &&
+        data.joinedAt is timestamp &&
+        data.userId == request.auth.uid; // Can only create participant doc for self
+    }
+    
+    /**
+     * Validate voice settings data structure
+     */
+    function isValidSettings() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['audioQuality', 'echoCancellation', 'noiseSuppression', 'autoGainControl']) &&
+        data.audioQuality in ['low', 'medium', 'high'] &&
+        data.echoCancellation is bool &&
+        data.noiseSuppression is bool &&
+        data.autoGainControl is bool;
+    }
+    
+    /**
+     * Check if the update is a valid DM moderation action
+     */
+    function isValidDMAction() {
+      let data = request.resource.data;
+      let existing = resource.data;
+      
+      // DM can only modify isMuted and volume fields
+      return data.diff(existing).affectedKeys().hasOnly(['isMuted', 'volume', 'kickedAt']) &&
+        (
+          // Mute/unmute action
+          (data.diff(existing).affectedKeys().hasOnly(['isMuted']) && data.isMuted is bool) ||
+          // Volume adjustment (future feature)
+          (data.diff(existing).affectedKeys().hasOnly(['volume']) && data.volume is number && data.volume >= 0 && data.volume <= 100) ||
+          // Kick action
+          (data.diff(existing).affectedKeys().hasOnly(['kickedAt']) && data.kickedAt is timestamp)
+        );
+    }
+    
+    // ============================================
+    // Voice Participants Rules
+    // ============================================
+    
+    /**
+     * Voice participants in campaigns
+     * Path: /campaigns/{campaignId}/voiceParticipants/{participantId}
+     */
+    match /campaigns/{campaignId}/voiceParticipants/{participantId} {
+      
+      // Anyone in the campaign can read participant list
+      allow read: if isCampaignMember(campaignId);
+      
+      // Users can create their own participant document
+      allow create: if isCampaignMember(campaignId) && 
+                       isOwner(participantId) &&
+                       isValidParticipant();
+      
+      // Users can update their own participant document (mute/unmute self)
+      allow update: if isCampaignMember(campaignId) && 
+                       (
+                         // User updating their own status
+                         (isOwner(participantId) && isValidParticipant()) ||
+                         // DM performing moderation action
+                         (isCampaignDM(campaignId) && isValidDMAction())
+                       );
+      
+      // Users can delete their own participant document (leave voice chat)
+      allow delete: if isCampaignMember(campaignId) && 
+                       (isOwner(participantId) || isCampaignDM(campaignId));
+    }
+    
+    // ============================================
+    // User Voice Settings Rules
+    // ============================================
+    
+    /**
+     * User-specific voice settings
+     * Path: /users/{userId}/voiceSettings/settings
+     */
+    match /users/{userId}/voiceSettings/settings {
+      
+      // Users can read their own settings
+      // DM can read settings for moderation purposes
+      allow read: if isOwner(userId);
+      
+      // Users can create/update their own settings
+      allow write: if isOwner(userId) && isValidSettings();
+    }
+    
+    // ============================================
+    // Voice Room Configuration Rules
+    // ============================================
+    
+    /**
+     * Campaign voice room configuration
+     * Path: /campaigns/{campaignId}/voiceRoom/config
+     */
+    match /campaigns/{campaignId}/voiceRoom/config {
+      
+      // All campaign members can read room config
+      allow read: if isCampaignMember(campaignId);
+      
+      // Only DM can write room configuration
+      allow write: if isCampaignDM(campaignId);
+    }
+    
+    // ============================================
+    // Voice Activity Logs (Optional - for audit trail)
+    // ============================================
+    
+    /**
+     * Voice activity logs for security/audit
+     * Path: /campaigns/{campaignId}/voiceLogs/{logId}
+     */
+    match /campaigns/{campaignId}/voiceLogs/{logId} {
+      
+      // DM can read logs for moderation
+      allow read: if isCampaignDM(campaignId);
+      
+      // Only server (Cloud Functions) can write logs
+      // Client writes are not allowed for audit integrity
+      allow write: if false;
+    }
+    
+    // ============================================
+    // Rate Limiting (Future Enhancement)
+    // ============================================
+    
+    /**
+     * Rate limit counters
+     * Path: /rateLimits/{userId}/voice/{action}
+     * 
+     * Example actions: join, mute, kick
+     * Implement with Cloud Functions to track action counts
+     */
+    match /rateLimits/{userId}/voice/{action} {
+      allow read: if isOwner(userId);
+      allow write: if false; // Only Cloud Functions can write
+    }
+  }
+}

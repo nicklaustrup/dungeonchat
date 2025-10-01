@@ -568,6 +568,9 @@
 .voice-tab {
   padding: 0;
   animation: fadeIn 0.3s ease-in;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .voice-tab h2 {
@@ -581,16 +584,16 @@
 
 .voice-tab .tab-description {
   color: var(--text-muted);
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1rem 0;
   line-height: 1.5;
   font-size: 0.95rem;
 }
 
 .voice-tab .voice-content {
+  flex: 1;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  min-height: 400px;
+  width: 100%;
+  min-height: 0;
 }
 
 /* Mobile responsive adjustments for voice tab */
@@ -601,10 +604,7 @@
   
   .voice-tab .tab-description {
     font-size: 0.9rem;
-  }
-  
-  .voice-tab .voice-content {
-    min-height: 300px;
+    margin-bottom: 0.75rem;
   }
 }
 

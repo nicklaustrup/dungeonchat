@@ -4,6 +4,7 @@
  */
 
 import { getWebRTCConfig, getAudioConstraints } from './webrtcConfig';
+import { ConnectionHealthMonitor } from './connectionHealthMonitor';
 
 export class WebRTCManager {
   constructor(userId, campaignId, roomId, signalingService) {
@@ -15,11 +16,17 @@ export class WebRTCManager {
     this.connections = new Map(); // userId -> RTCPeerConnection
     this.remoteStreams = new Map(); // userId -> MediaStream
     this.localStream = null;
+    this.reconnectionAttempts = new Map(); // userId -> attempt count
+    this.reconnectionTimers = new Map(); // userId -> timeout id
+    this.healthMonitors = new Map(); // userId -> ConnectionHealthMonitor
     
     // Callbacks
     this.onRemoteStream = null; // Callback when remote stream is received
     this.onConnectionStateChange = null; // Callback for connection state changes
     this.onError = null; // Callback for errors
+    this.onReconnecting = null; // Callback when reconnection starts
+    this.onReconnected = null; // Callback when reconnection succeeds
+    this.onConnectionQuality = null; // Callback for quality updates
   }
 
   /**
@@ -93,8 +100,20 @@ export class WebRTCManager {
         this.onConnectionStateChange(remoteUserId, pc.connectionState);
       }
 
-      // Clean up failed/closed connections
-      if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+      // Handle failed connections with automatic reconnection
+      if (pc.connectionState === 'failed') {
+        console.log(`[WebRTC] Connection failed with ${remoteUserId}, attempting reconnection`);
+        this.attemptReconnection(remoteUserId);
+      } else if (pc.connectionState === 'connected') {
+        // Reset reconnection attempts on successful connection
+        this.reconnectionAttempts.set(remoteUserId, 0);
+        if (this.onReconnected) {
+          this.onReconnected(remoteUserId);
+        }
+        
+        // Start monitoring connection health
+        this.startHealthMonitoring(remoteUserId);
+      } else if (pc.connectionState === 'closed') {
         this.closeConnection(remoteUserId);
       }
     };
@@ -280,6 +299,70 @@ export class WebRTCManager {
   }
 
   /**
+   * Attempt to reconnect to a remote peer with exponential backoff
+   */
+  async attemptReconnection(remoteUserId) {
+    const maxAttempts = 5;
+    const currentAttempts = this.reconnectionAttempts.get(remoteUserId) || 0;
+    
+    // Check if we've exceeded max attempts
+    if (currentAttempts >= maxAttempts) {
+      console.error(`[WebRTC] Max reconnection attempts reached for ${remoteUserId}`);
+      if (this.onError) {
+        this.onError('reconnection_failed', new Error(`Failed to reconnect to ${remoteUserId} after ${maxAttempts} attempts`));
+      }
+      this.clearReconnectionTimer(remoteUserId);
+      return;
+    }
+    
+    // Clear any existing timer
+    this.clearReconnectionTimer(remoteUserId);
+    
+    // Calculate backoff delay (1s, 2s, 4s, 8s, 16s)
+    const delay = Math.pow(2, currentAttempts) * 1000;
+    console.log(`[WebRTC] Reconnecting to ${remoteUserId} in ${delay}ms (attempt ${currentAttempts + 1}/${maxAttempts})`);
+    
+    // Notify UI of reconnection attempt
+    if (this.onReconnecting) {
+      this.onReconnecting(remoteUserId, currentAttempts + 1, maxAttempts);
+    }
+    
+    // Schedule reconnection attempt
+    const timer = setTimeout(async () => {
+      try {
+        console.log(`[WebRTC] Executing reconnection attempt ${currentAttempts + 1} for ${remoteUserId}`);
+        
+        // Update attempt counter
+        this.reconnectionAttempts.set(remoteUserId, currentAttempts + 1);
+        
+        // Close the old connection
+        this.closeConnection(remoteUserId);
+        
+        // Create a new connection and send an offer
+        await this.sendOffer(remoteUserId);
+        
+        console.log(`[WebRTC] Reconnection offer sent to ${remoteUserId}`);
+      } catch (error) {
+        console.error(`[WebRTC] Reconnection attempt ${currentAttempts + 1} failed for ${remoteUserId}:`, error);
+        // The connection state change handler will trigger another attempt if still failed
+      }
+    }, delay);
+    
+    this.reconnectionTimers.set(remoteUserId, timer);
+  }
+
+  /**
+   * Clear reconnection timer for a user
+   */
+  clearReconnectionTimer(remoteUserId) {
+    const timer = this.reconnectionTimers.get(remoteUserId);
+    if (timer) {
+      clearTimeout(timer);
+      this.reconnectionTimers.delete(remoteUserId);
+    }
+  }
+
+  /**
    * Close a specific peer connection
    */
   closeConnection(remoteUserId) {
@@ -290,6 +373,13 @@ export class WebRTCManager {
       this.remoteStreams.delete(remoteUserId);
       console.log(`[WebRTC] Closed connection with ${remoteUserId}`);
     }
+    
+    // Stop health monitoring
+    this.stopHealthMonitoring(remoteUserId);
+    
+    // Clear any reconnection state
+    this.clearReconnectionTimer(remoteUserId);
+    this.reconnectionAttempts.delete(remoteUserId);
   }
 
   /**
@@ -297,6 +387,19 @@ export class WebRTCManager {
    */
   cleanup() {
     console.log('[WebRTC] Cleaning up all connections');
+    
+    // Stop all health monitoring
+    this.healthMonitors.forEach((monitor) => {
+      monitor.stopMonitoring();
+    });
+    this.healthMonitors.clear();
+    
+    // Clear all reconnection timers
+    this.reconnectionTimers.forEach((timer) => {
+      clearTimeout(timer);
+    });
+    this.reconnectionTimers.clear();
+    this.reconnectionAttempts.clear();
     
     // Close all peer connections
     this.connections.forEach((pc, userId) => {
@@ -343,5 +446,69 @@ export class WebRTCManager {
     });
     
     return audioStats;
+  }
+
+  /**
+   * Start monitoring connection health for a peer
+   */
+  startHealthMonitoring(remoteUserId) {
+    const pc = this.connections.get(remoteUserId);
+    if (!pc) return;
+
+    // Stop existing monitor if any
+    this.stopHealthMonitoring(remoteUserId);
+
+    // Create new health monitor
+    const monitor = new ConnectionHealthMonitor(pc);
+    this.healthMonitors.set(remoteUserId, monitor);
+
+    // Start monitoring with callback
+    monitor.startMonitoring((quality) => {
+      console.log(`[WebRTC] Connection quality for ${remoteUserId}:`, quality);
+      
+      // Notify UI of quality changes
+      if (this.onConnectionQuality) {
+        this.onConnectionQuality(remoteUserId, quality);
+      }
+
+      // Trigger reconnection if connection becomes unhealthy
+      if (!monitor.isHealthy()) {
+        console.warn(`[WebRTC] Unhealthy connection detected for ${remoteUserId}`);
+        // Let the connection state handler deal with reconnection
+      }
+    });
+
+    console.log(`[WebRTC] Started health monitoring for ${remoteUserId}`);
+  }
+
+  /**
+   * Stop monitoring connection health for a peer
+   */
+  stopHealthMonitoring(remoteUserId) {
+    const monitor = this.healthMonitors.get(remoteUserId);
+    if (monitor) {
+      monitor.stopMonitoring();
+      this.healthMonitors.delete(remoteUserId);
+      console.log(`[WebRTC] Stopped health monitoring for ${remoteUserId}`);
+    }
+  }
+
+  /**
+   * Get connection quality for a specific peer
+   */
+  getConnectionQuality(remoteUserId) {
+    const monitor = this.healthMonitors.get(remoteUserId);
+    return monitor ? monitor.getConnectionQuality() : null;
+  }
+
+  /**
+   * Get quality for all monitored connections
+   */
+  getAllConnectionQualities() {
+    const qualities = {};
+    this.healthMonitors.forEach((monitor, userId) => {
+      qualities[userId] = monitor.getConnectionQuality();
+    });
+    return qualities;
   }
 }

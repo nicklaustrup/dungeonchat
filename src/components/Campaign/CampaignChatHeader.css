@@ -224,6 +224,32 @@
   border-radius: 0;
   box-shadow: none;
   max-height: none;
+  min-height: 0;
+  height: auto;
+  padding: 16px;
+}
+
+.floating-voice-panel .voice-header {
+  margin-bottom: 12px;
+}
+
+.floating-voice-panel .participant {
+  margin-bottom: 8px;
+}
+
+.floating-voice-panel .voice-controls {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0 0 0;
+  margin-top: 12px;
+}
+
+.floating-voice-panel .voice-controls button {
+  min-width: 95px;
+  max-width: 110px;
+  flex: 1 1 auto;
+  font-size: 12px;
+  padding: 10px 8px;
 }
 
 /* Responsive Design */

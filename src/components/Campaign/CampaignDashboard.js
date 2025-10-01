@@ -524,6 +524,7 @@ function CampaignDashboard() {
               </p>
               <div className="voice-content">
                 <VoiceChatPanel 
+                  campaign={campaign}
                   campaignId={campaignId} 
                   roomId="voice-general" 
                 />

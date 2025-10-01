@@ -1,0 +1,124 @@
+/**
+ * PTT (Push-to-Talk) Indicator Styles
+ * Visual feedback when user is actively transmitting via PTT
+ */
+
+.ptt-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(46, 213, 115, 0.15) 0%, rgba(0, 184, 148, 0.15) 100%);
+  border: 2px solid rgba(46, 213, 115, 0.4);
+  border-radius: 8px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #2ed573;
+  transition: all 0.2s ease;
+}
+
+.ptt-indicator.active {
+  background: linear-gradient(135deg, rgba(46, 213, 115, 0.3) 0%, rgba(0, 184, 148, 0.3) 100%);
+  border-color: #2ed573;
+  box-shadow: 0 0 20px rgba(46, 213, 115, 0.3);
+  animation: pttPulse 1.5s ease-in-out infinite;
+}
+
+.ptt-indicator-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.ptt-indicator.active .ptt-indicator-icon {
+  animation: pttIconPulse 0.5s ease-in-out infinite alternate;
+}
+
+.ptt-indicator-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ptt-indicator-label {
+  font-size: 11px;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ptt-indicator-status {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ptt-indicator.active .ptt-indicator-status {
+  color: #fff;
+}
+
+.ptt-key-hint {
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.ptt-indicator.active .ptt-key-hint {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+/* Animations */
+@keyframes pttPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(46, 213, 115, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(46, 213, 115, 0.5);
+  }
+}
+
+@keyframes pttIconPulse {
+  from {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .ptt-indicator {
+    padding: 6px 10px;
+    font-size: 12px;
+    gap: 6px;
+  }
+  
+  .ptt-indicator-icon {
+    font-size: 14px;
+  }
+  
+  .ptt-indicator-label {
+    font-size: 10px;
+  }
+  
+  .ptt-indicator-status {
+    font-size: 12px;
+  }
+  
+  .ptt-key-hint {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+}

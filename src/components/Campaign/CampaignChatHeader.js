@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHeadphones, FaTimes, FaMinus, FaExpand } from 'react-icons/fa';
 import VoiceChatPanel from '../Voice/VoiceChatPanel';
+import VoiceNotificationContainer, { setNotificationContainer } from '../Voice/VoiceNotificationContainer';
 import './CampaignChatHeader.css';
 
 function CampaignChatHeader({ campaign, channelName = 'General', onBackToDashboard }) {
@@ -11,6 +12,7 @@ function CampaignChatHeader({ campaign, channelName = 'General', onBackToDashboa
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = React.useRef({ x: 0, y: 0 });
+  const notificationContainerRef = useRef(null);
 
   const handleBackClick = () => {
     if (onBackToDashboard) {
@@ -53,10 +55,24 @@ function CampaignChatHeader({ campaign, channelName = 'General', onBackToDashboa
     };
   }, [isDragging]);
 
+  // Setup notification container
+  useEffect(() => {
+    if (notificationContainerRef.current) {
+      setNotificationContainer(notificationContainerRef.current);
+    }
+  }, []);
+
+  const handleNotification = (notification) => {
+    if (notificationContainerRef.current) {
+      notificationContainerRef.current.addNotification(notification);
+    }
+  };
+
   if (!campaign) return null;
 
   return (
     <>
+      <VoiceNotificationContainer ref={notificationContainerRef} />
       <div className="campaign-chat-header">
         <div className="campaign-chat-header-content">
           <button
@@ -127,11 +143,13 @@ function CampaignChatHeader({ campaign, channelName = 'General', onBackToDashboa
             </div>
           </div>
           <VoiceChatPanel
+            campaign={campaign}
             campaignId={campaign.id}
             roomId="voice-general"
             isFloating={true}
             isMinimized={isMinimized}
             onMinimizeChange={setIsMinimized}
+            onNotification={handleNotification}
           />
         </div>
       )}

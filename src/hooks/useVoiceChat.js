@@ -8,8 +8,9 @@ import { useFirebase } from '../services/FirebaseContext';
 import { WebRTCManager } from '../services/voice/webrtcManager';
 import { SignalingService } from '../services/voice/signalingService';
 import * as voiceRoomService from '../services/voice/voiceRoomService';
+import { notificationSounds } from '../services/voice/notificationSounds';
 
-export function useVoiceChat(campaignId, roomId = 'voice-general') {
+export function useVoiceChat(campaignId, roomId = 'voice-general', options = {}) {
   const { rtdb, firestore, user } = useFirebase();
   
   const [isConnected, setIsConnected] = useState(false);
@@ -18,14 +19,19 @@ export function useVoiceChat(campaignId, roomId = 'voice-general') {
   const [participants, setParticipants] = useState([]);
   const [audioLevels, setAudioLevels] = useState({});
   const [connectionStates, setConnectionStates] = useState({});
+  const [connectionQualities, setConnectionQualities] = useState({}); // Track quality per user
   const [error, setError] = useState(null);
   const [remoteStreams, setRemoteStreams] = useState({}); // Add remote streams state
+  const [notificationsEnabled, setNotificationsEnabled] = useState(options.notificationsEnabled !== false);
+  const [soundsEnabled, setSoundsEnabled] = useState(options.soundsEnabled !== false);
   
   const managerRef = useRef(null);
   const signalingRef = useRef(null);
   const unsubscribersRef = useRef([]);
   const audioContextRef = useRef(null);
   const analysersRef = useRef(new Map());
+  const previousParticipantsRef = useRef(new Set());
+  const onNotificationRef = useRef(options.onNotification);
 
   /**
    * Setup audio level detection for a stream
@@ -117,6 +123,21 @@ export function useVoiceChat(campaignId, roomId = 'voice-general') {
       }));
     };
     
+    managerRef.current.onConnectionQuality = (userId, quality) => {
+      setConnectionQualities(prev => ({
+        ...prev,
+        [userId]: quality
+      }));
+    };
+    
+    managerRef.current.onReconnecting = (userId, attempt, maxAttempts) => {
+      console.log(`[useVoiceChat] Reconnecting to ${userId} (attempt ${attempt}/${maxAttempts})`);
+    };
+    
+    managerRef.current.onReconnected = (userId) => {
+      console.log(`[useVoiceChat] Reconnected to ${userId}`);
+    };
+    
     managerRef.current.onError = (errorType, errorDetails) => {
       console.error(`[useVoiceChat] Error: ${errorType}`, errorDetails);
       setError({ type: errorType, details: errorDetails });
@@ -143,6 +164,66 @@ export function useVoiceChat(campaignId, roomId = 'voice-general') {
     unsubscribersRef.current.push(unsubscribe);
     return () => unsubscribe();
   }, [firestore, campaignId, roomId]);
+
+  // Detect participant changes and trigger notifications
+  useEffect(() => {
+    if (!isConnected || !notificationsEnabled) return;
+
+    const currentParticipantIds = new Set(participants.map(p => p.userId));
+    const previousParticipantIds = previousParticipantsRef.current;
+
+    // Find joined users (in current but not in previous)
+    const joinedUsers = participants.filter(p => 
+      !previousParticipantIds.has(p.userId) && p.userId !== user?.uid
+    );
+
+    // Find left users (in previous but not in current)
+    const leftUserIds = Array.from(previousParticipantIds).filter(
+      id => !currentParticipantIds.has(id) && id !== user?.uid
+    );
+
+    // Trigger notifications for joined users
+    joinedUsers.forEach(participant => {
+      const displayName = participant.username || participant.displayName || 'Someone';
+      
+      // Play sound
+      if (soundsEnabled) {
+        notificationSounds.init();
+        notificationSounds.playJoinSound();
+      }
+      
+      // Trigger notification callback
+      if (onNotificationRef.current) {
+        onNotificationRef.current({
+          type: 'user-joined',
+          title: `${displayName} joined`,
+          message: participant.characterName ? `Playing as ${participant.characterName}` : null,
+          userId: participant.userId
+        });
+      }
+    });
+
+    // Trigger notifications for left users (we don't have their data anymore, so use basic message)
+    leftUserIds.forEach(() => {
+      // Play sound
+      if (soundsEnabled) {
+        notificationSounds.init();
+        notificationSounds.playLeaveSound();
+      }
+      
+      // Trigger notification callback
+      if (onNotificationRef.current) {
+        onNotificationRef.current({
+          type: 'user-left',
+          title: 'Someone left',
+          message: 'A participant left the voice chat'
+        });
+      }
+    });
+
+    // Update previous participants
+    previousParticipantsRef.current = currentParticipantIds;
+  }, [participants, isConnected, notificationsEnabled, soundsEnabled, user]);
 
   /**
    * Join voice chat
@@ -201,12 +282,18 @@ export function useVoiceChat(campaignId, roomId = 'voice-general') {
       setIsConnecting(false);
       console.log('[useVoiceChat] Successfully joined voice chat');
       
+      // Play join sound for current user
+      if (soundsEnabled) {
+        notificationSounds.init();
+        notificationSounds.playJoinSound();
+      }
+      
     } catch (error) {
       console.error('[useVoiceChat] Failed to join voice chat:', error);
       setError({ type: 'join_failed', details: error });
       setIsConnecting(false);
     }
-  }, [managerRef, signalingRef, user, firestore, campaignId, roomId]);
+  }, [managerRef, signalingRef, user, firestore, campaignId, roomId, soundsEnabled]);
 
   /**
    * Leave voice chat
@@ -234,6 +321,12 @@ export function useVoiceChat(campaignId, roomId = 'voice-general') {
         audioContextRef.current = null;
       }
       
+      // Play leave sound for current user
+      if (soundsEnabled) {
+        notificationSounds.init();
+        notificationSounds.playLeaveSound();
+      }
+      
       setIsConnected(false);
       setConnectionStates({});
       setAudioLevels({});
@@ -242,7 +335,7 @@ export function useVoiceChat(campaignId, roomId = 'voice-general') {
     } catch (error) {
       console.error('[useVoiceChat] Error leaving voice chat:', error);
     }
-  }, [managerRef, signalingRef, user, firestore, campaignId, roomId]);
+  }, [managerRef, signalingRef, user, firestore, campaignId, roomId, soundsEnabled]);
 
   /**
    * Toggle mute
@@ -262,6 +355,23 @@ export function useVoiceChat(campaignId, roomId = 'voice-general') {
     }
   }, [managerRef, isMuted, user, firestore, campaignId, roomId]);
 
+  /**
+   * Toggle notifications on/off
+   */
+  const toggleNotifications = useCallback(() => {
+    setNotificationsEnabled(prev => !prev);
+  }, []);
+
+  /**
+   * Toggle sounds on/off
+   */
+  const toggleSounds = useCallback(() => {
+    setSoundsEnabled(prev => {
+      notificationSounds.setEnabled(!prev);
+      return !prev;
+    });
+  }, []);
+
   return {
     isConnected,
     isConnecting,
@@ -269,10 +379,15 @@ export function useVoiceChat(campaignId, roomId = 'voice-general') {
     participants,
     audioLevels,
     connectionStates,
+    connectionQualities, // Expose connection quality metrics
     remoteStreams, // Expose remote streams
     error,
+    notificationsEnabled,
+    soundsEnabled,
     join,
     leave,
-    toggleMute
+    toggleMute,
+    toggleNotifications,
+    toggleSounds
   };
 }
