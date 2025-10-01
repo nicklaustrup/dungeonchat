@@ -38,6 +38,7 @@ function MapCanvas({
   width, 
   height, 
   isDM = false,
+  playerViewMode = false,
   selectedTokenId,
   onTokenSelect,
   onMapClick,
@@ -342,7 +343,19 @@ function MapCanvas({
         for (const token of playerTokens) {
           const gridX = Math.floor(token.position.x / map.gridSize);
           const gridY = Math.floor(token.position.y / map.gridSize);
-          await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, 3);
+          
+          // Check if player has a light source (torch/lantern) nearby
+          const hasNearbyLight = lights.some(light => {
+            if (!light.position) return false;
+            const dx = light.position.x - token.position.x;
+            const dy = light.position.y - token.position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < 30; // Within 30 pixels = carrying the light
+          });
+          
+          // Base reveal radius is 3, increase to 5 if carrying a light (torch)
+          const revealRadius = hasNearbyLight ? 5 : 3;
+          await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, revealRadius);
         }
       } catch (error) {
         console.error('Error revealing fog around player tokens:', error);
@@ -350,7 +363,30 @@ function MapCanvas({
     };
 
     revealAroundPlayerTokens();
-  }, [firestore, campaignId, gMap?.id, gMap?.gridSize, fogOfWarEnabled, fogData?.enabled, gMap?.gridEnabled, playerTokens, map.gridSize, map.id]);
+  }, [firestore, campaignId, gMap?.id, gMap?.gridSize, fogOfWarEnabled, fogData?.enabled, gMap?.gridEnabled, playerTokens, lights, map.gridSize, map.id]);
+
+  // Reveal fog around light sources when lights or fog data changes
+  useEffect(() => {
+    if (!firestore || !campaignId || !gMap?.id || !fogOfWarEnabled || !fogData?.enabled || !lights.length) return;
+
+    const revealAroundLights = async () => {
+      try {
+        // Reveal fog around each light source
+        for (const light of lights) {
+          if (!light.position) continue;
+          const gridX = Math.floor(light.position.x / map.gridSize);
+          const gridY = Math.floor(light.position.y / map.gridSize);
+          // Calculate reveal radius based on light radius (convert pixels to grid cells)
+          const revealRadius = Math.ceil((light.radius || 40) / map.gridSize);
+          await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, revealRadius);
+        }
+      } catch (error) {
+        console.error('Error revealing fog around lights:', error);
+      }
+    };
+
+    revealAroundLights();
+  }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, lights, map.gridSize, map.id]);
 
   // Force re-render for fade animations (drawings)
   useEffect(() => {
@@ -1015,7 +1051,8 @@ function MapCanvas({
               return null;
             }
             // Hide tokens marked as hidden from non-DM players
-            if (token.hidden && !isDM) {
+            // Also hide from DMs when in player view mode
+            if (token.hidden && (!isDM || playerViewMode)) {
               return null;
             }
 

@@ -252,6 +252,27 @@ function TokenSprite({
         </Group>
       )}
 
+      {/* Hidden indicator - Closed eye icon (DM only) */}
+      {token.hidden && (
+        <Group x={tokenSize / 2 - 16} y={-tokenSize / 2 + 4}>
+          {/* Dark background circle */}
+          <Circle
+            radius={12}
+            fill="#000"
+            opacity={0.85}
+          />
+          {/* Eye slash icon - closed eye */}
+          <Text
+            text="👁️‍🗨️"
+            fontSize={16}
+            fill="#fff"
+            x={-8}
+            y={-8}
+            opacity={0.9}
+          />
+        </Group>
+      )}
+
       {/* Selection indicator */}
       {isSelected && (
         <Circle
