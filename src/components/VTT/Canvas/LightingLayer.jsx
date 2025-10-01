@@ -37,7 +37,7 @@ const LightingLayer = ({
         />
       )}
 
-      {/* Render each light source as a radial gradient - these lighten the darkness */}
+      {/* Render each light source - cut holes in darkness and add colored glow */}
       {lights.map((light, index) => {
         // Calculate flicker effect
         let radiusMultiplier = 1.0;
@@ -59,10 +59,9 @@ const LightingLayer = ({
         const effectiveRadius = light.radius * radiusMultiplier;
         const effectiveIntensity = (light.intensity || 0.8) * intensityMultiplier;
 
-        // Create radial gradient for light
         return (
           <React.Fragment key={light.id}>
-            {/* Outer glow (dim light) - cuts through darkness */}
+            {/* Light reveals area by cutting through darkness */}
             <Circle
               x={light.position.x}
               y={light.position.y}
@@ -73,33 +72,35 @@ const LightingLayer = ({
               fillRadialGradientEndRadius={effectiveRadius}
               fillRadialGradientColorStops={[
                 0,
-                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.9),
+                'rgba(255, 255, 255, 1)',
+                0.7,
+                'rgba(255, 255, 255, 0.5)',
+                1,
+                'rgba(255, 255, 255, 0)'
+              ]}
+              listening={false}
+              globalCompositeOperation="destination-out"
+            />
+
+            {/* Colored light glow on top */}
+            <Circle
+              x={light.position.x}
+              y={light.position.y}
+              radius={effectiveRadius}
+              fillRadialGradientStartPoint={{ x: 0, y: 0 }}
+              fillRadialGradientStartRadius={0}
+              fillRadialGradientEndPoint={{ x: 0, y: 0 }}
+              fillRadialGradientEndRadius={effectiveRadius}
+              fillRadialGradientColorStops={[
+                0,
+                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.3),
                 0.5,
-                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.5),
+                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.15),
                 1,
                 'rgba(0, 0, 0, 0)'
               ]}
               listening={false}
-              globalCompositeOperation="lighten"
-            />
-
-            {/* Inner bright light - maximum brightness at center */}
-            <Circle
-              x={light.position.x}
-              y={light.position.y}
-              radius={effectiveRadius * 0.3}
-              fillRadialGradientStartPoint={{ x: 0, y: 0 }}
-              fillRadialGradientStartRadius={0}
-              fillRadialGradientEndPoint={{ x: 0, y: 0 }}
-              fillRadialGradientEndRadius={effectiveRadius * 0.3}
-              fillRadialGradientColorStops={[
-                0,
-                hexToRgba(light.color || '#FFFFFF', effectiveIntensity),
-                1,
-                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.6)
-              ]}
-              listening={false}
-              globalCompositeOperation="lighten"
+              globalCompositeOperation="source-over"
             />
           </React.Fragment>
         );
