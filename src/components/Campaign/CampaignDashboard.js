@@ -11,6 +11,7 @@ import CampaignRules from './CampaignRules';
 import DiceHistoryPanel from '../DiceRoll/DiceHistoryPanel';
 import InitiativeTracker from '../Session/InitiativeTracker';
 import InitiativeButton from '../Session/InitiativeButton';
+import SessionNotes from '../Session/SessionNotes';
 import { CharacterCreationModal } from '../CharacterCreationModal';
 import { CharacterSheet } from '../CharacterSheet';
 import { useCharacterSheet, useCampaignCharacters } from '../../hooks/useCharacterSheet';
@@ -198,6 +199,12 @@ function CampaignDashboard() {
               onClick={() => setActiveTab('initiative')}
             >
               Initiative Tracker
+            </button>
+            <button 
+              className={`nav-item ${activeTab === 'session-notes' ? 'active' : ''}`}
+              onClick={() => setActiveTab('session-notes')}
+            >
+              Session Notes
             </button>
             <button 
               className={`nav-item ${activeTab === 'rules' ? 'active' : ''}`}
@@ -437,6 +444,16 @@ function CampaignDashboard() {
                   firestore={firestore}
                 />
               </div>
+            </div>
+          )}
+
+          {activeTab === 'session-notes' && (
+            <div className="session-notes-tab">
+              <h2>Session Notes</h2>
+              <p className="tab-description">
+                Record session summaries, important events, and track campaign narrative. DMs can keep private notes while sharing key details with players.
+              </p>
+              <SessionNotes campaignId={campaignId} />
             </div>
           )}
 

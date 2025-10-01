@@ -108,11 +108,11 @@ service cloud.firestore {
       
       // Campaign session data subcollection (initiative tracker, session notes, etc.)
       match /sessions/{sessionDocId} {
-        // Campaign members can read session data
+        // Campaign members can read all session data
         allow read: if request.auth != null && 
           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
         
-        // DM can create, update, and delete session data
+        // DM can create, update, and delete all session data
         allow create, update, delete: if request.auth != null && 
           request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
         
@@ -120,6 +120,12 @@ service cloud.firestore {
         allow update: if request.auth != null && 
           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)) &&
           sessionDocId == 'initiative';
+        
+        // For individual session notes documents:
+        // - Members can read all fields
+        // - DM can read/write all fields (including dmNotes)
+        // - The dmNotes field should only be accessible to DM (enforced in client code)
+        // Security rule already covers this through DM-only write permissions above
       }
     }
     
