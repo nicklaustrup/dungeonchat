@@ -2,7 +2,18 @@
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { normalizeReply } from './replyUtil';
 
-export async function createTextMessage({ firestore, text, user, getDisplayName, replyTo, campaignId = null, channelId = 'general', messageType = 'text', diceData = null }) {
+export async function createTextMessage({ 
+  firestore, 
+  text, 
+  user, 
+  getDisplayName, 
+  replyTo, 
+  campaignId = null, 
+  channelId = 'general', 
+  messageType = 'text', 
+  messageContext = null,
+  diceData = null 
+}) {
   // Determine the correct collection reference based on context
   const messagesRef = campaignId 
     ? collection(firestore, 'campaigns', campaignId, 'channels', channelId, 'messages')
@@ -18,6 +29,11 @@ export async function createTextMessage({ firestore, text, user, getDisplayName,
     reactions: {},
     type: messageType
   };
+  
+  // Add message context for character-aware messaging
+  if (messageContext && messageContext !== 'neutral') {
+    data.messageContext = messageContext;
+  }
   
   // Add dice roll data if this is a dice message
   if (messageType === 'dice_roll' && diceData) {

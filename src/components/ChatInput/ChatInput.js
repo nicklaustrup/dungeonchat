@@ -13,8 +13,10 @@ import { ImagePreviewModal } from './ImagePreviewModal';
 import { BulkImagePreviewModal } from './BulkImagePreviewModal';
 import { MessageBar } from './MessageBar';
 import { ActionButtons } from './ActionButtons';
-import { diceService } from '../../services/diceService';
+import { diceService, parseInlineDiceCommand, formatRollForChat } from '../../services/diceService';
+import { getCharacterContext, getMessageContextType, cleanMessageText } from '../../services/characterContextService';
 import DiceRoller from '../DiceRoll/DiceRoller';
+import CharacterCommandsHelp from './CharacterCommandsHelp';
 import { doc, getDoc } from 'firebase/firestore';
 
 // Custom hook to get campaign member info for current user
@@ -60,9 +62,32 @@ function ChatInput({
   const user = auth.currentUser;
   const [text, setText] = React.useState('');
   const [showDiceRoller, setShowDiceRoller] = React.useState(false);
+  const [showCommandsHelp, setShowCommandsHelp] = React.useState(false);
 
   // Get campaign member data for current user if in a campaign
   const campaignMemberData = useCampaignMember(campaignId, user?.uid);
+
+  // Load character data for character-aware commands
+  const [characterData, setCharacterData] = React.useState(null);
+  
+  React.useEffect(() => {
+    if (!campaignId || !user?.uid || !firestore) {
+      setCharacterData(null);
+      return;
+    }
+    
+    const loadCharacterData = async () => {
+      try {
+        const character = await getCharacterContext(firestore, campaignId, user.uid);
+        setCharacterData(character);
+      } catch (error) {
+        console.warn('Failed to load character data for dice commands:', error);
+        setCharacterData(null);
+      }
+    };
+    
+    loadCharacterData();
+  }, [campaignId, user?.uid, firestore]);
 
   // Enhanced function to get player name for dice rolls
   const getPlayerName = React.useCallback(() => {
@@ -272,50 +297,100 @@ function ChatInput({
     try {
       const trimmedText = text.trim();
       
-      // Check if this is a dice command
-      if (trimmedText.startsWith('/roll ')) {
-        const diceNotation = trimmedText.substring(6).trim();
-        if (diceNotation) {
-          try {
-            // Parse and roll the dice
-            const parsedDice = diceService.parseDiceNotation(diceNotation);
-            const rollResult = diceService.rollDice(parsedDice);
-            
-            // Create a dice roll message with the result
-            const playerName = getPlayerName();
-            await createTextMessage({ 
-              firestore, 
-              text: `🎲 **${playerName}** rolled **${rollResult.notation}**: **${rollResult.total}**${rollResult.breakdown ? ` (${rollResult.breakdown})` : ''}`,
-              user, 
-              getDisplayName, 
-              replyTo: replyingTo,
-              campaignId,
-              channelId,
-              messageType: 'dice_roll',
-              diceData: rollResult
-            });
-          } catch (error) {
-            pushToast(`Invalid dice notation: ${error.message}`, { type: 'error' });
-            return;
-          }
-        } else {
-          pushToast('Please specify dice notation after /roll (e.g., /roll 1d20+5)', { type: 'error' });
+      // Check for character-aware dice commands first (if in campaign with character)
+      const diceCommand = parseInlineDiceCommand(trimmedText, characterData);
+      
+      if (diceCommand) {
+        if (diceCommand.error) {
+          pushToast(`Dice command error: ${diceCommand.error}`, { type: 'error' });
+          return;
+        }
+        
+        try {
+          // Roll the dice
+          const rollResult = diceService.rollDice(diceCommand);
+          
+          // Get player display name (character name in campaigns)
+          const playerName = getPlayerName();
+          
+          // Format roll result with character context
+          const formattedRoll = formatRollForChat(rollResult, playerName, diceCommand.characterCommand);
+          
+          // Create a dice roll message with the result
+          await createTextMessage({ 
+            firestore, 
+            text: formattedRoll.text,
+            user, 
+            getDisplayName, 
+            replyTo: replyingTo,
+            campaignId,
+            channelId,
+            messageType: 'dice_roll',
+            diceData: {
+              ...rollResult,
+              characterCommand: diceCommand.characterCommand,
+              characterModifier: diceCommand.characterModifier
+            }
+          });
+          
+        } catch (error) {
+          pushToast(`Dice roll error: ${error.message}`, { type: 'error' });
           return;
         }
       } else {
-        // For regular text messages, just use the original text
-        // (processInlineDiceCommands is only for detecting dice commands, not processing regular text)
-        
-        // Create regular text message
-        await createTextMessage({ 
-          firestore, 
-          text: trimmedText, 
-          user, 
-          getDisplayName, 
-          replyTo: replyingTo,
-          campaignId,
-          channelId
-        });
+        // Check if this is a regular /roll command (fallback)
+        if (trimmedText.startsWith('/roll ') || trimmedText.startsWith('/r ')) {
+          const diceNotation = trimmedText.startsWith('/roll ') 
+            ? trimmedText.substring(6).trim() 
+            : trimmedText.substring(3).trim();
+            
+          if (diceNotation) {
+            try {
+              // Parse and roll the dice
+              const parsedDice = diceService.parseDiceNotation(diceNotation);
+              const rollResult = diceService.rollDice(parsedDice);
+              
+              // Create a dice roll message with the result
+              const playerName = getPlayerName();
+              const formattedRoll = formatRollForChat(rollResult, playerName);
+              
+              await createTextMessage({ 
+                firestore, 
+                text: formattedRoll.text,
+                user, 
+                getDisplayName, 
+                replyTo: replyingTo,
+                campaignId,
+                channelId,
+                messageType: 'dice_roll',
+                diceData: rollResult
+              });
+            } catch (error) {
+              pushToast(`Invalid dice notation: ${error.message}`, { type: 'error' });
+              return;
+            }
+          } else {
+            pushToast('Please specify dice notation after /roll (e.g., /roll 1d20+5)', { type: 'error' });
+            return;
+          }
+        } else {
+          // Regular text message - check for character context (IC/OOC)
+          const messageContext = getMessageContextType(trimmedText);
+          const cleanedText = cleanMessageText(trimmedText);
+          
+          // Create regular text message with context
+          await createTextMessage({ 
+            firestore, 
+            text: cleanedText || trimmedText, // Use cleaned text if available, otherwise original
+            user, 
+            getDisplayName, 
+            replyTo: replyingTo,
+            campaignId,
+            channelId,
+            messageType: messageContext !== 'neutral' ? messageContext : 'text',
+            messageContext
+          });
+        }
       }
       
       setText('');
@@ -416,14 +491,23 @@ function ChatInput({
           mode="inline"
         />
       )}
+      <CharacterCommandsHelp 
+        isOpen={showCommandsHelp}
+        onClose={() => setShowCommandsHelp(false)}
+        hasCharacter={!!characterData}
+      />
       <form onSubmit={onSubmit} className="message-form">
         <ActionButtons
           onUploadImage={handleFileUpload}
           onToggleDice={() => setShowDiceRoller(prev => !prev)}
           onToggleEmoji={toggleEmoji}
+          onToggleHelp={() => setShowCommandsHelp(prev => !prev)}
           showDiceRoller={showDiceRoller}
+          showCommandsHelp={showCommandsHelp}
           emojiOpen={emojiOpen}
           emojiButtonRef={emojiButtonRef}
+          campaignId={campaignId}
+          hasCharacter={!!characterData}
         />
         <div className="input-row">
           <MessageBar

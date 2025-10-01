@@ -890,32 +890,66 @@ The key to success will be maintaining the excellent chat experience users alrea
 - `((text))` - Double parentheses for OOC
 - `[[text]]` - Double brackets for OOC
 
-### Next Phase: Advanced Session Management ⬆️ PHASE 2E
+### Phase 2E: Initiative Tracking System ✅ COMPLETED
 
-**Session Management Features:**
-1. **Initiative Tracking System**
-   - 🔄 Combat initiative tracker with character integration
-   - 🔄 Turn order management with automatic advancement
-   - 🔄 HP tracking during combat encounters
-   - 🔄 Condition/status effect management
+**Implementation Status:**
+1. ✅ **InitiativeTracker Component**: Comprehensive combat initiative management with real-time updates
+2. ✅ **Initiative Service**: Complete service layer for turn order, HP tracking, and combat state management  
+3. ✅ **InitiativeButton Component**: Campaign dashboard integration with visual combat status indicators
+4. ✅ **Campaign Dashboard Integration**: New "Initiative Tracker" tab with full functionality
+5. ✅ **Combat Management**: Start/end combat, next/previous turn, round tracking
+6. ✅ **Combatant Management**: Add/remove combatants, HP tracking, condition management
+7. ✅ **Real-time Synchronization**: Firebase listeners for live initiative updates across all users
+8. ✅ **DM Controls**: Comprehensive DM tools for combat management and player oversight
+9. ✅ **Mobile Responsive Design**: Touch-friendly interface optimized for all devices
+10. ✅ **Security Rules**: Firestore rules for session data access control and DM permissions
 
-2. **Session Planning Tools**
-   - 🔄 Session notes and summaries with automatic timestamps
-   - 🔄 Encounter planning and management tools
-   - 🔄 Campaign calendar/scheduling with recurring sessions
-   - 🔄 Session preparation checklists for DMs
+**Features Delivered:**
+- **Real-time Initiative Tracking**: Live turn order management with automatic sorting by initiative
+- **Combat State Management**: Start/stop combat with proper state transitions and round tracking  
+- **HP and Condition Tracking**: Visual HP bars, condition badges, and status effect management
+- **Combatant Types**: Support for player characters, NPCs, and enemies with visual distinction
+- **Turn Management**: Next/previous turn navigation with automatic round advancement
+- **Campaign Integration**: Seamless integration with campaign dashboard and character systems
+- **Initiative Button**: Quick access widget showing combat status and providing dashboard navigation
+- **Form Validation**: Comprehensive input validation for combatant creation and management
+- **Visual Feedback**: Color-coded HP status, active turn highlighting, and combat status indicators
+- **Mobile Optimization**: Responsive design with touch-friendly controls and efficient layout
 
-3. **Enhanced Content Management**
-   - 🔄 NPC database with notes and relationships
-   - 🔄 Location tracking with descriptions and maps
-   - 🔄 Campaign timeline and event logging
-   - 🔄 Inventory management for party items
+**Technical Achievements:**
+- **Initiative Service**: Complete service layer with 15+ methods for combat management
+- **Real-time Architecture**: Firebase onSnapshot listeners for live combat state synchronization
+- **Component Architecture**: Modular design with reusable InitiativeButton and CombatantCard components
+- **State Management**: Efficient state handling with proper cleanup and error recovery
+- **Security Implementation**: Proper access control with DM-only write permissions and member read access
+- **Performance Optimization**: Efficient data structures and minimal re-renders during combat
 
-4. **Advanced DM Tools**
+### Next Phase: Advanced Session Management ⬆️ PHASE 2F
+
+**Session Planning and Note-Taking Tools:**
+1. **Session Notes System**
+   - 🔄 Real-time session note taking and sharing
+   - 🔄 DM notes with privacy controls  
+   - 🔄 Session summaries and highlights
+   - 🔄 Automatic timestamp and player attribution
+
+2. **Encounter Management**
+   - 🔄 Pre-planned encounter library
+   - 🔄 Encounter templates and scaling
+   - 🔄 Environmental hazards and conditions
+   - 🔄 Treasure and loot distribution tracking
+
+3. **Campaign Calendar & Scheduling**
+   - 🔄 Session scheduling with player availability
+   - 🔄 Campaign timeline and milestone tracking
+   - 🔄 Recurring session management
+   - 🔄 In-game calendar and events
+
+4. **Enhanced Party Management**
    - 🔄 Party overview dashboard with all character status
-   - 🔄 Character progression tracking and XP distribution
-   - 🔄 Private DM notes and character observations
-   - 🔄 Enhanced campaign administration tools
+   - 🔄 Group HP and resource tracking
+   - 🔄 Party inventory and shared resources
+   - 🔄 Experience point distribution and leveling
 
 ## Campaign System Progress Summary (Updated September 2025)
 
@@ -950,10 +984,20 @@ The key to success will be maintaining the excellent chat experience users alrea
 - ✅ **Visual Message Context** with IC/OOC indicators and enhanced dice roll displays
 - ✅ **Educational Help System** with character command documentation and usage examples
 
-### 🚀 CURRENT STATUS: PHASE 2D COMPLETE
+**Phase 2E: Initiative Tracking System** ✅ **(1 week)**
+- ✅ **InitiativeTracker Component** with comprehensive combat management interface
+- ✅ **Initiative Service** with 15+ methods for turn order, HP, and condition management
+- ✅ **Campaign Dashboard Integration** with dedicated Initiative Tracker tab
+- ✅ **Real-time Combat Synchronization** with Firebase listeners for live updates
+- ✅ **HP and Condition Tracking** with visual indicators and status management
+- ✅ **Turn Management** with next/previous turn and automatic round advancement
+- ✅ **Character Integration** with automatic initiative calculation from character stats
+- ✅ **Mobile-Responsive Design** with touch-friendly combat controls
 
-**Total Development Time: 8 months** 
-**Features Delivered: 85+ major features**
+### 🚀 CURRENT STATUS: PHASE 2E COMPLETE
+
+**Total Development Time: 8+ months** 
+**Features Delivered: 95+ major features**
 **Technical Debt: Minimal - clean architecture maintained**
 
 **Ready for Production:**
@@ -965,39 +1009,42 @@ The key to success will be maintaining the excellent chat experience users alrea
 - ✅ **Enhanced dice commands with skill checks, saving throws, and attack rolls**
 - ✅ **In-character vs out-of-character message system with visual indicators**
 - ✅ **Comprehensive command help system for new player onboarding**
+- ✅ **Initiative tracking system with real-time combat management**
+- ✅ **HP and condition tracking with visual status indicators**
+- ✅ **Turn order management with automatic round advancement**
 - ✅ Educational features for new D&D players
 - ✅ Professional dark/light theme support
 - ✅ Mobile-optimized responsive design
 - ✅ Robust error handling and user feedback
 
-### ⬆️ NEXT PHASE: Phase 2E - Advanced Session Management
+### ⬆️ NEXT PHASE: Phase 2F - Session Planning & Content Management
 
 **Timeline: 2-3 weeks**
-**Focus: Combat and session management tools for active gameplay**
+**Focus: Session planning tools and enhanced content management**
 
-**Initiative Tracking for combat**
-- Combat initiative tracker with character integration
-- Turn order management with automatic advancement
-- HP tracking during combat encounters
-- Condition/status effect management
+**Session Notes & Summaries**
+- Real-time session note taking with DM and player views
+- Session summaries with automatic timestamps and attribution
+- Private DM notes with privacy controls
+- Session highlights and key moments tracking
 
-**Session planning and note-taking tools**
-- Session notes and summaries with automatic timestamps
-- Encounter planning and management tools
-- Campaign calendar/scheduling with recurring sessions
-- Session preparation checklists for DMs
+**Encounter Planning & Management**
+- Pre-planned encounter library with templates
+- Encounter scaling and difficulty adjustment
+- Environmental hazards and conditions management
+- Treasure and loot distribution tracking
 
-**Enhanced DM utilities**
-- Party overview dashboard with all character status
-- Character progression tracking and XP distribution
-- Private DM notes and character observations
-- Enhanced campaign administration tools
+**Campaign Calendar & Scheduling**
+- Session scheduling with player availability tracking
+- Campaign timeline and milestone management
+- Recurring session support with reminders
+- In-game calendar and event tracking
 
-**Party management features**
-- Party HP and resource tracking
-- Group initiative and combat management
-- Party inventory and shared resources
-- Campaign timeline and milestone tracking
+**Enhanced Party Management**
+- Party overview dashboard with consolidated character status
+- Group HP and resource tracking across all characters
+- Party inventory and shared resources management
+- Experience point distribution and group leveling tools
 
 ### Phase 2D: Character-Aware Messaging System ✅ COMPLETED
 
@@ -1133,8 +1180,71 @@ The campaign system now provides a comprehensive D&D campaign management platfor
 - ✅ **Code Quality**: Modular components and reusable hooks
 
 **Recommended Next Steps:**
-1. 🔄 **User Testing** - Get feedback on current campaign workflows and dice system
-2. 🔄 **Performance Testing** - Test with multiple campaigns, members, and heavy dice usage
-3. 🔄 **Mobile Testing** - Validate mobile experience across devices and dice interactions
-4. 🔄 **Character Sheet Integration** - Begin Phase 2C with enhanced character management
-5. 🔄 **Session Management Tools** - Add initiative tracking and session planning features
+1. 🔄 **User Testing** - Get feedback on current campaign workflows, dice system, and initiative tracker
+2. 🔄 **Performance Testing** - Test with multiple campaigns, members, heavy dice usage, and active combat sessions
+3. 🔄 **Mobile Testing** - Validate mobile experience across devices including initiative tracker touch controls
+4. ✅ **Initiative Tracking System** - COMPLETED: Full combat initiative management implemented
+5. 🔄 **Session Management Tools** - Begin Phase 2F with session notes and encounter planning features
+
+---
+
+## Phase 2E: Initiative Tracking System ✅ COMPLETED (October 2025)
+
+**Implementation Status:**
+1. ✅ **InitiativeTracker Component**: Comprehensive combat initiative management with real-time updates
+2. ✅ **Initiative Service**: Complete service layer for turn order, HP tracking, and combat state management  
+3. ✅ **InitiativeButton Component**: Campaign dashboard integration with visual combat status indicators
+4. ✅ **Campaign Dashboard Integration**: New "Initiative Tracker" tab with full functionality
+5. ✅ **Combat Management**: Start/end combat, next/previous turn, round tracking
+6. ✅ **Combatant Management**: Add/remove combatants, HP tracking, condition management
+7. ✅ **Real-time Synchronization**: Firebase listeners for live initiative updates across all users
+8. ✅ **DM Controls**: Comprehensive DM tools for combat management and player oversight
+9. ✅ **Mobile Responsive Design**: Touch-friendly interface optimized for all devices
+10. ✅ **Security Rules**: Firestore rules for session data access control and DM permissions
+
+**Features Delivered:**
+- **Real-time Initiative Tracking**: Live turn order management with automatic sorting by initiative
+- **Combat State Management**: Start/stop combat with proper state transitions and round tracking  
+- **HP and Condition Tracking**: Visual HP bars, condition badges, and status effect management
+- **Combatant Types**: Support for player characters, NPCs, and enemies with visual distinction
+- **Turn Management**: Next/previous turn navigation with automatic round advancement
+- **Campaign Integration**: Seamless integration with campaign dashboard and character systems
+- **Initiative Button**: Quick access widget showing combat status and providing dashboard navigation
+- **Form Validation**: Comprehensive input validation for combatant creation and management
+- **Visual Feedback**: Color-coded HP status, active turn highlighting, and combat status indicators
+- **Mobile Optimization**: Responsive design with touch-friendly controls and efficient layout
+
+**Technical Achievements:**
+- **Initiative Service**: Complete service layer with 15+ methods for combat management
+- **Real-time Architecture**: Firebase onSnapshot listeners for live combat state synchronization
+- **Component Architecture**: Modular design with reusable InitiativeButton and CombatantCard components
+- **State Management**: Efficient state handling with proper cleanup and error recovery
+- **Security Implementation**: Proper access control with DM-only write permissions and member read access
+- **Performance Optimization**: Efficient data structures and minimal re-renders during combat
+
+### Next Phase: Advanced Session Management ⬆️ PHASE 2F
+
+**Session Planning and Note-Taking Tools:**
+1. **Session Notes System**
+   - Real-time session note taking and sharing
+   - DM notes with privacy controls  
+   - Session summaries and highlights
+   - Automatic timestamp and player attribution
+
+2. **Encounter Management**
+   - Pre-planned encounter library
+   - Encounter templates and scaling
+   - Environmental hazards and conditions
+   - Treasure and loot distribution tracking
+
+3. **Campaign Calendar & Scheduling**
+   - Session scheduling with player availability
+   - Campaign timeline and milestone tracking
+   - Recurring session management
+   - In-game calendar and events
+
+4. **Enhanced Party Management**
+   - Party overview dashboard with all character status
+   - Group HP and resource tracking
+   - Party inventory and shared resources
+   - Experience point distribution and leveling

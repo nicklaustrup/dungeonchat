@@ -1,0 +1,272 @@
+/* Initiative Button Styles */
+
+.initiative-button {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+.initiative-button:hover {
+  background: var(--hover-bg);
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.initiative-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* Size Variations */
+.initiative-button.small {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.initiative-button.medium {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.initiative-button.large {
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+}
+
+/* Status Variations */
+.initiative-button.inactive {
+  border-color: var(--border-color);
+}
+
+.initiative-button.inactive .button-icon {
+  opacity: 0.6;
+}
+
+.initiative-button.inactive .button-text {
+  color: var(--text-secondary);
+}
+
+.initiative-button.ready {
+  border-color: var(--warning-color);
+  background: var(--warning-bg);
+}
+
+.initiative-button.ready:hover {
+  border-color: var(--warning-hover);
+  background: var(--warning-bg);
+}
+
+.initiative-button.ready .button-icon {
+  color: var(--warning-color);
+}
+
+.initiative-button.ready .button-text {
+  color: var(--warning-color);
+  font-weight: 600;
+}
+
+.initiative-button.active {
+  border-color: var(--success-color);
+  background: var(--success-bg);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.initiative-button.active:hover {
+  border-color: var(--success-hover);
+  background: var(--success-bg);
+}
+
+.initiative-button.active .button-icon {
+  color: var(--success-color);
+}
+
+.initiative-button.active .button-text {
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+.initiative-button.loading {
+  border-color: var(--primary-color);
+}
+
+.initiative-button.loading .button-icon {
+  animation: spin 1s linear infinite;
+}
+
+/* Button Content */
+.button-icon {
+  font-size: 1.2em;
+  transition: all 0.2s ease;
+}
+
+.button-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+}
+
+.button-text {
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.button-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.75em;
+  line-height: 1;
+  font-weight: 400;
+  transition: all 0.2s ease;
+}
+
+.initiative-button.active .button-subtitle {
+  color: var(--success-color);
+  opacity: 0.8;
+}
+
+.initiative-button.ready .button-subtitle {
+  color: var(--warning-color);
+  opacity: 0.8;
+}
+
+/* Active Indicator */
+.active-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background: var(--success-color);
+  border-radius: 50%;
+  transform: translate(2px, -2px);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translate(2px, -2px) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translate(2px, -2px) scale(1.2);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Small Size Adjustments */
+.initiative-button.small .button-content {
+  gap: 0;
+}
+
+.initiative-button.small .button-icon {
+  font-size: 1em;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .initiative-button.medium {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+  
+  .initiative-button.large {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .button-subtitle {
+    font-size: 0.7em;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .initiative-button.active {
+    border-width: 2px;
+  }
+  
+  .initiative-button.ready {
+    border-width: 2px;
+  }
+  
+  .active-indicator {
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--card-bg);
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .initiative-button {
+    transition: none;
+  }
+  
+  .initiative-button:hover {
+    transform: none;
+  }
+  
+  .active-indicator {
+    animation: none;
+  }
+  
+  .initiative-button.active {
+    animation: none;
+  }
+  
+  .initiative-button.loading .button-icon {
+    animation: none;
+  }
+}
+
+/* Dark Theme Support */
+[data-theme="dark"] .initiative-button {
+  --card-bg: #2a2a2a;
+  --hover-bg: #3a3a3a;
+  --border-color: #404040;
+  --success-bg: rgba(34, 197, 94, 0.15);
+  --warning-bg: rgba(251, 191, 36, 0.15);
+}
+
+/* Color Variables (if not already defined) */
+:root {
+  --success-color: #22c55e;
+  --success-hover: #16a34a;
+  --success-bg: rgba(34, 197, 94, 0.1);
+  
+  --warning-color: #f59e0b;
+  --warning-hover: #d97706;
+  --warning-bg: rgba(251, 191, 36, 0.1);
+  
+  --primary-color: #3b82f6;
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaPlus, FaDiceD20 } from 'react-icons/fa6';
+import { FaPlus, FaDiceD20, FaQuestion } from 'react-icons/fa6';
 import { VscSmiley } from 'react-icons/vsc';
 import './ActionButtons.css';
 
@@ -7,9 +7,13 @@ export function ActionButtons({
   onUploadImage,
   onToggleDice,
   onToggleEmoji,
+  onToggleHelp,
   showDiceRoller = false,
+  showCommandsHelp = false,
   emojiOpen = false,
-  emojiButtonRef
+  emojiButtonRef,
+  campaignId = null,
+  hasCharacter = false
 }) {
   return (
     <div className="action-buttons" role="toolbar" aria-label="Message actions">
@@ -63,6 +67,18 @@ export function ActionButtons({
       >
         <VscSmiley size={20} aria-hidden="true" />
       </button>
+      
+      {campaignId && (
+        <button
+          type="button"
+          className={`action-btn help-btn ${showCommandsHelp ? 'help-active' : ''} ${hasCharacter ? 'has-character' : ''}`}
+          aria-label={hasCharacter ? "Character commands help" : "Commands help (create character for more)"}
+          data-tip={hasCharacter ? "Character commands help" : "Commands help"}
+          onClick={onToggleHelp}
+        >
+          <FaQuestion size={16} aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }

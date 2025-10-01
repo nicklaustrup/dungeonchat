@@ -9,6 +9,8 @@ import ChannelSidebar from './ChannelSidebar';
 import CampaignSettings from './CampaignSettings';
 import CampaignRules from './CampaignRules';
 import DiceHistoryPanel from '../DiceRoll/DiceHistoryPanel';
+import InitiativeTracker from '../Session/InitiativeTracker';
+import InitiativeButton from '../Session/InitiativeButton';
 import { CharacterCreationModal } from '../CharacterCreationModal';
 import { CharacterSheet } from '../CharacterSheet';
 import { useCharacterSheet, useCampaignCharacters } from '../../hooks/useCharacterSheet';
@@ -183,13 +185,19 @@ function CampaignDashboard() {
               className={`nav-item ${activeTab === 'characters' ? 'active' : ''}`}
               onClick={() => setActiveTab('characters')}
             >
-              📋 Characters ({campaignCharacters.length})
+              Characters ({campaignCharacters.length})
             </button>
             <button 
               className={`nav-item ${activeTab === 'dice-history' ? 'active' : ''}`}
               onClick={() => setActiveTab('dice-history')}
             >
-              🎲 Dice History
+              Dice History
+            </button>
+            <button 
+              className={`nav-item ${activeTab === 'initiative' ? 'active' : ''}`}
+              onClick={() => setActiveTab('initiative')}
+            >
+              Initiative Tracker
             </button>
             <button 
               className={`nav-item ${activeTab === 'rules' ? 'active' : ''}`}
@@ -239,13 +247,21 @@ function CampaignDashboard() {
                     <span>{campaign.lastActivity?.toDate().toLocaleDateString()}</span>
                   </div>
                   <div className="detail-item detail-item-action">
-                    <button 
-                      onClick={handleJoinChat}
-                      className="btn btn-primary btn-open-chat"
-                      disabled={!userMember || userMember.status !== 'active'}
-                    >
-                      Open Chat
-                    </button>
+                    <div className="campaign-quick-actions">
+                      <button 
+                        onClick={handleJoinChat}
+                        className="btn btn-primary btn-open-chat"
+                        disabled={!userMember || userMember.status !== 'active'}
+                      >
+                        Open Chat
+                      </button>
+                      <div onClick={() => setActiveTab('initiative')}>
+                        <InitiativeButton 
+                          campaignId={campaignId}
+                          size="medium"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -300,7 +316,7 @@ function CampaignDashboard() {
           {activeTab === 'characters' && (
             <div className="characters-tab">
               <div className="characters-header">
-                <h2>📋 Campaign Characters</h2>
+                <h2>Campaign Characters</h2>
                 <div className="characters-actions">
                   {!hasCharacter && (
                     <button 
@@ -324,7 +340,6 @@ function CampaignDashboard() {
               <div className="characters-content">
                 {campaignCharacters.length === 0 ? (
                   <div className="no-characters">
-                    <div className="no-characters-icon">📋</div>
                     <h3>No Characters Yet</h3>
                     <p>Be the first to create a character for this campaign!</p>
                     {!hasCharacter && (
@@ -360,17 +375,17 @@ function CampaignDashboard() {
                           </div>
                           
                           <div className="character-card-stats">
-                            <div className="stat-item">
+                            <div className="stat-item" title="Hit Points - The amount of damage your character can take before falling unconscious">
                               <span>HP:</span>
-                              <span>{character.hitPoints.current}/{character.hitPoints.maximum}</span>
+                              <span>{character.currentHitPoints || character.hitPointMaximum || 0}/{character.hitPointMaximum || 0}</span>
                             </div>
-                            <div className="stat-item">
+                            <div className="stat-item" title="Armor Class - How difficult your character is to hit in combat">
                               <span>AC:</span>
-                              <span>{character.armorClass}</span>
+                              <span>{character.armorClass || 10}</span>
                             </div>
-                            <div className="stat-item">
+                            <div className="stat-item" title="Experience Points - Points earned for completing challenges and adventures">
                               <span>XP:</span>
-                              <span>{character.experiencePoints.toLocaleString()}</span>
+                              <span>{(character.experience || 0).toLocaleString()}</span>
                             </div>
                           </div>
                           
@@ -398,7 +413,7 @@ function CampaignDashboard() {
 
           {activeTab === 'dice-history' && (
             <div className="dice-history-tab">
-              <h2>🎲 Dice Roll History & Statistics</h2>
+              <h2>Dice Roll History & Statistics</h2>
               <p className="tab-description">
                 View campaign dice roll history, statistics, and player performance across all channels.
               </p>
@@ -407,6 +422,21 @@ function CampaignDashboard() {
                 campaignId={campaignId}
                 userId={null} // Show all users' rolls
               />
+            </div>
+          )}
+
+          {activeTab === 'initiative' && (
+            <div className="initiative-tab">
+              <h2>Initiative Tracker</h2>
+              <p className="tab-description">
+                Manage combat initiative order, track HP, conditions, and turn progression for encounters.
+              </p>
+              <div className="initiative-content">
+                <InitiativeTracker 
+                  campaignId={campaignId}
+                  firestore={firestore}
+                />
+              </div>
             </div>
           )}
 
@@ -447,16 +477,18 @@ function CampaignDashboard() {
           setShowCharacterSheet(false);
           setSelectedCharacter(null);
         }}>
-          <CharacterSheet 
-            firestore={firestore}
-            campaignId={campaignId}
-            userId={selectedCharacter?.userId || user?.uid}
-            isModal={true}
-            onClose={() => {
-              setShowCharacterSheet(false);
-              setSelectedCharacter(null);
-            }}
-          />
+          <div onClick={(e) => e.stopPropagation()}>
+            <CharacterSheet 
+              firestore={firestore}
+              campaignId={campaignId}
+              userId={selectedCharacter?.userId || user?.uid}
+              isModal={true}
+              onClose={() => {
+                setShowCharacterSheet(false);
+                setSelectedCharacter(null);
+              }}
+            />
+          </div>
         </div>
       )}
 

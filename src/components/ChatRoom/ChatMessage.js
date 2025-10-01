@@ -64,7 +64,7 @@ function ChatMessage(props) {
     // Extract the campaignId from props
     const { campaignId } = props;
     const { firestore, auth } = useFirebase();
-    const { text, uid, photoURL, reactions = {}, createdAt, imageURL, type, displayName, replyTo, editedAt, deleted, diceData } = props.message;
+    const { text, uid, photoURL, reactions = {}, createdAt, imageURL, type, displayName, replyTo, editedAt, deleted, diceData, messageContext, messageType } = props.message;
     const { searchTerm, onReply, isReplyTarget, onViewProfile, showMeta = true } = props;
 
     // Get enhanced profile data for this user
@@ -119,9 +119,32 @@ function ChatMessage(props) {
 
     const messageId = buildMessageId(props.message);
 
-
-
-    const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
+    // Base message class
+    const baseMessageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
+    
+    // Add character context classes for campaign messages
+    let contextClasses = '';
+    if (campaignId && messageContext) {
+        switch (messageContext) {
+            case 'in_character':
+                contextClasses = ' in-character-message';
+                break;
+            case 'out_of_character':
+                contextClasses = ' out-of-character-message';
+                break;
+            default:
+                break;
+        }
+    }
+    
+    // Add dice roll styling for enhanced dice rolls
+    if (type === 'dice_roll' || messageType === 'dice_roll') {
+        if (diceData?.characterCommand) {
+            contextClasses += ' character-dice-roll';
+        }
+    }
+    
+    const messageClass = baseMessageClass + contextClasses;
 
     // Enhanced name priority: Campaign character name (highest) > username (medium) > displayName > auth displayName (lowest)
     const getDisplayNameWithPriority = () => {
@@ -288,6 +311,67 @@ function ChatMessage(props) {
 
     // (Removed unused handleNavigateToRepliedMessage; reply navigation handled inline where used.)
 
+    // Helper function to render character context indicators
+    const renderCharacterContextIndicator = () => {
+        if (!campaignId || !messageContext || messageContext === 'neutral') return null;
+        
+        const characterName = campaignMemberData?.characterName;
+        
+        switch (messageContext) {
+            case 'in_character':
+                return (
+                    <div className="character-context-indicator ic-indicator" title={characterName ? `${characterName} speaking in character` : 'In character'}>
+                        <span className="context-icon">🎭</span>
+                        <span className="context-label">IC</span>
+                        {characterName && <span className="character-name">{characterName}</span>}
+                    </div>
+                );
+            case 'out_of_character':
+                return (
+                    <div className="character-context-indicator ooc-indicator" title="Out of character">
+                        <span className="context-icon">💬</span>
+                        <span className="context-label">OOC</span>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    // Helper function to render enhanced dice roll info
+    const renderDiceContextInfo = () => {
+        if (type !== 'dice_roll' && messageType !== 'dice_roll') return null;
+        if (!diceData?.characterCommand) return null;
+        
+        const { characterCommand } = diceData;
+        
+        let contextInfo = '';
+        switch (characterCommand.type) {
+            case 'skill_check':
+                contextInfo = `${characterCommand.skill} check`;
+                break;
+            case 'saving_throw':
+                contextInfo = `${characterCommand.ability} saving throw`;
+                break;
+            case 'attack_roll':
+                contextInfo = 'attack roll';
+                break;
+            default:
+                return null;
+        }
+        
+        return (
+            <div className="dice-context-info" title={characterCommand.description}>
+                <span className="dice-context-type">{contextInfo}</span>
+                {diceData.characterModifier !== undefined && (
+                    <span className="character-modifier">
+                        +{diceData.characterModifier} character bonus
+                    </span>
+                )}
+            </div>
+        );
+    };
+
     const rootClasses = [
         'message',
         messageClass,
@@ -310,6 +394,7 @@ function ChatMessage(props) {
             <div className={rootClasses} data-message-id={messageId} data-selected={selected ? 'true' : undefined} role="article" aria-label={`Message from ${userName}`} onClick={isTouch ? handleSelect : undefined} onMouseEnter={() => onHoverMessage && onHoverMessage(messageId)} onMouseLeave={() => onHoverMessage && onHoverMessage(null)}>
                 <div className="time-col" aria-hidden="true">{timeOnly}</div>
                 <div className="message-content">
+                    {renderCharacterContextIndicator()}
                     {deleted ? (
                         <p className="deleted-message" aria-label="Message deleted">This message was deleted.</p>
                     ) : isEditing ? (
@@ -323,6 +408,7 @@ function ChatMessage(props) {
                         </>
                     ) : type === 'dice_roll' && diceData ? (
                         <>
+                            {renderDiceContextInfo()}
                             {displayText && (
                                 <p>
                                     {processMessageText(displayText, searchTerm)}{' '}
@@ -431,6 +517,7 @@ function ChatMessage(props) {
                             isInCampaign={!!campaignId}
                         />)}
                         {!showMeta && (<HoverTimestamp createdAt={createdAt} formatTimestamp={formatTimestamp} />)}
+                        {renderCharacterContextIndicator()}
                         {type === 'image' && imageURL && (
                             <>
                                 <div className="message-image">
@@ -441,6 +528,7 @@ function ChatMessage(props) {
                         )}
                         {type === 'dice_roll' && diceData && (
                             <>
+                                {renderDiceContextInfo()}
                                 {displayText && (
                                     <p>
                                         {processMessageText(displayText, searchTerm)}{' '}

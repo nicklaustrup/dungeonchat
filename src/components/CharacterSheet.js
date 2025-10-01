@@ -2,14 +2,13 @@
  * Character Sheet Display Component
  * Full D&D 5e character sheet with all stats and interactive elements
  */
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { 
   calculateAbilityModifier, 
   calculateSkillModifier,
   CHARACTER_SKILLS 
 } from '../models/CharacterSheet';
-import { useCharacterSheet } from '../hooks/useCharacterSheet';
 import './CharacterSheet.css';
 
 export function CharacterSheet({ 
@@ -19,60 +18,88 @@ export function CharacterSheet({
   onClose,
   isModal = false 
 }) {
-  const { character, loading, error, modifyHitPoints } = useCharacterSheet(
-    firestore, 
-    campaignId, 
-    userId
-  );
+  const [character, setCharacter] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (loading) {
-    return (
-      <div className={`character-sheet ${isModal ? 'modal-content' : ''}`}>
-        <div className="loading-state">Loading character sheet...</div>
-      </div>
-    );
-  }
+  // Load character data
+  useEffect(() => {
+    if (!firestore || !campaignId || !userId) return;
 
-  if (error) {
-    return (
-      <div className={`character-sheet ${isModal ? 'modal-content' : ''}`}>
-        <div className="error-state">Error loading character: {error}</div>
-      </div>
-    );
-  }
+    const loadCharacter = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  if (!character) {
-    return (
-      <div className={`character-sheet ${isModal ? 'modal-content' : ''}`}>
-        <div className="no-character">No character sheet found for this campaign.</div>
-      </div>
-    );
-  }
+        const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
+        const docSnap = await getDoc(characterRef);
+        
+        if (docSnap.exists()) {
+          setCharacter(docSnap.data());
+        } else {
+          setError('Character not found');
+        }
+      } catch (err) {
+        console.error('Error loading character:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCharacter();
+  }, [firestore, campaignId, userId]);
 
   const handleHitPointChange = async (newHP) => {
+    if (!character || !firestore) return;
+
     try {
-      await modifyHitPoints(newHP);
+      const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
+
+      await updateDoc(characterRef, {
+        currentHitPoints: newHP,
+        updatedAt: new Date()
+      });
+
+      setCharacter(prev => ({
+        ...prev,
+        currentHitPoints: newHP
+      }));
     } catch (err) {
-      console.error('Failed to update hit points:', err);
+      console.error('Error updating hit points:', err);
     }
+  };
+
+  // Helper function to get ability score tooltips
+  const getAbilityTooltip = (ability) => {
+    const tooltips = {
+      strength: "Strength - Measures bodily power, athletic training, and physical force you can exert",
+      dexterity: "Dexterity - Measures agility, reflexes, and balance",
+      constitution: "Constitution - Measures health, stamina, and vital force",
+      intelligence: "Intelligence - Measures reasoning ability, memory, and analytical thinking",
+      wisdom: "Wisdom - Measures awareness, intuition, and insight",
+      charisma: "Charisma - Measures force of personality, leadership, and charm"
+    };
+    return tooltips[ability] || ability;
   };
 
   const renderCharacterHeader = () => (
     <div className="character-header">
       <div className="character-title">
         <h1>{character.name}</h1>
-        <div className="character-subtitle">
+        <div className="character-subtitle" title="Character level, race, and class combination">
           Level {character.level} {character.race} {character.class}
         </div>
       </div>
+      
       <div className="character-details">
         <div className="detail-item">
           <label>Background</label>
-          <span>{character.background || 'None'}</span>
+          <span title="Your character's life before becoming an adventurer, providing skills and personality traits">{character.background || 'None'}</span>
         </div>
         <div className="detail-item">
           <label>Alignment</label>
-          <span>{character.alignment || 'None'}</span>
+          <span title="Your character's moral and ethical outlook (e.g., Lawful Good, Chaotic Neutral)">{character.alignment || 'None'}</span>
         </div>
         <div className="detail-item">
           <label>Player</label>
@@ -84,13 +111,13 @@ export function CharacterSheet({
 
   const renderAbilityScores = () => (
     <div className="ability-scores-section">
-      <h3>Ability Scores</h3>
+      <h3 title="The six core attributes that define your character's natural capabilities">Ability Scores</h3>
       <div className="ability-scores-grid">
-        {Object.entries(character.abilityScores).map(([ability, score]) => (
-          <div key={ability} className="ability-score-block">
+        {Object.entries(character.abilityScores || {}).map(([ability, score]) => (
+          <div key={ability} className="ability-score-block" title={getAbilityTooltip(ability)}>
             <div className="ability-name">{ability.toUpperCase()}</div>
             <div className="ability-score">{score}</div>
-            <div className="ability-modifier">
+            <div className="ability-modifier" title="Modifier used for dice rolls and calculations">
               {calculateAbilityModifier(score) >= 0 ? '+' : ''}{calculateAbilityModifier(score)}
             </div>
           </div>
@@ -103,45 +130,45 @@ export function CharacterSheet({
     <div className="combat-stats-section">
       <h3>Combat Stats</h3>
       <div className="combat-stats-grid">
-        <div className="stat-block">
+        <div className="stat-block" title="How difficult you are to hit in combat (10 + Dex modifier + armor bonus)">
           <label>Armor Class</label>
-          <div className="stat-value">{character.armorClass}</div>
+          <div className="stat-value">{character.armorClass || 10}</div>
         </div>
-        <div className="stat-block">
+        <div className="stat-block" title="Bonus added to initiative rolls to determine turn order in combat">
           <label>Initiative</label>
           <div className="stat-value">
-            +{calculateAbilityModifier(character.abilityScores.dexterity)}
+            +{calculateAbilityModifier((character.abilityScores || {}).dexterity || 10)}
           </div>
         </div>
-        <div className="stat-block">
+        <div className="stat-block" title="How far your character can move in a single turn (measured in feet)">
           <label>Speed</label>
           <div className="stat-value">{character.speed} ft</div>
         </div>
       </div>
       
       <div className="hit-points-section">
-        <h4>Hit Points</h4>
+        <h4 title="The amount of damage your character can take before falling unconscious">Hit Points</h4>
         <div className="hit-points-display">
-          <div className="hp-current">
+          <div className="hp-current" title="Current hit points - decreases when you take damage">
             <label>Current HP</label>
             <input
               type="number"
-              value={character.hitPoints.current}
+              value={character.currentHitPoints || 0}
               onChange={(e) => handleHitPointChange(parseInt(e.target.value) || 0)}
               min="0"
-              max={character.hitPoints.maximum}
+              max={character.hitPointMaximum || 0}
               className="hp-input"
             />
           </div>
           <div className="hp-separator">/</div>
-          <div className="hp-maximum">
+          <div className="hp-maximum" title="Maximum hit points - your character's full health">
             <label>Max HP</label>
-            <div className="hp-value">{character.hitPoints.maximum}</div>
+            <div className="hp-value">{character.hitPointMaximum || 0}</div>
           </div>
-          {character.hitPoints.temporary > 0 && (
-            <div className="hp-temp">
+          {(character.temporaryHitPoints || 0) > 0 && (
+            <div className="hp-temp" title="Temporary hit points - extra protection that's lost first">
               <label>Temp HP</label>
-              <div className="hp-value">{character.hitPoints.temporary}</div>
+              <div className="hp-value">{character.temporaryHitPoints}</div>
             </div>
           )}
         </div>
@@ -151,14 +178,14 @@ export function CharacterSheet({
 
   const renderSkills = () => (
     <div className="skills-section">
-      <h3>Skills</h3>
+      <h3 title="Trained abilities that represent your character's expertise in various areas">Skills</h3>
       <div className="skills-grid">
-        {CHARACTER_SKILLS.map(skill => {
+        {Object.values(CHARACTER_SKILLS).map(skill => {
           const modifier = calculateSkillModifier(character, skill.name);
-          const isProficient = character.skills.includes(skill.name);
+          const isProficient = (character.skillProficiencies || []).includes(skill.name);
           
           return (
-            <div key={skill.name} className={`skill-item ${isProficient ? 'proficient' : ''}`}>
+            <div key={skill.name} className={`skill-item ${isProficient ? 'proficient' : ''}`} title={`${skill.name} (${skill.ability.charAt(0).toUpperCase() + skill.ability.slice(1)}) - Represents your training and natural talent in this area`}>
               <div className="skill-proficiency">
                 {isProficient ? '●' : '○'}
               </div>
@@ -178,15 +205,15 @@ export function CharacterSheet({
 
   const renderSavingThrows = () => (
     <div className="saving-throws-section">
-      <h3>Saving Throws</h3>
+      <h3 title="Your character's ability to resist harmful effects and magical spells">Saving Throws</h3>
       <div className="saving-throws-grid">
-        {Object.entries(character.abilityScores).map(([ability, score]) => {
+        {Object.entries(character.abilityScores || {}).map(([ability, score]) => {
           const modifier = calculateAbilityModifier(score);
-          const isProficient = character.savingThrows.includes(ability);
-          const finalModifier = isProficient ? modifier + character.proficiencyBonus : modifier;
+          const isProficient = (character.savingThrowProficiencies || []).includes(ability);
+          const finalModifier = isProficient ? modifier + (character.proficiencyBonus || 0) : modifier;
           
           return (
-            <div key={ability} className={`saving-throw-item ${isProficient ? 'proficient' : ''}`}>
+            <div key={ability} className={`saving-throw-item ${isProficient ? 'proficient' : ''}`} title={`${ability.charAt(0).toUpperCase() + ability.slice(1)} saving throw - Roll this when resisting effects that target this ability`}>
               <div className="save-proficiency">
                 {isProficient ? '●' : '○'}
               </div>
@@ -201,36 +228,102 @@ export function CharacterSheet({
     </div>
   );
 
-  const renderExperience = () => (
-    <div className="experience-section">
-      <h3>Experience</h3>
-      <div className="xp-display">
-        <div className="xp-current">
-          {character.experiencePoints.toLocaleString()} XP
+  const renderExperience = () => {
+    // Experience thresholds for D&D 5e
+    const getXPForNextLevel = () => {
+      const xpTable = [
+        0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000,
+        85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000
+      ];
+      return xpTable[character.level] || xpTable[xpTable.length - 1];
+    };
+
+    return (
+      <div className="experience-section">
+        <h3 title="Experience points measure your character's professional development and combat expertise">Experience</h3>
+        <div className="xp-display">
+          <div className="xp-current" title="Current experience points earned">
+            {(character.experience || 0).toLocaleString()} XP
+          </div>
+          <div className="xp-bar" title="Progress toward next level">
+            <div 
+              className="xp-progress"
+              style={{ 
+                width: `${((character.experience || 0) / getXPForNextLevel()) * 100}%` 
+              }}
+            />
+          </div>
+          <div className="xp-next" title="Experience points needed to reach the next level">
+            Next Level: {getXPForNextLevel().toLocaleString()} XP
+          </div>
         </div>
-        <div className="xp-bar">
-          <div 
-            className="xp-progress"
-            style={{ 
-              width: `${(character.experiencePoints / getXPForNextLevel()) * 100}%` 
-            }}
-          />
+      </div>
+    );
+  };
+
+  const renderOtherStats = () => (
+    <div className="other-stats-section">
+      <h3>Other Stats</h3>
+      <div className="other-stats-grid">
+        <div className="stat-item">
+          <label title="Bonus added to all ability checks, attack rolls, and saving throws when proficient">Proficiency Bonus</label>
+          <span>+{character.proficiencyBonus || 2}</span>
         </div>
-        <div className="xp-next">
-          Next Level: {getXPForNextLevel().toLocaleString()} XP
+        <div className="stat-item">
+          <label title="Your character's passive Perception score (10 + Perception modifier)">Passive Perception</label>
+          <span>{10 + calculateSkillModifier(character, 'Perception')}</span>
         </div>
       </div>
     </div>
   );
 
-  // Experience thresholds for D&D 5e
-  const getXPForNextLevel = () => {
-    const xpTable = [
-      0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000,
-      85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000
-    ];
-    return xpTable[character.level] || xpTable[xpTable.length - 1];
-  };
+  if (loading) {
+    return (
+      <div className={`character-sheet ${isModal ? 'modal-content' : ''}`}>
+        {isModal && (
+          <div className="modal-header">
+            <h2>Character Sheet</h2>
+            <button className="close-button" onClick={onClose}>×</button>
+          </div>
+        )}
+        <div className="character-sheet-content">
+          <div className="loading-state">Loading character...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`character-sheet ${isModal ? 'modal-content' : ''}`}>
+        {isModal && (
+          <div className="modal-header">
+            <h2>Character Sheet</h2>
+            <button className="close-button" onClick={onClose}>×</button>
+          </div>
+        )}
+        <div className="character-sheet-content">
+          <div className="error-state">Error: {error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!character) {
+    return (
+      <div className={`character-sheet ${isModal ? 'modal-content' : ''}`}>
+        {isModal && (
+          <div className="modal-header">
+            <h2>Character Sheet</h2>
+            <button className="close-button" onClick={onClose}>×</button>
+          </div>
+        )}
+        <div className="character-sheet-content">
+          <div className="no-character">No character found</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`character-sheet ${isModal ? 'modal-content' : ''}`}>
@@ -254,20 +347,7 @@ export function CharacterSheet({
           <div className="right-column">
             {renderCombatStats()}
             {renderExperience()}
-            
-            <div className="other-stats-section">
-              <h3>Other Stats</h3>
-              <div className="other-stats-grid">
-                <div className="stat-item">
-                  <label>Proficiency Bonus</label>
-                  <span>+{character.proficiencyBonus}</span>
-                </div>
-                <div className="stat-item">
-                  <label>Passive Perception</label>
-                  <span>{10 + calculateSkillModifier(character, 'Perception')}</span>
-                </div>
-              </div>
-            </div>
+            {renderOtherStats()}
           </div>
         </div>
       </div>

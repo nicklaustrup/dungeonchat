@@ -83,6 +83,44 @@ service cloud.firestore {
             request.resource.data.keys().hasAll(resource.data.keys().removeAll(['reactions']));
         }
       }
+      
+      // Campaign character sheets subcollection
+      match /characters/{userId} {
+        // Campaign members can read all character sheets in the campaign
+        allow read: if request.auth != null && 
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+        
+        // Users can create/update their own character sheet if they're a campaign member
+        allow create, update: if request.auth != null && 
+          request.auth.uid == userId &&
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)) &&
+          request.auth.uid == request.resource.data.userId;
+        
+        // DM can update any character sheet in their campaign
+        allow update: if request.auth != null && 
+          request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+        
+        // Users can delete their own character sheet, DM can delete any
+        allow delete: if request.auth != null && 
+          (request.auth.uid == userId || 
+           request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId);
+      }
+      
+      // Campaign session data subcollection (initiative tracker, session notes, etc.)
+      match /sessions/{sessionDocId} {
+        // Campaign members can read session data
+        allow read: if request.auth != null && 
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+        
+        // DM can create, update, and delete session data
+        allow create, update, delete: if request.auth != null && 
+          request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+        
+        // Campaign members can contribute to certain session data (like adding to initiative)
+        allow update: if request.auth != null && 
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)) &&
+          sessionDocId == 'initiative';
+      }
     }
     
     // User campaigns tracking

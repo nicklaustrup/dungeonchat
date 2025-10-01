@@ -124,3 +124,28 @@
         height: 16px;
     }
 }
+
+.help-btn.help-active {
+    border-color: var(--accent-color);
+    background: rgba(255, 193, 7, 0.12);
+    color: var(--accent-color);
+}
+
+.light-theme .help-btn.help-active {
+    background: rgba(255, 193, 7, 0.15);
+}
+
+.help-btn.has-character:hover {
+    border-color: rgba(76, 175, 80, 0.6);
+    color: rgba(76, 175, 80, 1);
+}
+
+.help-btn.has-character.help-active {
+    border-color: rgba(76, 175, 80, 1);
+    background: rgba(76, 175, 80, 0.12);
+    color: rgba(76, 175, 80, 1);
+}
+
+.light-theme .help-btn.has-character.help-active {
+    background: rgba(76, 175, 80, 0.15);
+}

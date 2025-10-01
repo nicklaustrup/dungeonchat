@@ -1,0 +1,794 @@
+/* Initiative Tracker Styles */
+
+.initiative-tracker {
+  background: transparent;
+  width: 100%;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.initiative-tracker.loading,
+.initiative-tracker.error {
+  padding: 2rem;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.loading-spinner {
+  color: var(--text-secondary);
+}
+
+.error-message {
+  color: var(--error-color);
+  margin-bottom: 1rem;
+}
+
+.retry-button {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  background: var(--primary-hover);
+}
+
+/* Header */
+.initiative-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--secondary-bg);
+}
+
+.tracker-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.tracker-title h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+}
+
+.close-button:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.combat-status {
+  margin-top: 0.5rem;
+}
+
+.round-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.round-label {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.current-turn {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Content */
+.initiative-content {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* DM Controls */
+.dm-controls {
+  margin-bottom: 1rem;
+}
+
+.pre-combat-controls,
+.combat-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.start-combat-button,
+.add-combatant-button,
+.next-turn-button,
+.prev-turn-button,
+.end-combat-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.start-combat-button,
+.next-turn-button {
+  background: var(--success-color);
+  color: white;
+}
+
+.start-combat-button:hover,
+.next-turn-button:hover {
+  background: var(--success-hover);
+}
+
+.start-combat-button:disabled {
+  background: var(--disabled-bg);
+  color: var(--disabled-text);
+  cursor: not-allowed;
+}
+
+.add-combatant-button {
+  background: var(--primary-color);
+  color: white;
+}
+
+.add-combatant-button:hover {
+  background: var(--primary-hover);
+}
+
+.prev-turn-button {
+  background: var(--warning-color);
+  color: white;
+}
+
+.prev-turn-button:hover {
+  background: var(--warning-hover);
+}
+
+.end-combat-button {
+  background: var(--error-color);
+  color: white;
+}
+
+.end-combat-button:hover {
+  background: var(--error-hover);
+}
+
+/* Add Combatant Form (refactored to align with style guide) */
+.add-combatant-form {
+  background: var(--bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.25rem 1.25rem 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.add-combatant-form form { width:100%; display:flex; flex-direction:column; gap:0.5rem; }
+
+.acf-row { 
+  display:grid;
+  /* label | name | init | hp */
+  grid-template-columns: clamp(90px, 14%, 130px) minmax(0,1fr) clamp(60px, 9%, 80px) clamp(60px, 9%, 80px);
+  gap: 0.5rem;
+  align-items:center;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+.acf-row-top { margin-top:0.25rem; }
+
+.acf-row + .acf-row { margin-top:0.4rem; }
+
+.acf-label { 
+  font-size:0.75rem; 
+  font-weight:600; 
+  letter-spacing:0.5px; 
+  color: var(--text-secondary);
+  text-transform:uppercase;
+  display:flex; 
+  align-items:center; 
+}
+
+.acf-row input,
+.acf-row select { 
+  padding:0.55rem 0.65rem; 
+  border:1px solid var(--border-color); 
+  border-radius:8px; 
+  background:var(--bg-input); 
+  color:var(--text-primary); 
+  font-size:0.75rem; 
+  font-family:inherit; 
+  line-height:1.1; 
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; 
+  box-sizing:border-box; 
+}
+
+.acf-row input:focus,
+.acf-row select:focus { outline:none; border-color:var(--primary-color); box-shadow:0 0 0 2px rgba(11,147,246,0.25); }
+
+/* Specific widths for numeric */
+.acf-row input[placeholder="Init"],
+.acf-row input[aria-label="Initiative score"],
+.acf-row input[placeholder="HP"],
+.acf-row input[aria-label="Hit points (optional)"] { text-align:center; }
+
+/* Ensure name field can shrink properly */
+.acf-row #acf-name { min-width:0; }
+
+.acf-type-select { 
+  width:100%; 
+  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="8" height="6" viewBox="0 0 8 6"><path fill="%23aaa" d="M4 6L0 0h8z"/></svg>');
+  background-repeat:no-repeat; 
+  background-position:right 0.6rem center; 
+  background-size:10px 8px; 
+  padding-right:1.6rem; 
+  appearance:none; 
+}
+
+[data-theme="dark"] .acf-type-select { 
+  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="8" height="6" viewBox="0 0 8 6"><path fill="%23ccc" d="M4 6L0 0h8z"/></svg>');
+}
+
+.acf-actions { 
+  display:flex; 
+  justify-content:flex-end; 
+  gap:0.55rem; 
+  flex-wrap:nowrap;
+}
+
+.acf-actions .btn-primary,
+.acf-actions .btn-secondary { font-size:0.7rem; padding:0.5rem 0.85rem; border-radius:8px; }
+
+/* When action row alone, we only need the columns for spacing reset */
+/* Remove grid-template since .acf-actions is flex */
+
+/* Responsive collapse */
+@media (max-width: 860px) {
+  .acf-row { 
+    grid-template-columns: clamp(80px, 22%, 110px) minmax(0,1fr) 64px 64px; 
+  }
+}
+
+@media (max-width: 680px) {
+  .acf-row { 
+    display:flex; 
+    flex-wrap:wrap; 
+    gap:0.5rem; 
+  }
+  .acf-label { flex: 1 1 100%; order:0; }
+  .acf-row input[id="acf-name"] { flex: 1 1 100%; order:1; }
+  .acf-row input[placeholder="Init"],
+  .acf-row input[placeholder="HP"] { flex:1 1 calc(50% - 0.5rem); order:2; }
+  .acf-row + .acf-row { margin-top:0.25rem; }
+  .acf-type-select { flex:1 1 100%; }
+  .acf-actions { justify-content:flex-start; }
+}
+
+.add-combatant-form .form-title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.25px;
+}
+
+.form-input-row {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.form-input-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-family: inherit;
+  line-height: 1.2;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  box-sizing: border-box;
+}
+
+.form-input-row input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(11,147,246,0.25);
+}
+
+.form-input-row input[type="number"] {
+  flex: 0 0 78px;
+  text-align: center;
+}
+
+.form-input-row input[type="number"]::-webkit-outer-spin-button,
+.form-input-row input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: auto;
+  opacity: 1;
+  margin: 0;
+  height: 20px;
+}
+
+.form-select-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.form-select-actions select.character-type-select {
+  flex: 1 1 200px;
+  min-width: 160px;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-family: inherit;
+  appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="8" height="6" viewBox="0 0 8 6"><path fill="%23aaa" d="M4 6L0 0h8z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 10px 8px;
+  padding-right: 1.75rem;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+[data-theme="dark"] .form-select-actions select.character-type-select {
+  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="8" height="6" viewBox="0 0 8 6"><path fill="%23ccc" d="M4 6L0 0h8z"/></svg>');
+}
+
+.form-select-actions select.character-type-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(11,147,246,0.25);
+}
+
+.form-buttons-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1 1 180px;
+  min-width: 180px;
+}
+
+/* Reuse global button variants if present; provide fallback minimal styles */
+.form-buttons-row .btn-primary,
+.form-buttons-row .btn-secondary {
+  font-size: 0.75rem;
+  padding: 0.55rem 0.9rem;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+/* Fallback definitions (only apply if not already defined elsewhere) */
+.btn-primary:not([data-defined]),
+.btn-secondary:not([data-defined]) {
+  border: 1px solid var(--border-color);
+  background: var(--bg-light);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-primary:not([data-defined]) {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+}
+
+.btn-primary:not([data-defined]):hover {
+  background: var(--primary-dark);
+}
+
+.btn-secondary:not([data-defined]):hover {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+@media (max-width: 680px) {
+  .form-input-row {
+    flex-direction: column;
+  }
+  .form-input-row input[type="number"] {
+    flex: 1 1 auto;
+    text-align: left;
+  }
+  .form-select-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .form-buttons-row {
+    justify-content: flex-start;
+    padding-top: 0.25rem;
+  }
+}
+
+/* Initiative List */
+.initiative-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 2rem 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Combatant Cards */
+.combatant-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.combatant-card:hover {
+  border-color: var(--primary-color);
+}
+
+.combatant-card.current-turn {
+  border-color: var(--success-color);
+  background: var(--success-bg);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+.combatant-card.character {
+  border-left: 4px solid var(--primary-color);
+}
+
+.combatant-card.npc {
+  border-left: 4px solid var(--warning-color);
+}
+
+.combatant-card.enemy {
+  border-left: 4px solid var(--error-color);
+}
+
+.combatant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.combatant-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.combatant-icon {
+  font-size: 1.2rem;
+}
+
+.combatant-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.combatant-initiative {
+  background: var(--primary-color);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 32px;
+  text-align: center;
+}
+
+.remove-combatant {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.remove-combatant:hover {
+  background: var(--error-bg);
+  color: var(--error-color);
+}
+
+/* HP Display */
+.combatant-hp {
+  margin-bottom: 0.5rem;
+}
+
+.hp-edit-form {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.hp-edit-form input {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.hp-edit-form input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.hp-edit-form input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.hp-edit-form input[type="number"]::-webkit-outer-spin-button,
+.hp-edit-form input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: inner-spin-button;
+  opacity: 1;
+  height: 16px;
+  margin: 0;
+}
+
+.hp-edit-form button {
+  background: var(--success-color);
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.hp-edit-form button:hover {
+  background: var(--success-hover);
+}
+
+.hp-edit-form button:last-child {
+  background: var(--error-color);
+}
+
+.hp-edit-form button:last-child:hover {
+  background: var(--error-hover);
+}
+
+.hp-display {
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+.hp-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.hp-display.healthy .hp-text {
+  color: var(--success-color);
+}
+
+.hp-display.warning .hp-text {
+  color: var(--warning-color);
+}
+
+.hp-display.critical .hp-text {
+  color: var(--error-color);
+}
+
+.hp-bar {
+  height: 6px;
+  background: var(--secondary-bg);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+.hp-display.healthy .hp-fill {
+  background: var(--success-color);
+}
+
+.hp-display.warning .hp-fill {
+  background: var(--warning-color);
+}
+
+.hp-display.critical .hp-fill {
+  background: var(--error-color);
+}
+
+/* Conditions */
+.combatant-conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.condition-tag {
+  background: var(--warning-bg);
+  color: var(--warning-color);
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.condition-tag button {
+  background: none;
+  border: none;
+  color: var(--warning-color);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0;
+  margin-left: 0.25rem;
+}
+
+.condition-tag button:hover {
+  color: var(--error-color);
+}
+
+/* Actions */
+.combatant-actions {
+  margin-top: 0.5rem;
+}
+
+.toggle-conditions {
+  background: var(--secondary-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.toggle-conditions:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.condition-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.condition-form input {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+}
+
+.condition-form button {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.condition-form button:hover {
+  background: var(--primary-hover);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .initiative-tracker {
+    max-width: 100%;
+    max-height: 90vh;
+  }
+
+  .pre-combat-controls,
+  .combat-controls {
+    flex-direction: column;
+  }
+
+  .combatant-info {
+    flex-wrap: wrap;
+  }
+
+  .combatant-name {
+    min-width: 120px;
+  }
+}
+
+/* Dark Theme Support */
+[data-theme="dark"] .initiative-tracker {
+  --card-bg: #2a2a2a;
+  --secondary-bg: #333333;
+  --border-color: #404040;
+  --hover-bg: #3a3a3a;
+  --success-bg: rgba(34, 197, 94, 0.1);
+  --warning-bg: rgba(251, 191, 36, 0.1);
+  --error-bg: rgba(239, 68, 68, 0.1);
+  --input-bg: #2a2a2a;
+  --disabled-bg: #404040;
+  --disabled-text: #666666;
+}
+
+/* Color Variables */
+:root {
+  --success-color: #22c55e;
+  --success-hover: #16a34a;
+  --success-bg: rgba(34, 197, 94, 0.1);
+  
+  --warning-color: #f59e0b;
+  --warning-hover: #d97706;
+  --warning-bg: rgba(251, 191, 36, 0.1);
+  
+  --error-color: #ef4444;
+  --error-hover: #dc2626;
+  --error-bg: rgba(239, 68, 68, 0.1);
+  
+  --primary-hover: #3b82f6;
+  --disabled-bg: #f3f4f6;
+  --disabled-text: #9ca3af;
+}

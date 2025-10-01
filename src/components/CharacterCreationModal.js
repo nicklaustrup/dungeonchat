@@ -7,11 +7,14 @@ import React, { useState } from 'react';
 import { 
   CHARACTER_RACES, 
   CHARACTER_CLASSES, 
-  DEFAULT_ABILITY_SCORES,
+  CHARACTER_BACKGROUNDS,
+  STANDARD_ARRAY_SCORES,
   createDefaultCharacterSheet,
   calculateAbilityModifier 
 } from '../models/CharacterSheet';
 import { useCharacterCreation } from '../hooks/useCharacterSheet';
+import { useFirebase } from '../services/FirebaseContext';
+import { useChatTheme } from '../contexts/ChatStateContext';
 import './CharacterCreationModal.css';
 
 const CREATION_STEPS = {
@@ -36,17 +39,24 @@ export function CharacterCreationModal({
   userId,
   onCharacterCreated 
 }) {
+  const { user } = useFirebase();
+  const { isDarkTheme } = useChatTheme();
   const [currentStep, setCurrentStep] = useState(CREATION_STEPS.BASIC_INFO);
   const [characterData, setCharacterData] = useState(() => createDefaultCharacterSheet());
+  const [backgroundTooltip, setBackgroundTooltip] = useState({ show: false, background: null, position: { x: 0, y: 0 } });
   const { creating, error, createCharacter } = useCharacterCreation(firestore, campaignId, userId);
 
   // Reset modal state when opened
   React.useEffect(() => {
     if (isOpen) {
       setCurrentStep(CREATION_STEPS.BASIC_INFO);
-      setCharacterData(createDefaultCharacterSheet());
+      const defaultSheet = createDefaultCharacterSheet();
+      // Pre-fill player name from authenticated user
+      defaultSheet.playerName = user?.displayName || user?.email || 'Unknown Player';
+      setCharacterData(defaultSheet);
+      setBackgroundTooltip({ show: false, background: null, position: { x: 0, y: 0 } });
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 
@@ -80,6 +90,22 @@ export function CharacterCreationModal({
     }
   };
 
+  const handleBackgroundHover = (background, event) => {
+    const rect = event.target.getBoundingClientRect();
+    setBackgroundTooltip({
+      show: true,
+      background,
+      position: {
+        x: rect.left + rect.width / 2,
+        y: rect.top - 10
+      }
+    });
+  };
+
+  const handleBackgroundLeave = () => {
+    setBackgroundTooltip({ show: false, background: null, position: { x: 0, y: 0 } });
+  };
+
   const renderStepIndicator = () => (
     <div className="character-creation-steps">
       {Object.entries(STEP_TITLES).map(([step, title], index) => (
@@ -103,29 +129,45 @@ export function CharacterCreationModal({
         <label>Character Name *</label>
         <input
           type="text"
-          value={characterData.name}
+          value={characterData.name || ''}
           onChange={(e) => updateCharacterData({ name: e.target.value })}
           placeholder="Enter character name"
           required
         />
       </div>
       <div className="form-group">
-        <label>Player Name</label>
-        <input
-          type="text"
-          value={characterData.playerName}
-          onChange={(e) => updateCharacterData({ playerName: e.target.value })}
-          placeholder="Enter player name"
-        />
-      </div>
-      <div className="form-group">
         <label>Background</label>
-        <input
-          type="text"
-          value={characterData.background}
-          onChange={(e) => updateCharacterData({ background: e.target.value })}
-          placeholder="e.g., Acolyte, Criminal, Folk Hero"
-        />
+        <div className="background-select-container">
+          <select
+            value={characterData.background}
+            onChange={(e) => updateCharacterData({ background: e.target.value })}
+            onMouseLeave={handleBackgroundLeave}
+          >
+            <option value="">Select Background</option>
+            {CHARACTER_BACKGROUNDS.map(bg => (
+              <option 
+                key={bg.name} 
+                value={bg.name}
+                onMouseEnter={(e) => handleBackgroundHover(bg, e)}
+              >
+                {bg.name}
+              </option>
+            ))}
+          </select>
+          <div className="background-options">
+            {CHARACTER_BACKGROUNDS.map(bg => (
+              <div
+                key={bg.name}
+                className={`background-option ${characterData.background === bg.name ? 'selected' : ''}`}
+                onClick={() => updateCharacterData({ background: bg.name })}
+                onMouseEnter={(e) => handleBackgroundHover(bg, e)}
+                onMouseLeave={handleBackgroundLeave}
+              >
+                {bg.name}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
       <div className="form-group">
         <label>Alignment</label>
@@ -160,8 +202,10 @@ export function CharacterCreationModal({
             required
           >
             <option value="">Select Race</option>
-            {CHARACTER_RACES.map(race => (
-              <option key={race} value={race}>{race}</option>
+            {Object.keys(CHARACTER_RACES).map(raceKey => (
+              <option key={raceKey} value={raceKey}>
+                {CHARACTER_RACES[raceKey].name}
+              </option>
             ))}
           </select>
         </div>
@@ -173,8 +217,10 @@ export function CharacterCreationModal({
             required
           >
             <option value="">Select Class</option>
-            {CHARACTER_CLASSES.map(cls => (
-              <option key={cls} value={cls}>{cls}</option>
+            {Object.keys(CHARACTER_CLASSES).map(classKey => (
+              <option key={classKey} value={classKey}>
+                {CHARACTER_CLASSES[classKey].name}
+              </option>
             ))}
           </select>
         </div>
@@ -185,7 +231,7 @@ export function CharacterCreationModal({
           type="number"
           min="1"
           max="20"
-          value={characterData.level}
+          value={characterData.level || 1}
           onChange={(e) => updateCharacterData({ level: parseInt(e.target.value) || 1 })}
         />
       </div>
@@ -199,31 +245,49 @@ export function CharacterCreationModal({
         Set your character's ability scores (8-15 for standard array, or custom values).
       </p>
       <div className="ability-grid">
-        {Object.entries(characterData.abilityScores).map(([ability, score]) => (
-          <div key={ability} className="ability-input">
-            <label>{ability.toUpperCase()}</label>
-            <input
-              type="number"
-              min="3"
-              max="20"
-              value={score}
-              onChange={(e) => updateCharacterData({
-                abilityScores: {
-                  ...characterData.abilityScores,
-                  [ability]: parseInt(e.target.value) || 10
-                }
-              })}
-            />
-            <div className="ability-modifier">
-              {calculateAbilityModifier(score) >= 0 ? '+' : ''}{calculateAbilityModifier(score)}
+        {Object.entries(characterData.abilityScores).map(([ability, score]) => {
+          const modifier = calculateAbilityModifier(score);
+          const modifierText = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+          
+          // Define what each ability affects
+          const abilityEffects = {
+            strength: 'Strength saving throws, Athletics checks, melee attack/damage rolls',
+            dexterity: 'Dexterity saving throws, Acrobatics/Stealth checks, ranged attack rolls, AC (light armor), initiative',
+            constitution: 'Constitution saving throws, hit points, concentration checks',
+            intelligence: 'Intelligence saving throws, Arcana/History/Investigation/Nature/Religion checks',
+            wisdom: 'Wisdom saving throws, Animal Handling/Insight/Medicine/Perception/Survival checks',
+            charisma: 'Charisma saving throws, Deception/Intimidation/Performance/Persuasion checks'
+          };
+          
+          return (
+            <div key={ability} className="ability-input">
+              <label>{ability.toUpperCase()}</label>
+              <input
+                type="number"
+                min="3"
+                max="20"
+                value={score || 10}
+                onChange={(e) => updateCharacterData({
+                  abilityScores: {
+                    ...characterData.abilityScores,
+                    [ability]: parseInt(e.target.value) || 10
+                  }
+                })}
+              />
+              <div 
+                className="ability-modifier"
+                title={`${modifierText} modifier affects: ${abilityEffects[ability]}`}
+              >
+                {modifierText}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="ability-presets">
         <button
           type="button"
-          onClick={() => updateCharacterData({ abilityScores: DEFAULT_ABILITY_SCORES })}
+          onClick={() => updateCharacterData({ abilityScores: STANDARD_ARRAY_SCORES })}
           className="preset-button"
         >
           Standard Array (15,14,13,12,10,8)
@@ -232,41 +296,112 @@ export function CharacterCreationModal({
     </div>
   );
 
-  const renderReview = () => (
-    <div className="creation-step">
-      <h3>Review Your Character</h3>
-      <div className="character-review">
-        <div className="review-section">
-          <h4>Basic Information</h4>
-          <p><strong>Name:</strong> {characterData.name || 'Unnamed Character'}</p>
-          <p><strong>Race:</strong> {characterData.race}</p>
-          <p><strong>Class:</strong> {characterData.class}</p>
-          <p><strong>Level:</strong> {characterData.level}</p>
-          <p><strong>Background:</strong> {characterData.background || 'None'}</p>
-          <p><strong>Alignment:</strong> {characterData.alignment || 'None'}</p>
-        </div>
-        <div className="review-section">
-          <h4>Ability Scores</h4>
-          <div className="ability-review">
-            {Object.entries(characterData.abilityScores).map(([ability, score]) => (
-              <div key={ability} className="ability-line">
-                <span className="ability-name">{ability.toUpperCase()}:</span>
-                <span className="ability-score">{score}</span>
-                <span className="ability-modifier">
-                  ({calculateAbilityModifier(score) >= 0 ? '+' : ''}{calculateAbilityModifier(score)})
-                </span>
-              </div>
-            ))}
+  const renderReview = () => {
+    // Get detailed descriptions for tooltips
+    const raceInfo = characterData.race ? CHARACTER_RACES[characterData.race] : null;
+    const classInfo = characterData.class ? CHARACTER_CLASSES[characterData.class] : null;
+    const backgroundInfo = characterData.background ? 
+      CHARACTER_BACKGROUNDS.find(bg => bg.name === characterData.background) : null;
+    
+    return (
+      <div className="creation-step">
+        <h3>Review Your Character</h3>
+        <div className="character-review">
+          <div className="review-section">
+            <h4>Basic Information</h4>
+            <p><strong>Name:</strong> {characterData.name || 'Unnamed Character'}</p>
+            <p>
+              <strong>Race:</strong> 
+              <span 
+                className="review-tooltip" 
+                title={raceInfo ? `${raceInfo.name} - Size: ${raceInfo.size}, Speed: ${raceInfo.speed} feet` : 'No race selected'}
+              >
+                {characterData.race || 'None'}
+              </span>
+            </p>
+            <p>
+              <strong>Class:</strong> 
+              <span 
+                className="review-tooltip" 
+                title={classInfo ? `${classInfo.name} - Hit Die: ${classInfo.hitDie}, Primary Ability: ${classInfo.primaryAbility}` : 'No class selected'}
+              >
+                {characterData.class || 'None'}
+              </span>
+            </p>
+            <p>
+              <strong>Level:</strong> 
+              <span 
+                className="review-tooltip" 
+                title="Character level determines hit points, proficiency bonus, spell slots, and class features available"
+              >
+                {characterData.level}
+              </span>
+            </p>
+            <p>
+              <strong>Background:</strong> 
+              <span 
+                className="review-tooltip" 
+                title={backgroundInfo ? `${backgroundInfo.name} - ${backgroundInfo.description}` : 'No background selected'}
+              >
+                {characterData.background || 'None'}
+              </span>
+            </p>
+            <p>
+              <strong>Alignment:</strong> 
+              <span 
+                className="review-tooltip" 
+                title="Alignment represents your character's moral and ethical outlook, affecting roleplay and some game mechanics"
+              >
+                {characterData.alignment || 'None'}
+              </span>
+            </p>
+          </div>
+          <div className="review-section">
+            <h4>Ability Scores</h4>
+            <div className="ability-review">
+              {Object.entries(characterData.abilityScores).map(([ability, score]) => {
+                const modifier = calculateAbilityModifier(score);
+                const modifierText = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+                
+                // Define what each ability affects for tooltips
+                const abilityDescriptions = {
+                  strength: 'Physical power - affects melee attacks, Athletics, and carrying capacity',
+                  dexterity: 'Agility and reflexes - affects AC, ranged attacks, Stealth, and initiative',
+                  constitution: 'Health and stamina - affects hit points and Constitution saves',
+                  intelligence: 'Reasoning ability - affects Investigation, Arcana, and wizard spellcasting',
+                  wisdom: 'Awareness and insight - affects Perception, Medicine, and cleric/druid spellcasting',
+                  charisma: 'Force of personality - affects social skills and bard/sorcerer/warlock spellcasting'
+                };
+                
+                return (
+                  <div key={ability} className="ability-line">
+                    <span 
+                      className="ability-name review-tooltip" 
+                      title={abilityDescriptions[ability]}
+                    >
+                      {ability.toUpperCase()}:
+                    </span>
+                    <span className="ability-score">{score}</span>
+                    <span 
+                      className="ability-modifier review-tooltip" 
+                      title={`${modifierText} modifier affects all ${ability} checks, saves, and related bonuses`}
+                    >
+                      ({modifierText})
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
+        {error && (
+          <div className="error-message">
+            Error creating character: {error}
+          </div>
+        )}
       </div>
-      {error && (
-        <div className="error-message">
-          Error creating character: {error}
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   const canProceed = () => {
     switch (currentStep) {
@@ -285,7 +420,11 @@ export function CharacterCreationModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="character-creation-modal" onClick={(e) => e.stopPropagation()}>
+      <div 
+        className="character-creation-modal" 
+        data-theme={isDarkTheme ? 'dark' : 'light'}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <h2>Create New Character</h2>
           <button className="close-button" onClick={onClose}>×</button>
@@ -331,6 +470,20 @@ export function CharacterCreationModal({
           )}
         </div>
       </div>
+      
+      {/* Background Tooltip */}
+      {backgroundTooltip.show && backgroundTooltip.background && (
+        <div 
+          className="background-tooltip"
+          style={{
+            left: backgroundTooltip.position.x,
+            top: backgroundTooltip.position.y
+          }}
+        >
+          <div className="tooltip-header">{backgroundTooltip.background.name}</div>
+          <div className="tooltip-description">{backgroundTooltip.background.description}</div>
+        </div>
+      )}
     </div>
   );
 }
