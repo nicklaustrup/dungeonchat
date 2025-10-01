@@ -66,11 +66,11 @@
   background: var(--accent-hover);
 }
 
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
+/* Import shared panel styles */
+@import '../VTT/VTTSession/SharedPanelStyles.css';
+
+/* Override for dice history panel specific styling */
+.dice-history-panel .panel-header {
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
 }
@@ -215,10 +215,6 @@
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .panel-header {
-    padding: 0.75rem;
-  }
-  
   .panel-tabs {
     gap: 0.25rem;
   }
@@ -228,7 +224,7 @@
     font-size: 0.8rem;
   }
   
-  .panel-content {
+  .dice-history-panel .panel-content {
     padding: 0.75rem;
   }
   

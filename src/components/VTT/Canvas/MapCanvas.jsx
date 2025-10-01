@@ -13,6 +13,7 @@ import TokenContextMenu from '../TokenManager/TokenContextMenu';
 import MapContextMenu from './MapContextMenu';
 import LightingLayer from './LightingLayer';
 import LightingPanel from '../Lighting/LightingPanel';
+// import MovementRuler from './MovementRuler'; // TODO: Wire up in Phase 1 continuation
 import { initiativeService } from '../../../services/initiativeService';
 import { mapService } from '../../../services/vtt/mapService';
 import useTokens from '../../../hooks/vtt/useTokens';
@@ -20,6 +21,7 @@ import useCanvasTools from '../../../hooks/vtt/useCanvasTools';
 import useDrawingState from '../../../hooks/vtt/useDrawingState';
 import useCanvasViewport from '../../../hooks/vtt/useCanvasViewport';
 import useLighting from '../../../hooks/vtt/useLighting';
+// import useTokenMovement from '../../../hooks/vtt/useTokenMovement'; // TODO: Wire up in Phase 1 continuation
 import { tokenService } from '../../../services/vtt/tokenService';
 import { pingService } from '../../../services/vtt/pingService';
 import { fogOfWarService } from '../../../services/vtt/fogOfWarService';
@@ -125,6 +127,8 @@ function MapCanvas({
   const [tokenSnap, setTokenSnap] = useState(true);
   const [tokenSnapHighlight, setTokenSnapHighlight] = useState(null); // {x,y,w,h}
   const [tokenSnapPulse, setTokenSnapPulse] = useState(0); // animation ticker for highlight pulse
+  // Token movement tracking (for ruler and validation) - TODO: Wire up in Phase 1 continuation
+  // const [draggingToken, setDraggingToken] = useState(null); // { tokenId, startPos, currentPos }
   const [showGridConfig, setShowGridConfig] = useState(false);
   const [contextMenu, setContextMenu] = useState(null); // { tokenId, x, y }
   const [mapContextMenu, setMapContextMenu] = useState(null); // { x, y }
@@ -492,9 +496,9 @@ function MapCanvas({
       
   // Handle based on active tool
       if (activeTool === 'arrow') {
-        if (!arrowStart) {
+        if (!arrowStart && e.evt.button !== 2) {
           setArrowStart(maybeSnapPoint({ x: mapX, y: mapY }));
-        } else {
+        } else if (arrowStart && e.evt.button !== 2) {
           try {
             const end = maybeSnapPoint({ x: mapX, y: mapY });
             await drawingService.createArrow(firestore, campaignId, map.id, arrowStart, end, '#ffff00', user.uid);
@@ -504,6 +508,11 @@ function MapCanvas({
           }
         }
   } else if (activeTool === 'ruler') {
+        // Only process left-clicks for ruler tool
+        if (e.evt.button === 2) {
+          return; // Ignore right-clicks
+        }
+        
         const gridSize = map?.gridSize || 50;
         let startX = mapX;
         let startY = mapY;
@@ -540,6 +549,10 @@ function MapCanvas({
         }
         return; // Don't deselect tokens when using ruler
       } else if (activeTool === 'placeLight' && isDM && placingLight) {
+        // Only process left-clicks for placing lights
+        if (e.evt.button === 2) {
+          return; // Ignore right-clicks
+        }
         // Place the light at clicked position
         const position = maybeSnapPoint({ x: mapX, y: mapY });
         createLight({
@@ -554,9 +567,9 @@ function MapCanvas({
         });
         return;
       } else if (['circle','rectangle','cone','line'].includes(activeTool) && isDM) {
-        if (!shapeStart) {
+        if (!shapeStart && e.evt.button !== 2) {
           setShapeStart(maybeSnapPoint({ x: mapX, y: mapY }));
-        } else {
+        } else if (shapeStart && e.evt.button !== 2) {
           const end = maybeSnapPoint({ x: mapX, y: mapY });
           try {
             if (activeTool === 'circle') {
@@ -603,6 +616,10 @@ function MapCanvas({
 
   const handleMouseDown = (e) => {
     if (activeTool === 'pen' && e.target === e.target.getStage()) {
+      // Only process left-clicks for pen tool
+      if (e.evt.button === 2) {
+        return; // Ignore right-clicks
+      }
       const stage = stageRef.current;
       const pointer = stage.getPointerPosition();
       const mapX = (pointer.x - stage.x()) / stage.scaleX();

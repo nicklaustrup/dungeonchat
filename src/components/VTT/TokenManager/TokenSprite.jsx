@@ -1,28 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image as KonvaImage, Group, Circle, Rect, Text } from 'react-konva';
 import useImage from 'use-image';
 
 /**
  * TokenSprite Component
- * Renders a token on the Konva canvas
+ * Renders a token on the Konva canvas with ghost placeholder during drag
  */
 function TokenSprite({ 
   token, 
   onDragEnd, 
   onClick,
   onDragStart,
+  onDragMove,
   isSelected = false,
   isDraggable = true,
   listening = true,
   tokenSnap = true,
   gridSize = 50,
   onDragMovePreview,
-  onContextMenu
+  onContextMenu,
+  showGhost = false // Show ghost at original position during drag
 }) {
   const [image] = useImage(token.imageUrl || '', 'anonymous');
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState(null);
 
   const handleDragEnd = (e) => {
     e.cancelBubble = true;
+    setIsDragging(false);
+    setDragStartPos(null);
     const node = e.target;
     let x = node.x();
     let y = node.y();
@@ -57,6 +63,8 @@ function TokenSprite({
   const handleDragStart = (e) => {
     // Prevent stage from being dragged when dragging token
     e.cancelBubble = true;
+    setIsDragging(true);
+    setDragStartPos({ x: token.position.x, y: token.position.y });
     if (onDragStart) {
       onDragStart(token.id, e);
     }
@@ -125,29 +133,66 @@ function TokenSprite({
         });
       }
     }
+    
+    // Notify parent of drag move with current position
+    if (onDragMove) {
+      onDragMove(token.id, { x: rawX, y: rawY }, e);
+    }
   };
 
   return (
-    <Group
-  x={token.position.x}
-  y={token.position.y}
-      draggable={isDraggable}
-      onDragEnd={handleDragEnd}
-      onDragStart={handleDragStart}
-      onDragMove={handleDragMove}
-      onClick={handleClick}
-      onTap={handleClick}
-      onContextMenu={(e) => { e.evt?.preventDefault(); e.cancelBubble = true; onContextMenu && onContextMenu(e); }}
-      listening={listening}
-    >
-      {/* Token background circle */}
-      <Circle
-        radius={tokenSize / 2}
-        fill={tokenColor}
-        opacity={token.isHidden ? 0.3 : 0.8}
-        strokeWidth={isSelected ? 3 : 2}
-        stroke={isSelected ? '#fff' : '#000'}
-      />
+    <>
+      {/* Ghost Token - Shows original position during drag */}
+      {isDragging && dragStartPos && showGhost && (
+        <Group
+          x={dragStartPos.x}
+          y={dragStartPos.y}
+          opacity={0.3}
+          listening={false}
+        >
+          <Circle
+            radius={tokenSize / 2}
+            fill={tokenColor}
+            opacity={0.5}
+            strokeWidth={2}
+            stroke="#fff"
+            dash={[5, 5]}
+          />
+          {image && (
+            <KonvaImage
+              image={image}
+              width={tokenSize - 8}
+              height={tokenSize - 8}
+              offsetX={(tokenSize - 8) / 2}
+              offsetY={(tokenSize - 8) / 2}
+              cornerRadius={tokenSize / 2}
+              opacity={0.4}
+            />
+          )}
+        </Group>
+      )}
+
+      {/* Main Token */}
+      <Group
+    x={token.position.x}
+    y={token.position.y}
+        draggable={isDraggable}
+        onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
+        onClick={handleClick}
+        onTap={handleClick}
+        onContextMenu={(e) => { e.evt?.preventDefault(); e.cancelBubble = true; onContextMenu && onContextMenu(e); }}
+        listening={listening}
+      >
+        {/* Token background circle */}
+        <Circle
+          radius={tokenSize / 2}
+          fill={tokenColor}
+          opacity={token.isHidden ? 0.3 : 0.8}
+          strokeWidth={isSelected ? 3 : 2}
+          stroke={isSelected ? '#fff' : '#000'}
+        />
 
       {/* Token image (if available) */}
       {image && (
@@ -282,7 +327,8 @@ function TokenSprite({
           dash={[5, 5]}
         />
       )}
-    </Group>
+      </Group>
+    </>
   );
 }
 

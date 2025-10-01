@@ -1,0 +1,228 @@
+/* 
+ * Shared Panel Styles
+ * Consolidated panel header and control styles for all floating/popout panels
+ * Used by: ChatPanel, ResizablePanel, DiceHistoryPanel, PartyPanel
+ */
+
+/* Panel Header - Unified style for all panels */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 5px;
+  background: rgba(102, 126, 234, 0.2);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+  cursor: grab;
+  user-select: none;
+  border-radius: inherit inherit 0 0;
+}
+
+.panel-header:active {
+  cursor: grabbing;
+}
+
+/* Panel Title */
+.panel-title {
+  color: #e0e0f0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.panel-title h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e0e0f0;
+}
+
+/* Drag Icon */
+.drag-icon {
+  opacity: 0.7;
+  font-size: 1rem;
+  color: #c0c0d0;
+}
+
+/* Panel Controls Container */
+.panel-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* Panel Control Buttons */
+.panel-btn,
+.panel-control-btn,
+.chat-control-btn {
+  background: transparent;
+  border: none;
+  color: #c0c0d0;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.panel-btn:hover,
+.panel-control-btn:hover,
+.chat-control-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.panel-btn.close-btn:hover,
+.panel-control-btn.close-btn:hover,
+.chat-control-btn.close-btn:hover {
+  background: rgba(231, 76, 60, 0.3);
+  color: #ff6b6b;
+}
+
+.panel-btn.minimize-btn:hover,
+.panel-control-btn.minimize-btn:hover {
+  background: rgba(241, 196, 15, 0.3);
+  color: #ffd700;
+}
+
+.panel-btn.dock-btn:hover,
+.panel-control-btn.dock-btn:hover {
+  background: rgba(46, 204, 113, 0.3);
+  color: #4ade80;
+}
+
+/* Panel Content */
+.panel-content {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Scrollbar styling for panels */
+.panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.5);
+  border-radius: 3px;
+}
+
+.panel-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.8);
+}
+
+/* Resize Handle */
+.resize-handle,
+.panel-resize-handle,
+.chat-panel-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, rgba(102, 126, 234, 0.5) 50%);
+  border-radius: 0 0 inherit inherit;
+}
+
+.resize-handle:hover,
+.panel-resize-handle:hover,
+.chat-panel-resize-handle:hover {
+  background: linear-gradient(135deg, transparent 50%, rgba(102, 126, 234, 0.8) 50%);
+}
+
+/* Floating Panels */
+.floating-panel,
+.resizable-panel,
+.chat-panel-floating {
+  position: fixed;
+  background: rgba(30, 30, 40, 0.98);
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.floating-panel:hover,
+.resizable-panel:hover {
+  box-shadow: 0 12px 48px rgba(102, 126, 234, 0.3);
+}
+
+.floating-panel.dragging,
+.resizable-panel.dragging,
+.chat-panel-floating.dragging {
+  cursor: grabbing;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+}
+
+.floating-panel.resizing,
+.chat-panel-floating.resizing {
+  transition: none;
+}
+
+.floating-panel.minimized,
+.resizable-panel.minimized,
+.chat-panel-floating.minimized {
+  height: auto !important;
+  width: auto !important;
+}
+
+/* Panel Animation */
+@keyframes panelSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.floating-panel,
+.resizable-panel,
+.chat-panel-floating {
+  animation: panelSlideIn 0.2s ease-out;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .panel-header {
+    padding: 3px 4px;
+  }
+  
+  .panel-title {
+    font-size: 0.85rem;
+    gap: 4px;
+  }
+  
+  .panel-btn,
+  .panel-control-btn,
+  .chat-control-btn {
+    padding: 3px;
+    font-size: 12px;
+    min-width: 20px;
+    min-height: 20px;
+  }
+  
+  .panel-controls {
+    gap: 3px;
+  }
+}

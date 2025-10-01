@@ -1,27 +1,7 @@
-/* Shared Panel Styles */
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: #1e1e2e;
-  border-bottom: 2px solid #2a2a3e;
-}
+/* Import shared panel styles */
+@import './SharedPanelStyles.css';
 
-.panel-header h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #e0e0f0;
-}
-
-.panel-content {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-/* ChatPanel.css */
+/* ChatPanel.css - Specific overrides */
 .chat-panel {
   display: flex;
   flex-direction: column;
@@ -99,90 +79,19 @@
   cursor: not-allowed;
 }
 
-/* Floating Chat Panel */
+/* Floating Chat Panel - extends shared styles */
 .chat-panel-floating {
-  position: fixed;
-  background: rgba(30, 30, 40, 0.98);
-  border: 2px solid #667eea;
   border-radius: 12px;
-  z-index: 1000;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  display: flex;
-  flex-direction: column;
-  transition: all 0.3s ease;
 }
 
-.chat-panel-floating.dragging {
-  cursor: grabbing;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
-}
-
-.chat-panel-floating.resizing {
-  transition: none;
-}
-
-.chat-panel-floating.minimized {
-  height: auto !important;
-  width: auto !important;
-}
-
+/* Chat-specific header styling */
 .chat-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(102, 126, 234, 0.2);
-  border-bottom: 1px solid rgba(102, 126, 234, 0.3);
   border-radius: 10px 10px 0 0;
-  cursor: grab;
-  user-select: none;
 }
 
-.chat-panel-header:active {
-  cursor: grabbing;
-}
-
-.chat-panel-title {
-  color: #e0e0f0;
-  font-size: 1rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
+/* Chat icon */
 .chat-panel-title::before {
   content: '💬';
-}
-
-.chat-panel-controls {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.chat-control-btn {
-  background: transparent;
-  border: none;
-  color: #c0c0d0;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  font-size: 14px;
-}
-
-.chat-control-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-}
-
-.chat-control-btn.close-btn:hover {
-  background: rgba(231, 76, 60, 0.3);
-  color: #ff6b6b;
 }
 
 .chat-panel-content {
@@ -197,19 +106,9 @@
   overflow-y: auto;
 }
 
+/* Resize handle styling inherited from SharedPanelStyles.css */
 .chat-panel-resize-handle {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 20px;
-  height: 20px;
-  cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 50%, rgba(102, 126, 234, 0.5) 50%);
   border-radius: 0 0 10px 0;
-}
-
-.chat-panel-resize-handle:hover {
-  background: linear-gradient(135deg, transparent 50%, rgba(102, 126, 234, 0.8) 50%);
 }
 
 /* Docked Chat Panel */

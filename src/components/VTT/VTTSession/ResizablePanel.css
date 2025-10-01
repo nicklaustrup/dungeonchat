@@ -1,135 +1,33 @@
 /* ResizablePanel.css - Floating draggable panels for VTT */
+/* Import shared panel styles */
+@import './SharedPanelStyles.css';
 
+/* Specific overrides for resizable panel */
 .resizable-panel {
-  position: fixed;
   background: #1a1a2e;
-  border: 2px solid #667eea;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition: box-shadow 0.2s ease;
 }
 
-.resizable-panel:hover {
-  box-shadow: 0 12px 48px rgba(102, 126, 234, 0.3);
-}
-
-.resizable-panel.minimized {
-  height: auto !important;
-}
-
-/* Header */
-.panel-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 12px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: move;
-  user-select: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: white;
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.drag-icon {
-  opacity: 0.7;
-  font-size: 1.1rem;
-}
-
-.panel-controls {
-  display: flex;
-  gap: 8px;
-}
-
-.panel-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 1rem;
-}
-
-.panel-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+/* Transform effect on button hover */
+.resizable-panel .panel-btn:hover {
   transform: scale(1.1);
 }
 
-.panel-btn.close-btn:hover {
-  background: rgba(231, 76, 60, 0.5);
-}
-
-/* Content */
-.panel-content {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+/* Content specific styling */
+.resizable-panel .panel-content {
   background: #16213e;
   color: #e0e0f0;
 }
 
-/* Scrollbar styling */
-.panel-content::-webkit-scrollbar {
+/* Specific scrollbar colors for resizable panel */
+.resizable-panel .panel-content::-webkit-scrollbar {
   width: 8px;
 }
 
-.panel-content::-webkit-scrollbar-track {
+.resizable-panel .panel-content::-webkit-scrollbar-track {
   background: #0f0f1e;
 }
 
-.panel-content::-webkit-scrollbar-thumb {
-  background: #667eea;
-  border-radius: 4px;
-}
-
-.panel-content::-webkit-scrollbar-thumb:hover {
-  background: #764ba2;
-}
-
-/* Resize Handle */
-.resize-handle {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 20px;
-  height: 20px;
-  cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 0%, transparent 50%, #667eea 50%, #667eea 100%);
+/* Resize handle specific styling */
+.resizable-panel .resize-handle {
   border-bottom-right-radius: 6px;
-}
-
-.resize-handle:hover {
-  background: linear-gradient(135deg, transparent 0%, transparent 50%, #764ba2 50%, #764ba2 100%);
-}
-
-/* Animation for opening */
-@keyframes panelSlideIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.resizable-panel {
-  animation: panelSlideIn 0.2s ease-out;
 }
