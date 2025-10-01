@@ -43,6 +43,8 @@ function MapCanvas({
   onTokenSelect,
   onMapClick,
   fogOfWarEnabled = false,
+  onToggleFog,
+  onInitializeFog,
   children 
 }) {
   const { firestore, user } = useContext(FirebaseContext);
@@ -809,13 +811,6 @@ function MapCanvas({
       {isDM && (
         <button
           style={{ position:'absolute', top:20, left:350, zIndex:130, background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
-          onClick={() => setShowAudio(v=>!v)}
-          title="Toggle Ambient Audio"
-        >Audio</button>
-      )}
-      {isDM && (
-        <button
-          style={{ position:'absolute', top:20, left:410, zIndex:130, background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
           onClick={() => setShowTokenEditor(v=>!v)}
           title="Edit Selected Token Stats"
           disabled={!selectedTokenId}
@@ -823,15 +818,24 @@ function MapCanvas({
       )}
       {isDM && (
         <button
-          style={{ position:'absolute', top:20, left:495, zIndex:130, background: localPlayerViewMode ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+          style={{ position:'absolute', top:20, left:420, zIndex:130, background: localPlayerViewMode ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
           onClick={() => setLocalPlayerViewMode(v=>!v)}
           title={localPlayerViewMode ? 'Exit Player View (Return to DM View)' : 'Preview Player View (Hide hidden tokens)'}
         >
           👁️ {localPlayerViewMode ? 'DM View' : 'Player View'}
         </button>
       )}
+      {isDM && onToggleFog && (
+        <button
+          style={{ position:'absolute', top:20, left:520, zIndex:130, background: fogOfWarEnabled ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+          onClick={onToggleFog}
+          title={fogOfWarEnabled ? 'Disable Fog of War' : 'Enable Fog of War'}
+        >
+          {fogOfWarEnabled ? '🌫️' : '👁️'} Fog
+        </button>
+      )}
       {isDM && (
-        <div style={{ position:'absolute', top:20, left:610, zIndex:130 }} data-fx-library>
+        <div style={{ position:'absolute', top:20, left:600, zIndex:130 }} data-fx-library>
           <button
             style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
             onClick={() => setShowFXLibrary(v=>!v)}
@@ -884,6 +888,33 @@ function MapCanvas({
               <button
                 style={{
                   width:'100%',
+                  background: showAudio ? '#3a3a45' : 'transparent',
+                  color:'#ddd',
+                  border:'none',
+                  padding:'10px 12px',
+                  cursor:'pointer',
+                  fontSize:12,
+                  textAlign:'left',
+                  display:'flex',
+                  alignItems:'center',
+                  gap:'8px',
+                  transition:'background 0.2s'
+                }}
+                onClick={() => {
+                  setShowAudio(v=>!v);
+                  // Keep dropdown open for multiple selections
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#3a3a45'}
+                onMouseLeave={(e) => e.currentTarget.style.background = showAudio ? '#3a3a45' : 'transparent'}
+                title="Ambient Audio & Music"
+              >
+                <span style={{ fontSize:14 }}>🎵</span>
+                <span>Audio</span>
+                {showAudio && <span style={{ marginLeft:'auto', fontSize:10 }}>●</span>}
+              </button>
+              <button
+                style={{
+                  width:'100%',
                   background:'transparent',
                   color:'#888',
                   border:'none',
@@ -917,9 +948,9 @@ function MapCanvas({
                   gap:'8px'
                 }}
                 disabled
-                title="Ambience & Audio - Coming Soon"
+                title="Ambience Effects - Coming Soon"
               >
-                <span style={{ fontSize:14 }}>🎵</span>
+                <span style={{ fontSize:14 }}>✨</span>
                 <span>Ambience</span>
                 <span style={{ marginLeft:'auto', fontSize:9, opacity:0.6 }}>Soon</span>
               </button>
@@ -1017,8 +1048,8 @@ function MapCanvas({
           />
         )}
 
-  {/* Fog of War Layer (below tokens) - Enhanced for visibility */}
-        {fogData?.enabled && layerVisibility.fog && (() => {
+  {/* Fog of War Layer (below tokens for players, above lighting for DM) - Enhanced for visibility */}
+        {!isDM && fogData?.enabled && layerVisibility.fog && (() => {
           return (
           <Layer>
             {fogData.visibility && fogData.visibility.map((row, y) => 
@@ -1035,40 +1066,17 @@ function MapCanvas({
                       width={gMap.gridSize}
                       height={gMap.gridSize}
                       fill="black"
-                      opacity={isDM ? 0.35 : 0.95}
-                      stroke={isDM ? "#ff6b6b" : "#1a1a1a"}
-                      strokeWidth={isDM ? 1.5 : 0.5}
+                      opacity={0.95}
+                      stroke="#1a1a1a"
+                      strokeWidth={0.5}
                       listening={false}
-                      shadowColor={isDM ? "#ff0000" : "black"}
-                      shadowBlur={isDM ? 2 : 3}
-                      shadowOpacity={isDM ? 0.5 : 0.8}
+                      shadowColor="black"
+                      shadowBlur={3}
+                      shadowOpacity={0.8}
                     />
                   );
                 }
                 return null;
-              })
-            )}
-            {/* Dimmer pattern when grid disabled: outline faint cells to help DM orient fog */}
-            {!gMap.gridEnabled && isDM && fogData.visibility && fogData.visibility.map((row, y) =>
-              row.map((isVisible, x) => {
-                if (!isVisible) return null; // only outline revealed cells lightly
-                const cellX = x * gMap.gridSize;
-                const cellY = y * gMap.gridSize;
-                if (cellX >= gMap.width || cellY >= gMap.height) return null;
-                return (
-                  <Rect
-                    key={`fog-dimmer-${x}-${y}`}
-                    x={cellX}
-                    y={cellY}
-                    width={gMap.gridSize}
-                    height={gMap.gridSize}
-                    fill={null}
-                    stroke="#ff6b6b"
-                    strokeWidth={0.4}
-                    opacity={0.15}
-                    listening={false}
-                  />
-                );
               })
             )}
           </Layer>
@@ -1209,6 +1217,64 @@ function MapCanvas({
       mapHeight={gMap?.height || height}
     />
   )}
+
+  {/* Fog of War Layer for DM (above lighting to show explored areas) */}
+  {isDM && fogData?.enabled && layerVisibility.fog && (() => {
+    return (
+    <Layer>
+      {fogData.visibility && fogData.visibility.map((row, y) => 
+        row.map((isVisible, x) => {
+          const cellX = x * gMap.gridSize;
+          const cellY = y * gMap.gridSize;
+          if (cellX >= gMap.width || cellY >= gMap.height) return null;
+          if (!isVisible) {
+            return (
+              <Rect
+                key={`fog-dm-${x}-${y}`}
+                x={cellX}
+                y={cellY}
+                width={gMap.gridSize}
+                height={gMap.gridSize}
+                fill="black"
+                opacity={0.35}
+                stroke="#ff6b6b"
+                strokeWidth={1.5}
+                listening={false}
+                shadowColor="#ff0000"
+                shadowBlur={2}
+                shadowOpacity={0.5}
+              />
+            );
+          }
+          return null;
+        })
+      )}
+      {/* Dimmer pattern when grid disabled: outline faint cells to help DM orient fog */}
+      {!gMap.gridEnabled && fogData.visibility && fogData.visibility.map((row, y) =>
+        row.map((isVisible, x) => {
+          if (!isVisible) return null; // only outline revealed cells lightly
+          const cellX = x * gMap.gridSize;
+          const cellY = y * gMap.gridSize;
+          if (cellX >= gMap.width || cellY >= gMap.height) return null;
+          return (
+            <Rect
+              key={`fog-dimmer-${x}-${y}`}
+              x={cellX}
+              y={cellY}
+              width={gMap.gridSize}
+              height={gMap.gridSize}
+              fill={null}
+              stroke="#ff6b6b"
+              strokeWidth={0.4}
+              opacity={0.15}
+              listening={false}
+            />
+          );
+        })
+      )}
+    </Layer>
+    );
+  })()}
 
   {/* Drawing & Effects Layer - Shapes, Drawings, Rulers, Pings */}
   {(layerVisibility.shapes || layerVisibility.pings) && <Layer>

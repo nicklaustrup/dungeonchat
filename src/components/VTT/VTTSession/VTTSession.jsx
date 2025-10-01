@@ -30,8 +30,6 @@ import {
   FiX,
   FiLogOut,
   FiTarget,
-  FiEye,
-  FiEyeOff,
   FiUser,
   FiTrash
 } from 'react-icons/fi';
@@ -498,26 +496,6 @@ function VTTSession() {
                 <FiSettings />
                 <span>Encounters</span>
               </button>
-
-              <button
-                className={`toolbar-button ${fogOfWarEnabled ? 'active' : ''}`}
-                onClick={handleToggleFog}
-                title={fogOfWarEnabled ? 'Disable Fog of War' : 'Enable Fog of War'}
-              >
-                {fogOfWarEnabled ? <FiEyeOff /> : <FiEye />}
-                <span>Fog</span>
-              </button>
-
-              <button
-                className={`toolbar-button ${showLightingPanel ? 'active' : ''}`}
-                onClick={() => setShowLightingPanel(!showLightingPanel)}
-                title={showLightingPanel ? 'Hide Lighting Controls' : 'Show Lighting Controls'}
-                aria-label="Lighting Controls"
-                aria-pressed={showLightingPanel}
-              >
-                💡
-                <span>Lighting</span>
-              </button>
             </>
           )}
         </div>
@@ -621,6 +599,8 @@ function VTTSession() {
               selectedTokenId={selectedTokenId}
               onTokenSelect={setSelectedTokenId}
               fogOfWarEnabled={fogOfWarEnabled}
+              onToggleFog={handleToggleFog}
+              onInitializeFog={handleInitializeFog}
             />
           ) : (
             <div className="no-map-placeholder">
