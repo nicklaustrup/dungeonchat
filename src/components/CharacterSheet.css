@@ -93,13 +93,13 @@
 }
 
 .character-sheet-content {
-  padding: 24px;
+  padding: 12px;
   overflow-y: auto;
 }
 
 .modal-content .character-sheet-content {
   flex: 1;
-  padding: 20px;
+  padding: 12px;
 }
 
 /* Loading and Error States */
@@ -119,28 +119,28 @@
 /* Character Header */
 .character-header {
   border-bottom: 2px solid var(--border-color);
-  padding-bottom: 20px;
-  margin-bottom: 24px;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .character-title h1 {
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
   color: var(--text-primary);
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
 }
 
 .character-subtitle {
   color: var(--text-secondary);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 500;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .character-details {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  gap: 8px;
 }
 
 .detail-item {
@@ -166,30 +166,30 @@
 .character-stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 32px;
+  gap: 16px;
 }
 
 /* Ability Scores */
 .ability-scores-section h3 {
   color: var(--text-primary);
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
-  margin: 0 0 16px 0;
+  margin: 0 0 8px 0;
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
+  padding-bottom: 4px;
 }
 
 .ability-scores-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 6px;
 }
 
 .ability-score-block {
   background: var(--bg-light);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 6px;
+  padding: 8px;
   text-align: center;
   transition: all 0.2s;
 }
@@ -200,23 +200,23 @@
 }
 
 .ability-name {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .ability-score {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .ability-modifier {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   font-weight: 500;
 }
@@ -224,25 +224,25 @@
 /* Combat Stats */
 .combat-stats-section h3 {
   color: var(--text-primary);
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
-  margin: 0 0 16px 0;
+  margin: 0 0 8px 0;
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
+  padding-bottom: 4px;
 }
 
 .combat-stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .stat-block {
   background: var(--bg-light);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 6px;
+  padding: 10px;
   text-align: center;
 }
 

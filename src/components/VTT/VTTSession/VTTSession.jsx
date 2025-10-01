@@ -83,9 +83,6 @@ function VTTSession() {
   // Fog of War state
   const [fogOfWarEnabled, setFogOfWarEnabled] = useState(false);
   
-  // Player View mode (DM only - preview what players see)
-  const [playerViewMode, setPlayerViewMode] = useState(false);
-  
   // Lighting state
   const [showLightingPanel, setShowLightingPanel] = useState(false);
   
@@ -521,17 +518,6 @@ function VTTSession() {
                 💡
                 <span>Lighting</span>
               </button>
-              
-              <button
-                className={`toolbar-button ${playerViewMode ? 'active' : ''}`}
-                onClick={() => setPlayerViewMode(!playerViewMode)}
-                title={playerViewMode ? 'Exit Player View' : 'Preview Player View'}
-                aria-label="Player View Toggle"
-                aria-pressed={playerViewMode}
-              >
-                <FiEye />
-                <span>{playerViewMode ? 'DM View' : 'Player View'}</span>
-              </button>
             </>
           )}
         </div>
@@ -632,7 +618,6 @@ function VTTSession() {
               width={window.innerWidth - (isSidebarOpen ? 420 : 0) - (showTokenManager ? 320 : 0)}
               height={window.innerHeight - 60}
               isDM={isUserDM}
-              playerViewMode={playerViewMode}
               selectedTokenId={selectedTokenId}
               onTokenSelect={setSelectedTokenId}
               fogOfWarEnabled={fogOfWarEnabled}

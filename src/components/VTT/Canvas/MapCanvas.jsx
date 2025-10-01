@@ -38,7 +38,6 @@ function MapCanvas({
   width, 
   height, 
   isDM = false,
-  playerViewMode = false,
   selectedTokenId,
   onTokenSelect,
   onMapClick,
@@ -135,6 +134,8 @@ function MapCanvas({
   const [showTokenEditor, setShowTokenEditor] = useState(false);
   const [showFXLibrary, setShowFXLibrary] = useState(false);
   const [showLightingPanel, setShowLightingPanel] = useState(false);
+  // Player view mode - local state for canvas
+  const [localPlayerViewMode, setLocalPlayerViewMode] = useState(false);
   // Light placement state
   const [placingLight, setPlacingLight] = useState(null); // Light data to be placed
   const [lightPreviewPos, setLightPreviewPos] = useState(null); // { x, y } for preview
@@ -363,7 +364,8 @@ function MapCanvas({
     };
 
     revealAroundPlayerTokens();
-  }, [firestore, campaignId, gMap?.id, gMap?.gridSize, fogOfWarEnabled, fogData?.enabled, gMap?.gridEnabled, playerTokens, lights, map.gridSize, map.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, playerTokens.length, lights.length, map.gridSize, map.id]);
 
   // Reveal fog around light sources when lights or fog data changes
   useEffect(() => {
@@ -386,7 +388,8 @@ function MapCanvas({
     };
 
     revealAroundLights();
-  }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, lights, map.gridSize, map.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, lights.length, map.gridSize, map.id]);
 
   // Force re-render for fade animations (drawings)
   useEffect(() => {
@@ -813,7 +816,16 @@ function MapCanvas({
         >Edit Token</button>
       )}
       {isDM && (
-        <div style={{ position:'absolute', top:20, left:495, zIndex:130 }} data-fx-library>
+        <button
+          style={{ position:'absolute', top:20, left:495, zIndex:130, background: localPlayerViewMode ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+          onClick={() => setLocalPlayerViewMode(v=>!v)}
+          title={localPlayerViewMode ? 'Exit Player View (Return to DM View)' : 'Preview Player View (Hide hidden tokens)'}
+        >
+          👁️ {localPlayerViewMode ? 'DM View' : 'Player View'}
+        </button>
+      )}
+      {isDM && (
+        <div style={{ position:'absolute', top:20, left:610, zIndex:130 }} data-fx-library>
           <button
             style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
             onClick={() => setShowFXLibrary(v=>!v)}
@@ -1052,7 +1064,7 @@ function MapCanvas({
             }
             // Hide tokens marked as hidden from non-DM players
             // Also hide from DMs when in player view mode
-            if (token.hidden && (!isDM || playerViewMode)) {
+            if (token.hidden && (!isDM || localPlayerViewMode)) {
               return null;
             }
 
