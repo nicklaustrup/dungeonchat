@@ -10,6 +10,7 @@ import MapLibraryPanel from '../MapLibrary/MapLibraryPanel';
 import AudioController from '../Audio/AudioController';
 import TokenExtendedEditor from '../TokenManager/TokenExtendedEditor';
 import TokenContextMenu from '../TokenManager/TokenContextMenu';
+import MapContextMenu from './MapContextMenu';
 import LightingLayer from './LightingLayer';
 import LightingPanel from '../Lighting/LightingPanel';
 import { initiativeService } from '../../../services/initiativeService';
@@ -124,6 +125,7 @@ function MapCanvas({
   const [tokenSnapPulse, setTokenSnapPulse] = useState(0); // animation ticker for highlight pulse
   const [showGridConfig, setShowGridConfig] = useState(false);
   const [contextMenu, setContextMenu] = useState(null); // { tokenId, x, y }
+  const [mapContextMenu, setMapContextMenu] = useState(null); // { x, y }
   const [layerVisibility, setLayerVisibility] = useState({ grid: true, fog: true, tokens: true, shapes: true, drawings: true, pings: true, rulers: true });
   // Undo/Redo state (future enhancement)
   // const [undoStack, setUndoStack] = useState([]);
@@ -242,6 +244,10 @@ function MapCanvas({
           setContextMenu(null);
           return;
         }
+        if (mapContextMenu) {
+          setMapContextMenu(null);
+          return;
+        }
         if (activeTool === 'ruler') {
         setRulerStart(null);
         setRulerEnd(null);
@@ -271,7 +277,7 @@ function MapCanvas({
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDM, activeTool, contextMenu, gMap, firestore, campaignId]);
+  }, [isDM, activeTool, contextMenu, mapContextMenu, gMap, firestore, campaignId]);
 
   // Reset position and scale when map changes
   useEffect(() => {
@@ -938,6 +944,20 @@ function MapCanvas({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onContextMenu={(e) => {
+          // Only show map context menu if right-clicking on empty space (not on a token)
+          const target = e.target;
+          // Check if we clicked on the stage itself or background layer elements (not tokens/lights)
+          if (target.constructor.name === 'Stage' || target.nodeType === 'Stage' || 
+              target.className === 'Image' || (target.className === 'Rect' && target.attrs.id !== 'token')) {
+            e.evt.preventDefault();
+            const rect = e.currentTarget.container().getBoundingClientRect();
+            setMapContextMenu({ 
+              x: e.evt.clientX - rect.left, 
+              y: e.evt.clientY - rect.top 
+            });
+          }
+        }}
         draggable={activeTool !== 'pen'}
         style={{ 
           cursor: activeTool === 'pen' ? 'crosshair' : 
@@ -1776,6 +1796,34 @@ function MapCanvas({
                 await initiativeService.addCombatant(firestore, campaignId, combatant);
               } catch (e) {
                 console.error('Failed to add token to initiative', e);
+              }
+            }}
+          />
+        );
+      })()}
+      {mapContextMenu && (() => {
+        const pos = { x: mapContextMenu.x, y: mapContextMenu.y };
+        return (
+          <MapContextMenu
+            isDM={isDM}
+            position={pos}
+            onClose={() => setMapContextMenu(null)}
+            onClearMyShapes={async () => {
+              try {
+                if (!user?.uid) {
+                  console.error('No user ID available');
+                  return;
+                }
+                await shapeService.clearUserShapes(firestore, campaignId, map.id, user.uid);
+              } catch (e) {
+                console.error('Clear my shapes failed', e);
+              }
+            }}
+            onClearAllShapes={async () => {
+              try {
+                await shapeService.clearAllShapes(firestore, campaignId, map.id);
+              } catch (e) {
+                console.error('Clear all shapes failed', e);
               }
             }}
           />

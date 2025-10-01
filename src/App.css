@@ -173,7 +173,7 @@ body {
 
 .App {
   text-align: center;
-  max-width: 80%;
+  max-width: 100%;
   margin: 0 auto;
   height: 100vh;
   display: flex;

@@ -1,0 +1,89 @@
+/* Map Context Menu */
+.map-context-menu {
+  position: absolute;
+  background: linear-gradient(135deg, #2a2a3e 0%, #232334 100%);
+  border: 1px solid #444;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  min-width: 220px;
+  z-index: 10000;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.mcm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.05);
+  border-bottom: 1px solid #333;
+  color: #e0e0f0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.mcm-header button {
+  background: transparent;
+  border: none;
+  color: #999;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.mcm-header button:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.mcm-section {
+  padding: 8px;
+}
+
+.mcm-action-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  color: #e0e0f0;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  text-align: left;
+  margin: 2px 0;
+}
+
+.mcm-action-button:hover {
+  background: rgba(103, 126, 234, 0.2);
+  transform: translateX(2px);
+}
+
+.mcm-action-button.mcm-danger {
+  color: #ff6b6b;
+}
+
+.mcm-action-button.mcm-danger:hover {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff8787;
+}
+
+.mcm-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}

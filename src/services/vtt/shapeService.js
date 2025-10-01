@@ -191,5 +191,17 @@ export const shapeService = {
       });
     });
     await Promise.all(tasks);
+  },
+
+  /**
+   * Clear shapes created by a specific user
+   */
+  async clearUserShapes(firestore, campaignId, mapId, userId) {
+    const shapesRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'shapes');
+    const userShapesQuery = query(shapesRef, where('createdBy', '==', userId));
+    
+    const snapshot = await getDocs(userShapesQuery);
+    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
   }
 };
