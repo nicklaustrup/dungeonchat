@@ -917,7 +917,7 @@ function MapCanvas({
   // Handle drag-and-drop of tokens from Token Manager onto canvas
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
+    e.dataTransfer.dropEffect = 'move';
   }, []);
 
   const handleDrop = useCallback(async (e) => {
@@ -1355,7 +1355,7 @@ function MapCanvas({
                 key={token.id}
                 token={token}
                 isSelected={selectedTokenId === token.id}
-                isDraggable={isDM && activeTool === 'pointer'}
+                isDraggable={(isDM || token.ownerId === user?.uid || token.createdBy === user?.uid) && activeTool === 'pointer'}
                 onClick={handleTokenClick}
                 onDragEnd={handleTokenDragEnd}
                 tokenSnap={tokenSnap}

@@ -674,6 +674,7 @@ function VTTSession() {
                   setSelectedTokenId(null);
                 }
               }}
+              onTokenDeselect={() => setSelectedTokenId(null)}
               onClose={() => setShowTokenManager(false)}
             />
           </div>

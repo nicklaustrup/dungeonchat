@@ -18,6 +18,7 @@ const TokenManager = ({
   onTokenCreated,
   onTokenUpdated,
   onTokenDeleted,
+  onTokenDeselect,
   onClose 
 }) => {
   const { user, firestore, storage } = useContext(FirebaseContext);
@@ -72,8 +73,10 @@ const TokenManager = ({
 
     try {
       // Convert size multiplier to pixel size structure
+      // Player tokens from staging area start at 0.5 x 0.5 (tiny size = 25x25px)
       const sizeMultiplier = tokenData.size || 1;
-      const pixelSize = sizeMultiplier * 50;
+      const baseSizeMultiplier = tokenData.type === 'pc' ? 0.5 : sizeMultiplier;
+      const pixelSize = baseSizeMultiplier * 50;
 
       const newToken = await tokenService.createToken(firestore, campaignId, mapId, {
         ...tokenData,
@@ -208,7 +211,13 @@ const TokenManager = ({
       <div className="token-manager-tabs">
         <button
           className={`tab-button ${activeView === 'staging' ? 'active' : ''}`}
-          onClick={() => setActiveView('staging')}
+          onClick={() => {
+            setActiveView('staging');
+            // Deselect token when switching to staging tab
+            if (selectedToken && onTokenDeselect) {
+              onTokenDeselect();
+            }
+          }}
         >
           📦 Staging ({stagingTokens.length})
         </button>
