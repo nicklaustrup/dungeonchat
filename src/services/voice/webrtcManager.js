@@ -218,21 +218,47 @@ export class WebRTCManager {
     try {
       const pc = this.connections.get(remoteUserId);
       if (!pc) {
-        console.error(`[WebRTC] No connection found for ${remoteUserId}`);
+        console.warn(`[WebRTC] No connection found for ${remoteUserId} when handling answer`);
         return;
       }
       
-      // Only set remote description if we're expecting an answer
+      // Check if we're in the correct state to receive an answer
       if (pc.signalingState !== 'have-local-offer') {
-        console.warn(`[WebRTC] Received answer from ${remoteUserId} but not in correct state (${pc.signalingState}), ignoring`);
+        console.warn(
+          `[WebRTC] Received answer from ${remoteUserId} but in wrong state: ` +
+          `${pc.signalingState} (expected: have-local-offer). Ignoring.`
+        );
         return;
       }
+      
+      // Additional check: if remoteDescription is already set, this is a duplicate
+      if (pc.remoteDescription && pc.remoteDescription.type === 'answer') {
+        console.warn(
+          `[WebRTC] Remote answer already set for ${remoteUserId}, ` +
+          `ignoring duplicate answer`
+        );
+        return;
+      }
+      
+      console.log(
+        `[WebRTC] Setting remote answer from ${remoteUserId}, ` +
+        `state: ${pc.signalingState}`
+      );
       
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
-      console.log(`[WebRTC] Handled answer from ${remoteUserId}`);
+      console.log(
+        `[WebRTC] Successfully handled answer from ${remoteUserId}, ` +
+        `new state: ${pc.signalingState}`
+      );
     } catch (error) {
-      console.error(`[WebRTC] Failed to handle answer from ${remoteUserId}:`, error);
-      if (this.onError) {
+      console.error(
+        `[WebRTC] Failed to handle answer from ${remoteUserId}:`,
+        error.name,
+        error.message
+      );
+      
+      // Don't report InvalidStateError to user - it's usually benign
+      if (error.name !== 'InvalidStateError' && this.onError) {
         this.onError('answer_handling_failed', error);
       }
     }

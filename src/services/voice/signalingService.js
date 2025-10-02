@@ -57,15 +57,32 @@ export class SignalingService {
   listenForOffers(campaignId, roomId, userId, callback) {
     const path = `voiceSignaling/${campaignId}/${roomId}/${userId}/offers`;
     const offersRef = ref(this.rtdb, path);
+    const startTime = Date.now();
     
     const listener = onChildAdded(offersRef, (snapshot) => {
       const fromUser = snapshot.key;
       const offer = snapshot.val();
+      
       if (offer && offer.sdp) {
+        // Ignore offers that existed before we started listening
+        // This prevents processing stale signals on reconnection
+        if (offer.timestamp && offer.timestamp < startTime) {
+          console.log(
+            `[Signaling] Ignoring stale offer from ${fromUser} ` +
+            `(age: ${startTime - offer.timestamp}ms)`
+          );
+          return;
+        }
+        
         console.log(`[Signaling] Received offer from ${fromUser}`);
         callback(fromUser, {
           type: offer.type,
           sdp: offer.sdp
+        });
+        
+        // Clean up the offer after processing to prevent re-processing
+        remove(snapshot.ref).catch(err => {
+          console.warn(`[Signaling] Failed to cleanup offer from ${fromUser}:`, err);
         });
       }
     });
@@ -80,15 +97,32 @@ export class SignalingService {
   listenForAnswers(campaignId, roomId, userId, callback) {
     const path = `voiceSignaling/${campaignId}/${roomId}/${userId}/answers`;
     const answersRef = ref(this.rtdb, path);
+    const startTime = Date.now();
     
     const listener = onChildAdded(answersRef, (snapshot) => {
       const fromUser = snapshot.key;
       const answer = snapshot.val();
+      
       if (answer && answer.sdp) {
+        // Ignore answers that existed before we started listening
+        // This prevents processing stale signals on reconnection
+        if (answer.timestamp && answer.timestamp < startTime) {
+          console.log(
+            `[Signaling] Ignoring stale answer from ${fromUser} ` +
+            `(age: ${startTime - answer.timestamp}ms)`
+          );
+          return;
+        }
+        
         console.log(`[Signaling] Received answer from ${fromUser}`);
         callback(fromUser, {
           type: answer.type,
           sdp: answer.sdp
+        });
+        
+        // Clean up the answer after processing to prevent re-processing
+        remove(snapshot.ref).catch(err => {
+          console.warn(`[Signaling] Failed to cleanup answer from ${fromUser}:`, err);
         });
       }
     });
