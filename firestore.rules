@@ -205,9 +205,30 @@ service cloud.firestore {
           allow read: if request.auth != null && 
             (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
              exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
-          // Only DM can create/update/delete shapes
+          
+          // Campaign members and DM can create shapes
+          allow create: if request.auth != null && 
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid))) &&
+            request.resource.data.createdBy == request.auth.uid;
+          
+          // Only creator or DM can update/delete shapes
+          allow update, delete: if request.auth != null && 
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             request.auth.uid == resource.data.createdBy);
+        }
+
+        // Shape previews for real-time collaborative feedback
+        match /shapePreviews/{userId} {
+          // Members and DM can read all previews
+          allow read: if request.auth != null && 
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
+          
+          // Users can only create/update/delete their own preview
           allow create, update, delete: if request.auth != null && 
-            request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+            request.auth.uid == userId &&
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
         }
 
         // Lights collection - Dynamic lighting system

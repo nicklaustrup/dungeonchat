@@ -28,6 +28,7 @@ import { pingService } from '../../../services/vtt/pingService';
 import { fogOfWarService } from '../../../services/vtt/fogOfWarService';
 import { drawingService } from '../../../services/vtt/drawingService';
 import { shapeService } from '../../../services/vtt/shapeService';
+import { shapePreviewService } from '../../../services/vtt/shapePreviewService';
 import { FirebaseContext } from '../../../services/FirebaseContext';
 import './MapCanvas.css';
 
@@ -115,6 +116,9 @@ function MapCanvas({
   
   // Ping state
   const [pings, setPings] = useState([]);
+  
+  // Shape preview state (for seeing other users' previews)
+  const [otherUsersPreviews, setOtherUsersPreviews] = useState([]);
   
   // Fog of War state
   const [fogData, setFogData] = useState(null);
@@ -247,6 +251,44 @@ function MapCanvas({
     }
     return pt;
   }, [snapToGrid, gMap?.gridSize]);
+
+  // Helper to snap point to nearest token center if within threshold
+  const snapToTokenCenter = useCallback((pt, snapThreshold = 30) => {
+    if (!tokens || tokens.length === 0) return pt;
+    
+    let closestToken = null;
+    let minDistance = snapThreshold;
+    
+    // Find closest token center within threshold
+    tokens.forEach(token => {
+      const tokenCenter = {
+        x: token.position.x,
+        y: token.position.y
+      };
+      
+      const dx = pt.x - tokenCenter.x;
+      const dy = pt.y - tokenCenter.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestToken = tokenCenter;
+      }
+    });
+    
+    // Return snapped position if found, otherwise original
+    return closestToken || pt;
+  }, [tokens]);
+
+  // Combined snap function: first try token snap, then grid snap
+  const smartSnapPoint = useCallback((pt) => {
+    // Try token snapping first (for targeting)
+    const tokenSnapped = snapToTokenCenter(pt);
+    if (tokenSnapped !== pt) return tokenSnapped;
+    
+    // Fall back to grid snapping if enabled
+    return maybeSnapPoint(pt);
+  }, [snapToTokenCenter, maybeSnapPoint]);
 
   // Clamp a token center position so the token stays fully on the map
   const clampTokenCenter = useCallback((pos, token) => {
@@ -495,6 +537,37 @@ function MapCanvas({
     return () => clearInterval(interval);
   }, [pings.length]);
 
+  // Subscribe to other users' shape previews for real-time feedback
+  useEffect(() => {
+    if (!firestore || !campaignId || !gMap?.id || !user?.uid) return;
+
+    const unsubscribe = shapePreviewService.subscribeToShapePreviews(
+      firestore,
+      campaignId,
+      gMap.id,
+      user.uid,
+      (previews) => {
+        setOtherUsersPreviews(previews);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+      // Clear own preview on unmount
+      shapePreviewService.clearPreview(firestore, campaignId, gMap.id, user.uid)
+        .catch(err => console.debug('Error clearing preview on unmount:', err));
+    };
+  }, [firestore, campaignId, gMap?.id, user?.uid]);
+
+  // Clear shape preview when tool changes
+  useEffect(() => {
+    if (!firestore || !campaignId || !gMap?.id || !user?.uid) return;
+    if (!['circle', 'rectangle', 'cone', 'line'].includes(activeTool)) {
+      shapePreviewService.clearPreview(firestore, campaignId, gMap.id, user.uid)
+        .catch(err => console.debug('Error clearing preview:', err));
+    }
+  }, [activeTool, firestore, campaignId, gMap?.id, user?.uid]);
+
   const handleWheel = (e) => {
     e.evt.preventDefault();
 
@@ -621,7 +694,7 @@ function MapCanvas({
           return; // Ignore right-clicks
         }
         // Place the light at clicked position
-        const position = maybeSnapPoint({ x: mapX, y: mapY });
+        const position = smartSnapPoint({ x: mapX, y: mapY });
         createLight({
           ...placingLight,
           position
@@ -635,7 +708,7 @@ function MapCanvas({
         return;
       } else if (['circle','rectangle','cone','line'].includes(activeTool)) {
         if (!shapeStart && e.evt.button !== 2) {
-          setShapeStart(maybeSnapPoint({ x: mapX, y: mapY }));
+          setShapeStart(smartSnapPoint({ x: mapX, y: mapY }));
         } else if (shapeStart && e.evt.button !== 2) {
           const end = maybeSnapPoint({ x: mapX, y: mapY });
           try {
@@ -723,22 +796,40 @@ function MapCanvas({
       
       setRulerEnd({ x: endX, y: endY });
     } else if (['circle','rectangle','cone','line'].includes(activeTool) && shapeStart) {
-      const end = maybeSnapPoint({ x: mapX, y: mapY });
+      const end = smartSnapPoint({ x: mapX, y: mapY });
+      let preview = null;
+      
       if (activeTool === 'circle') {
         const dx = end.x - shapeStart.x;
         const dy = end.y - shapeStart.y;
         const radius = Math.sqrt(dx*dx + dy*dy);
-        setShapePreview({ type: 'circle', geometry: { x: shapeStart.x, y: shapeStart.y, radius } });
+        preview = { type: 'circle', geometry: { x: shapeStart.x, y: shapeStart.y, radius }, color: shapeColor, opacity: shapeOpacity * 0.5 };
       } else if (activeTool === 'rectangle') {
-        setShapePreview({ type: 'rectangle', geometry: { x: shapeStart.x, y: shapeStart.y, width: end.x - shapeStart.x, height: end.y - shapeStart.y } });
+        preview = { type: 'rectangle', geometry: { x: shapeStart.x, y: shapeStart.y, width: end.x - shapeStart.x, height: end.y - shapeStart.y }, color: shapeColor, opacity: shapeOpacity * 0.5 };
       } else if (activeTool === 'cone') {
         const dx = end.x - shapeStart.x;
         const dy = end.y - shapeStart.y;
         const length = Math.sqrt(dx*dx + dy*dy);
         const direction = (Math.atan2(dy, dx) * 180) / Math.PI;
-        setShapePreview({ type: 'cone', geometry: { x: shapeStart.x, y: shapeStart.y, direction, length, angle: 60 } });
+        preview = { type: 'cone', geometry: { x: shapeStart.x, y: shapeStart.y, direction, length, angle: 60 }, color: shapeColor, opacity: shapeOpacity * 0.5 };
       } else if (activeTool === 'line') {
-        setShapePreview({ type: 'line', geometry: { x1: shapeStart.x, y1: shapeStart.y, x2: end.x, y2: end.y } });
+        preview = { type: 'line', geometry: { x1: shapeStart.x, y1: shapeStart.y, x2: end.x, y2: end.y }, color: shapeColor, opacity: shapeOpacity * 0.5 };
+      }
+      
+      if (preview) {
+        setShapePreview(preview);
+        
+        // Broadcast preview to other users
+        if (user?.uid && user?.displayName && firestore && campaignId && gMap?.id) {
+          shapePreviewService.updateShapePreview(
+            firestore,
+            campaignId,
+            gMap.id,
+            user.uid,
+            user.displayName,
+            preview
+          ).catch(err => console.debug('Error updating shape preview:', err));
+        }
       }
     }
   };
@@ -1523,6 +1614,33 @@ function MapCanvas({
             }
             return null;
           })()}
+
+          {/* Other users' shape previews */}
+          {otherUsersPreviews.map(preview => {
+            if (preview.shapeType === 'circle') {
+              return <Circle key={preview.userId} x={preview.geometry.x} y={preview.geometry.y} radius={preview.geometry.radius} stroke={preview.color} strokeWidth={2} dash={[6,4]} opacity={preview.opacity * 0.6} listening={false} />;
+            }
+            if (preview.shapeType === 'rectangle') {
+              const { x,y,width,height } = preview.geometry;
+              return <Rect key={preview.userId} x={x} y={y} width={width} height={height} stroke={preview.color} strokeWidth={2} dash={[6,4]} opacity={preview.opacity * 0.6} listening={false} />;
+            }
+            if (preview.shapeType === 'line') {
+              const { x1,y1,x2,y2 } = preview.geometry;
+              return <Line key={preview.userId} points={[x1,y1,x2,y2]} stroke={preview.color} strokeWidth={3} dash={[6,4]} opacity={preview.opacity * 0.6} listening={false} />;
+            }
+            if (preview.shapeType === 'cone') {
+              const { x,y,direction,length,angle } = preview.geometry;
+              const half = (angle || 60)/2;
+              const startAngle = (direction - half) * (Math.PI/180);
+              const endAngle = (direction + half) * (Math.PI/180);
+              const x2 = x + Math.cos(startAngle) * length;
+              const y2 = y + Math.sin(startAngle) * length;
+              const x3 = x + Math.cos(endAngle) * length;
+              const y3 = y + Math.sin(endAngle) * length;
+              return <Line key={preview.userId} points={[x,y,x2,y2,x3,y3]} stroke={preview.color} strokeWidth={2} dash={[6,4]} opacity={preview.opacity * 0.6} closed listening={false} />;
+            }
+            return null;
+          })}
           {/* Pen strokes with fade */}
           {drawings.filter(d => d.type === 'pen').map(drawing => {
             const flatPoints = drawing.points.flatMap(p => [p.x, p.y]);
