@@ -120,6 +120,8 @@ export const mapService = {
    * @returns {Promise<void>}
    */
   async setActiveMap(firestore, campaignId, mapId) {
+    const { doc, updateDoc } = await import('firebase/firestore');
+    
     // First, deactivate all maps
     const maps = await this.getMaps(firestore, campaignId);
     const updatePromises = maps.map(map => {
@@ -132,6 +134,10 @@ export const mapService = {
 
     // Then activate the selected map
     await this.updateMap(firestore, campaignId, mapId, { isActive: true });
+    
+    // Update the campaign's activeMapId so players can see it
+    const campaignRef = doc(firestore, 'campaigns', campaignId);
+    await updateDoc(campaignRef, { activeMapId: mapId });
   },
 
   /**

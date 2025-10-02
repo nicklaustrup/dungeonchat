@@ -117,35 +117,51 @@ function VTTSession() {
     };
   }, []);
 
-  // Load campaign and check DM status
+  // Load campaign and check DM status with real-time sync
   useEffect(() => {
-    const loadCampaign = async () => {
-      if (!campaignId || !user || !firestore) return;
+    if (!campaignId || !user || !firestore) return;
 
+    let unsubscribe;
+    
+    const setupCampaignListener = async () => {
       try {
-        const { doc, getDoc } = await import('firebase/firestore');
+        const { doc, onSnapshot } = await import('firebase/firestore');
         const campaignRef = doc(firestore, 'campaigns', campaignId);
-        const campaignSnap = await getDoc(campaignRef);
-
-        if (campaignSnap.exists()) {
-          const campaignData = { id: campaignSnap.id, ...campaignSnap.data() };
-          setCampaign(campaignData);
-          setIsUserDM(campaignData.dmId === user.uid);
-          
-          // Load active map
-          if (campaignData.activeMapId) {
-            const map = await mapService.getMap(firestore, campaignId, campaignData.activeMapId);
-            setActiveMap(map);
+        
+        // Subscribe to real-time campaign updates
+        unsubscribe = onSnapshot(campaignRef, async (snapshot) => {
+          if (snapshot.exists()) {
+            const campaignData = { id: snapshot.id, ...snapshot.data() };
+            setCampaign(campaignData);
+            setIsUserDM(campaignData.dmId === user.uid);
+            
+            // Load active map when it changes
+            if (campaignData.activeMapId) {
+              const map = await mapService.getMap(firestore, campaignId, campaignData.activeMapId);
+              setActiveMap(map);
+            } else {
+              setActiveMap(null);
+            }
           }
-        }
+          setLoading(false);
+        }, (err) => {
+          console.error('Error in campaign listener:', err);
+          setLoading(false);
+        });
       } catch (err) {
-        console.error('Error loading campaign:', err);
-      } finally {
+        console.error('Error setting up campaign listener:', err);
         setLoading(false);
       }
     };
 
-    loadCampaign();
+    setupCampaignListener();
+    
+    // Cleanup listener on unmount
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [campaignId, user, firestore]);
 
   // Auto-create player tokens for players with character sheets
