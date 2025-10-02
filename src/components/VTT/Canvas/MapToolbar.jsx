@@ -63,17 +63,13 @@ const MapToolbar = ({
         { id: 'ping', icon: FiCrosshair, label: 'Ping', description: 'Alt+Click to ping' },
         { id: 'pen', icon: FiEdit2, label: 'Pen', description: 'Draw temporary marks' },
         { id: 'arrow', icon: FiArrowRight, label: 'Arrow', description: 'Point to locations' },
+        // Ruler and shape tools available to all players
+        { id: 'ruler', icon: FiCrosshair, label: 'Ruler', description: 'Measure distance in grid squares' },
+        { id: 'circle', icon: FiCircle, label: 'Circle', description: 'Draw circle (AOE radius)' },
+        { id: 'rectangle', icon: FiSquare, label: 'Rectangle', description: 'Draw rectangle area' },
+        { id: 'cone', icon: FiTriangle, label: 'Cone', description: 'Draw cone (breath / spell)' },
+        { id: 'line', icon: FiMinus, label: 'Line', description: 'Draw line / wall' },
     ];
-
-    // Add ruler tool for DM
-    if (isDM) {
-        tools.push({ id: 'ruler', icon: FiCrosshair, label: 'Ruler', description: 'Measure distance in grid squares' });
-        // Shape tools
-        tools.push({ id: 'circle', icon: FiCircle, label: 'Circle', description: 'Draw circle (AOE radius)' });
-        tools.push({ id: 'rectangle', icon: FiSquare, label: 'Rectangle', description: 'Draw rectangle area' });
-        tools.push({ id: 'cone', icon: FiTriangle, label: 'Cone', description: 'Draw cone (breath / spell)' });
-        tools.push({ id: 'line', icon: FiMinus, label: 'Line', description: 'Draw line / wall' });
-    }
 
     // Handle dragging
     const handleMouseDown = (e) => {
