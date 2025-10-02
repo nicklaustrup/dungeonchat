@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { FirebaseContext } from '../../../services/FirebaseContext';
 import { mapService } from '../../../services/vtt/mapService';
-import { FiMap, FiEdit2, FiTrash2, FiEye, FiPlus } from 'react-icons/fi';
+import { FiMap, FiEdit2, FiTrash2, FiEye, FiPlus, FiUpload } from 'react-icons/fi';
 import './MapLibrary.css';
 
 /**
@@ -9,11 +9,16 @@ import './MapLibrary.css';
  * Displays all saved maps for a campaign
  */
 function MapLibrary({ campaignId, onSelectMap, onEditMap, onDeleteMap, onCreateNew }) {
-  const { firestore } = useContext(FirebaseContext);
+  const { firestore, storage, user } = useContext(FirebaseContext);
   const [maps, setMaps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deletingMapId, setDeletingMapId] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Load maps
   useEffect(() => {
@@ -71,6 +76,114 @@ function MapLibrary({ campaignId, onSelectMap, onEditMap, onDeleteMap, onCreateN
     }
   };
 
+  const handleFileUpload = useCallback(async (file) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select an image file (PNG, JPG, or WebP)');
+      return;
+    }
+
+    // Validate file size (max 20MB)
+    if (file.size > 20 * 1024 * 1024) {
+      setUploadError('File size must be less than 20MB');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadProgress(0);
+
+    try {
+      console.log('Starting map upload...', { fileName: file.name, campaignId });
+
+      // Upload image to storage
+      const result = await mapService.uploadMapImage(
+        storage,
+        file,
+        campaignId,
+        user.uid,
+        (progress) => setUploadProgress(progress)
+      );
+
+      console.log('Upload successful, creating map document...');
+
+      // Create map document in Firestore
+      const mapData = {
+        name: file.name.replace(/\.[^/.]+$/, ''), // Remove file extension
+        description: '',
+        imageUrl: result.downloadURL,
+        width: result.width,
+        height: result.height,
+        gridSize: 50,
+        gridColor: '#000000',
+        gridOpacity: 0.3,
+        gridEnabled: true,
+        createdBy: user.uid
+      };
+
+      const newMap = await mapService.createMap(firestore, campaignId, mapData);
+      console.log('Map created successfully:', newMap.id);
+
+      // Add to local state
+      setMaps((prevMaps) => [newMap, ...prevMaps]);
+      
+      // Show success message briefly
+      setTimeout(() => {
+        setUploadProgress(0);
+      }, 2000);
+
+    } catch (err) {
+      console.error('Upload error:', err);
+      let errorMessage = err.message || 'Failed to upload map';
+      
+      if (err.code === 'permission-denied') {
+        errorMessage = 'Permission denied. You must be the DM to upload maps.';
+      } else if (err.code === 'storage/unauthorized') {
+        errorMessage = 'Storage permission denied. Please check your permissions.';
+      }
+      
+      setUploadError(errorMessage);
+    } finally {
+      setIsUploading(false);
+    }
+  }, [storage, campaignId, user, firestore]);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  }, [handleFileUpload]);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (e) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  };
+
   if (loading) {
     return (
       <div className="map-library">
@@ -88,24 +201,94 @@ function MapLibrary({ campaignId, onSelectMap, onEditMap, onDeleteMap, onCreateN
   }
 
   return (
-    <div className="map-library">
+    <div 
+      className={`map-library ${isDragging ? 'dragging' : ''}`}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+    >
+      {/* Drag and drop overlay */}
+      {isDragging && (
+        <div className="drag-overlay">
+          <div className="drag-overlay-content">
+            <FiUpload className="drag-icon" />
+            <p>Drop image here to upload</p>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        style={{ display: 'none' }}
+      />
+
       <div className="library-header">
         <h2 className="library-title">
           <FiMap /> Map Library
         </h2>
-        {onCreateNew && (
-          <button className="create-map-button" onClick={onCreateNew}>
-            <FiPlus /> Create New Map
+        <div className="header-actions">
+          <button 
+            className="upload-map-button" 
+            onClick={handleUploadClick}
+            disabled={isUploading}
+            title="Upload a map image"
+          >
+            <FiUpload /> Upload Map
           </button>
-        )}
+          {onCreateNew && (
+            <button 
+              className="create-map-button" 
+              onClick={onCreateNew}
+              disabled
+              title="Coming soon - This feature is under development"
+            >
+              <FiPlus /> Create New Map
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Upload status messages */}
+      {uploadError && (
+        <div className="upload-error">
+          {uploadError}
+          <button onClick={() => setUploadError(null)}>×</button>
+        </div>
+      )}
+      {isUploading && (
+        <div className="upload-status">
+          <div className="upload-progress-bar">
+            <div 
+              className="upload-progress-fill" 
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+          <span className="upload-progress-text">
+            Uploading... {Math.round(uploadProgress)}%
+          </span>
+        </div>
+      )}
+      {uploadProgress === 100 && !isUploading && (
+        <div className="upload-success">
+          Map uploaded successfully!
+        </div>
+      )}
 
       {maps.length === 0 ? (
         <div className="library-empty">
           <FiMap className="empty-icon" />
           <p>No maps yet</p>
           {onCreateNew && (
-            <button className="create-map-button" onClick={onCreateNew}>
+            <button 
+              className="create-map-button" 
+              onClick={onCreateNew}
+              disabled
+              title="Coming soon - This feature is under development"
+            >
               <FiPlus /> Create Your First Map
             </button>
           )}

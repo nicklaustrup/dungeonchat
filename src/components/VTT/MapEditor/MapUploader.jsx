@@ -11,15 +11,34 @@ function MapUploader({ onUpload, isUploading, disabled }) {
   const [preview, setPreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const onDrop = useCallback((acceptedFiles) => {
+  const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
+    if (rejectedFiles.length > 0) {
+      const rejection = rejectedFiles[0];
+      console.error('File rejected:', rejection);
+      
+      if (rejection.errors) {
+        rejection.errors.forEach(err => {
+          console.error('Rejection reason:', err.code, err.message);
+        });
+      }
+      
+      alert('File rejected. Please ensure the file is an image (PNG, JPG, or WebP) and under 20MB.');
+      return;
+    }
+
     if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
+      console.log('File accepted:', file.name, file.type, file.size);
       setSelectedFile(file);
       
       // Create preview
       const reader = new FileReader();
       reader.onload = () => {
         setPreview(reader.result);
+      };
+      reader.onerror = () => {
+        console.error('Failed to read file for preview');
+        alert('Failed to read file. Please try another image.');
       };
       reader.readAsDataURL(file);
     }

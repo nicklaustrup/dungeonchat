@@ -50,6 +50,25 @@ function MapEditor({ campaignId, existingMap, onSave, onCancel }) {
     setError(null);
     
     try {
+      console.log('Starting map upload...', { 
+        fileName: file.name, 
+        fileSize: file.size, 
+        campaignId,
+        userId: user?.uid 
+      });
+
+      if (!storage) {
+        throw new Error('Firebase Storage is not initialized');
+      }
+
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      if (!campaignId) {
+        throw new Error('Campaign ID is missing');
+      }
+
       const result = await mapService.uploadMapImage(
         storage, 
         file, 
@@ -58,6 +77,8 @@ function MapEditor({ campaignId, existingMap, onSave, onCancel }) {
         (progress) => setUploadProgress(progress)
       );
       
+      console.log('Upload successful:', result);
+
       setMap({
         imageUrl: result.downloadURL,
         width: result.width,
@@ -70,7 +91,19 @@ function MapEditor({ campaignId, existingMap, onSave, onCancel }) {
       
     } catch (err) {
       console.error('Upload error:', err);
-      setError(err.message || 'Failed to upload map image');
+      
+      let errorMessage = err.message || 'Failed to upload map image';
+      
+      // Provide more helpful error messages based on error codes
+      if (err.code === 'storage/unauthorized') {
+        errorMessage = 'Permission denied. You may not have access to upload maps for this campaign.';
+      } else if (err.code === 'storage/canceled') {
+        errorMessage = 'Upload was canceled.';
+      } else if (err.code === 'storage/unknown') {
+        errorMessage = 'An unknown error occurred during upload. Please try again.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -180,6 +213,7 @@ function MapEditor({ campaignId, existingMap, onSave, onCancel }) {
           {!map && (
             <div className="editor-section">
               <h2 className="section-title">Upload Map</h2>
+              {error && <div className="error-message" style={{ marginBottom: '16px' }}>{error}</div>}
               <MapUploader 
                 onUpload={handleFileUpload}
                 isUploading={isUploading}
