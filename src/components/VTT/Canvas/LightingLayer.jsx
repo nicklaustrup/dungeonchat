@@ -37,12 +37,25 @@ const LightingLayer = ({
     return null;
   }
 
-  // Calculate darkness overlay opacity based on ambient light
-  const darknessOpacity = 1 - (globalLighting.ambientLight || 0.7);
+  // Calculate darkness overlay opacity based on ambient light (linear from 0 to 1)
+  // 0% ambient = 100% darkness (pitch black), 100% ambient = 0% darkness (full bright)
+  const ambientLevel = globalLighting.ambientLight ?? 0.5;
+  const darknessOpacity = Math.pow(1 - ambientLevel, 1.2); // Slight curve for more natural feel
   
-  // Determine fog type: daytime (ambient > 0.6) = gray fog, night/indoors = black darkness
-  const isDaytime = (globalLighting.ambientLight || 0.7) > 0.6;
-  const fogColor = isDaytime ? '#b0b0b0' : 'black'; // Light gray fog or darkness
+  // Smoothly transition fog color from black (dark) to gray (bright)
+  // Below 40% = pure black, 40-70% = transition, above 70% = gray fog
+  let fogColor;
+  if (ambientLevel < 0.4) {
+    fogColor = 'black';
+  } else if (ambientLevel < 0.7) {
+    // Smooth transition from black to gray
+    const transition = (ambientLevel - 0.4) / 0.3; // 0 to 1
+    const grayValue = Math.floor(transition * 176); // 0 to 176 (0 = black, #b0 = 176)
+    const hex = grayValue.toString(16).padStart(2, '0');
+    fogColor = `#${hex}${hex}${hex}`;
+  } else {
+    fogColor = '#b0b0b0'; // Light gray fog
+  }
 
   return (
     <Layer name="lighting-layer" listening={false}>

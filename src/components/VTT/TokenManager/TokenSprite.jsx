@@ -297,46 +297,27 @@ function TokenSprite({
         />
       )}
 
-      {/* Token name label with word wrap */}
-      {token.name && (() => {
-        // Calculate proper text dimensions with word wrapping
-        const maxWidth = Math.max(tokenSize * 1.8, 90); // Wider to accommodate longer names
-        const fontSize = 11;
-        const padding = 6;
-        // Estimate height based on name length (allow up to 3 lines)
-        const estimatedLines = Math.min(Math.ceil(token.name.length / 12), 3);
-        const lineHeight = fontSize * 1.2;
-        const textHeight = estimatedLines * lineHeight;
-        
-        return (
-          <>
-            {/* Dark background for text - covers multiple lines */}
-            <Rect
-              x={-maxWidth / 2 - padding}
-              y={tokenSize / 2 + 5}
-              width={maxWidth + padding * 2}
-              height={textHeight + padding * 2}
-              fill="#000"
-              opacity={0.75}
-              cornerRadius={4}
-              listening={false}
-            />
-            {/* Text element with word wrapping */}
-            <Text
-              text={token.name}
-              fontSize={fontSize}
-              fontStyle="bold"
-              fill="#fff"
-              align="center"
-              width={maxWidth}
-              wrap="word" // Enable word wrapping on word boundaries, not character boundaries
-              x={-maxWidth / 2}
-              y={tokenSize / 2 + 8}
-              listening={false}
-            />
-          </>
-        );
-      })()}
+      {/* Token name label - single line, no background */}
+      {token.name && (
+        <Text
+          text={token.name}
+          fontSize={11}
+          fontStyle="bold"
+          fill="#fff"
+          align="center"
+          width={Math.max(tokenSize * 4, 200)} // Wide enough for ~64 characters
+          ellipsis={true} // Show ellipsis if text is too long
+          wrap="none" // Keep on single line
+          x={-Math.max(tokenSize * 2, 100)}
+          y={tokenSize / 2 + 8}
+          listening={false}
+          shadowColor="#000"
+          shadowBlur={8}
+          shadowOpacity={0.9}
+          shadowOffsetX={0}
+          shadowOffsetY={0}
+        />
+      )}
 
       {/* HP Bar (if hp & maxHp defined) */}
       {token.maxHp != null && token.hp != null && token.maxHp > 0 && (

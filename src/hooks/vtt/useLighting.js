@@ -11,7 +11,7 @@ const useLighting = (firestore, campaignId, mapId, globalLightingFromMap = null)
   const [globalLighting, setGlobalLighting] = useState({
     enabled: globalLightingFromMap?.enabled ?? false,
     timeOfDay: globalLightingFromMap?.timeOfDay ?? 12.0,
-    ambientLight: globalLightingFromMap?.ambientLight ?? 0.7,
+    ambientLight: globalLightingFromMap?.ambientLight ?? 0.5,
     outdoorLighting: globalLightingFromMap?.outdoorLighting ?? true
   });
   const [loading, setLoading] = useState(true);
@@ -22,7 +22,7 @@ const useLighting = (firestore, campaignId, mapId, globalLightingFromMap = null)
       setGlobalLighting({
         enabled: globalLightingFromMap.enabled ?? false,
         timeOfDay: globalLightingFromMap.timeOfDay ?? 12.0,
-        ambientLight: globalLightingFromMap.ambientLight ?? 0.7,
+        ambientLight: globalLightingFromMap.ambientLight ?? 0.5,
         outdoorLighting: globalLightingFromMap.outdoorLighting ?? true
       });
     }

@@ -26,7 +26,7 @@ export const shapeService = {
       visibleTo: visibleTo || 'all', // 'dm' or 'all'
       createdBy: createdBy,
       createdAt: Timestamp.now(),
-      expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 10000) // 10 seconds for temporary
+      expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 13000) // 13 seconds for temporary (3s visible + 10s fade)
     };
     
     const docRef = await addDoc(shapesRef, shapeData);
@@ -53,7 +53,7 @@ export const shapeService = {
       visibleTo: visibleTo || 'all',
       createdBy: createdBy,
       createdAt: Timestamp.now(),
-      expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 10000)
+      expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 13000)
     };
     
     const docRef = await addDoc(shapesRef, shapeData);
@@ -81,7 +81,7 @@ export const shapeService = {
       visibleTo: visibleTo || 'all',
       createdBy: createdBy,
       createdAt: Timestamp.now(),
-      expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 10000)
+      expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 13000)
     };
     
     const docRef = await addDoc(shapesRef, shapeData);
@@ -108,7 +108,7 @@ export const shapeService = {
       visibleTo: visibleTo || 'all',
       createdBy: createdBy,
       createdAt: Timestamp.now(),
-      expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 10000)
+      expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 13000)
     };
     
     const docRef = await addDoc(shapesRef, shapeData);
