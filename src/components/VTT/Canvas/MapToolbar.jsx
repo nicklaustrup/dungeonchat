@@ -149,7 +149,6 @@ const MapToolbar = ({
                     <button
                         className="toolbar-control-btn"
                         onClick={() => setShowSettings(!showSettings)}
-                        title="Settings"
                         aria-label="Toggle toolbar settings"
                         aria-pressed={showSettings}
                     >
@@ -158,7 +157,6 @@ const MapToolbar = ({
                     <button
                         className="toolbar-control-btn"
                         onClick={() => setIsMinimized(!isMinimized)}
-                        title={isMinimized ? "Expand" : "Minimize"}
                         aria-label={isMinimized ? "Expand toolbar" : "Minimize toolbar"}
                         aria-pressed={isMinimized}
                     >
@@ -177,7 +175,6 @@ const MapToolbar = ({
                                     key={tool.id}
                                     className={`toolbar-button ${activeTool === tool.id ? 'active' : ''}`}
                                     onClick={() => onToolChange(tool.id)}
-                                    title={tool.description}
                                     aria-label={`${tool.label} - ${tool.description}`}
                                     aria-pressed={activeTool === tool.id}
                                 >
@@ -190,7 +187,6 @@ const MapToolbar = ({
                             <button
                                 className="toolbar-button"
                                 onClick={() => onOpenGridConfig?.()}
-                                title="Grid Settings"
                                 aria-label="Open Grid Configuration Settings"
                             >
                                 <FiGrid size={20} />
@@ -263,7 +259,6 @@ const MapToolbar = ({
                                             <button
                                                 className="clear-rulers-btn"
                                                 onClick={() => onClearPinnedRulers?.()}
-                                                title="Clear all pinned measurements"
                                             >
                                                 Clear {pinnedRulersCount} Pinned Ruler{pinnedRulersCount !== 1 ? 's' : ''}
                                             </button>
@@ -325,7 +320,6 @@ const MapToolbar = ({
                                             <button
                                                 className="clear-rulers-btn"
                                                 onClick={() => onClearTempShapes?.()}
-                                                title="Clear temporary shapes"
                                             >
                                                 Clear Temp Shapes
                                             </button>

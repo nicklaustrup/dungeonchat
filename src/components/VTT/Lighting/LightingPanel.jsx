@@ -112,7 +112,6 @@ const LightingPanel = ({
             <button
               className={`toggle-button ${globalLighting.enabled ? 'active' : ''}`}
               onClick={handleToggleLighting}
-              title={globalLighting.enabled ? 'Disable lighting' : 'Enable lighting'}
             >
               {globalLighting.enabled ? '🔆 ON' : '🌑 OFF'}
             </button>
@@ -178,7 +177,6 @@ const LightingPanel = ({
                   flicker: true,
                   falloff: 'realistic'
                 })}
-                title="Click to place torch"
               >
                 🔥<br/>Torch
               </button>
@@ -192,7 +190,6 @@ const LightingPanel = ({
                   flicker: false,
                   falloff: 'realistic'
                 })}
-                title="Click to place lantern"
               >
                 🏮<br/>Lantern
               </button>
@@ -206,7 +203,6 @@ const LightingPanel = ({
                   flicker: true,
                   falloff: 'realistic'
                 })}
-                title="Click to place candle"
               >
                 🕯️<br/>Candle
               </button>
@@ -220,7 +216,6 @@ const LightingPanel = ({
                   flicker: false,
                   falloff: 'realistic'
                 })}
-                title="Click to place light spell"
               >
                 ✨<br/>Light Spell
               </button>
@@ -234,7 +229,6 @@ const LightingPanel = ({
                   animated: true,
                   falloff: 'realistic'
                 })}
-                title="Click to place magical light"
               >
                 🔵<br/>Magical
               </button>
@@ -248,7 +242,6 @@ const LightingPanel = ({
                   animated: true,
                   falloff: 'realistic'
                 })}
-                title="Click to place purple magical light"
               >
                 🟣<br/>Purple
               </button>
@@ -264,7 +257,6 @@ const LightingPanel = ({
               <button
                 className="add-button"
                 onClick={handleCreateNew}
-                title="Add light source"
               >
                 + Add Light
               </button>
@@ -298,14 +290,12 @@ const LightingPanel = ({
                       <button
                         className="icon-button"
                         onClick={() => handleEditLight(light)}
-                        title="Edit light"
                       >
                         🔧
                       </button>
                       <button
                         className="icon-button delete"
                         onClick={() => handleDeleteLight(light.id)}
-                        title="Delete light"
                       >
                         🗑️
                       </button>

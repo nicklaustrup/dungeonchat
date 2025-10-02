@@ -1,6 +1,13 @@
 /**
  * Shape Service
- * Manages shape drawings (circles, rectangles, cones, lines) on maps
+ * Manages shape drawings (      color: color || '#ffff00',
+      opacity: opacity || 0.8,
+      persistent: persistent || false,
+      visibleTo: visibleTo || 'all',
+      createdBy: createdBy,
+      createdByName: createdByName,
+      createdAt: Timestamp.now(),
+      expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 13000), rectangles, cones, lines) on maps
  * Supports persistent and temporary shapes with customizable colors and opacity
  */
 
@@ -10,7 +17,7 @@ export const shapeService = {
   /**
    * Create a circle shape
    */
-  async createCircle(firestore, campaignId, mapId, center, radius, color, opacity, persistent, visibleTo, createdBy) {
+  async createCircle(firestore, campaignId, mapId, center, radius, color, opacity, persistent, visibleTo, createdBy, createdByName = '') {
     const shapesRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'shapes');
     
     const shapeData = {
@@ -25,6 +32,7 @@ export const shapeService = {
       persistent: persistent || false,
       visibleTo: visibleTo || 'all', // 'dm' or 'all'
       createdBy: createdBy,
+      createdByName: createdByName,
       createdAt: Timestamp.now(),
       expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 13000) // 13 seconds for temporary (3s visible + 10s fade)
     };
@@ -36,7 +44,7 @@ export const shapeService = {
   /**
    * Create a rectangle shape
    */
-  async createRectangle(firestore, campaignId, mapId, topLeft, width, height, color, opacity, persistent, visibleTo, createdBy) {
+  async createRectangle(firestore, campaignId, mapId, topLeft, width, height, color, opacity, persistent, visibleTo, createdBy, createdByName = '') {
     const shapesRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'shapes');
     
     const shapeData = {
@@ -52,6 +60,7 @@ export const shapeService = {
       persistent: persistent || false,
       visibleTo: visibleTo || 'all',
       createdBy: createdBy,
+      createdByName: createdByName,
       createdAt: Timestamp.now(),
       expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 13000)
     };
@@ -63,7 +72,7 @@ export const shapeService = {
   /**
    * Create a cone/triangle shape
    */
-  async createCone(firestore, campaignId, mapId, origin, direction, length, angle, color, opacity, persistent, visibleTo, createdBy) {
+  async createCone(firestore, campaignId, mapId, origin, direction, length, angle, color, opacity, persistent, visibleTo, createdBy, createdByName = '') {
     const shapesRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'shapes');
     
     const shapeData = {
@@ -80,6 +89,7 @@ export const shapeService = {
       persistent: persistent || false,
       visibleTo: visibleTo || 'all',
       createdBy: createdBy,
+      createdByName: createdByName,
       createdAt: Timestamp.now(),
       expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 13000)
     };
@@ -91,7 +101,7 @@ export const shapeService = {
   /**
    * Create a line shape
    */
-  async createLine(firestore, campaignId, mapId, start, end, color, opacity, persistent, visibleTo, createdBy) {
+  async createLine(firestore, campaignId, mapId, start, end, color, opacity, persistent, visibleTo, createdBy, createdByName = '') {
     const shapesRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'shapes');
     
     const shapeData = {
@@ -107,6 +117,7 @@ export const shapeService = {
       persistent: persistent || false,
       visibleTo: visibleTo || 'all',
       createdBy: createdBy,
+      createdByName: createdByName,
       createdAt: Timestamp.now(),
       expiresAt: persistent ? null : Timestamp.fromMillis(Date.now() + 13000)
     };

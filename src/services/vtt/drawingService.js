@@ -15,8 +15,9 @@ export const drawingService = {
    * @param {Array} points - Array of {x, y} points
    * @param {string} color - Stroke color
    * @param {string} userId - User ID
+   * @param {string} username - User display name for attribution
    */
-  async createPenStroke(firestore, campaignId, mapId, points, color = '#ffffff', userId) {
+  async createPenStroke(firestore, campaignId, mapId, points, color = '#ffffff', userId, username = '') {
     const strokeId = uuidv4();
     const strokeRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'drawings', strokeId);
     
@@ -26,6 +27,7 @@ export const drawingService = {
       points,
       color,
       createdBy: userId,
+      createdByName: username,
       createdAt: serverTimestamp()
     };
 
@@ -52,8 +54,9 @@ export const drawingService = {
    * @param {Object} end - Ending point {x, y}
    * @param {string} color - Arrow color
    * @param {string} userId - User ID
+   * @param {string} username - User display name for attribution
    */
-  async createArrow(firestore, campaignId, mapId, start, end, color = '#ffff00', userId) {
+  async createArrow(firestore, campaignId, mapId, start, end, color = '#ffff00', userId, username = '') {
     const arrowId = uuidv4();
     const arrowRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'drawings', arrowId);
     
@@ -64,6 +67,7 @@ export const drawingService = {
       end,
       color,
       createdBy: userId,
+      createdByName: username,
       createdAt: serverTimestamp()
     };
 

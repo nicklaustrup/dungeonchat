@@ -57,12 +57,26 @@ const LightingLayer = ({
     timeBasedLight = 0.15; // Moonlight level
   }
   
+  // Determine time of day categories first (needed for calculations below)
+  const isNight = timeOfDay < 6 || timeOfDay > 20;
+  const isDusk = (timeOfDay >= 18 && timeOfDay <= 20) || (timeOfDay >= 6 && timeOfDay < 8);
+  
   // Blend time-based and manual ambient: manual ambient acts as a multiplier/override
   // At 100% manual: use mostly manual (indoor override: bright even at night)
   // At 0% manual: very dark (indoor without lights)
   // Middle values: blend outdoor time with indoor adjustment
   const blendWeight = Math.abs(manualAmbient - 0.5) * 2; // How far from neutral (0.5)
-  const effectiveAmbient = manualAmbient * blendWeight + timeBasedLight * (1 - blendWeight);
+  let effectiveAmbient = manualAmbient * blendWeight + timeBasedLight * (1 - blendWeight);
+  
+  // IMPORTANT: During night time (when time-based light is low), reduce effective ambient
+  // so player lights remain visible up to 70% ambient instead of cutting off at 40%
+  // This ensures torches/lanterns stay useful during nighttime even with higher ambient
+  if (isNight && timeBasedLight < 0.3) {
+    // Scale down the effective ambient during night to preserve light visibility
+    // At night with 70% manual ambient, this brings effective down to ~40% (lights still visible)
+    const nightReduction = 0.6; // Reduce by 40% during deep night
+    effectiveAmbient = effectiveAmbient * (1 - (1 - timeBasedLight / 0.3) * nightReduction);
+  }
   
   // Calculate darkness with slight curve for natural perception
   const darknessOpacity = Math.pow(1 - effectiveAmbient, 1.15);
@@ -70,8 +84,6 @@ const LightingLayer = ({
   // Fog color based on time of day and light level
   // Night = blue-black, Day = light gray, transitions smooth
   let fogColor;
-  const isNight = timeOfDay < 6 || timeOfDay > 20;
-  const isDusk = (timeOfDay >= 18 && timeOfDay <= 20) || (timeOfDay >= 6 && timeOfDay < 8);
   
   if (effectiveAmbient < 0.2) {
     // Very dark: pitch black or deep blue-black for night
@@ -120,14 +132,15 @@ const LightingLayer = ({
   return (
     <Layer name="lighting-layer" listening={false}>
       {/* Fog of War / Darkness overlay - render first as base layer */}
-      {darknessOpacity > 0 && (
+      {/* IMPORTANT: Darkness overlay must allow light sources to cut through at ALL darkness levels */}
+      {darknessOpacity > 0.01 && (
         <Rect
           x={0}
           y={0}
           width={mapWidth}
           height={mapHeight}
           fill={fogColor}
-          opacity={darknessOpacity}
+          opacity={Math.min(darknessOpacity, 0.95)}
           listening={false}
         />
       )}

@@ -615,8 +615,7 @@
 .preset-card:hover {
   border-color: #667eea;
   background: var(--bg-hover, #3a3a4e);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  /* Removed transform and box-shadow for cleaner UX */
 }
 
 .preset-card:active {
