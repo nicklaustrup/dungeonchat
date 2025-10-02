@@ -1,3 +1,11 @@
+## [1.4.0](https://github.com/nicklaustrup/dungeonchat/compare/v1.3.1...v1.4.0) (2025-10-02)
+
+
+### Features
+
+* Add drag-to-create for token types in Token Manager ([9f7d60a](https://github.com/nicklaustrup/dungeonchat/commit/9f7d60a6472aa7f143f53f74a3f01cdb69901bc7))
+* Comprehensive VTT improvements ([a293ac0](https://github.com/nicklaustrup/dungeonchat/commit/a293ac0fb1da1b8469600e7a4e3d62625effcd51))
+
 ## [1.3.1](https://github.com/nicklaustrup/dungeonchat/compare/v1.3.0...v1.3.1) (2025-10-02)
 
 
