@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { FaCog, FaTimes, FaCheck } from 'react-icons/fa';
+import { FaCog, FaTimes, FaCheck, FaMicrophone, FaVolumeUp } from 'react-icons/fa';
 import './VoiceSettings.css';
 
 export default function VoiceSettings({ 
@@ -15,10 +15,53 @@ export default function VoiceSettings({
   onSave 
 }) {
   const [localSettings, setLocalSettings] = useState(settings);
+  const [audioInputDevices, setAudioInputDevices] = useState([]);
+  const [audioOutputDevices, setAudioOutputDevices] = useState([]);
+  const [devicesLoading, setDevicesLoading] = useState(true);
 
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
+
+  // Enumerate available audio devices
+  useEffect(() => {
+    const getDevices = async () => {
+      try {
+        setDevicesLoading(true);
+        
+        // Request permission to access media devices
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        // Get all media devices
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        
+        // Filter audio input devices (microphones)
+        const inputDevices = devices.filter(
+          device => device.kind === 'audioinput'
+        );
+        setAudioInputDevices(inputDevices);
+        
+        // Filter audio output devices (speakers/headphones)
+        const outputDevices = devices.filter(
+          device => device.kind === 'audiooutput'
+        );
+        setAudioOutputDevices(outputDevices);
+        
+        console.log('[VoiceSettings] Found devices:', {
+          inputs: inputDevices.length,
+          outputs: outputDevices.length
+        });
+      } catch (error) {
+        console.error('[VoiceSettings] Error enumerating devices:', error);
+      } finally {
+        setDevicesLoading(false);
+      }
+    };
+    
+    if (isOpen) {
+      getDevices();
+    }
+  }, [isOpen]);
 
   const handleChange = (key, value) => {
     const newSettings = { ...localSettings, [key]: value };
@@ -60,6 +103,64 @@ export default function VoiceSettings({
         </div>
 
         <div className="voice-settings-content">
+          {/* Input Device (Microphone) */}
+          <div className="setting-group">
+            <label className="setting-label">
+              <span className="setting-name">
+                <FaMicrophone style={{ marginRight: '8px' }} />
+                Microphone
+              </span>
+              <span className="setting-description">
+                Select your input device
+              </span>
+            </label>
+            <div className="setting-control">
+              <select
+                value={localSettings.audioInputDeviceId || 'default'}
+                onChange={(e) => handleChange('audioInputDeviceId', e.target.value)}
+                className="setting-select"
+                disabled={devicesLoading}
+              >
+                <option value="default">Default Microphone</option>
+                {audioInputDevices.map((device) => (
+                  <option key={device.deviceId} value={device.deviceId}>
+                    {device.label || `Microphone ${device.deviceId.substring(0, 8)}`}
+                  </option>
+                ))}
+              </select>
+              {devicesLoading && <span className="device-loading">Loading...</span>}
+            </div>
+          </div>
+
+          {/* Output Device (Speakers) */}
+          <div className="setting-group">
+            <label className="setting-label">
+              <span className="setting-name">
+                <FaVolumeUp style={{ marginRight: '8px' }} />
+                Speakers
+              </span>
+              <span className="setting-description">
+                Select your output device
+              </span>
+            </label>
+            <div className="setting-control">
+              <select
+                value={localSettings.audioOutputDeviceId || 'default'}
+                onChange={(e) => handleChange('audioOutputDeviceId', e.target.value)}
+                className="setting-select"
+                disabled={devicesLoading}
+              >
+                <option value="default">Default Speakers</option>
+                {audioOutputDevices.map((device) => (
+                  <option key={device.deviceId} value={device.deviceId}>
+                    {device.label || `Speakers ${device.deviceId.substring(0, 8)}`}
+                  </option>
+                ))}
+              </select>
+              {devicesLoading && <span className="device-loading">Loading...</span>}
+            </div>
+          </div>
+
           {/* Audio Quality */}
           <div className="setting-group">
             <label className="setting-label">

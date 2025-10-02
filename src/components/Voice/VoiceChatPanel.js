@@ -23,7 +23,9 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
     audioQuality: 'medium',
     echoCancellation: true,
     noiseSuppression: true,
-    autoGainControl: true
+    autoGainControl: true,
+    audioInputDeviceId: 'default',
+    audioOutputDeviceId: 'default'
   });
   const hasNotifiedJoin = useRef(false);
   const {
