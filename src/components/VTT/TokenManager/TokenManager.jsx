@@ -265,7 +265,21 @@ const TokenManager = ({
             ) : (
               <div className="staged-token-list">
                 {stagingTokens.map((token) => (
-                  <div key={token.id} className="staged-token-item">
+                  <div 
+                    key={token.id} 
+                    className="staged-token-item"
+                    draggable={true}
+                    onDragStart={(e) => {
+                      // Set token data for drag operation
+                      e.dataTransfer.setData('application/json', JSON.stringify({
+                        tokenId: token.id,
+                        fromStaging: true,
+                        tokenData: token
+                      }));
+                      e.dataTransfer.effectAllowed = 'move';
+                      console.log('Started dragging staged token:', token.name);
+                    }}
+                  >
                     <div 
                       className="token-color-preview" 
                       style={{ backgroundColor: token.color }}

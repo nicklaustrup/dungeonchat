@@ -199,11 +199,18 @@
   border: 2px solid #3a3a4e;
   border-radius: 6px;
   transition: all 0.2s ease;
+  cursor: grab;
 }
 
 .staged-token-item:hover {
   border-color: #667eea;
   background: #323248;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.staged-token-item:active {
+  cursor: grabbing;
+  opacity: 0.7;
 }
 
 .token-color-preview {

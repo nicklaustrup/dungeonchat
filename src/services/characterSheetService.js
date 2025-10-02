@@ -11,9 +11,88 @@ import {
   deleteDoc,
   serverTimestamp,
   collection,
-  getDocs
+  getDocs,
+  query,
+  where
 } from 'firebase/firestore';
 import { createDefaultCharacterSheet } from '../models/CharacterSheet';
+
+/**
+ * Create a staged token for a new player character
+ * @param {Object} firestore - Firestore instance
+ * @param {string} campaignId - Campaign ID
+ * @param {string} userId - User ID
+ * @param {Object} character - Character sheet data
+ */
+async function createPlayerStagedToken(firestore, campaignId, userId, character) {
+  try {
+    // Get campaign to find active map (or any map to stage the token)
+    const campaignRef = doc(firestore, 'campaigns', campaignId);
+    const campaignSnap = await getDoc(campaignRef);
+    
+    if (!campaignSnap.exists()) {
+      console.warn('Campaign not found, cannot create staged token');
+      return;
+    }
+    
+    const campaignData = campaignSnap.data();
+    let targetMapId = campaignData.activeMapId;
+    
+    // If no active map, find the first available map
+    if (!targetMapId) {
+      const mapsRef = collection(firestore, 'campaigns', campaignId, 'vtt');
+      const mapsSnap = await getDocs(mapsRef);
+      if (!mapsSnap.empty) {
+        targetMapId = mapsSnap.docs[0].id;
+      } else {
+        console.warn('No maps found in campaign, cannot create staged token');
+        return;
+      }
+    }
+    
+    // Check if player already has a token for this character
+    const tokensRef = collection(firestore, 'campaigns', campaignId, 'vtt', targetMapId, 'tokens');
+    const q = query(tokensRef, where('characterId', '==', userId), where('type', '==', 'pc'));
+    const existingTokens = await getDocs(q);
+    
+    if (!existingTokens.empty) {
+      console.log('Player token already exists, skipping creation');
+      return;
+    }
+    
+    // Get user profile for photo
+    const profileRef = doc(firestore, 'userProfiles', userId);
+    const profileSnap = await getDoc(profileRef);
+    const profile = profileSnap.exists() ? profileSnap.data() : {};
+    
+    // Create staged player token using tokenService
+    const { tokenService } = await import('./vtt/tokenService');
+    
+    const playerToken = {
+      name: character.name,
+      type: 'pc',
+      imageUrl: profile.photoURL || '',
+      position: { x: 100, y: 100 },
+      size: { width: 50, height: 50 },
+      rotation: 0,
+      color: '#4a9eff',
+      characterId: userId,
+      ownerId: userId,
+      isHidden: false,
+      staged: true, // Start in staging area
+      hp: character.currentHitPoints || character.hitPointMaximum,
+      maxHp: character.hitPointMaximum,
+      statusEffects: [],
+      createdBy: userId
+    };
+    
+    await tokenService.createToken(firestore, campaignId, targetMapId, playerToken);
+    console.log(`Created staged token for player character: ${character.name}`);
+  } catch (error) {
+    console.error('Error creating staged token for character:', error);
+    // Don't throw - token creation failure shouldn't block character creation
+  }
+}
 
 /**
  * Create a new character sheet for a campaign member
@@ -60,6 +139,9 @@ export async function createCharacterSheet(firestore, campaignId, userId, charac
       characterLevel: finalCharacterSheet.level,
       updatedAt: serverTimestamp()
     });
+    
+    // Auto-create a staged token for the player
+    await createPlayerStagedToken(firestore, campaignId, userId, finalCharacterSheet);
     
     return { id: userId, ...finalCharacterSheet };
   } catch (error) {
