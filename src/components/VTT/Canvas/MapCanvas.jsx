@@ -633,7 +633,7 @@ function MapCanvas({
           console.error('Error placing light:', error);
         });
         return;
-      } else if (['circle','rectangle','cone','line'].includes(activeTool) && isDM) {
+      } else if (['circle','rectangle','cone','line'].includes(activeTool)) {
         if (!shapeStart && e.evt.button !== 2) {
           setShapeStart(maybeSnapPoint({ x: mapX, y: mapY }));
         } else if (shapeStart && e.evt.button !== 2) {
@@ -722,7 +722,7 @@ function MapCanvas({
       }
       
       setRulerEnd({ x: endX, y: endY });
-    } else if (['circle','rectangle','cone','line'].includes(activeTool) && isDM && shapeStart) {
+    } else if (['circle','rectangle','cone','line'].includes(activeTool) && shapeStart) {
       const end = maybeSnapPoint({ x: mapX, y: mapY });
       if (activeTool === 'circle') {
         const dx = end.x - shapeStart.x;
@@ -1211,8 +1211,8 @@ function MapCanvas({
           />
         )}
 
-  {/* Fog of War Layer (below tokens for players, above lighting for DM) - Enhanced for visibility */}
-        {!isDM && fogData?.enabled && layerVisibility.fog && (() => {
+  {/* Fog of War Layer (below tokens for players, above lighting for DM) - Always visible to players */}
+        {!isDM && fogData?.enabled && (() => {
           return (
           <Layer>
             {fogData.visibility && fogData.visibility.map((row, y) => 
@@ -1229,13 +1229,13 @@ function MapCanvas({
                       width={gMap.gridSize}
                       height={gMap.gridSize}
                       fill="black"
-                      opacity={0.95}
-                      stroke="#1a1a1a"
+                      opacity={0.98}
+                      stroke="#0a0a0a"
                       strokeWidth={0.5}
                       listening={false}
                       shadowColor="black"
-                      shadowBlur={3}
-                      shadowOpacity={0.8}
+                      shadowBlur={5}
+                      shadowOpacity={0.9}
                     />
                   );
                 }

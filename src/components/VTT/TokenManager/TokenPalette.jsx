@@ -159,6 +159,29 @@ const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, isCreating 
                   fromTokenType: true, // Flag to indicate this is a new token from type palette
                 };
                 
+                // Create visual drag image (colored circle) instead of HTML element
+                const canvas = document.createElement('canvas');
+                canvas.width = 60;
+                canvas.height = 60;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw circle token
+                ctx.beginPath();
+                ctx.arc(30, 30, 28, 0, Math.PI * 2);
+                ctx.fillStyle = template.color;
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Draw icon emoji in center
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'white';
+                ctx.fillText(type.icon, 30, 30);
+                
+                e.dataTransfer.setDragImage(canvas, 30, 30);
                 e.dataTransfer.setData('application/json', JSON.stringify(tokenData));
                 e.dataTransfer.effectAllowed = 'copy';
                 

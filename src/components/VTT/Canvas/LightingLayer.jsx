@@ -33,7 +33,7 @@ const LightingLayer = ({
     return () => cancelAnimationFrame(frameId);
   }, [lights, visible, globalLighting.enabled]);
 
-  if (!visible || !globalLighting.enabled) {
+  if (!globalLighting.enabled) {
     return null;
   }
 
