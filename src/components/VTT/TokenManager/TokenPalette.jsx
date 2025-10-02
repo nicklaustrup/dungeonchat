@@ -159,31 +159,35 @@ const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, isCreating 
                   fromTokenType: true, // Flag to indicate this is a new token from type palette
                 };
                 
-                // Create visual drag image (colored circle) instead of HTML element
-                const canvas = document.createElement('canvas');
-                canvas.width = 60;
-                canvas.height = 60;
-                const ctx = canvas.getContext('2d');
+                // Create HTML drag image (colored circle with icon)
+                const dragImage = document.createElement('div');
+                dragImage.style.width = '60px';
+                dragImage.style.height = '60px';
+                dragImage.style.borderRadius = '50%';
+                dragImage.style.backgroundColor = template.color;
+                dragImage.style.border = '3px solid white';
+                dragImage.style.display = 'flex';
+                dragImage.style.alignItems = 'center';
+                dragImage.style.justifyContent = 'center';
+                dragImage.style.fontSize = '24px';
+                dragImage.style.position = 'absolute';
+                dragImage.style.top = '-1000px';
+                dragImage.style.left = '-1000px';
+                dragImage.style.zIndex = '9999';
+                dragImage.textContent = type.icon;
                 
-                // Draw circle token
-                ctx.beginPath();
-                ctx.arc(30, 30, 28, 0, Math.PI * 2);
-                ctx.fillStyle = template.color;
-                ctx.fill();
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 3;
-                ctx.stroke();
+                // Append to body temporarily so it renders
+                document.body.appendChild(dragImage);
                 
-                // Draw icon emoji in center
-                ctx.font = 'bold 24px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = 'white';
-                ctx.fillText(type.icon, 30, 30);
-                
-                e.dataTransfer.setDragImage(canvas, 30, 30);
+                // Set as drag image
+                e.dataTransfer.setDragImage(dragImage, 30, 30);
                 e.dataTransfer.setData('application/json', JSON.stringify(tokenData));
                 e.dataTransfer.effectAllowed = 'copy';
+                
+                // Clean up after drag starts
+                setTimeout(() => {
+                  document.body.removeChild(dragImage);
+                }, 0);
                 
                 console.log('Started dragging token type:', type.label, tokenData);
               }}

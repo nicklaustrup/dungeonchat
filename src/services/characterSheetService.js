@@ -24,7 +24,7 @@ import { createDefaultCharacterSheet } from '../models/CharacterSheet';
  * @param {string} userId - User ID
  * @param {Object} character - Character sheet data
  */
-async function createPlayerStagedToken(firestore, campaignId, userId, character) {
+export async function createPlayerStagedToken(firestore, campaignId, userId, character) {
   try {
     // Get campaign to find active map (or any map to stage the token)
     const campaignRef = doc(firestore, 'campaigns', campaignId);

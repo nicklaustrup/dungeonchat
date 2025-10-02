@@ -69,6 +69,45 @@
   transition: all 0.2s ease;
   white-space: nowrap;
   min-width: 120px;
+  position: relative;
+}
+
+/* Generate Token Button */
+.generate-token-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: rgba(74, 144, 226, 0.8);
+  border: 1px solid rgba(74, 144, 226, 1);
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.generate-token-btn:hover:not(:disabled) {
+  background: rgba(74, 144, 226, 1);
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(74, 144, 226, 0.6);
+}
+
+.generate-token-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
 }
 
 .character-tab:hover {

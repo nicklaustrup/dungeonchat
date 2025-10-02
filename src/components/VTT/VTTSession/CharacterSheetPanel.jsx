@@ -7,6 +7,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { FirebaseContext } from '../../../services/FirebaseContext';
 import { CharacterSheet } from '../../CharacterSheet';
+import { createPlayerStagedToken } from '../../../services/characterSheetService';
 import './CharacterSheetPanel.css';
 
 function CharacterSheetPanel({ campaignId, isUserDM }) {
@@ -14,6 +15,7 @@ function CharacterSheetPanel({ campaignId, isUserDM }) {
   const [characters, setCharacters] = useState([]);
   const [selectedCharacterId, setSelectedCharacterId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [generatingTokenFor, setGeneratingTokenFor] = useState(null);
 
   // Load characters
   useEffect(() => {
@@ -46,6 +48,22 @@ function CharacterSheetPanel({ campaignId, isUserDM }) {
 
     return () => unsubscribe();
   }, [firestore, campaignId, user, isUserDM, selectedCharacterId]);
+
+  // Handle manual token generation for a character
+  const handleGenerateToken = async (character) => {
+    if (!isUserDM || generatingTokenFor) return;
+    
+    setGeneratingTokenFor(character.id);
+    try {
+      await createPlayerStagedToken(firestore, campaignId, character.id, character);
+      console.log(`Successfully generated token for ${character.name}`);
+    } catch (error) {
+      console.error('Failed to generate token:', error);
+      alert(`Failed to generate token for ${character.name}: ${error.message}`);
+    } finally {
+      setGeneratingTokenFor(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -88,6 +106,19 @@ function CharacterSheetPanel({ campaignId, isUserDM }) {
               <span className="character-class">
                 {char.class || 'Unknown'} {char.level || 1}
               </span>
+              {isUserDM && (
+                <button
+                  className="generate-token-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleGenerateToken(char);
+                  }}
+                  disabled={generatingTokenFor === char.id}
+                  title="Generate map token for this character"
+                >
+                  {generatingTokenFor === char.id ? '⏳' : '🎭'}
+                </button>
+              )}
             </button>
           ))}
         </div>
