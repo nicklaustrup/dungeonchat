@@ -22,8 +22,14 @@ const db = admin.firestore();
 // Import username availability checker (after admin init)
 const { checkUsernameAvailability } = require('./checkUsernameAvailability');
 
+// Import user deletion function
+const { deleteUser } = require('./deleteUser');
+
 // Export the username availability function
 exports.checkUsernameAvailability = checkUsernameAvailability;
+
+// Export the user deletion function
+exports.deleteUser = deleteUser;
 
 // DISABLED: Profanity filtering moved to client-side for user viewing preferences
 // Server-side filtering was removed to allow content freedom with user-controlled display filtering
