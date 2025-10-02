@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/nicklaustrup/dungeonchat/compare/v1.3.0...v1.3.1) (2025-10-02)
+
+
+### Bug Fixes
+
+* Active map not syncing between DM and players ([365e8ed](https://github.com/nicklaustrup/dungeonchat/commit/365e8ed3a4cbf63d1e2d8e382f1c9cb7d328ec46))
+
 ## [1.3.0](https://github.com/nicklaustrup/dungeonchat/compare/v1.2.0...v1.3.0) (2025-10-02)
 
 
