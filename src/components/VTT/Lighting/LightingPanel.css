@@ -99,8 +99,8 @@
 }
 
 .add-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  /* Removed transform and box-shadow for cleaner UX */
+  opacity: 0.9;
 }
 
 /* Control Groups */
@@ -148,7 +148,8 @@
 }
 
 .slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
+  /* Removed scale transform for cleaner UX */
+  cursor: grab;
 }
 
 .slider::-moz-range-thumb {
@@ -162,7 +163,8 @@
 }
 
 .slider::-moz-range-thumb:hover {
-  transform: scale(1.2);
+  /* Removed scale transform for cleaner UX */
+  cursor: grab;
 }
 
 /* Time Markers */

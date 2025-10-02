@@ -284,9 +284,14 @@ service cloud.firestore {
             (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
              exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           
-          // Only DM can create, update, and delete fog of war
-          allow create, update, delete: if request.auth != null && 
+          // DM can create and delete fog of war
+          allow create, delete: if request.auth != null && 
             request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+          
+          // Campaign members and DM can update fog (for auto-reveal when moving tokens)
+          allow update: if request.auth != null && 
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
         }
         
         // Drawings subcollection (pen strokes and arrows)

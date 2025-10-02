@@ -78,6 +78,10 @@ const LightingLayer = ({
     effectiveAmbient = effectiveAmbient * (1 - (1 - timeBasedLight / 0.3) * nightReduction);
   }
   
+  // CRITICAL: Cap minimum effective ambient at 2% to prevent complete darkness from disabling lights
+  // At 0% ambient slider, this ensures player lights still cut through (darkness at 98% not 100%)
+  effectiveAmbient = Math.max(effectiveAmbient, 0.02);
+  
   // Calculate darkness with slight curve for natural perception
   const darknessOpacity = Math.pow(1 - effectiveAmbient, 1.15);
   
