@@ -37,24 +37,84 @@ const LightingLayer = ({
     return null;
   }
 
-  // Calculate darkness overlay opacity based on ambient light (linear from 0 to 1)
-  // 0% ambient = 100% darkness (pitch black), 100% ambient = 0% darkness (full bright)
-  const ambientLevel = globalLighting.ambientLight ?? 0.5;
-  const darknessOpacity = Math.pow(1 - ambientLevel, 1.2); // Slight curve for more natural feel
+  // Calculate effective ambient light by blending time of day influence with manual ambient setting
+  const timeOfDay = globalLighting.timeOfDay ?? 12.0;
+  const manualAmbient = globalLighting.ambientLight ?? 0.5;
   
-  // Smoothly transition fog color from black (dark) to gray (bright)
-  // Below 40% = pure black, 40-70% = transition, above 70% = gray fog
+  // Time of Day provides a base lighting level (outdoors context)
+  let timeBasedLight = 0.5; // Default neutral
+  if (timeOfDay >= 8 && timeOfDay <= 18) {
+    // Full daylight (8am - 6pm): high base
+    timeBasedLight = 0.9;
+  } else if (timeOfDay >= 6 && timeOfDay < 8) {
+    // Sunrise (6am - 8am): transition from dark to bright
+    timeBasedLight = 0.3 + ((timeOfDay - 6) / 2) * 0.6; // 0.3 to 0.9
+  } else if (timeOfDay > 18 && timeOfDay <= 20) {
+    // Sunset (6pm - 8pm): transition from bright to dark
+    timeBasedLight = 0.9 - ((timeOfDay - 18) / 2) * 0.7; // 0.9 to 0.2
+  } else if (timeOfDay > 20 || timeOfDay < 6) {
+    // Night time (8pm - 6am): very dark with moonlight
+    timeBasedLight = 0.15; // Moonlight level
+  }
+  
+  // Blend time-based and manual ambient: manual ambient acts as a multiplier/override
+  // At 100% manual: use mostly manual (indoor override: bright even at night)
+  // At 0% manual: very dark (indoor without lights)
+  // Middle values: blend outdoor time with indoor adjustment
+  const blendWeight = Math.abs(manualAmbient - 0.5) * 2; // How far from neutral (0.5)
+  const effectiveAmbient = manualAmbient * blendWeight + timeBasedLight * (1 - blendWeight);
+  
+  // Calculate darkness with slight curve for natural perception
+  const darknessOpacity = Math.pow(1 - effectiveAmbient, 1.15);
+  
+  // Fog color based on time of day and light level
+  // Night = blue-black, Day = light gray, transitions smooth
   let fogColor;
-  if (ambientLevel < 0.4) {
-    fogColor = 'black';
-  } else if (ambientLevel < 0.7) {
-    // Smooth transition from black to gray
-    const transition = (ambientLevel - 0.4) / 0.3; // 0 to 1
-    const grayValue = Math.floor(transition * 176); // 0 to 176 (0 = black, #b0 = 176)
-    const hex = grayValue.toString(16).padStart(2, '0');
-    fogColor = `#${hex}${hex}${hex}`;
+  const isNight = timeOfDay < 6 || timeOfDay > 20;
+  const isDusk = (timeOfDay >= 18 && timeOfDay <= 20) || (timeOfDay >= 6 && timeOfDay < 8);
+  
+  if (effectiveAmbient < 0.2) {
+    // Very dark: pitch black or deep blue-black for night
+    fogColor = isNight ? '#050510' : '#000000';
+  } else if (effectiveAmbient < 0.35) {
+    // Dark: blue-black night or dark gray
+    fogColor = isNight ? '#0a0a18' : '#1a1a1a';
+  } else if (effectiveAmbient < 0.55) {
+    // Medium-low: transition zone
+    const progress = (effectiveAmbient - 0.35) / 0.2;
+    if (isNight) {
+      // Night: dark blue to gray-blue
+      const blue = Math.floor(24 + progress * 36); // 24 to 60
+      const other = Math.floor(10 + progress * 45); // 10 to 55
+      fogColor = `rgb(${other}, ${other}, ${blue})`;
+    } else {
+      // Day/indoor: dark gray to medium gray
+      const gray = Math.floor(26 + progress * 64); // 26 to 90
+      fogColor = `rgb(${gray}, ${gray}, ${gray})`;
+    }
+  } else if (effectiveAmbient < 0.75) {
+    // Medium-high: lighter tones
+    const progress = (effectiveAmbient - 0.55) / 0.2;
+    if (isDusk) {
+      // Dusk: warm gray-orange tones
+      const r = Math.floor(90 + progress * 50); // 90 to 140
+      const g = Math.floor(85 + progress * 45); // 85 to 130
+      const b = Math.floor(90 + progress * 30); // 90 to 120
+      fogColor = `rgb(${r}, ${g}, ${b})`;
+    } else if (isNight) {
+      // Night: blue-gray to silver
+      const r = Math.floor(55 + progress * 75); // 55 to 130
+      const g = Math.floor(55 + progress * 75); // 55 to 130
+      const b = Math.floor(60 + progress * 80); // 60 to 140
+      fogColor = `rgb(${r}, ${g}, ${b})`;
+    } else {
+      // Day: medium to light gray
+      const gray = Math.floor(90 + progress * 70); // 90 to 160
+      fogColor = `rgb(${gray}, ${gray}, ${gray})`;
+    }
   } else {
-    fogColor = '#b0b0b0'; // Light gray fog
+    // Very bright: light gray
+    fogColor = isDusk ? '#c8b8a8' : '#b0b0b0';
   }
 
   return (
@@ -119,6 +179,7 @@ const LightingLayer = ({
         return (
           <React.Fragment key={light.id}>
             {/* Light reveals area by cutting through fog/darkness */}
+            {/* Use stronger alpha values to ensure lights cut through even heavy darkness */}
             <Circle
               x={light.position.x}
               y={light.position.y}
@@ -130,8 +191,10 @@ const LightingLayer = ({
               fillRadialGradientColorStops={[
                 0,
                 'rgba(255, 255, 255, 1)',
-                0.6,
-                'rgba(255, 255, 255, 0.7)',
+                0.5,
+                'rgba(255, 255, 255, 0.9)',
+                0.8,
+                'rgba(255, 255, 255, 0.6)',
                 1,
                 'rgba(255, 255, 255, 0)'
               ]}
