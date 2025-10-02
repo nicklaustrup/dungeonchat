@@ -36,6 +36,19 @@ service cloud.firestore {
     
     // Campaign collection - new for campaign system
     match /campaigns/{campaignId} {
+      // Helper function: Check if user is the DM
+      function isDM() {
+        return request.auth != null && 
+          request.auth.uid == resource.data.dmId;
+      }
+      
+      // Helper function: Check if user is a campaign member or DM
+      function isMemberOrDM() {
+        return request.auth != null && 
+          (request.auth.uid == resource.data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
+      }
+      
       // Anyone can read public campaigns, members can read their campaigns
       allow read: if request.auth != null && 
         (resource.data.visibility == 'public' || 
@@ -68,24 +81,29 @@ service cloud.firestore {
       // Campaign channels subcollection
       match /channels/{channelId} {
         allow read: if request.auth != null && 
-          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
         allow write: if request.auth != null && 
           request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
           
         // Campaign channel messages
         match /messages/{messageId} {
           allow read: if request.auth != null && 
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           allow create: if request.auth != null && 
             request.auth.uid == request.resource.data.uid &&
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           // Allow message author to update/delete their own messages
           allow update, delete: if request.auth != null && 
             request.auth.uid == resource.data.uid &&
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           // Allow any campaign member to update reactions field only
           allow update: if request.auth != null && 
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)) &&
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid))) &&
             request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']) &&
             request.resource.data.keys().hasAll(resource.data.keys().removeAll(['reactions']));
         }
@@ -93,14 +111,16 @@ service cloud.firestore {
       
       // Campaign character sheets subcollection
       match /characters/{userId} {
-        // Campaign members can read all character sheets in the campaign
+        // Campaign members and DM can read all character sheets in the campaign
         allow read: if request.auth != null && 
-          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
         
         // Users can create/update their own character sheet if they're a campaign member
         allow create, update: if request.auth != null && 
           request.auth.uid == userId &&
-          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)) &&
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid))) &&
           request.auth.uid == request.resource.data.userId;
         
         // DM can update any character sheet in their campaign
@@ -115,9 +135,10 @@ service cloud.firestore {
       
       // Campaign session data subcollection (initiative tracker, session notes, etc.)
       match /sessions/{sessionDocId} {
-        // Campaign members can read all session data
+        // Campaign members and DM can read all session data
         allow read: if request.auth != null && 
-          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
         
         // DM can create, update, and delete all session data
         allow create, update, delete: if request.auth != null && 
@@ -125,7 +146,8 @@ service cloud.firestore {
         
         // Campaign members can contribute to certain session data (like adding to initiative)
         allow update: if request.auth != null && 
-          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)) &&
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid))) &&
           sessionDocId == 'initiative';
         
         // For individual session notes documents:
@@ -137,9 +159,10 @@ service cloud.firestore {
       
       // Campaign encounters subcollection (encounter templates and active encounters)
       match /encounters/{encounterId} {
-        // Campaign members can read all encounters
+        // Campaign members and DM can read all encounters
         allow read: if request.auth != null && 
-          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
         
         // DM can create, update, and delete encounters
         allow create, update, delete: if request.auth != null && 
@@ -148,9 +171,10 @@ service cloud.firestore {
       
       // Campaign schedule subcollection (sessions, milestones, events)
       match /schedule/{eventId} {
-        // Campaign members can read all scheduled events
+        // Campaign members and DM can read all scheduled events
         allow read: if request.auth != null && 
-          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
         
         // DM can create, update, and delete events
         allow create, update, delete: if request.auth != null && 
@@ -158,16 +182,18 @@ service cloud.firestore {
         
         // Campaign members can update availability field only
         allow update: if request.auth != null && 
-          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)) &&
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid))) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['availability']) &&
           request.resource.data.keys().hasAll(resource.data.keys().removeAll(['availability']));
       }
       
       // VTT Maps collection
       match /maps/{mapId} {
-        // Campaign members can read maps
+        // Campaign members and DM can read maps
         allow read: if request.auth != null && 
-          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
         
         // Only DM can create, update, and delete maps
         allow create, update, delete: if request.auth != null && 
@@ -175,9 +201,10 @@ service cloud.firestore {
 
         // Shapes drawn on a map (circles, rectangles, cones, lines)
         match /shapes/{shapeId} {
-          // Members can see shapes
+          // Members and DM can see shapes
           allow read: if request.auth != null && 
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           // Only DM can create/update/delete shapes
           allow create, update, delete: if request.auth != null && 
             request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
@@ -185,9 +212,10 @@ service cloud.firestore {
 
         // Lights collection - Dynamic lighting system
         match /lights/{lightId} {
-          // Campaign members can read lights
+          // Campaign members and DM can read lights
           allow read: if request.auth != null && 
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           // Only DM can create/update/delete lights
           allow create, update, delete: if request.auth != null && 
             request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
@@ -196,9 +224,10 @@ service cloud.firestore {
 
       // Ambient audio tracks for the campaign
       match /audio/{trackId} {
-        // Members can read the audio playlist
+        // Members and DM can read the audio playlist
         allow read: if request.auth != null && 
-          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
         // Only DM manages tracks
         allow create, update, delete: if request.auth != null && 
           request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
@@ -206,9 +235,10 @@ service cloud.firestore {
       
       // VTT Map Tokens collection (legacy)
       match /mapTokens/{mapId}/tokens/{tokenId} {
-        // Campaign members can read tokens
+        // Campaign members and DM can read tokens
         allow read: if request.auth != null && 
-          exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
         
         // Only DM can create, update, and delete tokens
         allow create, update, delete: if request.auth != null && 
@@ -219,9 +249,10 @@ service cloud.firestore {
       match /vtt/{mapId} {
         // Tokens subcollection
         match /tokens/{tokenId} {
-          // Campaign members can read tokens
+          // Campaign members and DM can read tokens
           allow read: if request.auth != null && 
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           
           // Only DM can create, update, and delete tokens
           allow create, update, delete: if request.auth != null && 
@@ -230,14 +261,16 @@ service cloud.firestore {
         
         // Pings subcollection (temporary map markers)
         match /pings/{pingId} {
-          // Campaign members can read pings
+          // Campaign members and DM can read pings
           allow read: if request.auth != null && 
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           
           // Campaign members can create and delete their own pings
           allow create: if request.auth != null && 
             request.auth.uid == request.resource.data.userId &&
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           
           allow delete: if request.auth != null && 
             (request.auth.uid == resource.data.userId || 
@@ -246,9 +279,10 @@ service cloud.firestore {
         
         // Fog of war subcollection
         match /fog/{fogDocId} {
-          // Campaign members can read fog of war
+          // Campaign members and DM can read fog of war
           allow read: if request.auth != null && 
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           
           // Only DM can create, update, and delete fog of war
           allow create, update, delete: if request.auth != null && 
@@ -257,14 +291,16 @@ service cloud.firestore {
         
         // Drawings subcollection (pen strokes and arrows)
         match /drawings/{drawingId} {
-          // Campaign members can read drawings
+          // Campaign members and DM can read drawings
           allow read: if request.auth != null && 
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           
           // Campaign members can create and delete their own drawings
           allow create: if request.auth != null && 
             request.auth.uid == request.resource.data.createdBy &&
-            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+            (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+             exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           
           allow delete: if request.auth != null && 
             (request.auth.uid == resource.data.createdBy || 
@@ -274,43 +310,62 @@ service cloud.firestore {
       
       // Voice rooms within campaigns
       match /voiceRooms/{roomId} {
-        // Special rule for demo campaigns - any authenticated user can access
+        // Helper function to check if user is campaign member
+        function isCampaignMember() {
+          return request.auth != null && 
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+        }
+        
+        // Helper function for demo campaigns
         function isDemoCampaign() {
           return campaignId.matches('test-campaign-.*');
         }
         
-        // Only campaign members can read voice room (or demo users)
+        // Campaign members can read voice rooms
         allow read: if request.auth != null && 
-          (isDemoCampaign() || exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
+          (isDemoCampaign() || isCampaignMember());
         
-        // Only DM can create/delete voice rooms (or any authenticated user for demo)
-        allow create, delete: if request.auth != null && 
-          (isDemoCampaign() || request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId);
+        // Campaign members can create voice rooms (not just DM)
+        allow create: if request.auth != null && 
+          (isDemoCampaign() || isCampaignMember());
         
-        // DM can update, others can update participant list (or any authenticated user for demo)
+        // Campaign members can update voice rooms (for joining/leaving)
         allow update: if request.auth != null && 
-          (isDemoCampaign() || request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId);
+          (isDemoCampaign() || isCampaignMember());
+        
+        // DM and room creator can delete voice rooms
+        allow delete: if request.auth != null && 
+          (isDemoCampaign() || 
+           request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           request.auth.uid == resource.data.createdBy);
         
         // Voice room participants
         match /participants/{userId} {
-          // Special rule for demo campaigns - any authenticated user can access
+          // Helper function to check if user is campaign member
+          function isCampaignMember() {
+            return request.auth != null && 
+              exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+          }
+          
+          // Helper function for demo campaigns
           function isDemoCampaign() {
             return campaignId.matches('test-campaign-.*');
           }
           
-          // Anyone in the voice room can read participants
+          // Campaign members can read participants
           allow read: if request.auth != null && 
-            (isDemoCampaign() || exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
+            (isDemoCampaign() || isCampaignMember());
           
-          // Users can add themselves as participants
+          // Campaign members can add themselves as participants
           allow create: if request.auth != null && 
             request.auth.uid == userId && 
-            (isDemoCampaign() || exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
+            (isDemoCampaign() || isCampaignMember());
           
           // Users can update their own participant data
-          allow update: if request.auth != null && request.auth.uid == userId;
+          allow update: if request.auth != null && 
+            request.auth.uid == userId;
           
-          // Users can remove themselves, DM can remove anyone (or anyone for demo)
+          // Users can remove themselves, DM can remove anyone
           allow delete: if request.auth != null && 
             (request.auth.uid == userId || 
              isDemoCampaign() ||
