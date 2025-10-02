@@ -129,14 +129,41 @@ const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, isCreating 
 
       <div className="palette-section">
         <label className="palette-label">Token Type</label>
+        <p className="drag-hint">💡 Drag a token type onto the map to instantly create it</p>
         <div className="token-type-grid">
           {tokenTypes.map((type) => (
             <button
               key={type.id}
-              className={`token-type-button ${selectedType === type.id ? 'selected' : ''}`}
+              className={`token-type-button ${selectedType === type.id ? 'selected' : ''} draggable-token-type`}
               onClick={() => handleTypeSelect(type)}
               disabled={isCreating}
-              title={type.label}
+              title={`${type.label} - Click to select or drag to create`}
+              draggable={!isCreating}
+              onDragStart={(e) => {
+                // Create default token template based on type
+                const defaultTokens = {
+                  pc: { name: 'Player', color: '#4a90e2', size: 1, hp: 20, maxHp: 20 },
+                  npc: { name: 'NPC', color: '#27ae60', size: 1, hp: 15, maxHp: 15 },
+                  monster: { name: 'Monster', color: '#e74c3c', size: 1, hp: 30, maxHp: 30 },
+                  enemy: { name: 'Enemy', color: '#c0392b', size: 0.5, hp: 10, maxHp: 10 },
+                  ally: { name: 'Ally', color: '#16a085', size: 1, hp: 15, maxHp: 15 },
+                  object: { name: 'Object', color: '#95a5a6', size: 1, hp: null, maxHp: null },
+                  hazard: { name: 'Hazard', color: '#f39c12', size: 1, hp: null, maxHp: null },
+                  marker: { name: 'Marker', color: '#9b59b6', size: 0.5, hp: null, maxHp: null },
+                };
+                
+                const template = defaultTokens[type.id];
+                const tokenData = {
+                  ...template,
+                  type: type.id,
+                  fromTokenType: true, // Flag to indicate this is a new token from type palette
+                };
+                
+                e.dataTransfer.setData('application/json', JSON.stringify(tokenData));
+                e.dataTransfer.effectAllowed = 'copy';
+                
+                console.log('Started dragging token type:', type.label, tokenData);
+              }}
             >
               <span className="token-type-icon">{type.icon}</span>
               <span className="token-type-label">{type.label}</span>

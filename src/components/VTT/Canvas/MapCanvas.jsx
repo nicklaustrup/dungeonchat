@@ -820,6 +820,58 @@ function MapCanvas({
     setStagePos({ x: 0, y: 0 });
   }, [setStageScale, setStagePos]);
 
+  // Handle drag-and-drop of tokens from Token Manager onto canvas
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }, []);
+
+  const handleDrop = useCallback(async (e) => {
+    e.preventDefault();
+    if (!isDM) return; // Only DM can create tokens this way
+    
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('application/json'));
+      
+      // Check if this is a token type being dragged (not a staged token)
+      if (data.fromTokenType) {
+        // Get drop position relative to canvas
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = (e.clientX - rect.left - stagePos.x) / stageScale;
+        const y = (e.clientY - rect.top - stagePos.y) / stageScale;
+        
+        // Auto-increment token name if multiple of same type exist
+        const existingTokens = tokens.filter(t => t.type === data.type);
+        const number = existingTokens.length + 1;
+        const tokenName = number > 1 ? `${data.name} ${number}` : data.name;
+        
+        // Create token at drop position
+        const pixelSize = data.size * 50;
+        await tokenService.createToken(firestore, campaignId, map.id, {
+          name: tokenName,
+          type: data.type,
+          color: data.color,
+          size: { width: pixelSize, height: pixelSize },
+          position: { x, y },
+          hp: data.hp,
+          maxHp: data.maxHp,
+          hidden: false,
+          staged: false, // Place directly on map
+          createdBy: user.uid,
+          createdAt: new Date()
+        });
+        
+        console.log(`[MapCanvas] Created ${data.type} token: ${tokenName} at (${Math.round(x)}, ${Math.round(y)})`);
+      } else if (data.fromStaging) {
+        // Handle staged token drop (existing functionality via Konva drag)
+        // This is handled by TokenSprite's drag-end event
+        console.log('[MapCanvas] Staged token drop - handled by TokenSprite');
+      }
+    } catch (err) {
+      console.error('[MapCanvas] Failed to handle token drop:', err);
+    }
+  }, [isDM, stagePos, stageScale, tokens, firestore, campaignId, map, user]);
+
   if (!gMap) {
     return (
       <div className="map-canvas-empty" style={{ width, height }}>
@@ -829,7 +881,11 @@ function MapCanvas({
   }
 
   return (
-    <div className="map-canvas-container">
+    <div 
+      className="map-canvas-container"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       {/* Map Toolbar */}
       <MapToolbar 
         activeTool={activeTool} 
