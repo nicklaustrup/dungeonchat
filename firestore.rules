@@ -254,9 +254,16 @@ service cloud.firestore {
             (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
              exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
           
-          // Only DM can create, update, and delete tokens
+          // DM can create, update, and delete any token
           allow create, update, delete: if request.auth != null && 
             request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+          
+          // Campaign members can create their own character tokens (staged tokens for character sheets)
+          allow create: if request.auth != null && 
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)) &&
+            request.resource.data.ownerId == request.auth.uid &&
+            request.resource.data.type == 'pc' &&
+            request.resource.data.staged == true;
         }
         
         // Pings subcollection (temporary map markers)
