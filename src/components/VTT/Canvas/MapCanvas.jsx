@@ -6,8 +6,8 @@ import GridLayer from './GridLayer';
 import TokenSprite from '../TokenManager/TokenSprite';
 import MapToolbar from './MapToolbar';
 import GridConfigurator from './GridConfigurator';
+import FogPanel from './FogPanel';
 import LayerManager from './LayerManager';
-import MapLibraryPanel from '../MapLibrary/MapLibraryPanel';
 import AudioController from '../Audio/AudioController';
 import TokenExtendedEditor from '../TokenManager/TokenExtendedEditor';
 import TokenContextMenu from '../TokenManager/TokenContextMenu';
@@ -47,10 +47,23 @@ function MapCanvas({
   onTokenSelect,
   onMapClick,
   fogOfWarEnabled = false,
-  onToggleFog,
+  showFogPanel = false,
+  onOpenFogPanel,
+  onCloseFogPanel,
+  onToggleFogEnabled,
+  onRevealAll,
+  onConcealAll,
+  fogBrushSize = 3,
+  onFogBrushSizeChange,
+  fogBrushMode = 'reveal',
+  onFogBrushModeChange,
   onInitializeFog,
   onShowMaps,
   onShowEncounters,
+  showTokenManager = false,
+  onToggleTokenManager,
+  showMapLibrary = false,
+  onToggleMapLibrary,
   children 
 }) {
   const { firestore, user } = useContext(FirebaseContext);
@@ -144,7 +157,6 @@ function MapCanvas({
   // const [undoStack, setUndoStack] = useState([]);
   // const [redoStack, setRedoStack] = useState([]);
   const [showLayerManager, setShowLayerManager] = useState(false);
-  const [showMapLibrary, setShowMapLibrary] = useState(false);
   const [showAudio, setShowAudio] = useState(false);
   const [showTokenEditor, setShowTokenEditor] = useState(false);
   const [showFXLibrary, setShowFXLibrary] = useState(false);
@@ -1044,6 +1056,15 @@ function MapCanvas({
             title="Toggle Layer Manager"
           >Layers</button>
           
+          <button
+            className="canvas-control-btn"
+            style={{ background: showMapLibrary ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+            onClick={onToggleMapLibrary}
+            title="Map Library"
+          >
+            <FiMap size={14} /> Library
+          </button>
+          
           {onShowMaps && (
             <button
               className="canvas-control-btn"
@@ -1075,14 +1096,25 @@ function MapCanvas({
             👁️ {localPlayerViewMode ? 'DM View' : 'Player View'}
           </button>
           
-          {onToggleFog && (
+          {onOpenFogPanel && (
             <button
               className="canvas-control-btn"
-              style={{ background: fogOfWarEnabled ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
-              onClick={onToggleFog}
-              title={fogOfWarEnabled ? 'Disable Fog of War' : 'Enable Fog of War'}
+              style={{ background: showFogPanel ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+              onClick={onOpenFogPanel}
+              title="Fog of War Controls"
             >
-              {fogOfWarEnabled ? '🌫️' : '👁️'} Fog
+              🌫️ Fog
+            </button>
+          )}
+          
+          {onToggleTokenManager && (
+            <button
+              className="canvas-control-btn"
+              style={{ background: showTokenManager ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+              onClick={onToggleTokenManager}
+              title="Token Manager"
+            >
+              🎭 Tokens
             </button>
           )}
           
@@ -2047,20 +2079,25 @@ function MapCanvas({
         />
       )}
       {isDM && (
+        <FogPanel
+          open={showFogPanel}
+          onClose={onCloseFogPanel}
+          fogEnabled={fogOfWarEnabled}
+          onToggleFog={onToggleFogEnabled}
+          onRevealAll={onRevealAll}
+          onConcealAll={onConcealAll}
+          brushSize={fogBrushSize}
+          onBrushSizeChange={onFogBrushSizeChange}
+          brushMode={fogBrushMode}
+          onBrushModeChange={onFogBrushModeChange}
+        />
+      )}
+      {isDM && (
         <LayerManager
           open={showLayerManager}
           onClose={() => setShowLayerManager(false)}
           visibility={layerVisibility}
           onToggle={(key) => setLayerVisibility(v => ({ ...v, [key]: !v[key] }))}
-        />
-      )}
-      {isDM && (
-        <MapLibraryPanel
-          firestore={firestore}
-          campaignId={campaignId}
-          open={showMapLibrary}
-          onClose={() => setShowMapLibrary(false)}
-          onSelect={(m) => { /* selection hook placeholder */ setShowMapLibrary(false); }}
         />
       )}
       {isDM && (

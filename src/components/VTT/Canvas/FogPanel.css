@@ -1,0 +1,203 @@
+.fog-panel {
+  position: absolute;
+  top: 60px;
+  left: 520px;
+  z-index: 999998;
+  background: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  min-width: 280px;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #e0e0f0;
+}
+
+.fog-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+  font-size: 14px;
+  color: white;
+}
+
+.fog-panel-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.fog-panel-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.fog-panel-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fog-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fog-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.fog-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #a0a0b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.fog-brush-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.fog-mode-btn {
+  padding: 10px;
+  background: #1e1e2e;
+  border: 2px solid #444;
+  border-radius: 6px;
+  color: #ddd;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.fog-mode-btn:hover {
+  background: #2a2a3e;
+  border-color: #667eea;
+}
+
+.fog-mode-btn.active {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+}
+
+.fog-slider {
+  width: 100%;
+  height: 6px;
+  background: #1e1e2e;
+  border-radius: 3px;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.fog-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #667eea;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fog-slider::-webkit-slider-thumb:hover {
+  background: #764ba2;
+  transform: scale(1.1);
+}
+
+.fog-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #667eea;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.fog-slider::-moz-range-thumb:hover {
+  background: #764ba2;
+  transform: scale(1.1);
+}
+
+.fog-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.fog-action-btn {
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.fog-action-btn.reveal-all {
+  background: #22c55e;
+  color: white;
+}
+
+.fog-action-btn.reveal-all:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+.fog-action-btn.conceal-all {
+  background: #ef4444;
+  color: white;
+}
+
+.fog-action-btn.conceal-all:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.fog-instructions {
+  background: rgba(102, 126, 234, 0.1);
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+}
+
+.fog-instructions small {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #b0b0c0;
+}
+
+.fog-instructions strong {
+  color: #e0e0f0;
+}

@@ -42,7 +42,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
   return (
     <div className="map-queue">
       <div className="panel-header">
-        <h3>🗺️ Map Queue</h3>
+        <h3>Library</h3>
         <span className="map-count">{maps.length} maps</span>
       </div>
       

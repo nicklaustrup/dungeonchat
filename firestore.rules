@@ -53,7 +53,8 @@ service cloud.firestore {
       allow read: if request.auth != null && 
         (resource.data.visibility == 'public' || 
          resource.data.dmId == request.auth.uid ||
-         request.auth.uid in resource.data.get('members', []));
+         request.auth.uid in resource.data.get('members', []) ||
+         exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
       
       // Only authenticated users can create campaigns (they become DM)
       allow create: if request.auth != null && 
@@ -268,6 +269,14 @@ service cloud.firestore {
       
       // VTT collection (new structure for tokens, pings, fog of war)
       match /vtt/{mapId} {
+        // Map document permissions
+        allow read: if request.auth != null && 
+          (request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId ||
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)));
+        
+        allow write: if request.auth != null && 
+          request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+        
         // Tokens subcollection
         match /tokens/{tokenId} {
           // Campaign members and DM can read tokens

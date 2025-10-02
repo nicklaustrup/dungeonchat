@@ -16,6 +16,7 @@ import InitiativeTracker from '../../Session/InitiativeTracker';
 import MapQueue from './MapQueue';
 import EncounterBuilder from './EncounterBuilder';
 import ResizablePanel from './ResizablePanel';
+import MapLibraryPanel from '../MapLibrary/MapLibraryPanel';
 import CharacterSheetPanel from './CharacterSheetPanel';
 import LightingPanel from '../Lighting/LightingPanel';
 import VoiceChatPanel from '../../Voice/VoiceChatPanel';
@@ -69,7 +70,11 @@ function VTTSession() {
   // Panel state
   const [activePanel, setActivePanel] = useState(null); // 'chat', 'notes', 'party', 'maps', 'encounter', 'initiative'
   const [showTokenManager, setShowTokenManager] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showMapLibrary, setShowMapLibrary] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(420);
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
+  const sidebarResizeStartRef = useRef({ x: 0, width: 0 });
   
   // Floating panel state
   const [floatingPanels, setFloatingPanels] = useState({
@@ -82,6 +87,9 @@ function VTTSession() {
   
   // Fog of War state
   const [fogOfWarEnabled, setFogOfWarEnabled] = useState(false);
+  const [showFogPanel, setShowFogPanel] = useState(false);
+  const [fogBrushSize, setFogBrushSize] = useState(3);
+  const [fogBrushMode, setFogBrushMode] = useState('reveal'); // 'reveal' | 'conceal'
   
   // Lighting state
   const [showLightingPanel, setShowLightingPanel] = useState(false);
@@ -120,7 +128,8 @@ function VTTSession() {
   useEffect(() => {
     if (!campaignId || !user || !firestore) return;
 
-    let unsubscribe;
+    let campaignUnsubscribe;
+    let mapUnsubscribe;
     
     const setupCampaignListener = async () => {
       try {
@@ -128,16 +137,37 @@ function VTTSession() {
         const campaignRef = doc(firestore, 'campaigns', campaignId);
         
         // Subscribe to real-time campaign updates
-        unsubscribe = onSnapshot(campaignRef, async (snapshot) => {
+        campaignUnsubscribe = onSnapshot(campaignRef, async (snapshot) => {
           if (snapshot.exists()) {
             const campaignData = { id: snapshot.id, ...snapshot.data() };
+            console.log('🔄 Campaign update received. Active map ID:', campaignData.activeMapId, 'User is DM:', campaignData.dmId === user.uid);
             setCampaign(campaignData);
             setIsUserDM(campaignData.dmId === user.uid);
             
-            // Load active map when it changes
+            // Unsubscribe from previous map if switching maps
+            if (mapUnsubscribe) {
+              mapUnsubscribe();
+              mapUnsubscribe = null;
+            }
+            
+            // Subscribe to active map changes in real-time
             if (campaignData.activeMapId) {
-              const map = await mapService.getMap(firestore, campaignId, campaignData.activeMapId);
-              setActiveMap(map);
+              console.log('📍 Subscribing to map:', campaignData.activeMapId);
+              const mapRef = doc(firestore, 'campaigns', campaignId, 'maps', campaignData.activeMapId);
+              mapUnsubscribe = onSnapshot(mapRef, (mapSnapshot) => {
+                if (mapSnapshot.exists()) {
+                  const mapData = { id: mapSnapshot.id, ...mapSnapshot.data() };
+                  setActiveMap(mapData);
+                  console.log('🗺️ Map loaded successfully:', mapData.name || mapData.id);
+                } else {
+                  console.warn('⚠️ Map document does not exist');
+                  setActiveMap(null);
+                }
+              }, (err) => {
+                console.error('Error in map listener:', err);
+                // Handle permission errors gracefully by clearing the active map
+                setActiveMap(null);
+              });
             } else {
               setActiveMap(null);
             }
@@ -155,10 +185,13 @@ function VTTSession() {
 
     setupCampaignListener();
     
-    // Cleanup listener on unmount
+    // Cleanup listeners on unmount
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
+      if (campaignUnsubscribe) {
+        campaignUnsubscribe();
+      }
+      if (mapUnsubscribe) {
+        mapUnsubscribe();
       }
     };
   }, [campaignId, user, firestore]);
@@ -243,6 +276,39 @@ function VTTSession() {
     return () => unsubscribe();
   }, [firestore, campaignId, activeMap?.id]);
 
+  // Handle sidebar resize
+  useEffect(() => {
+    if (!isResizingSidebar) return;
+
+    const handleMouseMove = (e) => {
+      const deltaX = e.clientX - sidebarResizeStartRef.current.x;
+      const newWidth = Math.max(300, Math.min(800, sidebarResizeStartRef.current.width + deltaX));
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizingSidebar(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizingSidebar]);
+
+  // Handle starting sidebar resize
+  const handleSidebarResizeStart = (e) => {
+    e.preventDefault();
+    setIsResizingSidebar(true);
+    sidebarResizeStartRef.current = {
+      x: e.clientX,
+      width: sidebarWidth
+    };
+  };
+
   // Handle map selection from queue
   const handleMapSelect = async (mapId) => {
     try {
@@ -262,10 +328,8 @@ function VTTSession() {
   const togglePanel = (panelName) => {
     setActivePanel(prev => {
       const next = prev === panelName ? null : panelName;
-      if (next && !isSidebarOpen) {
-        // Open sidebar if a new panel is being activated while it's hidden
-        setIsSidebarOpen(true);
-      }
+      // Always open sidebar when selecting a panel, close when toggling off
+      setIsSidebarOpen(next !== null);
       return next;
     });
   };
@@ -286,8 +350,14 @@ function VTTSession() {
     }));
   };
 
-  // Toggle fog of war
-  const handleToggleFog = async () => {
+  // Open fog panel
+  const handleOpenFogPanel = () => {
+    if (!isUserDM || !activeMap) return;
+    setShowFogPanel(true);
+  };
+
+  // Toggle fog of war enable/disable
+  const handleToggleFogEnabled = async (enabled) => {
     if (!isUserDM || !activeMap) return;
     
     try {
@@ -301,14 +371,39 @@ function VTTSession() {
           return;
         }
         await handleInitializeFog();
+        setFogOfWarEnabled(true);
       } else {
-        // Toggle existing fog
-        const newState = await fogOfWarService.toggleFogOfWar(firestore, campaignId, activeMap.id);
-        setFogOfWarEnabled(newState);
+        // Update fog enabled state
+        await fogOfWarService.updateFogOfWar(firestore, campaignId, activeMap.id, fogData.visibility, enabled);
+        setFogOfWarEnabled(enabled);
       }
     } catch (err) {
       console.error('Error toggling fog of war:', err);
       alert('Failed to toggle fog of war: ' + err.message);
+    }
+  };
+
+  // Reveal all fog
+  const handleRevealAll = async () => {
+    if (!isUserDM || !activeMap) return;
+    
+    try {
+      await fogOfWarService.clearFogOfWar(firestore, campaignId, activeMap.id);
+    } catch (err) {
+      console.error('Error revealing all fog:', err);
+      alert('Failed to reveal all: ' + err.message);
+    }
+  };
+
+  // Conceal all fog
+  const handleConcealAll = async () => {
+    if (!isUserDM || !activeMap) return;
+    
+    try {
+      await fogOfWarService.resetFogOfWar(firestore, campaignId, activeMap.id);
+    } catch (err) {
+      console.error('Error concealing all fog:', err);
+      alert('Failed to conceal all: ' + err.message);
     }
   };
 
@@ -550,18 +645,6 @@ function VTTSession() {
         </div>
 
         <div className="toolbar-right">
-          {isUserDM && (
-            <button
-              className={`toolbar-button primary ${showTokenManager ? 'active' : ''}`}
-              onClick={() => setShowTokenManager(!showTokenManager)}
-              title="Token Manager"
-              aria-label="Token Manager"
-              aria-pressed={showTokenManager}
-            >
-              🎭 Tokens
-            </button>
-          )}
-
           <button
             className="toolbar-button exit-button"
             onClick={() => navigate(`/campaign/${campaignId}`)}
@@ -578,49 +661,83 @@ function VTTSession() {
       <div className="vtt-content">
         {/* Left Sidebar (Collapsible) */}
         {isSidebarOpen && (
-          <div className="vtt-sidebar">
-            {activePanel === 'chat' && !floatingPanels.chat && (
-              <ChatPage campaignContext={true} showHeader={false} />
-            )}
+          <div className="vtt-sidebar" style={{ width: sidebarWidth }}>
+            {/* Sidebar Header with Close Button */}
+            <div className="sidebar-header">
+              <h3 className="sidebar-title">
+                {activePanel === 'chat' && '💬 Chat'}
+                {activePanel === 'rules' && '📖 Rules'}
+                {activePanel === 'party' && '👥 Party'}
+                {activePanel === 'initiative' && '🎲 Initiative'}
+                {activePanel === 'maps' && '🗺️ Maps'}
+                {activePanel === 'encounter' && '⚔️ Encounters'}
+                {!activePanel && '📁 Panel'}
+              </h3>
+              <button 
+                className="sidebar-close-btn"
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  setActivePanel(null);
+                }}
+                title="Close panel"
+                aria-label="Close sidebar panel"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
 
-            {activePanel === 'rules' && (
-              <CampaignRules 
-                campaignId={campaignId} 
-                isUserDM={isUserDM}
-              />
-            )}
+            {/* Sidebar Content */}
+            <div className="sidebar-content">
+              {activePanel === 'chat' && !floatingPanels.chat && (
+                <ChatPage campaignContext={true} showHeader={false} />
+              )}
 
-            {activePanel === 'party' && !floatingPanels.party && (
-              <PartyManagement 
-                campaignId={campaignId}
-              />
-            )}
+              {activePanel === 'rules' && (
+                <CampaignRules 
+                  campaignId={campaignId} 
+                  isUserDM={isUserDM}
+                />
+              )}
 
-            {activePanel === 'initiative' && (
-              <InitiativeTracker campaignId={campaignId} />
-            )}
+              {activePanel === 'party' && !floatingPanels.party && (
+                <PartyManagement 
+                  campaignId={campaignId}
+                />
+              )}
 
-            {activePanel === 'maps' && isUserDM && (
-              <MapQueue
-                campaignId={campaignId}
-                activeMapId={activeMap?.id}
-                onMapSelect={handleMapSelect}
-              />
-            )}
+              {activePanel === 'initiative' && (
+                <InitiativeTracker campaignId={campaignId} />
+              )}
 
-            {activePanel === 'encounter' && isUserDM && (
-              <EncounterBuilder
-                campaignId={campaignId}
-                mapId={activeMap?.id}
-              />
-            )}
+              {activePanel === 'maps' && isUserDM && (
+                <MapQueue
+                  campaignId={campaignId}
+                  activeMapId={activeMap?.id}
+                  onMapSelect={handleMapSelect}
+                />
+              )}
 
-            {!activePanel && (
-              <div className="sidebar-placeholder">
-                <FiMenu size={48} />
-                <p>Select a tool from the toolbar above</p>
-              </div>
-            )}
+              {activePanel === 'encounter' && isUserDM && (
+                <EncounterBuilder
+                  campaignId={campaignId}
+                  mapId={activeMap?.id}
+                />
+              )}
+
+              {!activePanel && (
+                <div className="sidebar-placeholder">
+                  <FiMenu size={48} />
+                  <p>Select a tool from the toolbar above</p>
+                </div>
+              )}
+            </div>
+
+            {/* Resize Handle */}
+            <div 
+              className="sidebar-resize-handle"
+              onMouseDown={handleSidebarResizeStart}
+              title="Drag to resize panel"
+            />
           </div>
         )}
 
@@ -630,16 +747,29 @@ function VTTSession() {
             <MapCanvas
               map={activeMap}
               campaignId={campaignId}
-              width={window.innerWidth - (isSidebarOpen ? 420 : 0) - (showTokenManager ? 320 : 0)}
+              width={window.innerWidth - (isSidebarOpen ? sidebarWidth : 0) - (showTokenManager ? 320 : 0)}
               height={window.innerHeight - 60}
               isDM={isUserDM}
               selectedTokenId={selectedTokenId}
               onTokenSelect={setSelectedTokenId}
               fogOfWarEnabled={fogOfWarEnabled}
-              onToggleFog={handleToggleFog}
+              showFogPanel={showFogPanel}
+              onOpenFogPanel={handleOpenFogPanel}
+              onCloseFogPanel={() => setShowFogPanel(false)}
+              onToggleFogEnabled={handleToggleFogEnabled}
+              onRevealAll={handleRevealAll}
+              onConcealAll={handleConcealAll}
+              fogBrushSize={fogBrushSize}
+              onFogBrushSizeChange={setFogBrushSize}
+              fogBrushMode={fogBrushMode}
+              onFogBrushModeChange={setFogBrushMode}
               onInitializeFog={handleInitializeFog}
               onShowMaps={isUserDM ? () => togglePanel('maps') : null}
               onShowEncounters={isUserDM ? () => togglePanel('encounter') : null}
+              showTokenManager={showTokenManager}
+              onToggleTokenManager={() => setShowTokenManager(!showTokenManager)}
+              showMapLibrary={showMapLibrary}
+              onToggleMapLibrary={() => setShowMapLibrary(!showMapLibrary)}
             />
           ) : (
             <div className="no-map-placeholder">
@@ -647,10 +777,19 @@ function VTTSession() {
               <h2>No Active Map</h2>
               <p>
                 {isUserDM 
-                  ? 'Select a map from the Map Queue to get started'
+                  ? 'Select a map from the Map Library to get started'
                   : 'Waiting for DM to load a map...'
                 }
               </p>
+              {isUserDM && (
+                <button
+                  className="map-library-cta-button"
+                  onClick={() => togglePanel('maps')}
+                >
+                  <FiMap size={20} />
+                  <span>Open Map Library</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -760,6 +899,20 @@ function VTTSession() {
             closeFloatingPanel('party');
             setActivePanel('party');
             setIsSidebarOpen(true);
+          }}
+        />
+      )}
+
+      {/* Map Library Panel */}
+      {isUserDM && showMapLibrary && (
+        <MapLibraryPanel
+          firestore={firestore}
+          campaignId={campaignId}
+          open={showMapLibrary}
+          onClose={() => setShowMapLibrary(false)}
+          onSelect={(map) => {
+            handleMapSelect(map.id);
+            setShowMapLibrary(false);
           }}
         />
       )}

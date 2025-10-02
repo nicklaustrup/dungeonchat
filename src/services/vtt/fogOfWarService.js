@@ -61,26 +61,36 @@ export const fogOfWarService = {
   },
 
   /**
-   * Update fog of war visibility
+   * Update fog of war visibility and/or enabled state
    */
-  async updateFogOfWar(firestore, campaignId, mapId, visibility) {
+  async updateFogOfWar(firestore, campaignId, mapId, visibility, enabled) {
     try {
       const fogRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'fog', 'current');
       
-      // Flatten 2D array to 1D for Firestore
-      const gridHeight = visibility.length;
-      const gridWidth = visibility[0]?.length || 0;
-      const flatVisibility = [];
-      for (let y = 0; y < gridHeight; y++) {
-        for (let x = 0; x < gridWidth; x++) {
-          flatVisibility.push(visibility[y][x]);
+      const updates = {
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Update visibility if provided
+      if (visibility !== undefined) {
+        // Flatten 2D array to 1D for Firestore
+        const gridHeight = visibility.length;
+        const gridWidth = visibility[0]?.length || 0;
+        const flatVisibility = [];
+        for (let y = 0; y < gridHeight; y++) {
+          for (let x = 0; x < gridWidth; x++) {
+            flatVisibility.push(visibility[y][x]);
+          }
         }
+        updates.visibility = flatVisibility;
       }
       
-      await updateDoc(fogRef, {
-        visibility: flatVisibility,
-        updatedAt: new Date().toISOString()
-      });
+      // Update enabled state if provided
+      if (enabled !== undefined) {
+        updates.enabled = enabled;
+      }
+      
+      await updateDoc(fogRef, updates);
 
       return true;
     } catch (error) {
@@ -199,6 +209,13 @@ export const fogOfWarService = {
   },
 
   /**
+   * Alias for clearAllFog
+   */
+  async clearFogOfWar(firestore, campaignId, mapId) {
+    return this.clearAllFog(firestore, campaignId, mapId);
+  },
+
+  /**
    * Reset all fog (hide entire map)
    */
   async resetAllFog(firestore, campaignId, mapId) {
@@ -221,6 +238,13 @@ export const fogOfWarService = {
       console.error('Error resetting fog:', error);
       throw error;
     }
+  },
+
+  /**
+   * Alias for resetAllFog
+   */
+  async resetFogOfWar(firestore, campaignId, mapId) {
+    return this.resetAllFog(firestore, campaignId, mapId);
   }
 };
 
