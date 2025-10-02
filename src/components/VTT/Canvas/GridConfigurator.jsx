@@ -69,7 +69,11 @@ export default function GridConfigurator({
       <div className="gc-body">
         <label className="gc-row">
           <span>Enabled</span>
-          <input type="checkbox" checked={gridEnabled} onChange={e => setGridEnabled(e.target.checked)} />
+          <input type="checkbox" checked={gridEnabled} onChange={e => {
+            const newValue = e.target.checked;
+            setGridEnabled(newValue);
+            debouncedCommit({ gridEnabled: newValue });
+          }} />
         </label>
         <label className="gc-row">
           <span>Grid Size (px)</span>

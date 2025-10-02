@@ -1283,8 +1283,8 @@ function MapCanvas({
             );
           })}
 
-          {/* Light Control Markers - draggable for DMs */}
-          {isDM && globalLighting.enabled && lights.map(light => (
+          {/* Light Control Markers - visible to all, draggable for DMs */}
+          {globalLighting.enabled && lights.map(light => (
             <React.Fragment key={`light-control-${light.id}`}>
               {/* Light center marker */}
               <Circle
@@ -1295,7 +1295,7 @@ function MapCanvas({
                 stroke="white"
                 strokeWidth={2}
                 opacity={0.9}
-                draggable={activeTool === 'pointer'}
+                draggable={isDM && activeTool === 'pointer'}
                 onDragStart={(e) => {
                   e.cancelBubble = true; // Prevent map from shifting
                   setDraggingLight({
@@ -1318,10 +1318,14 @@ function MapCanvas({
                   setDraggingLight(null);
                 }}
                 onMouseEnter={(e) => {
-                  e.target.getStage().container().style.cursor = 'move';
+                  if (isDM) {
+                    e.target.getStage().container().style.cursor = 'move';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.target.getStage().container().style.cursor = 'default';
+                  if (isDM) {
+                    e.target.getStage().container().style.cursor = 'default';
+                  }
                 }}
                 onClick={(e) => {
                   if (e.evt.button === 2) { // Right click
@@ -1330,6 +1334,7 @@ function MapCanvas({
                   }
                 }}
                 onContextMenu={(e) => {
+                  if (!isDM) return; // Only DMs can delete lights
                   e.cancelBubble = true;
                   const stage = e.target.getStage();
                   const pos = stage.getPointerPosition();
