@@ -136,6 +136,7 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
         />
       )}
       
+      {/* Show campaign header when in campaign but NOT in VTT context */}
       {isInCampaign && campaign && !campaignLoading && !campaignContext && (
         <CampaignChatHeader 
           campaign={campaign}

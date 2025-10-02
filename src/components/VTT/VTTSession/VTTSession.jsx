@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FirebaseContext } from '../../../services/FirebaseContext';
 import { mapService } from '../../../services/vtt/mapService';
@@ -18,6 +18,8 @@ import EncounterBuilder from './EncounterBuilder';
 import ResizablePanel from './ResizablePanel';
 import CharacterSheetPanel from './CharacterSheetPanel';
 import LightingPanel from '../Lighting/LightingPanel';
+import VoiceChatPanel from '../../Voice/VoiceChatPanel';
+import VoiceNotificationContainer, { setNotificationContainer } from '../../Voice/VoiceNotificationContainer';
 import useTokens from '../../../hooks/vtt/useTokens';
 import useLighting from '../../../hooks/vtt/useLighting';
 import { 
@@ -32,7 +34,9 @@ import {
   FiTarget,
   FiUser
 } from 'react-icons/fi';
+import { FaHeadphones } from 'react-icons/fa';
 import './VTTSession.css';
+import '../../Campaign/CampaignChatHeader.css'; // For voice panel styles
 
 /**
  * VTTSession - Main Virtual Tabletop Session Room
@@ -82,6 +86,14 @@ function VTTSession() {
   
   // Lighting state
   const [showLightingPanel, setShowLightingPanel] = useState(false);
+  
+  // Voice chat state
+  const [showVoicePanel, setShowVoicePanel] = useState(false);
+  const [isVoiceMinimized, setIsVoiceMinimized] = useState(false);
+  const [voicePosition, setVoicePosition] = useState({ x: window.innerWidth - 420, y: 100 });
+  const [isVoiceDragging, setIsVoiceDragging] = useState(false);
+  const voiceDragStartRef = useRef({ x: 0, y: 0 });
+  const notificationContainerRef = useRef(null);
   
   // Load lighting system for active map
   const lightingHook = useLighting(firestore, campaignId, activeMap?.id, activeMap?.lighting);
@@ -319,6 +331,53 @@ function VTTSession() {
     setShowDeleteModal(false);
     setTokenToDelete(null);
   };
+  
+  // Voice chat drag handlers
+  const handleVoiceDragStart = (e) => {
+    setIsVoiceDragging(true);
+    voiceDragStartRef.current = { x: e.clientX, y: e.clientY };
+  };
+
+  useEffect(() => {
+    if (!isVoiceDragging) return;
+
+    const handleMouseMove = (e) => {
+      const deltaX = e.clientX - voiceDragStartRef.current.x;
+      const deltaY = e.clientY - voiceDragStartRef.current.y;
+      
+      setVoicePosition(prev => ({
+        x: Math.max(0, Math.min(window.innerWidth - 380, prev.x + deltaX)),
+        y: Math.max(0, Math.min(window.innerHeight - 100, prev.y + deltaY))
+      }));
+      
+      voiceDragStartRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleMouseUp = () => {
+      setIsVoiceDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isVoiceDragging]);
+
+  // Setup notification container
+  useEffect(() => {
+    if (notificationContainerRef.current) {
+      setNotificationContainer(notificationContainerRef.current);
+    }
+  }, []);
+
+  const handleVoiceNotification = (notification) => {
+    if (notificationContainerRef.current) {
+      notificationContainerRef.current.addNotification(notification);
+    }
+  };
 
   if (loading) {
     return (
@@ -459,6 +518,17 @@ function VTTSession() {
           >
             <FiUser />
             <span>Characters</span>
+          </button>
+
+          <button
+            className={`toolbar-button ${showVoicePanel ? 'active' : ''}`}
+            onClick={() => setShowVoicePanel(!showVoicePanel)}
+            title={showVoicePanel ? 'Close Voice Chat' : 'Open Voice Chat'}
+            aria-label="Voice Chat"
+            aria-pressed={showVoicePanel}
+          >
+            <FaHeadphones />
+            <span>Voice</span>
           </button>
 
           {isUserDM && (
@@ -725,6 +795,61 @@ function VTTSession() {
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {/* Voice Chat Floating Panel */}
+      <VoiceNotificationContainer ref={notificationContainerRef} />
+      {showVoicePanel && campaign && (
+        <div 
+          className={`floating-voice-panel ${isVoiceDragging ? 'dragging' : ''}`}
+          onMouseDown={handleVoiceDragStart}
+          style={{
+            position: 'fixed',
+            top: `${voicePosition.y}px`,
+            left: `${voicePosition.x}px`,
+            cursor: isVoiceDragging ? 'grabbing' : 'grab',
+            zIndex: 1000
+          }}
+        >
+          <div className="floating-voice-header">
+            <h3>🎙️ Voice Chat</h3>
+            <div className="floating-voice-actions">
+              <button
+                className="btn-voice-action"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsVoiceMinimized(!isVoiceMinimized);
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                title={isVoiceMinimized ? "Maximize" : "Minimize"}
+              >
+                {isVoiceMinimized ? '🗖' : '🗕'}
+              </button>
+              <button
+                className="btn-voice-action"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowVoicePanel(false);
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          {!isVoiceMinimized && (
+            <VoiceChatPanel
+              campaign={campaign}
+              campaignId={campaignId}
+              roomId="voice-general"
+              isFloating={true}
+              isMinimized={isVoiceMinimized}
+              onMinimizeChange={setIsVoiceMinimized}
+              onNotification={handleVoiceNotification}
+            />
+          )}
         </div>
       )}
     </div>
