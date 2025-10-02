@@ -8,11 +8,12 @@ import { useState, useCallback } from 'react';
  * - Tool-specific color settings
  * - Shape tool configuration (opacity, persistence, visibility)
  * 
+ * @param {string} defaultTool - Initial tool to use (default: 'pointer')
  * @returns {Object} Tool state and setter methods
  */
-export function useCanvasTools() {
+export function useCanvasTools(defaultTool = 'pointer') {
   // Active tool state
-  const [activeTool, setActiveTool] = useState('ping');
+  const [activeTool, setActiveTool] = useState(defaultTool);
   
   // Color settings for different tools
   const [pingColor, setPingColor] = useState('#ffff00'); // Yellow

@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, useContext, Fragment, useMemo, useCallback } from 'react';
 import { Stage, Layer, Image as KonvaImage, Rect, Line, Arrow, Circle, Text as KonvaText } from 'react-konva';
 import useImage from 'use-image';
+import { FiMap, FiSettings } from 'react-icons/fi';
 import GridLayer from './GridLayer';
 import TokenSprite from '../TokenManager/TokenSprite';
 import MapToolbar from './MapToolbar';
@@ -47,6 +48,8 @@ function MapCanvas({
   fogOfWarEnabled = false,
   onToggleFog,
   onInitializeFog,
+  onShowMaps,
+  onShowEncounters,
   children 
 }) {
   const { firestore, user } = useContext(FirebaseContext);
@@ -78,7 +81,7 @@ function MapCanvas({
     setShapeOpacity,
     setShapePersistent,
     setShapeVisibility
-  } = useCanvasTools();
+  } = useCanvasTools('pointer'); // Set default tool to pointer
   
   const {
     drawings,
@@ -950,12 +953,27 @@ function MapCanvas({
             title="Toggle Layer Manager"
           >Layers</button>
           
-          <button
-            className="canvas-control-btn"
-            style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
-            onClick={() => setShowMapLibrary(v=>!v)}
-            title="Toggle Map Library"
-          >Maps</button>
+          {onShowMaps && (
+            <button
+              className="canvas-control-btn"
+              style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
+              onClick={onShowMaps}
+              title="Map Queue"
+            >
+              <FiMap size={14} style={{ marginRight: '4px' }} /> Maps
+            </button>
+          )}
+          
+          {onShowEncounters && (
+            <button
+              className="canvas-control-btn"
+              style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
+              onClick={onShowEncounters}
+              title="Encounter Builder"
+            >
+              <FiSettings size={14} style={{ marginRight: '4px' }} /> Encounters
+            </button>
+          )}
           
           <button
             className="canvas-control-btn"
@@ -1188,6 +1206,8 @@ function MapCanvas({
             gridColor={gMap.gridColor}
             gridOpacity={gMap.gridOpacity}
             enabled={gMap.gridEnabled}
+            offsetX={gMap.gridOffsetX || 0}
+            offsetY={gMap.gridOffsetY || 0}
           />
         )}
 

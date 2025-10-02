@@ -27,7 +27,6 @@ import {
   FiFileText, 
   FiUsers, 
   FiMap, 
-  FiSettings,
   FiMenu,
   FiX,
   FiLogOut,
@@ -547,31 +546,7 @@ function VTTSession() {
             <span>Voice</span>
           </button>
 
-          {isUserDM && (
-            <>
-              <button
-                className={`toolbar-button ${activePanel === 'maps' ? 'active' : ''}`}
-                onClick={() => togglePanel('maps')}
-                title="Map Queue"
-                aria-label="Map Queue"
-                aria-pressed={activePanel === 'maps'}
-              >
-                <FiMap />
-                <span>Maps</span>
-              </button>
-
-              <button
-                className={`toolbar-button ${activePanel === 'encounter' ? 'active' : ''}`}
-                onClick={() => togglePanel('encounter')}
-                title="Encounter Builder"
-                aria-label="Encounter Builder"
-                aria-pressed={activePanel === 'encounter'}
-              >
-                <FiSettings />
-                <span>Encounters</span>
-              </button>
-            </>
-          )}
+          {/* Maps and Encounters buttons moved to canvas controls for better small-screen support */}
         </div>
 
         <div className="toolbar-right">
@@ -663,6 +638,8 @@ function VTTSession() {
               fogOfWarEnabled={fogOfWarEnabled}
               onToggleFog={handleToggleFog}
               onInitializeFog={handleInitializeFog}
+              onShowMaps={isUserDM ? () => togglePanel('maps') : null}
+              onShowEncounters={isUserDM ? () => togglePanel('encounter') : null}
             />
           ) : (
             <div className="no-map-placeholder">

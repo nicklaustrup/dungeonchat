@@ -369,6 +369,24 @@
     width: 100%;
     justify-content: flex-start;
     overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.3) transparent;
+  }
+
+  .toolbar-center::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .toolbar-center::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+  }
+
+  .toolbar-center::-webkit-scrollbar-track {
+    background: transparent;
   }
 
   .toolbar-right {

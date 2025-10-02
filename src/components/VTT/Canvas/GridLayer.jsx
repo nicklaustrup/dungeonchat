@@ -3,7 +3,7 @@ import { Layer, Line } from 'react-konva';
 
 /**
  * GridLayer Component
- * Renders a grid overlay on the map
+ * Renders a grid overlay on the map with optional offset for precise alignment
  */
 function GridLayer({ 
   width, 
@@ -11,15 +11,29 @@ function GridLayer({
   gridSize, 
   gridColor, 
   gridOpacity, 
-  enabled 
+  enabled,
+  offsetX = 0,
+  offsetY = 0
 }) {
   const lines = useMemo(() => {
     if (!enabled || !gridSize || !width || !height) return [];
 
     const gridLines = [];
     
-    // Vertical lines
-    for (let x = 0; x <= width; x += gridSize) {
+    // Vertical lines with offset
+    for (let x = offsetX; x <= width; x += gridSize) {
+      if (x >= 0) {
+        gridLines.push({
+          key: `v-${x}`,
+          points: [x, 0, x, height],
+          stroke: gridColor,
+          strokeWidth: 1,
+          opacity: gridOpacity,
+        });
+      }
+    }
+    // Add lines to the left of offset if needed
+    for (let x = offsetX - gridSize; x >= 0; x -= gridSize) {
       gridLines.push({
         key: `v-${x}`,
         points: [x, 0, x, height],
@@ -29,8 +43,20 @@ function GridLayer({
       });
     }
     
-    // Horizontal lines
-    for (let y = 0; y <= height; y += gridSize) {
+    // Horizontal lines with offset
+    for (let y = offsetY; y <= height; y += gridSize) {
+      if (y >= 0) {
+        gridLines.push({
+          key: `h-${y}`,
+          points: [0, y, width, y],
+          stroke: gridColor,
+          strokeWidth: 1,
+          opacity: gridOpacity,
+        });
+      }
+    }
+    // Add lines above offset if needed
+    for (let y = offsetY - gridSize; y >= 0; y -= gridSize) {
       gridLines.push({
         key: `h-${y}`,
         points: [0, y, width, y],
@@ -41,7 +67,7 @@ function GridLayer({
     }
     
     return gridLines;
-  }, [width, height, gridSize, gridColor, gridOpacity, enabled]);
+  }, [width, height, gridSize, gridColor, gridOpacity, enabled, offsetX, offsetY]);
 
   if (!enabled) return null;
 

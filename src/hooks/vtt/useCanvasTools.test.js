@@ -5,7 +5,7 @@ describe('useCanvasTools', () => {
   it('should initialize with default values', () => {
     const { result } = renderHook(() => useCanvasTools());
     
-    expect(result.current.activeTool).toBe('ping');
+    expect(result.current.activeTool).toBe('pointer'); // Changed default from 'ping' to 'pointer'
     expect(result.current.pingColor).toBe('#ffff00');
     expect(result.current.penColor).toBe('#ffffff');
     expect(result.current.shapeColor).toBe('#ff0000');

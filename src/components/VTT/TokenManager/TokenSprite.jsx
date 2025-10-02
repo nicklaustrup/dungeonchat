@@ -61,10 +61,13 @@ function TokenSprite({
       const altPressed = e.evt?.altKey;
       const snapActive = tokenSnap ? !altPressed : altPressed;
       if (snapActive) {
-        const cellX = Math.floor(x / gridSize);
-        const cellY = Math.floor(y / gridSize);
-        x = cellX * gridSize + (tokenSize === gridSize ? gridSize / 2 : (tokenSize / squares) / 2 + (squares > 1 ? 0 : 0));
-        y = cellY * gridSize + (tokenSize === gridSize ? gridSize / 2 : (tokenSize / squares) / 2 + (squares > 1 ? 0 : 0));
+        // Same logic as handleDragMove: align top-left corner to grid, then center
+        const topLeftX = x - tokenSize / 2;
+        const topLeftY = y - tokenSize / 2;
+        const cellX = Math.round(topLeftX / gridSize);
+        const cellY = Math.round(topLeftY / gridSize);
+        x = cellX * gridSize + tokenSize / 2;
+        y = cellY * gridSize + tokenSize / 2;
         node.x(x);
         node.y(y);
       }
@@ -131,25 +134,31 @@ function TokenSprite({
     const snapActive = tokenSnap ? !altPressed : altPressed;
 
     if (snapActive) {
-      // For large tokens (multiple squares), align top-left corner to grid, not center.
-      const cellX = Math.floor(rawX / gridSize);
-      const cellY = Math.floor(rawY / gridSize);
-      const snappedX = cellX * gridSize + (tokenSize === gridSize ? gridSize / 2 : tokenSize / squares / 2);
-      const snappedY = cellY * gridSize + (tokenSize === gridSize ? gridSize / 2 : tokenSize / squares / 2);
+      // For large tokens: Calculate top-left corner position, snap it to grid, then center the token
+      // This ensures the token's boundary aligns with grid squares properly
+      const topLeftX = rawX - tokenSize / 2;
+      const topLeftY = rawY - tokenSize / 2;
+      const cellX = Math.round(topLeftX / gridSize);
+      const cellY = Math.round(topLeftY / gridSize);
+      // Snap top-left to grid intersection, then offset by half token size to center
+      const snappedX = cellX * gridSize + tokenSize / 2;
+      const snappedY = cellY * gridSize + tokenSize / 2;
       node.x(snappedX);
       node.y(snappedY);
       if (onDragMovePreview) {
         onDragMovePreview({
           x: cellX * gridSize,
-            y: cellY * gridSize,
+          y: cellY * gridSize,
           w: tokenSize,
           h: tokenSize
         });
       }
     } else {
-      // Free move: still show highlight of current cell footprint (top-left cell containing center)
-      const cellX = Math.floor(rawX / gridSize);
-      const cellY = Math.floor(rawY / gridSize);
+      // Free move: still show highlight of current cell footprint
+      const topLeftX = rawX - tokenSize / 2;
+      const topLeftY = rawY - tokenSize / 2;
+      const cellX = Math.floor(topLeftX / gridSize);
+      const cellY = Math.floor(topLeftY / gridSize);
       if (onDragMovePreview) {
         onDragMovePreview({
           x: cellX * gridSize,

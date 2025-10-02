@@ -142,13 +142,13 @@ const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, isCreating 
               onDragStart={(e) => {
                 // Create default token template based on type
                 const defaultTokens = {
-                  pc: { name: 'Player', color: '#4a90e2', size: 1, hp: 20, maxHp: 20 },
-                  npc: { name: 'NPC', color: '#27ae60', size: 1, hp: 15, maxHp: 15 },
-                  monster: { name: 'Monster', color: '#e74c3c', size: 1, hp: 30, maxHp: 30 },
+                  pc: { name: 'Player', color: '#4a90e2', size: 0.5, hp: 20, maxHp: 20 },
+                  npc: { name: 'NPC', color: '#27ae60', size: 0.5, hp: 15, maxHp: 15 },
+                  monster: { name: 'Monster', color: '#e74c3c', size: 0.5, hp: 30, maxHp: 30 },
                   enemy: { name: 'Enemy', color: '#c0392b', size: 0.5, hp: 10, maxHp: 10 },
-                  ally: { name: 'Ally', color: '#16a085', size: 1, hp: 15, maxHp: 15 },
-                  object: { name: 'Object', color: '#95a5a6', size: 1, hp: null, maxHp: null },
-                  hazard: { name: 'Hazard', color: '#f39c12', size: 1, hp: null, maxHp: null },
+                  ally: { name: 'Ally', color: '#16a085', size: 0.5, hp: 15, maxHp: 15 },
+                  object: { name: 'Object', color: '#95a5a6', size: 0.5, hp: null, maxHp: null },
+                  hazard: { name: 'Hazard', color: '#f39c12', size: 0.5, hp: null, maxHp: null },
                   marker: { name: 'Marker', color: '#9b59b6', size: 0.5, hp: null, maxHp: null },
                 };
                 
