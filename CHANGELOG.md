@@ -1,3 +1,11 @@
+## [1.4.1](https://github.com/nicklaustrup/dungeonchat/compare/v1.4.0...v1.4.1) (2025-10-02)
+
+
+### Bug Fixes
+
+* **vtt:** Player UX improvements - context menu, shapes, token dragging ([48f347e](https://github.com/nicklaustrup/dungeonchat/commit/48f347e05adfd345db0d6b38d400701b52a5d6af))
+* **vtt:** Token manager improvements - deselect and sizing ([8ea89cf](https://github.com/nicklaustrup/dungeonchat/commit/8ea89cf46dddc3dac410d88fffe269f0774214a3)), closes [#1](https://github.com/nicklaustrup/dungeonchat/issues/1) [#3](https://github.com/nicklaustrup/dungeonchat/issues/3)
+
 ## [1.4.0](https://github.com/nicklaustrup/dungeonchat/compare/v1.3.1...v1.4.0) (2025-10-02)
 
 
