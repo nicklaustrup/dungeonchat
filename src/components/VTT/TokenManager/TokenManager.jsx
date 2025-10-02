@@ -1,6 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
 import TokenPalette from './TokenPalette';
-import TokenProperties from './TokenProperties';
 import TokenUploader from './TokenUploader';
 import { FirebaseContext } from '../../../services/FirebaseContext';
 import { tokenService } from '../../../services/vtt/tokenService';
@@ -28,10 +27,10 @@ const TokenManager = ({
   const [successMessage, setSuccessMessage] = useState(null);
   const [stagingTokens, setStagingTokens] = useState([]);
 
-  // Auto-switch to properties tab when a token is selected
+  // Auto-switch to palette tab when a token is selected to show its info
   useEffect(() => {
-    if (selectedToken && activeView !== 'properties') {
-      setActiveView('properties');
+    if (selectedToken && activeView !== 'palette') {
+      setActiveView('palette');
     }
   }, [selectedToken, activeView]);
 
@@ -217,7 +216,7 @@ const TokenManager = ({
           className={`tab-button ${activeView === 'palette' ? 'active' : ''}`}
           onClick={() => setActiveView('palette')}
         >
-          🎨 Palette
+          🎨 Palette {selectedToken ? '(Editing)' : ''}
         </button>
         <button
           className={`tab-button ${activeView === 'upload' ? 'active' : ''}`}
@@ -225,14 +224,14 @@ const TokenManager = ({
         >
           📤 Upload
         </button>
-        {selectedToken && (
-          <button
-            className={`tab-button ${activeView === 'properties' ? 'active' : ''}`}
-            onClick={() => setActiveView('properties')}
-          >
-            ⚙️ Properties
-          </button>
-        )}
+        {/* Settings tab commented out - may come back later
+        <button
+          className={`tab-button ${activeView === 'settings' ? 'active' : ''}`}
+          onClick={() => setActiveView('settings')}
+        >
+          ⚙️ Settings
+        </button>
+        */}
       </div>
 
       {/* Messages */}
@@ -304,7 +303,9 @@ const TokenManager = ({
 
         {activeView === 'palette' && (
           <TokenPalette
+            selectedToken={selectedToken}
             onCreateToken={handleCreateToken}
+            onUpdateToken={handleUpdateToken}
             isCreating={isCreating}
           />
         )}
@@ -314,20 +315,6 @@ const TokenManager = ({
             onUpload={handleUploadToken}
             isUploading={isCreating}
           />
-        )}
-
-        {activeView === 'properties' && selectedToken && (
-          <TokenProperties
-            token={selectedToken}
-            onUpdate={handleUpdateToken}
-            onDelete={handleDeleteToken}
-          />
-        )}
-
-        {activeView === 'properties' && !selectedToken && (
-          <div className="no-token-selected">
-            <p>Select a token on the map to edit its properties.</p>
-          </div>
         )}
       </div>
     </div>

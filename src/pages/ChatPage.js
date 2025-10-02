@@ -136,7 +136,7 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
         />
       )}
       
-      {isInCampaign && campaign && !campaignLoading && (
+      {isInCampaign && campaign && !campaignLoading && !campaignContext && (
         <CampaignChatHeader 
           campaign={campaign}
           channelName={activeChannelId}

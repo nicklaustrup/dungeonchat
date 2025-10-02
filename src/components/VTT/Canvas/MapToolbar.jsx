@@ -333,13 +333,6 @@ const MapToolbar = ({
                                             >
                                                 Clear Temp Shapes
                                             </button>
-                                            <button
-                                                className="clear-rulers-btn danger"
-                                                onClick={() => onClearAllShapes?.()}
-                                                title="Clear all shapes"
-                                            >
-                                                Clear All Shapes
-                                            </button>
                                         </div>
                                     </div>
                                 </>

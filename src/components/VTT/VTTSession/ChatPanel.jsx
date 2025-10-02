@@ -116,7 +116,7 @@ function ChatPanel({
       }}
     >
       <div className="chat-panel-header" onMouseDown={handleMouseDown}>
-        <div className="chat-panel-title">Session Chat</div>
+        <div className="chat-panel-title">#general</div>
         <div className="chat-panel-controls">
           <button
             className="chat-control-btn"

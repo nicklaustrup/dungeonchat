@@ -154,6 +154,9 @@ function MapCanvas({
   useEffect(() => { setMapLive(map); }, [map]);
   const gMap = mapLive || map;
 
+  // Animation state for shape fade-out
+  const [animationTime, setAnimationTime] = useState(Date.now());
+
   // Performance optimization: Memoize filtered shapes
   const visibleShapes = useMemo(() => {
     return shapes.filter(s => (s.visibleTo === 'all') || isDM);
@@ -163,6 +166,32 @@ function MapCanvas({
   const playerTokens = useMemo(() => {
     return tokens ? tokens.filter(t => t.type === 'pc' && !t.staged && t.position) : [];
   }, [tokens]);
+
+  // Generate natural light for player tokens during dark ambience
+  const playerTokenLights = useMemo(() => {
+    if (!globalLighting?.enabled || !playerTokens.length) return [];
+    
+    // Only add natural light if ambient is low (dark environment)
+    const ambientLight = globalLighting.ambientLight || 0.7;
+    if (ambientLight > 0.4) return []; // Bright enough, no need for token lights
+    
+    // Create natural light sources for each player token
+    return playerTokens
+      .filter(token => token.position && typeof token.position.x === 'number' && typeof token.position.y === 'number')
+      .map((token, index) => ({
+        id: `player-light-${token.id}`,
+        position: { 
+          x: token.position.x, 
+          y: token.position.y 
+        },
+        radius: 120, // Natural vision radius (~24ft at 5ft/square)
+        intensity: 0.5, // Subtle natural light
+        color: '#ffe6cc', // Warm candlelight color
+        flicker: false, // No flicker for natural vision
+        enabled: true,
+        name: `${token.name} Vision`
+      }));
+  }, [playerTokens, globalLighting]);
 
   // Animate token snap highlight while dragging
   useEffect(() => {
@@ -345,6 +374,41 @@ function MapCanvas({
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firestore, campaignId, map?.id]);
+
+  // Animation loop for shape fade-out
+  useEffect(() => {
+    const nonPersistentShapes = shapes.filter(s => !s.persistent);
+    if (nonPersistentShapes.length === 0) return;
+
+    let frameId;
+    const animate = () => {
+      setAnimationTime(Date.now());
+      frameId = requestAnimationFrame(animate);
+    };
+    frameId = requestAnimationFrame(animate);
+    
+    return () => cancelAnimationFrame(frameId);
+  }, [shapes]);
+
+  // Auto-cleanup fully faded shapes
+  useEffect(() => {
+    if (!firestore || !campaignId || !map?.id || !isDM) return;
+    
+    const fadeStart = 3000;
+    const fadeDuration = 2000;
+    const now = Date.now();
+    
+    shapes.filter(s => !s.persistent).forEach(shape => {
+      const createdAt = shape.createdAt?.toDate ? shape.createdAt.toDate() : new Date();
+      const age = now - createdAt.getTime();
+      
+      // Delete if fully faded
+      if (age > fadeStart + fadeDuration) {
+        shapeService.deleteShape(firestore, campaignId, map.id, shape.id)
+          .catch(err => console.error('Error auto-cleaning faded shape:', err));
+      }
+    });
+  }, [animationTime, shapes, firestore, campaignId, map?.id, isDM]);
 
   // Reveal fog around all player tokens when tokens or fog data changes
   useEffect(() => {
@@ -811,49 +875,54 @@ function MapCanvas({
           } catch (err) { console.error('Error clearing all shapes:', err); }
         }}
       />
+      
+      {/* Canvas Control Buttons Container */}
       {isDM && (
-        <button
-          style={{ position:'absolute', top:20, left:220, zIndex:130, background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
-          onClick={() => setShowLayerManager(v=>!v)}
-          title="Toggle Layer Manager"
-        >Layers</button>
-      )}
-      {isDM && (
-        <button
-          style={{ position:'absolute', top:20, left:290, zIndex:130, background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
-          onClick={() => setShowMapLibrary(v=>!v)}
-          title="Toggle Map Library"
-        >Maps</button>
-      )}
-      {isDM && (
-        <button
-          style={{ position:'absolute', top:20, left:350, zIndex:130, background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
-          onClick={() => setShowTokenEditor(v=>!v)}
-          title="Edit Selected Token Stats"
-          disabled={!selectedTokenId}
-        >Edit Token</button>
-      )}
-      {isDM && (
-        <button
-          style={{ position:'absolute', top:20, left:420, zIndex:130, background: localPlayerViewMode ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
-          onClick={() => setLocalPlayerViewMode(v=>!v)}
-          title={localPlayerViewMode ? 'Exit Player View (Return to DM View)' : 'Preview Player View (Hide hidden tokens)'}
-        >
-          👁️ {localPlayerViewMode ? 'DM View' : 'Player View'}
-        </button>
-      )}
-      {isDM && onToggleFog && (
-        <button
-          style={{ position:'absolute', top:20, left:520, zIndex:130, background: fogOfWarEnabled ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
-          onClick={onToggleFog}
-          title={fogOfWarEnabled ? 'Disable Fog of War' : 'Enable Fog of War'}
-        >
-          {fogOfWarEnabled ? '🌫️' : '👁️'} Fog
-        </button>
-      )}
-      {isDM && (
-        <div style={{ position:'absolute', top:20, left:600, zIndex:130 }} data-fx-library>
+        <div className="canvas-controls-top" style={{
+          position: 'absolute',
+          top: 20,
+          left: 220,
+          zIndex: 999999,
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'center'
+        }}>
           <button
+            className="canvas-control-btn"
+            style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
+            onClick={() => setShowLayerManager(v=>!v)}
+            title="Toggle Layer Manager"
+          >Layers</button>
+          
+          <button
+            className="canvas-control-btn"
+            style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
+            onClick={() => setShowMapLibrary(v=>!v)}
+            title="Toggle Map Library"
+          >Maps</button>
+          
+          <button
+            className="canvas-control-btn"
+            style={{ background: localPlayerViewMode ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+            onClick={() => setLocalPlayerViewMode(v=>!v)}
+            title={localPlayerViewMode ? 'Exit Player View (Return to DM View)' : 'Preview Player View (Hide hidden tokens)'}
+          >
+            👁️ {localPlayerViewMode ? 'DM View' : 'Player View'}
+          </button>
+          
+          {onToggleFog && (
+            <button
+              className="canvas-control-btn"
+              style={{ background: fogOfWarEnabled ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+              onClick={onToggleFog}
+              title={fogOfWarEnabled ? 'Disable Fog of War' : 'Enable Fog of War'}
+            >
+              {fogOfWarEnabled ? '🌫️' : '👁️'} Fog
+            </button>
+          )}
+          
+          <button
+            className="canvas-control-btn"
             style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
             onClick={() => setShowFXLibrary(v=>!v)}
             title="FX Library - Lighting, Weather, Ambience"
@@ -861,12 +930,14 @@ function MapCanvas({
             ✨ FX Library
             <span style={{ fontSize:10, marginLeft:2 }}>{showFXLibrary ? '▲' : '▼'}</span>
           </button>
-          {showFXLibrary && (
+        </div>
+      )}
+      {isDM && showFXLibrary && (
+        <div style={{ position:'absolute', top:60, left:220, zIndex:999998 }} data-fx-library>
             <div style={{
               position:'absolute',
-              top:'100%',
+              top:0,
               left:0,
-              marginTop:4,
               background:'#2d2d35',
               border:'1px solid #444',
               borderRadius:6,
@@ -972,7 +1043,6 @@ function MapCanvas({
                 <span style={{ marginLeft:'auto', fontSize:9, opacity:0.6 }}>Soon</span>
               </button>
             </div>
-          )}
         </div>
       )}
       
@@ -1025,7 +1095,7 @@ function MapCanvas({
           )}
           
           {/* Token snap highlight (shows target footprint while dragging) */}
-          {gMap.gridEnabled && tokenSnapHighlight && (() => {
+          {gMap.gridEnabled && tokenSnap && tokenSnapHighlight && (() => {
             // Pulse parameters
             const periodMs = 900; // full cycle
             const phase = (tokenSnapPulse % periodMs) / periodMs; // 0..1
@@ -1123,8 +1193,11 @@ function MapCanvas({
                 onDragEnd={handleTokenDragEnd}
                 tokenSnap={tokenSnap}
                 gridSize={map?.gridSize}
+                mapWidth={gMap?.width || width}
+                mapHeight={gMap?.height || height}
                 onDragMovePreview={(data) => setTokenSnapHighlight(data)}
                 listening={activeTool === 'pointer'}
+                showGhost={true}
                 onContextMenu={(evt) => {
                   evt.cancelBubble = true;
                   const raw = evt.evt;
@@ -1148,6 +1221,7 @@ function MapCanvas({
                 opacity={0.9}
                 draggable={activeTool === 'pointer'}
                 onDragStart={(e) => {
+                  e.cancelBubble = true; // Prevent map from shifting
                   setDraggingLight({
                     id: light.id,
                     light: light,
@@ -1155,12 +1229,14 @@ function MapCanvas({
                   });
                 }}
                 onDragMove={(e) => {
+                  e.cancelBubble = true; // Prevent map from shifting
                   setDraggingLight(prev => prev ? {
                     ...prev,
                     currentPos: { x: e.target.x(), y: e.target.y() }
                   } : null);
                 }}
                 onDragEnd={(e) => {
+                  e.cancelBubble = true; // Prevent map from shifting
                   const newPos = maybeSnapPoint({ x: e.target.x(), y: e.target.y() });
                   updateLight(light.id, { position: newPos });
                   setDraggingLight(null);
@@ -1228,7 +1304,13 @@ function MapCanvas({
   {/* Lighting Layer - renders dynamic lighting effects */}
   {lights && globalLighting && (
     <LightingLayer
-      lights={lights}
+      lights={[...lights, ...playerTokenLights].filter(light => 
+        light && 
+        light.position && 
+        typeof light.position.x === 'number' && 
+        typeof light.position.y === 'number' &&
+        typeof light.radius === 'number'
+      )}
       globalLighting={globalLighting}
       mapWidth={gMap?.width || width}
       mapHeight={gMap?.height || height}
@@ -1236,7 +1318,7 @@ function MapCanvas({
   )}
 
   {/* Fog of War Layer for DM (above lighting to show explored areas) */}
-  {isDM && fogData?.enabled && layerVisibility.fog && (() => {
+  {isDM && !localPlayerViewMode && fogData?.enabled && layerVisibility.fog && (() => {
     return (
     <Layer>
       {fogData.visibility && fogData.visibility.map((row, y) => 
@@ -1295,16 +1377,29 @@ function MapCanvas({
 
   {/* Drawing & Effects Layer - Shapes, Drawings, Rulers, Pings */}
   {(layerVisibility.shapes || layerVisibility.pings) && <Layer>
-          {/* Shapes (persisted) */}
+          {/* Shapes (persisted) with fade-out for non-persistent */}
           {visibleShapes.map(shape => {
+            // Calculate fade-out for non-persistent shapes
+            let effectiveOpacity = shape.opacity;
+            if (!shape.persistent) {
+              const createdAt = shape.createdAt?.toDate ? shape.createdAt.toDate() : new Date();
+              const age = Date.now() - createdAt.getTime();
+              const fadeStart = 3000; // Start fading at 3 seconds
+              const fadeDuration = 2000; // Complete fade in 2 seconds
+              if (age > fadeStart) {
+                const fadeProgress = Math.min((age - fadeStart) / fadeDuration, 1);
+                effectiveOpacity = shape.opacity * (1 - fadeProgress);
+              }
+            }
+            
             if (shape.type === 'circle') {
-              return <Circle key={shape.id} x={shape.geometry.x} y={shape.geometry.y} radius={shape.geometry.radius} fill={shape.color} opacity={shape.opacity} listening={false} />;
+              return <Circle key={shape.id} x={shape.geometry.x} y={shape.geometry.y} radius={shape.geometry.radius} fill={shape.color} opacity={effectiveOpacity} listening={false} />;
             }
             if (shape.type === 'rectangle') {
-              return <Rect key={shape.id} x={shape.geometry.x} y={shape.geometry.y} width={shape.geometry.width} height={shape.geometry.height} fill={shape.color} opacity={shape.opacity} listening={false} />;
+              return <Rect key={shape.id} x={shape.geometry.x} y={shape.geometry.y} width={shape.geometry.width} height={shape.geometry.height} fill={shape.color} opacity={effectiveOpacity} listening={false} />;
             }
             if (shape.type === 'line') {
-              return <Line key={shape.id} points={[shape.geometry.x1, shape.geometry.y1, shape.geometry.x2, shape.geometry.y2]} stroke={shape.color} strokeWidth={4} opacity={shape.opacity} listening={false} lineCap="round" />;
+              return <Line key={shape.id} points={[shape.geometry.x1, shape.geometry.y1, shape.geometry.x2, shape.geometry.y2]} stroke={shape.color} strokeWidth={4} opacity={effectiveOpacity} listening={false} lineCap="round" />;
             }
             if (shape.type === 'cone') {
               const { x, y, direction, length, angle } = shape.geometry;
@@ -1315,7 +1410,7 @@ function MapCanvas({
               const y2 = y + Math.sin(startAngle) * length;
               const x3 = x + Math.cos(endAngle) * length;
               const y3 = y + Math.sin(endAngle) * length;
-              return <Line key={shape.id} points={[x,y,x2,y2,x3,y3]} fill={shape.color} closed opacity={shape.opacity} listening={false} />;
+              return <Line key={shape.id} points={[x,y,x2,y2,x3,y3]} fill={shape.color} closed opacity={effectiveOpacity} listening={false} />;
             }
             return null;
           })}

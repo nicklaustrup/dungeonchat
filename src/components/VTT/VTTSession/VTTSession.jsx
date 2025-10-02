@@ -30,8 +30,7 @@ import {
   FiX,
   FiLogOut,
   FiTarget,
-  FiUser,
-  FiTrash
+  FiUser
 } from 'react-icons/fi';
 import './VTTSession.css';
 
@@ -300,17 +299,6 @@ function VTTSession() {
       console.error('Error initializing fog of war:', err);
     }
   };
-
-  // Delete selected token
-  const handleDeleteToken = () => {
-    if (!isUserDM || !selectedTokenId || !activeMap) return;
-    
-    const token = tokens?.find(t => t.id === selectedTokenId || t.tokenId === selectedTokenId);
-    if (token) {
-      setTokenToDelete(token);
-      setShowDeleteModal(true);
-    }
-  };
   
   const confirmDeleteToken = async () => {
     if (!tokenToDelete || !activeMap) return;
@@ -501,18 +489,6 @@ function VTTSession() {
         </div>
 
         <div className="toolbar-right">
-          {isUserDM && selectedTokenId && (
-            <button
-              className="toolbar-button danger"
-              onClick={handleDeleteToken}
-              title="Delete Selected Token"
-              aria-label="Delete Selected Token"
-            >
-              <FiTrash />
-              <span>Delete Token</span>
-            </button>
-          )}
-          
           {isUserDM && (
             <button
               className={`toolbar-button primary ${showTokenManager ? 'active' : ''}`}

@@ -61,6 +61,11 @@
   text-align: center;
 }
 
+/* Canvas Control Buttons at Top */
+.canvas-control-btn {
+  position: relative;
+}
+
 /* Reduced motion support - disable animations for accessibility */
 @media (prefers-reduced-motion: reduce) {
   .canvas-controls button,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image as KonvaImage, Group, Circle, Rect, Text } from 'react-konva';
+import { Image as KonvaImage, Group, Circle, Rect, Text, Line } from 'react-konva';
 import useImage from 'use-image';
 
 /**
@@ -17,6 +17,8 @@ function TokenSprite({
   listening = true,
   tokenSnap = true,
   gridSize = 50,
+  mapWidth,
+  mapHeight,
   onDragMovePreview,
   onContextMenu,
   showGhost = false // Show ghost at original position during drag
@@ -24,14 +26,37 @@ function TokenSprite({
   const [image] = useImage(token.imageUrl || '', 'anonymous');
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState(null);
+  const [currentDragPos, setCurrentDragPos] = useState(null);
 
   const handleDragEnd = (e) => {
     e.cancelBubble = true;
-    setIsDragging(false);
-    setDragStartPos(null);
     const node = e.target;
     let x = node.x();
     let y = node.y();
+    
+    // Check if token is within map boundaries
+    // Token is off-limits if:
+    // - Negative coordinates (off left/top edge)
+    // - Beyond map width/height (off right/bottom edge)
+    const tokenRadius = tokenSize / 2;
+    const isOffLimits = (
+      x < tokenRadius || // Too far left
+      y < tokenRadius || // Too far top
+      (mapWidth && x > mapWidth - tokenRadius) || // Too far right
+      (mapHeight && y > mapHeight - tokenRadius) // Too far bottom
+    );
+    
+    if (isOffLimits && dragStartPos) {
+      // Reset to ghost position if dropped in off-limits area
+      x = dragStartPos.x;
+      y = dragStartPos.y;
+      node.x(x);
+      node.y(y);
+    }
+    
+    setIsDragging(false);
+    setDragStartPos(null);
+    setCurrentDragPos(null);
     if (gridSize) {
       const altPressed = e.evt?.altKey;
       const snapActive = tokenSnap ? !altPressed : altPressed;
@@ -65,6 +90,7 @@ function TokenSprite({
     e.cancelBubble = true;
     setIsDragging(true);
     setDragStartPos({ x: token.position.x, y: token.position.y });
+    setCurrentDragPos({ x: token.position.x, y: token.position.y });
     if (onDragStart) {
       onDragStart(token.id, e);
     }
@@ -134,6 +160,9 @@ function TokenSprite({
       }
     }
     
+    // Update current drag position for ruler line rendering
+    setCurrentDragPos({ x: node.x(), y: node.y() });
+    
     // Notify parent of drag move with current position
     if (onDragMove) {
       onDragMove(token.id, { x: rawX, y: rawY }, e);
@@ -169,6 +198,58 @@ function TokenSprite({
               opacity={0.4}
             />
           )}
+        </Group>
+      )}
+
+      {/* Ruler Line - Shows distance from ghost to current position */}
+      {isDragging && dragStartPos && currentDragPos && showGhost && (
+        <Group listening={false}>
+          <Line
+            points={[
+              dragStartPos.x,
+              dragStartPos.y,
+              currentDragPos.x,
+              currentDragPos.y
+            ]}
+            stroke="#22c55e"
+            strokeWidth={2}
+            dash={[10, 5]}
+            opacity={0.7}
+            listening={false}
+          />
+          {/* Distance label */}
+          {gridSize && (() => {
+            const dx = currentDragPos.x - dragStartPos.x;
+            const dy = currentDragPos.y - dragStartPos.y;
+            const distancePixels = Math.sqrt(dx * dx + dy * dy);
+            const distanceFeet = Math.round((distancePixels / gridSize) * 5); // 5ft per square
+            const midX = (dragStartPos.x + currentDragPos.x) / 2;
+            const midY = (dragStartPos.y + currentDragPos.y) / 2;
+            
+            return (
+              <Group x={midX} y={midY}>
+                <Rect
+                  offsetX={20}
+                  offsetY={10}
+                  width={40}
+                  height={20}
+                  fill="rgba(0, 0, 0, 0.8)"
+                  cornerRadius={4}
+                />
+                <Text
+                  offsetX={20}
+                  offsetY={10}
+                  width={40}
+                  height={20}
+                  text={`${distanceFeet}ft`}
+                  fontSize={12}
+                  fill="#ffffff"
+                  align="center"
+                  verticalAlign="middle"
+                />
+              </Group>
+            );
+          })()}
         </Group>
       )}
 

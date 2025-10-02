@@ -6,12 +6,39 @@ import './TokenPalette.css';
  * TokenPalette - UI for selecting token type, color, and creating tokens
  * Provides quick access to common token types (PC, NPC, Monster, etc.)
  */
-const TokenPalette = ({ onCreateToken, isCreating }) => {
+const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, isCreating }) => {
   const [selectedType, setSelectedType] = useState('pc');
   const [selectedColor, setSelectedColor] = useState('#4a90e2');
   const [tokenName, setTokenName] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [size, setSize] = useState(1); // Grid squares (1 = Medium, 2 = Large, etc.)
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showCharacterSheet, setShowCharacterSheet] = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
+
+  // Populate form when token is selected
+  React.useEffect(() => {
+    if (selectedToken) {
+      setTokenName(selectedToken.name || '');
+      setSelectedType(selectedToken.type || 'pc');
+      setSelectedColor(selectedToken.color || '#4a90e2');
+      setSize(selectedToken.size?.width ? selectedToken.size.width / 50 : 1);
+      setHasChanges(false);
+    }
+  }, [selectedToken]);
+
+  // Track changes when editing
+  React.useEffect(() => {
+    if (selectedToken) {
+      const currentSize = selectedToken.size?.width ? selectedToken.size.width / 50 : 1;
+      const changed = 
+        tokenName !== selectedToken.name ||
+        selectedColor !== selectedToken.color ||
+        size !== currentSize ||
+        selectedType !== selectedToken.type;
+      setHasChanges(changed);
+    }
+  }, [tokenName, selectedColor, size, selectedType, selectedToken]);
 
   const tokenTypes = [
     { id: 'pc', label: 'Player Character', icon: '🧙', color: '#4a90e2' },
@@ -32,27 +59,42 @@ const TokenPalette = ({ onCreateToken, isCreating }) => {
     { value: 4, label: 'Gargantuan', gridSquares: '4x4' },
   ];
 
-  const handleCreate = () => {
+  const handleSaveOrCreate = () => {
     if (!tokenName.trim()) {
       alert('Please enter a token name');
       return;
     }
 
-    const tokenData = {
-      name: tokenName.trim(),
-      type: selectedType,
-      color: selectedColor,
-      size,
-      hidden: false,
-    };
-
-    onCreateToken(tokenData);
-    
-    // Reset form
-    setTokenName('');
-    setSelectedType('pc');
-    setSelectedColor('#4a90e2');
-    setSize(1);
+    if (selectedToken) {
+      // Update existing token
+      const pixelSize = size * 50;
+      const updates = {
+        name: tokenName.trim(),
+        type: selectedType,
+        color: selectedColor,
+        size: { width: pixelSize, height: pixelSize },
+        updatedAt: new Date(),
+      };
+      const tokenId = selectedToken.id || selectedToken.tokenId;
+      onUpdateToken(tokenId, updates);
+      setHasChanges(false);
+    } else {
+      // Create new token
+      const tokenData = {
+        name: tokenName.trim(),
+        type: selectedType,
+        color: selectedColor,
+        size,
+        hidden: false,
+      };
+      onCreateToken(tokenData);
+      
+      // Reset form
+      setTokenName('');
+      setSelectedType('pc');
+      setSelectedColor('#4a90e2');
+      setSize(1);
+    }
   };
 
   const handleTypeSelect = (type) => {
@@ -62,6 +104,17 @@ const TokenPalette = ({ onCreateToken, isCreating }) => {
 
   return (
     <div className="token-palette">
+      {selectedToken && (
+        <div className="palette-section token-info-header">
+          <div className="editing-indicator">✏️ Editing Token</div>
+          {selectedToken.imageUrl && (
+            <div className="token-preview-mini">
+              <img src={selectedToken.imageUrl} alt={selectedToken.name} />
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="palette-section">
         <label className="palette-label">Token Name</label>
         <input
@@ -133,16 +186,51 @@ const TokenPalette = ({ onCreateToken, isCreating }) => {
       <div className="palette-section">
         <button
           className="create-token-button"
-          onClick={handleCreate}
-          disabled={isCreating || !tokenName.trim()}
+          onClick={handleSaveOrCreate}
+          disabled={isCreating || !tokenName.trim() || (selectedToken && !hasChanges)}
         >
-          {isCreating ? '⏳ Creating...' : '✨ Create Token'}
+          {isCreating ? '⏳ Saving...' : selectedToken ? '💾 Save Changes' : '✨ Create Token'}
         </button>
       </div>
 
-      <div className="palette-help">
-        <p>💡 <strong>Tip:</strong> Select a token type, choose a color, and give it a name to create a new token on the map.</p>
-      </div>
+      {selectedToken && (
+        <div className="palette-section">
+          <div className="token-actions-grid">
+            <button
+              className="token-action-button"
+              onClick={() => setShowCharacterSheet(!showCharacterSheet)}
+              title="View/Edit Character Sheet (DM can modify attributes)"
+            >
+              📋 Character Sheet
+            </button>
+            <button
+              className="token-action-button"
+              onClick={() => setShowInventory(!showInventory)}
+              title="View/Edit Inventory"
+            >
+              🎒 Inventory
+            </button>
+          </div>
+          {showCharacterSheet && (
+            <div className="feature-placeholder">
+              <p>📋 Character Sheet editor coming soon!</p>
+              <p><small>DMs will be able to modify attributes on the fly during games.</small></p>
+            </div>
+          )}
+          {showInventory && (
+            <div className="feature-placeholder">
+              <p>🎒 Inventory manager coming soon!</p>
+              <p><small>Track items, equipment, and loot.</small></p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!selectedToken && (
+        <div className="palette-help">
+          <p>💡 <strong>Tip:</strong> Select a token type, choose a color, and give it a name to create a new token on the map.</p>
+        </div>
+      )}
     </div>
   );
 };

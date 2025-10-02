@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import './SignIn.css';
 import useAuth from '../../hooks/useAuth';
-import { useChatTheme } from '../../contexts/ChatStateContext';
 
 function SignIn() {
   const [mode, setMode] = useState('signin'); // 'signin', 'signup', 'reset'
@@ -11,8 +10,6 @@ function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showSetupNotice, setShowSetupNotice] = useState(false);
-
-  const { isDarkTheme, toggleTheme } = useChatTheme();
 
   const {
     loading,
@@ -77,16 +74,6 @@ function SignIn() {
 
   return (
     <div className="sign-in-container">
-      {/* Theme Toggle */}
-      <button 
-        className="theme-toggle-btn"
-        onClick={toggleTheme}
-        aria-label={`Switch to ${isDarkTheme ? 'light' : 'dark'} theme`}
-        title={`Switch to ${isDarkTheme ? 'light' : 'dark'} theme`}
-      >
-        {isDarkTheme ? '☀️' : '🌙'}
-      </button>
-
       <div className="sign-in-card">
         <div className="sign-in-header">
           <h1>Welcome to Superchat</h1>

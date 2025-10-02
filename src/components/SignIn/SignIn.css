@@ -1,6 +1,6 @@
 /* SignIn.css */
 .sign-in-container {
-  min-height: 100vh;
+  /* min-height: 100vh; */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -413,7 +413,7 @@
   }
   
   .sign-in-card {
-    padding: 32px 24px;
+    /* padding: 32px 24px; */
     border-radius: 12px;
   }
   

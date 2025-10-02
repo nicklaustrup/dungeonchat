@@ -50,6 +50,20 @@ export default function TokenContextMenu({
         <div className="tcm-row">
           <span className="tcm-label">HP:</span>
           <span className="tcm-value">{token.hp != null && token.maxHp != null ? `${token.hp}/${token.maxHp}` : '—'}</span>
+          {token.maxHp != null && (
+            <div className="hp-quick-adjust">
+              <button
+                className="hp-btn hp-decrease"
+                onClick={() => onAdjustHP?.(-1, false)}
+                title="Decrease HP by 1"
+              >▼</button>
+              <button
+                className="hp-btn hp-increase"
+                onClick={() => onAdjustHP?.(1, false)}
+                title="Increase HP by 1"
+              >▲</button>
+            </div>
+          )}
         </div>
         {token.maxHp != null && (
           <div className="tcm-row hp-adjust">

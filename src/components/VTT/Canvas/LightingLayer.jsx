@@ -39,17 +39,21 @@ const LightingLayer = ({
 
   // Calculate darkness overlay opacity based on ambient light
   const darknessOpacity = 1 - (globalLighting.ambientLight || 0.7);
+  
+  // Determine fog type: daytime (ambient > 0.6) = gray fog, night/indoors = black darkness
+  const isDaytime = (globalLighting.ambientLight || 0.7) > 0.6;
+  const fogColor = isDaytime ? '#b0b0b0' : 'black'; // Light gray fog or darkness
 
   return (
     <Layer name="lighting-layer" listening={false}>
-      {/* Darkness overlay - render first as base layer */}
+      {/* Fog of War / Darkness overlay - render first as base layer */}
       {darknessOpacity > 0 && (
         <Rect
           x={0}
           y={0}
           width={mapWidth}
           height={mapHeight}
-          fill="black"
+          fill={fogColor}
           opacity={darknessOpacity}
           listening={false}
         />
@@ -101,7 +105,7 @@ const LightingLayer = ({
 
         return (
           <React.Fragment key={light.id}>
-            {/* Light reveals area by cutting through darkness */}
+            {/* Light reveals area by cutting through fog/darkness */}
             <Circle
               x={light.position.x}
               y={light.position.y}
@@ -113,8 +117,8 @@ const LightingLayer = ({
               fillRadialGradientColorStops={[
                 0,
                 'rgba(255, 255, 255, 1)',
-                0.7,
-                'rgba(255, 255, 255, 0.5)',
+                0.6,
+                'rgba(255, 255, 255, 0.7)',
                 1,
                 'rgba(255, 255, 255, 0)'
               ]}

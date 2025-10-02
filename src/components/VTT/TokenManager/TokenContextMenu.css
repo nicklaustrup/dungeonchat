@@ -7,6 +7,10 @@
 .tcm-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
 .tcm-label { font-size:12px; opacity:0.8; }
 .tcm-value { font-size:12px; font-weight:600; }
+.hp-quick-adjust { display:flex; gap:2px; margin-left:auto; }
+.hp-btn { background:#333; border:1px solid #444; color:#22c55e; width:24px; height:20px; border-radius:3px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:10px; padding:0; }
+.hp-btn:hover { background:#444; }
+.hp-btn.hp-decrease { color:#ef4444; }
 .hp-adjust input { flex:1; background:#111; border:1px solid #333; color:#eee; padding:4px 6px; border-radius:4px; font-size:12px; }
 .hp-adjust button { background:#3d6df2; color:#fff; border:1px solid #3d6df2; padding:4px 8px; font-size:12px; border-radius:4px; cursor:pointer; }
 .hp-adjust button:hover { background:#335ad0; }
