@@ -23,11 +23,11 @@ import VoiceChatPanel from '../../Voice/VoiceChatPanel';
 import VoiceNotificationContainer, { setNotificationContainer } from '../../Voice/VoiceNotificationContainer';
 import useTokens from '../../../hooks/vtt/useTokens';
 import useLighting from '../../../hooks/vtt/useLighting';
-import { 
-  FiMessageSquare, 
-  FiFileText, 
-  FiUsers, 
-  FiMap, 
+import {
+  FiMessageSquare,
+  FiFileText,
+  FiUsers,
+  FiMap,
   FiMenu,
   FiX,
   FiLogOut,
@@ -47,26 +47,26 @@ function VTTSession() {
   const { campaignId } = useParams();
   const navigate = useNavigate();
   const { user, firestore } = useContext(FirebaseContext);
-  
+
   // Campaign & User state
   const [campaign, setCampaign] = useState(null);
   const [isUserDM, setIsUserDM] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   // Map state
   const [activeMap, setActiveMap] = useState(null);
   const [selectedTokenId, setSelectedTokenId] = useState(null);
-  
+
   // Load tokens with real-time sync
   const { tokens } = useTokens(campaignId, activeMap?.id);
-  
+
   // Get selected token object
   const selectedToken = tokens?.find(t => t.id === selectedTokenId || t.tokenId === selectedTokenId);
-  
+
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [tokenToDelete, setTokenToDelete] = useState(null);
-  
+
   // Panel state
   const [activePanel, setActivePanel] = useState(null); // 'chat', 'notes', 'party', 'maps', 'encounter', 'initiative'
   const [showTokenManager, setShowTokenManager] = useState(false);
@@ -75,7 +75,7 @@ function VTTSession() {
   const [sidebarWidth, setSidebarWidth] = useState(420);
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
   const sidebarResizeStartRef = useRef({ x: 0, width: 0 });
-  
+
   // Floating panel state
   const [floatingPanels, setFloatingPanels] = useState({
     chat: false,
@@ -84,16 +84,16 @@ function VTTSession() {
     initiative: false,
     characters: false
   });
-  
+
   // Fog of War state
   const [fogOfWarEnabled, setFogOfWarEnabled] = useState(false);
   const [showFogPanel, setShowFogPanel] = useState(false);
   const [fogBrushSize, setFogBrushSize] = useState(3);
   const [fogBrushMode, setFogBrushMode] = useState('reveal'); // 'reveal' | 'conceal'
-  
+
   // Lighting state
   const [showLightingPanel, setShowLightingPanel] = useState(false);
-  
+
   // Voice chat state
   const [showVoicePanel, setShowVoicePanel] = useState(false);
   const [isVoiceMinimized, setIsVoiceMinimized] = useState(false);
@@ -101,10 +101,10 @@ function VTTSession() {
   const [isVoiceDragging, setIsVoiceDragging] = useState(false);
   const voiceDragStartRef = useRef({ x: 0, y: 0 });
   const notificationContainerRef = useRef(null);
-  
+
   // Load lighting system for active map
   const lightingHook = useLighting(firestore, campaignId, activeMap?.id, activeMap?.lighting);
-  
+
   // Help tooltip state
   // Help tooltip state removed: tooltip behavior controlled elsewhere; state was unused and caused lint warnings
 
@@ -113,7 +113,7 @@ function VTTSession() {
     // Hide the app navigation and breadcrumb
     const appNav = document.querySelector('.app-navigation');
     const breadcrumb = document.querySelector('.breadcrumb');
-    
+
     if (appNav) appNav.style.display = 'none';
     if (breadcrumb) breadcrumb.style.display = 'none';
 
@@ -130,12 +130,12 @@ function VTTSession() {
 
     let campaignUnsubscribe;
     let mapUnsubscribe;
-    
+
     const setupCampaignListener = async () => {
       try {
         const { doc, onSnapshot } = await import('firebase/firestore');
         const campaignRef = doc(firestore, 'campaigns', campaignId);
-        
+
         // Subscribe to real-time campaign updates
         campaignUnsubscribe = onSnapshot(campaignRef, async (snapshot) => {
           if (snapshot.exists()) {
@@ -143,13 +143,13 @@ function VTTSession() {
             console.log('🔄 Campaign update received. Active map ID:', campaignData.activeMapId, 'User is DM:', campaignData.dmId === user.uid);
             setCampaign(campaignData);
             setIsUserDM(campaignData.dmId === user.uid);
-            
+
             // Unsubscribe from previous map if switching maps
             if (mapUnsubscribe) {
               mapUnsubscribe();
               mapUnsubscribe = null;
             }
-            
+
             // Subscribe to active map changes in real-time
             if (campaignData.activeMapId) {
               console.log('📍 Subscribing to map:', campaignData.activeMapId);
@@ -184,7 +184,7 @@ function VTTSession() {
     };
 
     setupCampaignListener();
-    
+
     // Cleanup listeners on unmount
     return () => {
       if (campaignUnsubscribe) {
@@ -198,37 +198,37 @@ function VTTSession() {
 
   // Auto-create player tokens for players with character sheets
   useEffect(() => {
-    console.log('Auto-create player token check:', { 
-      hasCampaign: !!campaign, 
-      hasUser: !!user, 
-      hasFirestore: !!firestore, 
-      hasActiveMap: !!activeMap, 
+    console.log('Auto-create player token check:', {
+      hasCampaign: !!campaign,
+      hasUser: !!user,
+      hasFirestore: !!firestore,
+      hasActiveMap: !!activeMap,
       isUserDM,
       willRun: !!(campaign && user && firestore && activeMap && !isUserDM)
     });
-    
+
     if (!campaign || !user || !firestore || !activeMap || isUserDM) return;
 
     const createPlayerToken = async () => {
       try {
         const { collection, query, where, getDocs, doc, getDoc } = await import('firebase/firestore');
-        
+
         // First check if player has a character sheet
         const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', user.uid);
         const characterSnap = await getDoc(characterRef);
-        
+
         if (!characterSnap.exists()) {
           console.log('Player has no character sheet, skipping token creation');
           return; // Only create tokens for players with character sheets
         }
-        
+
         const character = characterSnap.data();
-        
+
         // Check if player already has a token for this map
         const tokensRef = collection(firestore, 'campaigns', campaignId, 'vtt', activeMap.id, 'tokens');
         const q = query(tokensRef, where('ownerId', '==', user.uid), where('type', '==', 'pc'));
         const existingTokens = await getDocs(q);
-        
+
         if (!existingTokens.empty) return; // Player already has a token on this map
 
         // Get user profile for photo
@@ -320,7 +320,7 @@ function VTTSession() {
     try {
       const map = await mapService.getMap(firestore, campaignId, mapId);
       setActiveMap(map);
-      
+
       // DM can set this as the active map for all players
       if (isUserDM) {
         await mapService.setActiveMap(firestore, campaignId, mapId);
@@ -365,11 +365,22 @@ function VTTSession() {
   // Toggle fog of war enable/disable
   const handleToggleFogEnabled = async (enabled) => {
     if (!isUserDM || !activeMap) return;
-    
+
+    // Get user confirmation first
+    if (fogOfWarEnabled) {
+      const confirm = window.confirm('Disabling Fog of War will reveal unexplored areas on the map. Do you want to continue?');
+      if (!confirm) {
+        return;
+      }
+      else {
+        setFogOfWarEnabled(false);
+      }
+    }
+
     try {
       // Check if fog exists first
       const fogData = await fogOfWarService.getFogOfWar(firestore, campaignId, activeMap.id);
-      
+
       if (!fogData) {
         // Initialize fog if it doesn't exist
         if (!activeMap.gridEnabled) {
@@ -392,7 +403,7 @@ function VTTSession() {
   // Reveal all fog
   const handleRevealAll = async () => {
     if (!isUserDM || !activeMap) return;
-    
+
     try {
       await fogOfWarService.clearFogOfWar(firestore, campaignId, activeMap.id);
     } catch (err) {
@@ -404,7 +415,7 @@ function VTTSession() {
   // Conceal all fog
   const handleConcealAll = async () => {
     if (!isUserDM || !activeMap) return;
-    
+
     try {
       await fogOfWarService.resetFogOfWar(firestore, campaignId, activeMap.id);
     } catch (err) {
@@ -416,22 +427,22 @@ function VTTSession() {
   // Initialize fog of war for new map
   const handleInitializeFog = async () => {
     if (!isUserDM || !activeMap || !activeMap.gridEnabled) return;
-    
+
     try {
       // Add 2 extra cells in each dimension (1 padding on each side) to prevent edge reveal when grid is offset
       const gridWidth = Math.ceil(activeMap.width / activeMap.gridSize) + 2;
       const gridHeight = Math.ceil(activeMap.height / activeMap.gridSize) + 2;
-      
+
       await fogOfWarService.initializeFogOfWar(firestore, campaignId, activeMap.id, gridWidth, gridHeight);
       setFogOfWarEnabled(true);
     } catch (err) {
       console.error('Error initializing fog of war:', err);
     }
   };
-  
+
   const confirmDeleteToken = async () => {
     if (!tokenToDelete || !activeMap) return;
-    
+
     try {
       const tokenId = tokenToDelete.id || tokenToDelete.tokenId;
       await tokenService.deleteToken(firestore, campaignId, activeMap.id, tokenId);
@@ -443,12 +454,12 @@ function VTTSession() {
       alert('Failed to delete token: ' + err.message);
     }
   };
-  
+
   const cancelDeleteToken = () => {
     setShowDeleteModal(false);
     setTokenToDelete(null);
   };
-  
+
   // Voice chat drag handlers
   const handleVoiceDragStart = (e) => {
     setIsVoiceDragging(true);
@@ -461,12 +472,12 @@ function VTTSession() {
     const handleMouseMove = (e) => {
       const deltaX = e.clientX - voiceDragStartRef.current.x;
       const deltaY = e.clientY - voiceDragStartRef.current.y;
-      
+
       setVoicePosition(prev => ({
         x: Math.max(0, Math.min(window.innerWidth - 380, prev.x + deltaX)),
         y: Math.max(0, Math.min(window.innerHeight - 100, prev.y + deltaY))
       }));
-      
+
       voiceDragStartRef.current = { x: e.clientX, y: e.clientY };
     };
 
@@ -519,7 +530,7 @@ function VTTSession() {
       {/* Top Toolbar */}
       <div className="vtt-toolbar">
         <div className="toolbar-left">
-          <button 
+          <button
             className="sidebar-toggle"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             title={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
@@ -680,7 +691,7 @@ function VTTSession() {
                 {activePanel === 'encounter' && '⚔️ Encounters'}
                 {!activePanel && '📁 Panel'}
               </h3>
-              <button 
+              <button
                 className="sidebar-close-btn"
                 onClick={() => {
                   setIsSidebarOpen(false);
@@ -700,14 +711,14 @@ function VTTSession() {
               )}
 
               {activePanel === 'rules' && (
-                <CampaignRules 
-                  campaignId={campaignId} 
+                <CampaignRules
+                  campaignId={campaignId}
                   isUserDM={isUserDM}
                 />
               )}
 
               {activePanel === 'party' && !floatingPanels.party && (
-                <PartyManagement 
+                <PartyManagement
                   campaignId={campaignId}
                 />
               )}
@@ -740,7 +751,7 @@ function VTTSession() {
             </div>
 
             {/* Resize Handle */}
-            <div 
+            <div
               className="sidebar-resize-handle"
               onMouseDown={handleSidebarResizeStart}
               title="Drag to resize panel"
@@ -783,7 +794,7 @@ function VTTSession() {
               <FiMap size={64} />
               <h2>No Active Map</h2>
               <p>
-                {isUserDM 
+                {isUserDM
                   ? 'Select a map from the Map Library to get started'
                   : 'Waiting for DM to load a map...'
                 }
@@ -871,7 +882,7 @@ function VTTSession() {
           <CharacterSheetPanel campaignId={campaignId} isUserDM={isUserDM} />
         </ResizablePanel>
       )}
-      
+
       {/* Delete Token Modal */}
       {showDeleteModal && tokenToDelete && (
         <DeleteTokenModal
@@ -941,7 +952,7 @@ function VTTSession() {
       {/* Voice Chat Floating Panel */}
       <VoiceNotificationContainer ref={notificationContainerRef} />
       {showVoicePanel && campaign && (
-        <div 
+        <div
           className={`floating-voice-panel ${isVoiceDragging ? 'dragging' : ''}`}
           onMouseDown={handleVoiceDragStart}
           style={{

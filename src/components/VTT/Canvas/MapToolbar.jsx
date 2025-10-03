@@ -10,7 +10,8 @@ import {
     Square,
     Triangle,
     Grid,
-    Ruler
+    Ruler,
+    CloudFog
 } from 'lucide-react';
 import './MapToolbar.css';
 
@@ -53,6 +54,9 @@ const MapToolbar = ({
     onClearAllShapes,
     onOpenGridConfig,
     showKeyboardShortcuts = false, // Controlled by MapCanvas now
+    // Grid configuration props
+    map,
+    onGridUpdate,
     // Fog-related props
     fogOfWarEnabled,
     onToggleFogEnabled,
@@ -69,10 +73,31 @@ const MapToolbar = ({
 }) => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showFogControls, setShowFogControls] = useState(false);
+    const [showGridConfig, setShowGridConfig] = useState(false);
     const [position, setPosition] = useState({ x: 20, y: 20 });
     const [width, setWidth] = useState(180);
     const [isDragging, setIsDragging] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
+
+    // Grid configuration state
+    const [gridSize, setGridSize] = useState(map?.gridSize || 50);
+    const [gridColor, setGridColor] = useState(map?.gridColor || '#000000');
+    const [gridOpacity, setGridOpacity] = useState(map?.gridOpacity ?? 0.3);
+    const [gridEnabled, setGridEnabled] = useState(map?.gridEnabled ?? true);
+    const [gridOffsetX, setGridOffsetX] = useState(map?.gridOffsetX || 0);
+    const [gridOffsetY, setGridOffsetY] = useState(map?.gridOffsetY || 0);
+    const debounceRef = useRef();
+
+    // Update grid state when map changes
+    useEffect(() => {
+        setGridSize(map?.gridSize || 50);
+        setGridColor(map?.gridColor || '#000000');
+        setGridOpacity(map?.gridOpacity ?? 0.3);
+        setGridEnabled(map?.gridEnabled ?? true);
+        setGridOffsetX(map?.gridOffsetX || 0);
+        setGridOffsetY(map?.gridOffsetY || 0);
+    }, [map?.id, map?.gridSize, map?.gridColor, map?.gridOpacity, map?.gridEnabled, map?.gridOffsetX, map?.gridOffsetY]);
 
     const toolbarRef = useRef(null);
     const dragStartPos = useRef({ x: 0, y: 0 });
@@ -196,12 +221,44 @@ const MapToolbar = ({
     }, [isDragging, isResizing, position, width, MIN_WIDTH, MAX_WIDTH]);
 
     const handleFogButtonClick = () => {
-        if (fogOfWarEnabled) {
-            onToggleFogEnabled(false);
+        // Toggle fog controls panel
+        if (showFogControls) {
+            setShowFogControls(false);
         } else {
-            onToggleFogEnabled(true);
+            // Close other panels if open
+            if (showSettings) {
+                setShowSettings(false);
+            }
+            if (showGridConfig) {
+                setShowGridConfig(false);
+            }
+            setShowFogControls(true);
         }
     };
+
+    const handleGridButtonClick = () => {
+        // Toggle grid config panel
+        if (showGridConfig) {
+            setShowGridConfig(false);
+        } else {
+            // Close other panels if open
+            if (showSettings) {
+                setShowSettings(false);
+            }
+            if (showFogControls) {
+                setShowFogControls(false);
+            }
+            setShowGridConfig(true);
+        }
+    };
+
+    // Debounced grid update
+    const debouncedGridUpdate = useCallback((partial) => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            onGridUpdate?.(partial);
+        }, 180);
+    }, [onGridUpdate]);
 
     return (
         <div
@@ -237,11 +294,22 @@ const MapToolbar = ({
                 <div className="toolbar-controls">
                     {!isMinimized && (
                         <button
-                            className="toolbar-control-btn"
+                            className={`toolbar-control-btn ${showSettings ? 'active' : ''}`}
                             onMouseDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
                                 e.stopPropagation();
-                                setShowSettings(!showSettings);
+                                if (showSettings) {
+                                    setShowSettings(false);
+                                } else {
+                                    // Close other panels if open
+                                    if (showFogControls) {
+                                        setShowFogControls(false);
+                                    }
+                                    if (showGridConfig) {
+                                        setShowGridConfig(false);
+                                    }
+                                    setShowSettings(true);
+                                }
                             }}
                             aria-label="Toggle toolbar settings"
                             aria-pressed={showSettings}
@@ -282,41 +350,29 @@ const MapToolbar = ({
                                 </button>
                             );
                         })}
+                        <div className="dm-toolbar-separator" />
                         {isDM && (
                             <button
-                                className="toolbar-button"
-                                onClick={() => onOpenGridConfig?.()}
-                                aria-label="Open Grid Configuration Settings"
+                                className={`toolbar-button ${showGridConfig ? 'active' : ''}`}
+                                onClick={handleGridButtonClick}
+                                aria-label="Toggle Grid Configuration"
+                                aria-pressed={showGridConfig}
                             >
                                 <Grid size={20} />
                                 {width > 100 && <span className="toolbar-label">Grid</span>}
                             </button>
-
                         )}
 
-                        {isDM && onOpenFogPanel && (
+                        {isDM && (
                             <button
-                                className="canvas-control-btn"
-                                style={{ background: showFogPanel ? '#667eea' : '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
-                                onClick={onOpenFogPanel}
-                                title="Fog of War Controls"
+                                className={`toolbar-button ${showFogControls ? 'active' : ''}`}
+                                onClick={handleFogButtonClick}
+                                aria-label="Toggle Fog Controls"
+                                aria-pressed={showFogControls}
                             >
-                                🌫️ Fog
+                                <CloudFog size={20} />
+                                {width > 100 && <span className="toolbar-label">Fog</span>}
                             </button>
-                        )}
-
-                        <button
-                            className={`fog-button ${fogOfWarEnabled ? 'active' : ''}`}
-                            onClick={handleFogButtonClick}
-                        >
-                            {fogOfWarEnabled ? 'Disable Fog' : 'Enable Fog'}
-                        </button>
-                        {fogOfWarEnabled && (
-                            <div className="fog-controls">
-                                <button onClick={onRevealAll}>Reveal All</button>
-                                <button onClick={onConcealAll}>Conceal All</button>
-                                <button onClick={onInitializeFog}>Initialize Fog</button>
-                            </div>
                         )}
                     </div>
                 </div>
@@ -325,6 +381,16 @@ const MapToolbar = ({
             {/* Settings Panel - Adjacent Flyout */}
             {showSettings && !isMinimized && (
                 <div className="toolbar-settings-panel">
+                    <div className="panel-header">
+                        <label>Tool Settings</label>
+                        <button
+                            className="panel-close-btn"
+                            onClick={() => setShowSettings(false)}
+                            aria-label="Close settings"
+                        >
+                            ×
+                        </button>
+                    </div>
                     <div className="setting-group">
                         <label>Ping Color (Alt+Click)</label>
                         <div className="color-picker-container">
@@ -337,6 +403,7 @@ const MapToolbar = ({
                             <span className="color-value">{pingColor}</span>
                         </div>
                     </div>
+                    <div className="setting-divider" />
                     <div className="setting-group">
                         <label>Pen Color</label>
                         <div className="color-picker-container">
@@ -349,6 +416,7 @@ const MapToolbar = ({
                             <span className="color-value">{penColor}</span>
                         </div>
                     </div>
+                    <div className="setting-divider" />
                     <div className="setting-group">
                         <label>Ruler Color</label>
                         <div className="color-picker-container">
@@ -460,6 +528,261 @@ const MapToolbar = ({
                                         onClick={() => onClearTempShapes?.()}
                                     >
                                         Clear Temp Shapes
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* Grid Configuration Panel - Adjacent Flyout */}
+            {showGridConfig && !isMinimized && isDM && onOpenGridConfig && (
+                <div className="toolbar-settings-panel">
+                    <div className="panel-header">
+                        <label>Grid Configuration</label>
+                        <button
+                            className="panel-close-btn"
+                            onClick={() => setShowGridConfig(false)}
+                            aria-label="Close grid configuration"
+                        >
+                            ×
+                        </button>
+                    </div>
+                    <div className="setting-group">
+                        <label>Grid Visibility</label>
+                        <div className="checkbox-group">
+                            <label className="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked={gridEnabled}
+                                    onChange={(e) => {
+                                        const newValue = e.target.checked;
+                                        setGridEnabled(newValue);
+                                        debouncedGridUpdate({ gridEnabled: newValue });
+                                    }}
+                                />
+                                <span>Show Grid</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div className="setting-divider" />
+                    <div className="setting-group">
+                        <label>Grid Size (px): {gridSize}</label>
+                        <div className="opacity-slider">
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <input
+                                    type="range"
+                                    min={20}
+                                    max={150}
+                                    step={5}
+                                    value={gridSize}
+                                    onChange={(e) => {
+                                        const v = parseInt(e.target.value, 10);
+                                        setGridSize(v);
+                                        debouncedGridUpdate({ gridSize: v });
+                                    }}
+                                    style={{ flex: 1 }}
+                                />
+                                <input
+                                    type="number"
+                                    min={10}
+                                    max={300}
+                                    value={gridSize}
+                                    onChange={(e) => {
+                                        const v = parseInt(e.target.value, 10) || 50;
+                                        setGridSize(v);
+                                        debouncedGridUpdate({ gridSize: v });
+                                    }}
+                                    style={{ width: '60px', padding: '4px', background: '#2a2a3e', color: '#fff', border: '1px solid #444', borderRadius: '4px' }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="setting-divider" />
+                    <div className="setting-group">
+                        <label>Grid Offset X: {gridOffsetX}</label>
+                        <div className="opacity-slider">
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <input
+                                    type="range"
+                                    min={Math.floor(-(gridSize / 2))}
+                                    max={Math.floor(gridSize / 2)}
+                                    step={1}
+                                    value={gridOffsetX}
+                                    onChange={(e) => {
+                                        const v = parseInt(e.target.value, 10);
+                                        setGridOffsetX(v);
+                                        debouncedGridUpdate({ gridOffsetX: v });
+                                    }}
+                                    style={{ flex: 1 }}
+                                />
+                                <input
+                                    type="number"
+                                    min={Math.floor(-(gridSize / 2))}
+                                    max={Math.floor(gridSize / 2)}
+                                    value={gridOffsetX}
+                                    onChange={(e) => {
+                                        const v = Math.max(Math.floor(-(gridSize / 2)), Math.min(Math.floor(gridSize / 2), parseInt(e.target.value, 10) || 0));
+                                        setGridOffsetX(v);
+                                        debouncedGridUpdate({ gridOffsetX: v });
+                                    }}
+                                    style={{ width: '60px', padding: '4px', background: '#2a2a3e', color: '#fff', border: '1px solid #444', borderRadius: '4px' }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="setting-divider" />
+                    <div className="setting-group">
+                        <label>Grid Offset Y: {gridOffsetY}</label>
+                        <div className="opacity-slider">
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <input
+                                    type="range"
+                                    min={Math.floor(-(gridSize / 2))}
+                                    max={Math.floor(gridSize / 2)}
+                                    step={1}
+                                    value={gridOffsetY}
+                                    onChange={(e) => {
+                                        const v = parseInt(e.target.value, 10);
+                                        setGridOffsetY(v);
+                                        debouncedGridUpdate({ gridOffsetY: v });
+                                    }}
+                                    style={{ flex: 1 }}
+                                />
+                                <input
+                                    type="number"
+                                    min={Math.floor(-(gridSize / 2))}
+                                    max={Math.floor(gridSize / 2)}
+                                    value={gridOffsetY}
+                                    onChange={(e) => {
+                                        const v = Math.max(Math.floor(-(gridSize / 2)), Math.min(Math.floor(gridSize / 2), parseInt(e.target.value, 10) || 0));
+                                        setGridOffsetY(v);
+                                        debouncedGridUpdate({ gridOffsetY: v });
+                                    }}
+                                    style={{ width: '60px', padding: '4px', background: '#2a2a3e', color: '#fff', border: '1px solid #444', borderRadius: '4px' }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="setting-divider" />
+                    <div className="setting-group">
+                        <label>Grid Opacity</label>
+                        <div className="opacity-slider">
+                            <input
+                                type="range"
+                                min={0}
+                                max={1}
+                                step={0.05}
+                                value={gridOpacity}
+                                onChange={(e) => {
+                                    const v = parseFloat(e.target.value);
+                                    setGridOpacity(v);
+                                    debouncedGridUpdate({ gridOpacity: v });
+                                }}
+                            />
+                            <span>{Math.round(gridOpacity * 100)}% opacity</span>
+                        </div>
+                    </div>
+                    <div className="setting-divider" />
+                    <div className="setting-group">
+                        <label>Grid Color</label>
+                        <div className="color-picker-container">
+                            <input
+                                type="color"
+                                value={gridColor}
+                                onChange={(e) => {
+                                    const v = e.target.value;
+                                    setGridColor(v);
+                                    debouncedGridUpdate({ gridColor: v });
+                                }}
+                                className="color-picker"
+                            />
+                            <span className="color-value">{gridColor}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Fog Controls Panel - Adjacent Flyout */}
+            {showFogControls && !isMinimized && isDM && (
+                <div className="toolbar-settings-panel">
+                    <div className="panel-header">
+                        <label>Fog of War Controls</label>
+                        <button
+                            className="panel-close-btn"
+                            onClick={() => setShowFogControls(false)}
+                            aria-label="Close fog controls"
+                        >
+                            ×
+                        </button>
+                    </div>
+                    <div className="setting-group">
+                        <div className="checkbox-group">
+                            <label className="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked={fogOfWarEnabled}
+                                    onChange={(e) => onToggleFogEnabled?.(e.target.checked)}
+                                />
+                                <span>Enable Fog of War</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {fogOfWarEnabled && (
+                        <>
+                            <div className="setting-divider" />
+                            <div className="setting-group">
+                                <label>Brush Settings</label>
+                                <div className="opacity-slider">
+                                    <label>Brush Size: {fogBrushSize}</label>
+                                    <input
+                                        type="range"
+                                        min={1}
+                                        max={10}
+                                        step={1}
+                                        value={fogBrushSize}
+                                        onChange={(e) => onFogBrushSizeChange?.(parseInt(e.target.value))}
+                                    />
+                                </div>
+                                <div className="checkbox-group">
+                                    <label className="checkbox-label">
+                                        <input
+                                            type="radio"
+                                            name="fogBrushMode"
+                                            checked={fogBrushMode === 'reveal'}
+                                            onChange={() => onFogBrushModeChange?.('reveal')}
+                                        />
+                                        <span>Reveal Mode</span>
+                                    </label>
+                                    <label className="checkbox-label">
+                                        <input
+                                            type="radio"
+                                            name="fogBrushMode"
+                                            checked={fogBrushMode === 'conceal'}
+                                            onChange={() => onFogBrushModeChange?.('conceal')}
+                                        />
+                                        <span>Conceal Mode</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="setting-divider" />
+                            <div className="setting-group">
+                                <label>Quick Actions</label>
+                                <div className="shape-actions">
+                                    <button
+                                        className="clear-rulers-btn"
+                                        onClick={() => onRevealAll?.()}
+                                    >
+                                        Reveal All
+                                    </button>
+                                    <button
+                                        className="clear-rulers-btn"
+                                        onClick={() => onConcealAll?.()}
+                                    >
+                                        Conceal All
                                     </button>
                                 </div>
                             </div>

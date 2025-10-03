@@ -33,6 +33,12 @@
   width: auto !important; /* Ensure minimal width when minimized */
 }
 
+.dm-toolbar-separator {
+  height: 1px;
+  background: rgba(102, 126, 234, 0.2);
+  margin: 4px 0;
+}
+
 /* Resize Handles - CRITICAL FIX */
 .resize-handle {
   position: absolute;
@@ -133,6 +139,11 @@
   color: var(--text-primary, #ffffff);
 }
 
+.toolbar-control-btn.active {
+  background: rgba(102, 126, 234, 0.3);
+  color: #667eea;
+}
+
 .toolbar-buttons {
   display: flex;
   flex-direction: column;
@@ -212,6 +223,8 @@
 /* Settings Panel - Adjacent Flyout */
 .toolbar-settings-panel {
   position: absolute;
+  display: flex;
+  flex-direction: column;
   left: 100%;
   top: 0;
   margin-left: 8px;
@@ -256,6 +269,8 @@
 
 .setting-group {
   margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
 }
 
 .setting-group:last-child {
@@ -352,7 +367,8 @@
   color: #667eea;
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type="checkbox"],
+.checkbox-label input[type="radio"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
@@ -382,6 +398,47 @@
 
 .clear-rulers-btn:active {
   transform: translateY(0);
+}
+
+.shape-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Panel Header with Close Button */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.panel-header label {
+  margin-bottom: 0 !important;
+}
+
+.panel-close-btn {
+  background: transparent;
+  border: none;
+  color: #c0c0d0;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.panel-close-btn:hover {
+  background: rgba(244, 67, 54, 0.2);
+  color: #ff5252;
 }
 
 /* Focus indicators for accessibility */

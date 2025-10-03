@@ -1068,7 +1068,27 @@ function MapCanvas({
         shapeOpacity={shapeOpacity}
         shapePersistent={shapePersistent}
         shapeVisibility={shapeVisibility}
-        onOpenFogPanel={() => showFogPanel(true)}
+        // Grid configuration props
+        map={gMap}
+        onGridUpdate={async (updates) => {
+          setMapLive(m => m ? { ...m, ...updates } : m);
+          try {
+            await mapService.updateMap(firestore, campaignId, gMap.id, updates);
+          } catch (e) { console.error('Failed to update grid settings', e); }
+        }}
+        // Fog-related props
+        fogOfWarEnabled={fogOfWarEnabled}
+        onToggleFogEnabled={onToggleFogEnabled}
+        onRevealAll={onRevealAll}
+        onConcealAll={onConcealAll}
+        onInitializeFog={onInitializeFog}
+        showFogPanel={showFogPanel}
+        onOpenFogPanel={onOpenFogPanel}
+        onCloseFogPanel={onCloseFogPanel}
+        fogBrushSize={fogBrushSize}
+        onFogBrushSizeChange={onFogBrushSizeChange}
+        fogBrushMode={fogBrushMode}
+        onFogBrushModeChange={onFogBrushModeChange}
         onShapeColorChange={setShapeColor}
         onShapeOpacityChange={setShapeOpacity}
         onShapePersistentToggle={() => setShapePersistent(prev => !prev)}
