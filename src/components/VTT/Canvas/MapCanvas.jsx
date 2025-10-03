@@ -681,7 +681,7 @@ function MapCanvas({
 
     revealAroundPlayerTokens();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, playerTokens.length, lights.length, map.gridSize, map.id]);
+  }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, JSON.stringify(playerTokens.map(t => ({ x: t.position?.x, y: t.position?.y }))), lights.length, map.gridSize, map.id]);
 
   // Reveal fog around light sources when lights or fog data changes
   useEffect(() => {
@@ -922,6 +922,12 @@ function MapCanvas({
         }
         // Place the light at clicked position
         const position = smartSnapPoint({ x: mapX, y: mapY });
+        
+        // Check if position is within map bounds
+        if (!isPointInMapBounds(position)) {
+          console.log('Cannot place light outside map bounds');
+          return;
+        }
         
         // Determine light type from preset data
         const lightType = determineLightType(placingLight);
@@ -1843,7 +1849,15 @@ function MapCanvas({
                 onDragEnd={(e) => {
                   e.cancelBubble = true; // Prevent map from shifting
                   const newPos = maybeSnapPoint({ x: e.target.x(), y: e.target.y() });
-                  updateLight(light.id, { position: newPos });
+                  // Check if new position is within map bounds
+                  if (!isPointInMapBounds(newPos)) {
+                    console.log('Cannot move light outside map bounds');
+                    // Reset to original position
+                    e.target.x(light.position.x);
+                    e.target.y(light.position.y);
+                  } else {
+                    updateLight(light.id, { position: newPos });
+                  }
                   setDraggingLight(null);
                 }}
                 onMouseEnter={(e) => {
