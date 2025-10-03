@@ -294,6 +294,12 @@ service cloud.firestore {
             request.resource.data.ownerId == request.auth.uid &&
             request.resource.data.type == 'pc' &&
             request.resource.data.staged == true;
+          
+          // Campaign members can update their own PC tokens (position and other fields)
+          allow update: if request.auth != null && 
+            exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid)) &&
+            resource.data.ownerId == request.auth.uid &&
+            resource.data.type == 'pc';
         }
         
         // Pings subcollection (temporary map markers)

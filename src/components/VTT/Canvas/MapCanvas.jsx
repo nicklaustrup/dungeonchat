@@ -259,10 +259,17 @@ function MapCanvas({
   const maybeSnapPoint = useCallback((pt) => {
     if (snapToGrid && gMap?.gridSize) {
       const g = gMap.gridSize;
-      return { x: Math.round(pt.x / g) * g, y: Math.round(pt.y / g) * g };
+      const offsetX = gMap.gridOffsetX || 0;
+      const offsetY = gMap.gridOffsetY || 0;
+      // Adjust point by removing offset, snap to grid, then add offset back
+      const adjustedX = pt.x - offsetX;
+      const adjustedY = pt.y - offsetY;
+      const snappedX = Math.round(adjustedX / g) * g + offsetX;
+      const snappedY = Math.round(adjustedY / g) * g + offsetY;
+      return { x: snappedX, y: snappedY };
     }
     return pt;
-  }, [snapToGrid, gMap?.gridSize]);
+  }, [snapToGrid, gMap?.gridSize, gMap?.gridOffsetX, gMap?.gridOffsetY]);
 
   // Helper to snap point to nearest token center if within threshold
   const snapToTokenCenter = useCallback((pt, snapThreshold = 30) => {
@@ -473,10 +480,15 @@ function MapCanvas({
 
     const revealAroundPlayerTokens = async () => {
       try {
+        const offsetX = map.gridOffsetX || 0;
+        const offsetY = map.gridOffsetY || 0;
         // Reveal fog around each player token
         for (const token of playerTokens) {
-          const gridX = Math.floor(token.position.x / map.gridSize);
-          const gridY = Math.floor(token.position.y / map.gridSize);
+          // Adjust for grid offset before calculating cell position
+          const adjustedX = token.position.x - offsetX;
+          const adjustedY = token.position.y - offsetY;
+          const gridX = Math.floor(adjustedX / map.gridSize);
+          const gridY = Math.floor(adjustedY / map.gridSize);
 
           // Check if player has a light source (torch/lantern) nearby
           const hasNearbyLight = lights.some(light => {
@@ -506,11 +518,16 @@ function MapCanvas({
 
     const revealAroundLights = async () => {
       try {
+        const offsetX = map.gridOffsetX || 0;
+        const offsetY = map.gridOffsetY || 0;
         // Reveal fog around each light source
         for (const light of lights) {
           if (!light.position) continue;
-          const gridX = Math.floor(light.position.x / map.gridSize);
-          const gridY = Math.floor(light.position.y / map.gridSize);
+          // Adjust for grid offset before calculating cell position
+          const adjustedX = light.position.x - offsetX;
+          const adjustedY = light.position.y - offsetY;
+          const gridX = Math.floor(adjustedX / map.gridSize);
+          const gridY = Math.floor(adjustedY / map.gridSize);
           // Calculate reveal radius based on light radius (convert pixels to grid cells)
           const revealRadius = Math.ceil((light.radius || 40) / map.gridSize);
           await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, revealRadius);
@@ -522,7 +539,7 @@ function MapCanvas({
 
     revealAroundLights();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, lights.length, map.gridSize, map.id]);
+  }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, JSON.stringify(lights.map(l => ({ x: l.position?.x, y: l.position?.y, r: l.radius }))), map.gridSize, map.id]);
 
   // Force re-render for fade animations (drawings)
   useEffect(() => {
@@ -666,6 +683,8 @@ function MapCanvas({
         }
 
         const gridSize = map?.gridSize || 50;
+        const offsetX = map?.gridOffsetX || 0;
+        const offsetY = map?.gridOffsetY || 0;
         let startX = mapX;
         let startY = mapY;
         let endX = mapX;
@@ -673,10 +692,12 @@ function MapCanvas({
 
         // Snap to grid if enabled
         if (snapToGrid) {
-          startX = Math.round(mapX / gridSize) * gridSize;
-          startY = Math.round(mapY / gridSize) * gridSize;
-          endX = Math.round(mapX / gridSize) * gridSize;
-          endY = Math.round(mapY / gridSize) * gridSize;
+          const adjustedX = mapX - offsetX;
+          const adjustedY = mapY - offsetY;
+          startX = Math.round(adjustedX / gridSize) * gridSize + offsetX;
+          startY = Math.round(adjustedY / gridSize) * gridSize + offsetY;
+          endX = Math.round(adjustedX / gridSize) * gridSize + offsetX;
+          endY = Math.round(adjustedY / gridSize) * gridSize + offsetY;
         }
 
         if (!rulerStart) {
@@ -797,13 +818,17 @@ function MapCanvas({
     } else if (activeTool === 'ruler' && rulerStart) {
       // Update ruler end point while dragging
       const gridSize = map?.gridSize || 50;
+      const offsetX = map?.gridOffsetX || 0;
+      const offsetY = map?.gridOffsetY || 0;
       let endX = mapX;
       let endY = mapY;
 
       // Snap to grid if enabled
       if (snapToGrid) {
-        endX = Math.round(mapX / gridSize) * gridSize;
-        endY = Math.round(mapY / gridSize) * gridSize;
+        const adjustedX = mapX - offsetX;
+        const adjustedY = mapY - offsetY;
+        endX = Math.round(adjustedX / gridSize) * gridSize + offsetX;
+        endY = Math.round(adjustedY / gridSize) * gridSize + offsetY;
       }
 
       setRulerEnd({ x: endX, y: endY });
@@ -872,9 +897,14 @@ function MapCanvas({
       let finalPos = newPosition;
       if (snapToGrid && map?.gridSize) {
         const g = map.gridSize;
-        const cellX = Math.floor(newPosition.x / g);
-        const cellY = Math.floor(newPosition.y / g);
-        finalPos = { x: cellX * g + g / 2, y: cellY * g + g / 2 };
+        const offsetX = map.gridOffsetX || 0;
+        const offsetY = map.gridOffsetY || 0;
+        // Adjust for offset, snap to grid, then add offset back
+        const adjustedX = newPosition.x - offsetX;
+        const adjustedY = newPosition.y - offsetY;
+        const cellX = Math.floor(adjustedX / g);
+        const cellY = Math.floor(adjustedY / g);
+        finalPos = { x: cellX * g + g / 2 + offsetX, y: cellY * g + g / 2 + offsetY };
       }
       // Clamp to map bounds
       finalPos = clampTokenCenter(finalPos, token);
@@ -883,15 +913,19 @@ function MapCanvas({
       // Undo/redo disabled for token moves (future enhancement)
       if (fogOfWarEnabled && fogData?.enabled && map.gridEnabled) {
         if (token && token.type === 'pc') {
-          const gridX = Math.floor(finalPos.x / map.gridSize);
-          const gridY = Math.floor(finalPos.y / map.gridSize);
+          const offsetX = map.gridOffsetX || 0;
+          const offsetY = map.gridOffsetY || 0;
+          const adjustedX = finalPos.x - offsetX;
+          const adjustedY = finalPos.y - offsetY;
+          const gridX = Math.floor(adjustedX / map.gridSize);
+          const gridY = Math.floor(adjustedY / map.gridSize);
           await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, 3);
         }
       }
     } catch (err) {
       console.error('Error updating token position:', err);
     }
-  }, [tokens, snapToGrid, map?.gridSize, map?.id, map?.gridEnabled, clampTokenCenter, firestore, campaignId, updateToken, fogOfWarEnabled, fogData?.enabled]);
+  }, [tokens, snapToGrid, map?.gridSize, map?.gridOffsetX, map?.gridOffsetY, map?.id, map?.gridEnabled, clampTokenCenter, firestore, campaignId, updateToken, fogOfWarEnabled, fogData?.enabled]);
 
   // Handle token selection
   const handleTokenClick = useCallback((tokenId, e) => {
@@ -971,7 +1005,7 @@ function MapCanvas({
       } else if (data.id || data.tokenId) {
         // Handle staged token being dragged onto map
         const tokenId = data.id || data.tokenId;
-        
+
         // Get drop position relative to canvas
         const rect = e.currentTarget.getBoundingClientRect();
         const x = (e.clientX - rect.left - stagePos.x) / stageScale;
@@ -1346,41 +1380,6 @@ function MapCanvas({
           />
         )}
 
-        {/* Fog of War Layer (below tokens for players, above lighting for DM) - Always visible to players */}
-        {!isDM && fogData?.enabled && (() => {
-          return (
-            <Layer>
-              {fogData.visibility && fogData.visibility.map((row, y) =>
-                row.map((isVisible, x) => {
-                  const cellX = x * gMap.gridSize;
-                  const cellY = y * gMap.gridSize;
-                  if (cellX >= gMap.width || cellY >= gMap.height) return null;
-                  if (!isVisible) {
-                    return (
-                      <Rect
-                        key={`fog-${x}-${y}`}
-                        x={cellX}
-                        y={cellY}
-                        width={gMap.gridSize}
-                        height={gMap.gridSize}
-                        fill="black"
-                        opacity={0.98}
-                        stroke="#0a0a0a"
-                        strokeWidth={0.5}
-                        listening={false}
-                        shadowColor="black"
-                        shadowBlur={5}
-                        shadowOpacity={0.9}
-                      />
-                    );
-                  }
-                  return null;
-                })
-              )}
-            </Layer>
-          );
-        })()}
-
         {/* Token Layer */}
         {layerVisibility.tokens && <Layer>
           {tokens && tokens.map(token => {
@@ -1404,6 +1403,8 @@ function MapCanvas({
                 onDragEnd={handleTokenDragEnd}
                 tokenSnap={tokenSnap}
                 gridSize={map?.gridSize}
+                gridOffsetX={map?.gridOffsetX || 0}
+                gridOffsetY={map?.gridOffsetY || 0}
                 mapWidth={gMap?.width || width}
                 mapHeight={gMap?.height || height}
                 onDragMovePreview={(data) => setTokenSnapHighlight(data)}
@@ -1417,6 +1418,8 @@ function MapCanvas({
               />
             );
           })}
+
+          {/* player fog moved to be a top-level layer after LightingLayer */}
 
           {/* Light Control Markers - visible to all, draggable for DMs */}
           {globalLighting.enabled && lights.map(light => (
@@ -1441,9 +1444,14 @@ function MapCanvas({
                 }}
                 onDragMove={(e) => {
                   e.cancelBubble = true; // Prevent map from shifting
+                  const rawPos = { x: e.target.x(), y: e.target.y() };
+                  const snappedPos = maybeSnapPoint(rawPos);
+                  // Apply snap to visual position during drag
+                  e.target.x(snappedPos.x);
+                  e.target.y(snappedPos.y);
                   setDraggingLight(prev => prev ? {
                     ...prev,
-                    currentPos: { x: e.target.x(), y: e.target.y() }
+                    currentPos: snappedPos
                   } : null);
                 }}
                 onDragEnd={(e) => {
@@ -1533,14 +1541,53 @@ function MapCanvas({
           />
         )}
 
-        {/* Fog of War Layer for DM (above lighting to show explored areas) */}
-        {isDM && !localPlayerViewMode && fogData?.enabled && layerVisibility.fog && (() => {
+        {/* Fog of War Layer for players - rendered after tokens and lighting so it occludes tokens */}
+        {!isDM && fogData?.enabled && layerVisibility.fog && (() => {
+          const offsetX = gMap.gridOffsetX || 0;
+          const offsetY = gMap.gridOffsetY || 0;
           return (
             <Layer>
               {fogData.visibility && fogData.visibility.map((row, y) =>
                 row.map((isVisible, x) => {
-                  const cellX = x * gMap.gridSize;
-                  const cellY = y * gMap.gridSize;
+                  const cellX = x * gMap.gridSize + offsetX;
+                  const cellY = y * gMap.gridSize + offsetY;
+                  if (cellX >= gMap.width || cellY >= gMap.height) return null;
+                  if (!isVisible) {
+                    return (
+                      <Rect
+                        key={`fog-${x}-${y}`}
+                        x={cellX}
+                        y={cellY}
+                        width={gMap.gridSize}
+                        height={gMap.gridSize}
+                        fill="black"
+                        opacity={0.98}
+                        stroke="#0a0a0a"
+                        strokeWidth={0.5}
+                        listening={false}
+                        shadowColor="black"
+                        shadowBlur={5}
+                        shadowOpacity={0.9}
+                      />
+                    );
+                  }
+                  return null;
+                })
+              )}
+            </Layer>
+          );
+        })()}
+
+        {/* Fog of War Layer for DM (above lighting to show explored areas) */}
+        {isDM && !localPlayerViewMode && fogData?.enabled && layerVisibility.fog && (() => {
+          const offsetX = gMap.gridOffsetX || 0;
+          const offsetY = gMap.gridOffsetY || 0;
+          return (
+            <Layer>
+              {fogData.visibility && fogData.visibility.map((row, y) =>
+                row.map((isVisible, x) => {
+                  const cellX = x * gMap.gridSize + offsetX;
+                  const cellY = y * gMap.gridSize + offsetY;
                   if (cellX >= gMap.width || cellY >= gMap.height) return null;
                   if (!isVisible) {
                     return (
@@ -1568,8 +1615,8 @@ function MapCanvas({
               {!gMap.gridEnabled && fogData.visibility && fogData.visibility.map((row, y) =>
                 row.map((isVisible, x) => {
                   if (!isVisible) return null; // only outline revealed cells lightly
-                  const cellX = x * gMap.gridSize;
-                  const cellY = y * gMap.gridSize;
+                  const cellX = x * gMap.gridSize + offsetX;
+                  const cellY = y * gMap.gridSize + offsetY;
                   if (cellX >= gMap.width || cellY >= gMap.height) return null;
                   return (
                     <Rect
@@ -1589,7 +1636,7 @@ function MapCanvas({
               )}
             </Layer>
           );
-        })()}
+        })()}  
 
         {/* Drawing & Effects Layer - Shapes, Drawings, Rulers, Pings */}
         {(layerVisibility.shapes || layerVisibility.pings) && <Layer>

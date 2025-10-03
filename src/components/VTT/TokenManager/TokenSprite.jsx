@@ -17,6 +17,8 @@ function TokenSprite({
   listening = true,
   tokenSnap = true,
   gridSize = 50,
+  gridOffsetX = 0,
+  gridOffsetY = 0,
   mapWidth,
   mapHeight,
   onDragMovePreview,
@@ -64,10 +66,14 @@ function TokenSprite({
         // Same logic as handleDragMove: align top-left corner to grid, then center
         const topLeftX = x - tokenSize / 2;
         const topLeftY = y - tokenSize / 2;
-        const cellX = Math.round(topLeftX / gridSize);
-        const cellY = Math.round(topLeftY / gridSize);
-        x = cellX * gridSize + tokenSize / 2;
-        y = cellY * gridSize + tokenSize / 2;
+        // Adjust for grid offset before snapping
+        const adjustedX = topLeftX - gridOffsetX;
+        const adjustedY = topLeftY - gridOffsetY;
+        const cellX = Math.round(adjustedX / gridSize);
+        const cellY = Math.round(adjustedY / gridSize);
+        // Snap to grid and add offset back
+        x = cellX * gridSize + gridOffsetX + tokenSize / 2;
+        y = cellY * gridSize + gridOffsetY + tokenSize / 2;
         node.x(x);
         node.y(y);
       }
@@ -138,17 +144,20 @@ function TokenSprite({
       // This ensures the token's boundary aligns with grid squares properly
       const topLeftX = rawX - tokenSize / 2;
       const topLeftY = rawY - tokenSize / 2;
-      const cellX = Math.round(topLeftX / gridSize);
-      const cellY = Math.round(topLeftY / gridSize);
-      // Snap top-left to grid intersection, then offset by half token size to center
-      const snappedX = cellX * gridSize + tokenSize / 2;
-      const snappedY = cellY * gridSize + tokenSize / 2;
+      // Adjust for grid offset before snapping
+      const adjustedX = topLeftX - gridOffsetX;
+      const adjustedY = topLeftY - gridOffsetY;
+      const cellX = Math.round(adjustedX / gridSize);
+      const cellY = Math.round(adjustedY / gridSize);
+      // Snap top-left to grid intersection, add offset back, then offset by half token size to center
+      const snappedX = cellX * gridSize + gridOffsetX + tokenSize / 2;
+      const snappedY = cellY * gridSize + gridOffsetY + tokenSize / 2;
       node.x(snappedX);
       node.y(snappedY);
       if (onDragMovePreview) {
         onDragMovePreview({
-          x: cellX * gridSize,
-          y: cellY * gridSize,
+          x: cellX * gridSize + gridOffsetX,
+          y: cellY * gridSize + gridOffsetY,
           w: tokenSize,
           h: tokenSize
         });
@@ -157,12 +166,15 @@ function TokenSprite({
       // Free move: still show highlight of current cell footprint
       const topLeftX = rawX - tokenSize / 2;
       const topLeftY = rawY - tokenSize / 2;
-      const cellX = Math.floor(topLeftX / gridSize);
-      const cellY = Math.floor(topLeftY / gridSize);
+      // Adjust for grid offset to find cell position
+      const adjustedX = topLeftX - gridOffsetX;
+      const adjustedY = topLeftY - gridOffsetY;
+      const cellX = Math.floor(adjustedX / gridSize);
+      const cellY = Math.floor(adjustedY / gridSize);
       if (onDragMovePreview) {
         onDragMovePreview({
-          x: cellX * gridSize,
-          y: cellY * gridSize,
+          x: cellX * gridSize + gridOffsetX,
+          y: cellY * gridSize + gridOffsetY,
           w: tokenSize,
           h: tokenSize
         });
