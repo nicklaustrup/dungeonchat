@@ -117,7 +117,7 @@ const LightingPanel = ({
       x: Math.max(0, Math.min(newX, maxX)),
       y: Math.max(0, Math.min(newY, maxY))
     });
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragOffset.x, dragOffset.y]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);

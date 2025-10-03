@@ -1,93 +1,40 @@
-.fog-panel {
-  position: absolute;
-  top: 60px;
-  left: 520px;
-  z-index: 999998;
-  background: #2a2a3e;
-  border: 1px solid #444;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  min-width: 280px;
-  font-family: system-ui, -apple-system, sans-serif;
-  color: #e0e0f0;
+/* Fog of War Control Panel Styles */
+
+/* Enhanced styling for fog panel (inherits positioning from toolbar-settings-panel) */
+.fog-panel.toolbar-settings-panel {
+  /* Enhanced purple border for fog panel */
+  border: 2px solid rgba(168, 85, 247, 0.4);
 }
 
-.fog-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 8px 8px 0 0;
-  font-weight: 600;
-  font-size: 14px;
-  color: white;
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-.fog-panel-close {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-
-.fog-panel-close:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.fog-panel-body {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.fog-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.fog-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-}
-
-.fog-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #a0a0b0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
-}
-
+/* Fog-specific brush mode buttons */
 .fog-brush-modes {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+  margin-top: 8px;
 }
 
 .fog-mode-btn {
   padding: 10px;
-  background: #1e1e2e;
-  border: 2px solid #444;
+  background: rgba(30, 30, 40, 0.8);
+  border: 2px solid rgba(100, 100, 120, 0.5);
   border-radius: 6px;
   color: #ddd;
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,60 +42,25 @@
 }
 
 .fog-mode-btn:hover {
-  background: #2a2a3e;
-  border-color: #667eea;
+  background: rgba(40, 40, 50, 0.9);
+  border-color: rgba(168, 85, 247, 0.6);
+  transform: translateY(-1px);
 }
 
 .fog-mode-btn.active {
-  background: #667eea;
-  border-color: #667eea;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(168, 85, 247, 0.3));
+  border-color: rgba(168, 85, 247, 0.8);
   color: white;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
+  transform: translateY(-1px);
 }
 
-.fog-slider {
-  width: 100%;
-  height: 6px;
-  background: #1e1e2e;
-  border-radius: 3px;
-  outline: none;
-  appearance: none;
-  cursor: pointer;
-}
-
-.fog-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  background: #667eea;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.fog-slider::-webkit-slider-thumb:hover {
-  background: #764ba2;
-  transform: scale(1.1);
-}
-
-.fog-slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: #667eea;
-  border-radius: 50%;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-}
-
-.fog-slider::-moz-range-thumb:hover {
-  background: #764ba2;
-  transform: scale(1.1);
-}
-
+/* Quick actions buttons */
 .fog-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+  margin-top: 8px;
 }
 
 .fog-action-btn {
@@ -158,7 +70,7 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,38 +78,66 @@
 }
 
 .fog-action-btn.reveal-all {
-  background: #22c55e;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: white;
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
 }
 
 .fog-action-btn.reveal-all:hover {
-  background: #16a34a;
+  background: linear-gradient(135deg, #16a34a, #15803d);
   transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.4);
 }
 
 .fog-action-btn.conceal-all {
-  background: #ef4444;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
 }
 
 .fog-action-btn.conceal-all:hover {
-  background: #dc2626;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
   transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
 }
 
+/* Instructions box */
 .fog-instructions {
-  background: rgba(102, 126, 234, 0.1);
+  background: rgba(139, 92, 246, 0.15);
   padding: 12px;
   border-radius: 6px;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid rgba(168, 85, 247, 0.6);
+  margin-top: 8px;
 }
 
 .fog-instructions small {
   font-size: 11px;
-  line-height: 1.5;
-  color: #b0b0c0;
+  line-height: 1.6;
+  color: #b8b8d0;
+  display: block;
 }
 
 .fog-instructions strong {
-  color: #e0e0f0;
+  color: #e0e0ff;
+  font-weight: 600;
 }
+
+/* Enhanced scrollbar for fog panel */
+.fog-panel.toolbar-settings-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.fog-panel.toolbar-settings-panel::-webkit-scrollbar-track {
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 4px;
+}
+
+.fog-panel.toolbar-settings-panel::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.4);
+  border-radius: 4px;
+}
+
+.fog-panel.toolbar-settings-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.6);
+}
+

@@ -13,6 +13,7 @@ import {
     Ruler,
     CloudFog
 } from 'lucide-react';
+import FogPanel from './FogPanel';
 import './MapToolbar.css';
 
 /**
@@ -73,7 +74,6 @@ const MapToolbar = ({
 }) => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
-    const [showFogControls, setShowFogControls] = useState(false);
     const [showGridConfig, setShowGridConfig] = useState(false);
     const [position, setPosition] = useState({ x: 20, y: 20 });
     const [width, setWidth] = useState(180);
@@ -221,9 +221,9 @@ const MapToolbar = ({
     }, [isDragging, isResizing, position, width, MIN_WIDTH, MAX_WIDTH]);
 
     const handleFogButtonClick = () => {
-        // Toggle fog controls panel
-        if (showFogControls) {
-            setShowFogControls(false);
+        // Toggle fog panel (external FogPanel component)
+        if (showFogPanel) {
+            onCloseFogPanel?.();
         } else {
             // Close other panels if open
             if (showSettings) {
@@ -232,7 +232,7 @@ const MapToolbar = ({
             if (showGridConfig) {
                 setShowGridConfig(false);
             }
-            setShowFogControls(true);
+            onOpenFogPanel?.();
         }
     };
 
@@ -245,8 +245,8 @@ const MapToolbar = ({
             if (showSettings) {
                 setShowSettings(false);
             }
-            if (showFogControls) {
-                setShowFogControls(false);
+            if (showFogPanel) {
+                onCloseFogPanel?.();
             }
             setShowGridConfig(true);
         }
@@ -302,8 +302,8 @@ const MapToolbar = ({
                                     setShowSettings(false);
                                 } else {
                                     // Close other panels if open
-                                    if (showFogControls) {
-                                        setShowFogControls(false);
+                                    if (showFogPanel) {
+                                        onCloseFogPanel?.();
                                     }
                                     if (showGridConfig) {
                                         setShowGridConfig(false);
@@ -365,10 +365,10 @@ const MapToolbar = ({
 
                         {isDM && (
                             <button
-                                className={`toolbar-button ${showFogControls ? 'active' : ''}`}
+                                className={`toolbar-button ${showFogPanel ? 'active' : ''}`}
                                 onClick={handleFogButtonClick}
                                 aria-label="Toggle Fog Controls"
-                                aria-pressed={showFogControls}
+                                aria-pressed={showFogPanel}
                             >
                                 <CloudFog size={20} />
                                 {width > 100 && <span className="toolbar-label">Fog</span>}
@@ -704,91 +704,20 @@ const MapToolbar = ({
                 </div>
             )}
 
-            {/* Fog Controls Panel - Adjacent Flyout */}
-            {showFogControls && !isMinimized && isDM && (
-                <div className="toolbar-settings-panel">
-                    <div className="panel-header">
-                        <label>Fog of War Controls</label>
-                        <button
-                            className="panel-close-btn"
-                            onClick={() => setShowFogControls(false)}
-                            aria-label="Close fog controls"
-                        >
-                            ×
-                        </button>
-                    </div>
-                    <div className="setting-group">
-                        <div className="checkbox-group">
-                            <label className="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked={fogOfWarEnabled}
-                                    onChange={(e) => onToggleFogEnabled?.(e.target.checked)}
-                                />
-                                <span>Enable Fog of War</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {fogOfWarEnabled && (
-                        <>
-                            <div className="setting-divider" />
-                            <div className="setting-group">
-                                <label>Brush Settings</label>
-                                <div className="opacity-slider">
-                                    <label>Brush Size: {fogBrushSize}</label>
-                                    <input
-                                        type="range"
-                                        min={1}
-                                        max={10}
-                                        step={1}
-                                        value={fogBrushSize}
-                                        onChange={(e) => onFogBrushSizeChange?.(parseInt(e.target.value))}
-                                    />
-                                </div>
-                                <div className="checkbox-group">
-                                    <label className="checkbox-label">
-                                        <input
-                                            type="radio"
-                                            name="fogBrushMode"
-                                            checked={fogBrushMode === 'reveal'}
-                                            onChange={() => onFogBrushModeChange?.('reveal')}
-                                        />
-                                        <span>Reveal Mode</span>
-                                    </label>
-                                    <label className="checkbox-label">
-                                        <input
-                                            type="radio"
-                                            name="fogBrushMode"
-                                            checked={fogBrushMode === 'conceal'}
-                                            onChange={() => onFogBrushModeChange?.('conceal')}
-                                        />
-                                        <span>Conceal Mode</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="setting-divider" />
-                            <div className="setting-group">
-                                <label>Quick Actions</label>
-                                <div className="shape-actions">
-                                    <button
-                                        className="clear-rulers-btn"
-                                        onClick={() => onRevealAll?.()}
-                                    >
-                                        Reveal All
-                                    </button>
-                                    <button
-                                        className="clear-rulers-btn"
-                                        onClick={() => onConcealAll?.()}
-                                    >
-                                        Conceal All
-                                    </button>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
+            {/* Fog of War Panel - Adjacent Flyout */}
+            {showFogPanel && !isMinimized && isDM && (
+                <FogPanel
+                    open={showFogPanel}
+                    onClose={onCloseFogPanel}
+                    fogEnabled={fogOfWarEnabled}
+                    onToggleFog={onToggleFogEnabled}
+                    onRevealAll={onRevealAll}
+                    onConcealAll={onConcealAll}
+                    brushSize={fogBrushSize}
+                    onBrushSizeChange={onFogBrushSizeChange}
+                    brushMode={fogBrushMode}
+                    onBrushModeChange={onFogBrushModeChange}
+                />
             )}
         </div>
     );

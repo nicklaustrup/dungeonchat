@@ -7,7 +7,6 @@ import GridLayer from './GridLayer';
 import TokenSprite from '../TokenManager/TokenSprite';
 import MapToolbar from './MapToolbar';
 import GridConfigurator from './GridConfigurator';
-import FogPanel from './FogPanel';
 import LayerManager from './LayerManager';
 import AudioController from '../Audio/AudioController';
 import TokenExtendedEditor from '../TokenManager/TokenExtendedEditor';
@@ -199,6 +198,9 @@ function MapCanvas({
 
   // Fog of War state
   const [fogData, setFogData] = useState(null);
+  const [isFogBrushing, setIsFogBrushing] = useState(false); // Track if actively painting fog
+  const [fogBrushActive, setFogBrushActive] = useState(false); // Track if fog brush tool is enabled
+  const [lastFogCell, setLastFogCell] = useState(null); // Track last painted cell to avoid redundant updates
 
   // Ruler state
   const [rulerStart, setRulerStart] = useState(null);
@@ -570,6 +572,19 @@ function MapCanvas({
       unsubscribe();
     };
   }, [firestore, campaignId, map?.id]);
+
+  // Enable fog brush when fog panel is open and fog is enabled
+  useEffect(() => {
+    const shouldActivate = isDM && showFogPanel && fogOfWarEnabled && fogData?.enabled;
+    console.log('[FOG BRUSH] Brush active state:', shouldActivate, '(panel:', showFogPanel, 'enabled:', fogOfWarEnabled, 'fogData:', !!fogData, ')');
+    setFogBrushActive(shouldActivate);
+    
+    // Reset brushing state when deactivated
+    if (!shouldActivate) {
+      setIsFogBrushing(false);
+      setLastFogCell(null);
+    }
+  }, [isDM, showFogPanel, fogOfWarEnabled, fogData]);
 
   // Subscribe to drawings
   useEffect(() => {
@@ -993,7 +1008,85 @@ function MapCanvas({
     }
   };
 
+  // Paint fog at pointer position with brush size
+  const paintFogAtPointer = useCallback(async (e) => {
+    if (!map || !fogData) return;
+
+    const stage = stageRef.current;
+    const pointer = stage.getPointerPosition();
+    const mapX = (pointer.x - stage.x()) / stage.scaleX();
+    const mapY = (pointer.y - stage.y()) / stage.scaleY();
+
+    const gridSize = map.gridSize || 50;
+    const offsetX = map.gridOffsetX || 0;
+    const offsetY = map.gridOffsetY || 0;
+
+    // Calculate grid cell position
+    const adjustedX = mapX - offsetX;
+    const adjustedY = mapY - offsetY;
+    // Add 1 to account for padding cell (fog grid has 1 extra cell on each side)
+    const centerGridX = Math.floor(adjustedX / gridSize) + 1;
+    const centerGridY = Math.floor(adjustedY / gridSize) + 1;
+
+    // Skip if we just painted this cell
+    const cellKey = `${centerGridX},${centerGridY}`;
+    if (lastFogCell === cellKey) {
+      return;
+    }
+    setLastFogCell(cellKey);
+
+    console.log('[FOG BRUSH] Painting at grid cell:', centerGridX, centerGridY, 'with brush size:', fogBrushSize, 'mode:', fogBrushMode);
+
+    try {
+      const { visibility, gridWidth, gridHeight } = fogData;
+      const newVisibility = visibility.map(row => [...row]);
+
+      // Determine what value to set based on brush mode
+      const revealValue = fogBrushMode === 'reveal';
+
+      // Paint in circular area based on brush size
+      const radius = Math.floor(fogBrushSize / 2);
+      let cellsChanged = 0;
+
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance <= radius) {
+            const gridX = centerGridX + dx;
+            const gridY = centerGridY + dy;
+
+            // Check bounds
+            if (gridY >= 0 && gridY < gridHeight && gridX >= 0 && gridX < gridWidth) {
+              if (newVisibility[gridY][gridX] !== revealValue) {
+                newVisibility[gridY][gridX] = revealValue;
+                cellsChanged++;
+              }
+            }
+          }
+        }
+      }
+
+      if (cellsChanged > 0) {
+        console.log('[FOG BRUSH] Updated', cellsChanged, 'cells');
+        await fogOfWarService.updateFogOfWar(firestore, campaignId, map.id, newVisibility);
+      }
+    } catch (err) {
+      console.error('[FOG BRUSH] Error painting fog:', err);
+    }
+  }, [map, fogData, fogBrushSize, fogBrushMode, firestore, campaignId, lastFogCell]);
+
   const handleMouseDown = (e) => {
+    // Fog brush painting
+    if (fogBrushActive && isDM && fogOfWarEnabled && fogData?.enabled && e.target === e.target.getStage()) {
+      console.log('[FOG BRUSH] Mouse down - starting fog brush painting');
+      if (e.evt.button === 2) {
+        return; // Ignore right-clicks
+      }
+      setIsFogBrushing(true);
+      paintFogAtPointer(e);
+      return;
+    }
+
     if (activeTool === 'pen' && e.target === e.target.getStage()) {
       // Only process left-clicks for pen tool
       if (e.evt.button === 2) {
@@ -1019,6 +1112,12 @@ function MapCanvas({
     const pointer = stage.getPointerPosition();
     const mapX = (pointer.x - stage.x()) / stage.scaleX();
     const mapY = (pointer.y - stage.y()) / stage.scaleY();
+
+    // Fog brush painting while dragging
+    if (isFogBrushing && fogBrushActive && isDM && fogOfWarEnabled && fogData?.enabled) {
+      paintFogAtPointer(e);
+      return;
+    }
 
     if (activeTool === 'placeLight' && placingLight) {
       // Update light preview position
@@ -1089,6 +1188,14 @@ function MapCanvas({
   };
 
   const handleMouseUp = async () => {
+    // Stop fog brushing
+    if (isFogBrushing) {
+      console.log('[FOG BRUSH] Mouse up - stopping fog brush painting');
+      setIsFogBrushing(false);
+      setLastFogCell(null);
+      return;
+    }
+
     if (activeTool === 'pen' && isDrawing && currentDrawing.length > 0) {
       try {
         // Convert flat array to points array
@@ -1586,9 +1693,10 @@ function MapCanvas({
             });
           }
         }}
-        draggable={activeTool === 'pointer'}
+        draggable={activeTool === 'pointer' && !fogBrushActive}
         style={{
-          cursor: activeTool === 'pointer' ? (isDragging ? 'grabbing' : 'grab') :
+          cursor: fogBrushActive ? (fogBrushMode === 'reveal' ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${Math.min(fogBrushSize * 8, 48)}' height='${Math.min(fogBrushSize * 8, 48)}' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10' opacity='0.5'/%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") ${Math.min(fogBrushSize * 4, 24)} ${Math.min(fogBrushSize * 4, 24)}, crosshair` : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${Math.min(fogBrushSize * 8, 48)}' height='${Math.min(fogBrushSize * 8, 48)}' viewBox='0 0 24 24' fill='none' stroke='%2366B3FF' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10' opacity='0.5'/%3E%3Cpath d='M3 3l18 18M21 3L3 21'/%3E%3C/svg%3E") ${Math.min(fogBrushSize * 4, 24)} ${Math.min(fogBrushSize * 4, 24)}, crosshair`) :
+            activeTool === 'pointer' ? (isDragging ? 'grabbing' : 'grab') :
             activeTool === 'pen' ? 'crosshair' :
             activeTool === 'arrow' ? (arrowStart ? 'crosshair' : 'cell') :
             activeTool === 'ruler' ? 'crosshair' :
@@ -2487,20 +2595,7 @@ function MapCanvas({
         //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
         />
       )}
-      {isDM && (
-        <FogPanel
-          open={showFogPanel}
-          onClose={onCloseFogPanel}
-          fogEnabled={fogOfWarEnabled}
-          onToggleFog={onToggleFogEnabled}
-          onRevealAll={onRevealAll}
-          onConcealAll={onConcealAll}
-          brushSize={fogBrushSize}
-          onBrushSizeChange={onFogBrushSizeChange}
-          brushMode={fogBrushMode}
-          onBrushModeChange={onFogBrushModeChange}
-        />
-      )}
+      {/* FogPanel now rendered inside MapToolbar as a flyout */}
       {isDM && (
         <LayerManager
           open={showLayerManager}

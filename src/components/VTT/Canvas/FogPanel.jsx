@@ -1,4 +1,5 @@
 import React from 'react';
+import { Eye, EyeOff, Sun, Cloud } from 'lucide-react';
 import './FogPanel.css';
 
 /**
@@ -20,53 +21,62 @@ function FogPanel({
   if (!open) return null;
 
   return (
-    <div className="fog-panel">
-      <div className="fog-panel-header">
-        <span>Fog of War Controls</span>
-        <button onClick={onClose} className="fog-panel-close">×</button>
+    <div className="toolbar-settings-panel fog-panel">
+      <div className="panel-header">
+        <label>Fog of War Controls</label>
+        <button 
+          className="panel-close-btn"
+          onClick={onClose}
+          aria-label="Close fog controls"
+        >
+          ×
+        </button>
       </div>
       
-      <div className="fog-panel-body">
-        {/* Fog Enable/Disable Toggle */}
-        <div className="fog-section">
-          <label className="fog-row">
-            <span>Enable Fog of War</span>
+      {/* Fog Enable/Disable Toggle */}
+      <div className="setting-group">
+        <label>Fog of War</label>
+        <div className="checkbox-group">
+          <label className="checkbox-label">
             <input 
               type="checkbox" 
               checked={fogEnabled} 
               onChange={(e) => onToggleFog?.(e.target.checked)}
             />
+            <span>Enable Fog of War</span>
           </label>
         </div>
+      </div>
 
-        {/* Brush Mode */}
-        {fogEnabled && (
-          <>
-            <div className="fog-section">
-              <label className="fog-label">Brush Mode</label>
-              <div className="fog-brush-modes">
-                <button
-                  className={`fog-mode-btn ${brushMode === 'reveal' ? 'active' : ''}`}
-                  onClick={() => onBrushModeChange?.('reveal')}
-                  title="Reveal fog (make visible)"
-                >
-                  👁️ Reveal
-                </button>
-                <button
-                  className={`fog-mode-btn ${brushMode === 'conceal' ? 'active' : ''}`}
-                  onClick={() => onBrushModeChange?.('conceal')}
-                  title="Conceal fog (hide)"
-                >
-                  🌫️ Conceal
-                </button>
-              </div>
+      {/* Brush Mode */}
+      {fogEnabled && (
+        <>
+          <div className="setting-divider" />
+          <div className="setting-group">
+            <label>Brush Mode</label>
+            <div className="fog-brush-modes">
+              <button
+                className={`fog-mode-btn ${brushMode === 'reveal' ? 'active' : ''}`}
+                onClick={() => onBrushModeChange?.('reveal')}
+                title="Reveal fog (make visible)"
+              >
+                <Eye size={16} /> Reveal
+              </button>
+              <button
+                className={`fog-mode-btn ${brushMode === 'conceal' ? 'active' : ''}`}
+                onClick={() => onBrushModeChange?.('conceal')}
+                title="Conceal fog (hide)"
+              >
+                <Cloud size={16} /> Conceal
+              </button>
             </div>
+          </div>
 
-            {/* Brush Size Slider */}
-            <div className="fog-section">
-              <label className="fog-label">
-                Brush Size: {brushSize} cell{brushSize !== 1 ? 's' : ''}
-              </label>
+          {/* Brush Size Slider */}
+          <div className="setting-divider" />
+          <div className="setting-group">
+            <label>Brush Size: {brushSize} cell{brushSize !== 1 ? 's' : ''}</label>
+            <div className="opacity-slider">
               <input
                 type="range"
                 min={1}
@@ -74,40 +84,41 @@ function FogPanel({
                 step={1}
                 value={brushSize}
                 onChange={(e) => onBrushSizeChange?.(parseInt(e.target.value, 10))}
-                className="fog-slider"
               />
             </div>
+          </div>
 
-            {/* Quick Actions */}
-            <div className="fog-section">
-              <label className="fog-label">Quick Actions</label>
-              <div className="fog-actions">
-                <button
-                  className="fog-action-btn reveal-all"
-                  onClick={onRevealAll}
-                  title="Reveal entire map"
-                >
-                  👁️ Reveal All
-                </button>
-                <button
-                  className="fog-action-btn conceal-all"
-                  onClick={onConcealAll}
-                  title="Conceal entire map"
-                >
-                  🌫️ Conceal All
-                </button>
-              </div>
+          {/* Quick Actions */}
+          <div className="setting-divider" />
+          <div className="setting-group">
+            <label>Quick Actions</label>
+            <div className="fog-actions">
+              <button
+                className="fog-action-btn reveal-all"
+                onClick={onRevealAll}
+                title="Reveal entire map"
+              >
+                <Sun size={16} /> Reveal All
+              </button>
+              <button
+                className="fog-action-btn conceal-all"
+                onClick={onConcealAll}
+                title="Conceal entire map"
+              >
+                <EyeOff size={16} /> Conceal All
+              </button>
             </div>
+          </div>
 
-            {/* Instructions */}
-            <div className="fog-section fog-instructions">
-              <small>
-                💡 <strong>Tip:</strong> Click and drag on the map to paint fog with your brush.
-              </small>
-            </div>
-          </>
-        )}
-      </div>
+          {/* Instructions */}
+          <div className="setting-divider" />
+          <div className="fog-instructions">
+            <small>
+              💡 <strong>Tip:</strong> Click and drag on the map to paint fog with your brush.
+            </small>
+          </div>
+        </>
+      )}
     </div>
   );
 }
