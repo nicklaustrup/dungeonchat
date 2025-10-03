@@ -1,6 +1,8 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import TokenPalette from './TokenPalette';
+// eslint-disable-next-line no-unused-vars
 import TokenUploader from './TokenUploader';
+import ActiveTokensTab from './ActiveTokensTab';
 import { FirebaseContext } from '../../../services/FirebaseContext';
 import { tokenService } from '../../../services/vtt/tokenService';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -19,7 +21,10 @@ const TokenManager = ({
   onTokenUpdated,
   onTokenDeleted,
   onTokenDeselect,
-  onClose
+  onTokenSelect,
+  onClose,
+  onCenterCamera,
+  onOpenLightEditor
 }) => {
   const { user, firestore, storage } = useContext(FirebaseContext);
   const [activeView, setActiveView] = useState('palette'); // 'palette', 'upload', 'properties', 'staging'
@@ -108,6 +113,7 @@ const TokenManager = ({
   };
 
   // Handle uploading custom token image
+  // eslint-disable-next-line no-unused-vars
   const handleUploadToken = async (file, tokenData) => {
     if (!user) {
       setError('You must be logged in to upload tokens');
@@ -154,6 +160,158 @@ const TokenManager = ({
       setError(err.message || 'Failed to upload token');
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  // Handle uploading art for existing token (from TokenPalette)
+  const handleUploadArt = async (file) => {
+    if (!selectedToken) {
+      setError('No token selected');
+      return;
+    }
+
+    if (!user) {
+      setError('You must be logged in to upload token art');
+      return;
+    }
+
+    setIsCreating(true);
+    setError(null);
+
+    try {
+      // Upload image to Firebase Storage
+      const imageUrl = await tokenService.uploadTokenImage(
+        storage,
+        file,
+        campaignId
+      );
+
+      // Update token with new imageUrl
+      const tokenId = selectedToken.id || selectedToken.tokenId;
+      await tokenService.updateToken(firestore, campaignId, mapId, tokenId, {
+        imageUrl,
+        updatedAt: new Date()
+      });
+
+      setSuccessMessage('Token art uploaded successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+
+      if (onTokenUpdated) {
+        onTokenUpdated(tokenId, { imageUrl });
+      }
+    } catch (err) {
+      console.error('Error uploading token art:', err);
+      setError(err.message || 'Failed to upload token art');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Handle removing art from existing token
+  const handleRemoveArt = async () => {
+    if (!selectedToken) {
+      setError('No token selected');
+      return;
+    }
+
+    if (!user) {
+      setError('You must be logged in to modify tokens');
+      return;
+    }
+
+    try {
+      // Remove imageUrl from token
+      const tokenId = selectedToken.id || selectedToken.tokenId;
+      await tokenService.updateToken(firestore, campaignId, mapId, tokenId, {
+        imageUrl: null,
+        updatedAt: new Date()
+      });
+
+      setSuccessMessage('Token art removed successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+
+      if (onTokenUpdated) {
+        onTokenUpdated(tokenId, { imageUrl: null });
+      }
+    } catch (err) {
+      console.error('Error removing token art:', err);
+      setError(err.message || 'Failed to remove token art');
+    }
+  };
+
+  // Handle focusing camera on a token
+  const handleFocusToken = (token) => {
+    if (!token || !token.position) {
+      console.warn('Cannot focus on token without position:', token);
+      return;
+    }
+
+    console.log('Focusing camera on token:', token.name, token.position);
+
+    // Call parent handler to center camera
+    if (onCenterCamera) {
+      onCenterCamera(token.position.x, token.position.y);
+    }
+
+    // Select the token
+    if (onTokenSelect) {
+      onTokenSelect(token.id || token.tokenId);
+    }
+
+    // Switch to palette tab to show token details
+    setActiveView('palette');
+  };
+
+  // Handle focusing camera on a light
+  const handleFocusLight = (light) => {
+    if (!light || !light.position) {
+      console.warn('Cannot focus on light without position:', light);
+      return;
+    }
+
+    console.log('Focusing camera on light:', light.name || light.type, light.position);
+
+    // Call parent handler to center camera
+    if (onCenterCamera) {
+      onCenterCamera(light.position.x, light.position.y);
+    }
+  };
+
+  // Handle editing a token - opens character sheet or palette
+  const handleEditToken = (token) => {
+    console.log('Editing token:', token.name);
+
+    // For PC, NPC, or Enemy tokens, try to open character sheet
+    // TODO: Implement character sheet integration
+    if (['pc', 'npc', 'enemy'].includes(token.type)) {
+      console.log('TODO: Open character sheet for', token.name);
+      // Fallback to palette for now
+    }
+
+    // Select the token
+    if (onTokenSelect) {
+      onTokenSelect(token.id || token.tokenId);
+    }
+
+    // Switch to palette tab
+    setActiveView('palette');
+  };
+
+  // Handle editing a light
+  const handleEditLight = (light) => {
+    console.log('TokenManager: Editing light:', light.name || light.type, light);
+
+    // Switch to Active tab if not already there
+    if (activeView !== 'active') {
+      setActiveView('active');
+    }
+
+    // Call parent handler to open light editor modal
+    if (onOpenLightEditor) {
+      console.log('TokenManager: Calling onOpenLightEditor with light:', light.id);
+      onOpenLightEditor(light);
+    } else {
+      console.warn('TokenManager: onOpenLightEditor handler not provided');
     }
   };
 
@@ -272,11 +430,18 @@ const TokenManager = ({
           🎨 Palette {selectedToken ? '(Editing)' : ''}
         </button>
         <button
-          className={`tab-button ${activeView === 'upload' ? 'active' : ''}`}
-          onClick={() => setActiveView('upload')}
+          className={`tab-button ${activeView === 'active' ? 'active' : ''}`}
+          onClick={() => {
+            // Deselect any selected token when switching to Active tab
+            if (onTokenDeselect) {
+              onTokenDeselect();
+            }
+            setActiveView('active');
+          }}
         >
-          📤 Upload
+          🎯 Active
         </button>
+        {/* Upload tab removed - functionality moved to Palette tab */}
         {/* Settings tab commented out - may come back later
         <button
           className={`tab-button ${activeView === 'settings' ? 'active' : ''}`}
@@ -400,16 +565,25 @@ const TokenManager = ({
             selectedToken={selectedToken}
             onCreateToken={handleCreateToken}
             onUpdateToken={handleUpdateToken}
+            onUploadArt={handleUploadArt}
+            onRemoveArt={handleRemoveArt}
             isCreating={isCreating}
-          />
-        )}
-
-        {activeView === 'upload' && (
-          <TokenUploader
-            onUpload={handleUploadToken}
             isUploading={isCreating}
           />
         )}
+
+        {activeView === 'active' && (
+          <ActiveTokensTab
+            campaignId={campaignId}
+            mapId={mapId}
+            onFocusToken={handleFocusToken}
+            onFocusLight={handleFocusLight}
+            onEditToken={handleEditToken}
+            onEditLight={handleEditLight}
+          />
+        )}
+
+        {/* Upload tab removed - functionality moved to Palette tab */}
 
       </div>
     </div >

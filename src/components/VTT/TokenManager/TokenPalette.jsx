@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
+import TokenArtUpload from './TokenArtUpload';
 import './TokenPalette.css';
 
 /**
  * TokenPalette - UI for selecting token type, color, and creating tokens
  * Provides quick access to common token types (PC, NPC, Monster, etc.)
  */
-const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, isCreating }) => {
+const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, onUploadArt, onRemoveArt, isCreating, isUploading }) => {
   const [selectedType, setSelectedType] = useState('pc');
   const [selectedColor, setSelectedColor] = useState('#4a90e2');
   const [tokenName, setTokenName] = useState('');
@@ -107,11 +108,18 @@ const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, isCreating 
       {selectedToken && (
         <div className="palette-section token-info-header">
           <div className="editing-indicator">✏️ Editing Token</div>
-          {selectedToken.imageUrl && (
-            <div className="token-preview-mini">
-              <img src={selectedToken.imageUrl} alt={selectedToken.name} />
-            </div>
-          )}
+        </div>
+      )}
+
+      {/* Token Art Upload Section - Available for ALL token types */}
+      {selectedToken && (
+        <div className="palette-section">
+          <TokenArtUpload
+            selectedToken={selectedToken}
+            onUpload={onUploadArt}
+            onRemove={onRemoveArt}
+            isUploading={isUploading}
+          />
         </div>
       )}
 

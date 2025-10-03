@@ -10,7 +10,10 @@ const LightingLayer = ({
   globalLighting = {}, 
   mapWidth, 
   mapHeight,
-  visible = true 
+  visible = true,
+  selectedLightId = null,
+  onLightClick = null,
+  isDM = false
 }) => {
   // Animation state - continuously updates to drive flicker/pulse effects
   const [animationTime, setAnimationTime] = useState(Date.now());
@@ -192,6 +195,7 @@ const LightingLayer = ({
 
         const effectiveRadius = light.radius * radiusMultiplier;
         const effectiveIntensity = (light.intensity || 0.8) * intensityMultiplier;
+        const isSelected = selectedLightId === light.id;
 
         return (
           <React.Fragment key={light.id}>
@@ -239,6 +243,63 @@ const LightingLayer = ({
               listening={false}
               globalCompositeOperation="source-over"
             />
+
+            {/* Clickable center marker and selection indicator (DM only) */}
+            {isDM && (
+              <>
+                {/* Selection ring */}
+                {isSelected && (
+                  <Circle
+                    x={light.position.x}
+                    y={light.position.y}
+                    radius={20}
+                    stroke="#4a9eff"
+                    strokeWidth={3}
+                    dash={[8, 4]}
+                    listening={false}
+                  />
+                )}
+                
+                {/* Clickable center marker */}
+                <Circle
+                  x={light.position.x}
+                  y={light.position.y}
+                  radius={8}
+                  fill={light.color || '#FFFFFF'}
+                  stroke="#ffffff"
+                  strokeWidth={1.5}
+                  opacity={isSelected ? 0.9 : 0.6}
+                  onClick={(e) => {
+                    e.cancelBubble = true;
+                    if (onLightClick) {
+                      onLightClick(light.id);
+                    }
+                  }}
+                  onTap={(e) => {
+                    e.cancelBubble = true;
+                    if (onLightClick) {
+                      onLightClick(light.id);
+                    }
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.getStage().container().style.cursor = 'pointer';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.getStage().container().style.cursor = 'default';
+                  }}
+                />
+                
+                {/* Light icon */}
+                <Circle
+                  x={light.position.x}
+                  y={light.position.y}
+                  radius={3}
+                  fill="#ffffff"
+                  opacity={0.9}
+                  listening={false}
+                />
+              </>
+            )}
           </React.Fragment>
         );
       })}

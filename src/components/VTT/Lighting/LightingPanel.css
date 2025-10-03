@@ -14,6 +14,15 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  user-select: none;
+  /* Prevent text selection while dragging */
+  transition: box-shadow 0.2s ease;
+  /* Smooth shadow transition */
+}
+
+.lighting-panel:active {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+  /* Enhanced shadow when dragging */
 }
 
 .lighting-panel-header {
@@ -23,6 +32,12 @@
   padding: 16px;
   border-bottom: 1px solid var(--border-color, #333);
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: grab;
+  user-select: none;
+}
+
+.lighting-panel-header:active {
+  cursor: grabbing;
 }
 
 .lighting-panel-header h3 {
@@ -191,6 +206,8 @@
   background: var(--bg-tertiary, #2a2a3e);
   border-radius: 8px;
   transition: all 0.18s ease;
+  cursor: pointer;
+
 }
 
 .light-item:hover {
@@ -230,6 +247,17 @@
   display: flex;
   gap: 4px;
   flex-shrink: 0;
+}
+
+.icon-button.focus {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+.icon-button.focus:hover {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: rgba(52, 211, 153, 0.5);
+  transform: scale(1.1);
 }
 
 /* Empty State */
@@ -315,6 +343,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -340,6 +369,7 @@
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -547,6 +577,7 @@
 
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
+
   .lighting-panel,
   .light-editor-modal,
   .light-item,
@@ -583,7 +614,7 @@
 
 .lighting-panel-content::-webkit-scrollbar-thumb:hover,
 .light-editor-form::-webkit-scrollbar-thumb:hover {
-  background: #444; 
+  background: #444;
 }
 
 /* Quick Place Light Presets */

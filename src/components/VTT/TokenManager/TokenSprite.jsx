@@ -228,7 +228,7 @@ function TokenSprite({
       )}
 
       {/* Ruler Line - Shows distance from ghost to current position */}
-      {isDragging && dragStartPos && currentDragPos && showGhost && (
+      {isDragging && dragStartPos && currentDragPos && (
         <Group listening={false}>
           <Line
             points={[

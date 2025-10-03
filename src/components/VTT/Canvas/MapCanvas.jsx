@@ -31,7 +31,69 @@ import { drawingService } from '../../../services/vtt/drawingService';
 import { shapeService } from '../../../services/vtt/shapeService';
 import { shapePreviewService } from '../../../services/vtt/shapePreviewService';
 import { FirebaseContext } from '../../../services/FirebaseContext';
+import { generateLightName } from '../../../utils/lightNameGenerator';
 import './MapCanvas.css';
+
+/**
+ * Determine light type from preset data
+ * Maps light characteristics to type names for auto-naming
+ */
+function determineLightType(lightData) {
+  const { color, radius, flicker, animated } = lightData;
+  
+  // Torch: orange/warm, 40ft, flickering
+  if (color === '#FF8800' && radius === 40 && flicker) {
+    return 'torch';
+  }
+  
+  // Lantern: warm orange, 30ft, steady
+  if (color === '#FFB366' && radius === 30 && !flicker) {
+    return 'lantern';
+  }
+  
+  // Candle: yellow, small radius, flickering
+  if (color === '#FFD700' && radius <= 15 && flicker) {
+    return 'candle';
+  }
+  
+  // Light Spell: white, 40ft, bright, steady
+  if (color === '#FFFFFF' && radius === 40 && !flicker) {
+    return 'lightSpell';
+  }
+  
+  // Magical Blue: blue tones, animated
+  if ((color === '#4444FF' || color.startsWith('#44')) && animated) {
+    return 'magicalBlue';
+  }
+  
+  // Magical Purple: purple tones, animated
+  if ((color === '#AA44FF' || color.startsWith('#AA')) && animated) {
+    return 'magicalPurple';
+  }
+  
+  // Magical Green
+  if (color.startsWith('#44') && color.includes('FF') && animated) {
+    return 'magicalGreen';
+  }
+  
+  // Magical Red
+  if (color.startsWith('#FF44') && animated) {
+    return 'magicalRed';
+  }
+  
+  // Campfire: orange/red, large radius, flickering
+  if ((color === '#FF6600' || color === '#FF4400') && radius >= 50 && flicker) {
+    return 'campfire';
+  }
+  
+  // Brazier: similar to campfire but smaller
+  if ((color === '#FF6600' || color === '#FF8800') && radius >= 30 && radius < 50 && flicker) {
+    return 'brazier';
+  }
+  
+  // Default to custom
+  return 'custom';
+}
 
 /**
  * MapCanvas Component
@@ -65,6 +127,7 @@ function MapCanvas({
   onToggleTokenManager,
   showMapLibrary = false,
   onToggleMapLibrary,
+  onCenterCamera,
   children
 }) {
   const { firestore, user } = useContext(FirebaseContext);
@@ -171,6 +234,8 @@ function MapCanvas({
   const [lightPreviewPos, setLightPreviewPos] = useState(null); // { x, y } for preview
   // Light dragging state
   const [draggingLight, setDraggingLight] = useState(null); // { id, light data, currentPos }
+  // Light selection state
+  const [selectedLightId, setSelectedLightId] = useState(null);
   // Local optimistic map state for immediate grid visual response
   const [mapLive, setMapLive] = useState(map);
   useEffect(() => { setMapLive(map); }, [map]);
@@ -844,9 +909,21 @@ function MapCanvas({
         }
         // Place the light at clicked position
         const position = smartSnapPoint({ x: mapX, y: mapY });
+        
+        // Determine light type from preset data
+        const lightType = determineLightType(placingLight);
+        
+        // Generate auto-name for the light
+        const lightName = generateLightName(lightType, lights);
+        
+        console.log(`Placing light: ${lightName} (type: ${lightType})`);
+        
+        // Create the light with auto-generated name
         createLight({
           ...placingLight,
-          position
+          position,
+          name: lightName,
+          type: lightType
         }).then(() => {
           setPlacingLight(null);
           setLightPreviewPos(null);
@@ -1100,6 +1177,42 @@ function MapCanvas({
     setStageScale(1);
     setStagePos({ x: 0, y: 0 });
   }, [setStageScale, setStagePos]);
+
+  // Handle camera centering on specific coordinates
+  const handleCenterCamera = useCallback((x, y) => {
+    const stage = stageRef.current;
+    if (!stage) {
+      console.warn('Cannot center camera: stage ref not available');
+      return;
+    }
+
+    // Calculate position to center viewport on (x, y)
+    const newPos = {
+      x: width / 2 - x * stageScale,
+      y: height / 2 - y * stageScale
+    };
+
+    setStagePos(newPos);
+    console.log(`Centered camera on (${Math.round(x)}, ${Math.round(y)})`);
+  }, [width, height, stageScale, setStagePos]);
+
+  // Expose camera centering to parent if callback provided
+  useEffect(() => {
+    if (onCenterCamera && typeof onCenterCamera === 'object' && onCenterCamera.current !== undefined) {
+      onCenterCamera.current = handleCenterCamera;
+      console.log('Camera center function assigned to ref');
+    }
+  }, [onCenterCamera, handleCenterCamera]);
+
+  // Handle light selection
+  const handleLightClick = useCallback((lightId) => {
+    console.log('Light clicked:', lightId);
+    setSelectedLightId(prevId => prevId === lightId ? null : lightId);
+    // Deselect token when light is selected
+    if (onTokenSelect) {
+      onTokenSelect(null);
+    }
+  }, [onTokenSelect]);
 
   // Handle drag-and-drop of tokens from Token Manager onto canvas
   const handleDragOver = useCallback((e) => {
@@ -1537,6 +1650,25 @@ function MapCanvas({
           />
         )}
 
+        {/* Lighting Layer - renders BEFORE tokens so lights don't overlap token ghosts */}
+        {lights && globalLighting && (
+          <LightingLayer
+            lights={[...lights, ...playerTokenLights].filter(light =>
+              light &&
+              light.position &&
+              typeof light.position.x === 'number' &&
+              typeof light.position.y === 'number' &&
+              typeof light.radius === 'number'
+            )}
+            globalLighting={globalLighting}
+            mapWidth={gMap?.width || width}
+            mapHeight={gMap?.height || height}
+            selectedLightId={selectedLightId}
+            onLightClick={handleLightClick}
+            isDM={isDM}
+          />
+        )}
+
         {/* Token Layer */}
         {layerVisibility.tokens && <Layer>
           {tokens && tokens.map(token => {
@@ -1566,7 +1698,7 @@ function MapCanvas({
                 mapHeight={gMap?.height || height}
                 onDragMovePreview={(data) => setTokenSnapHighlight(data)}
                 listening={activeTool === 'pointer'}
-                showGhost={true}
+                showGhost={false}
                 onContextMenu={(evt) => {
                   evt.cancelBubble = true;
                   const raw = evt.evt;
@@ -1681,22 +1813,6 @@ function MapCanvas({
             </React.Fragment>
           ))}
         </Layer>}
-
-        {/* Lighting Layer - renders dynamic lighting effects */}
-        {lights && globalLighting && (
-          <LightingLayer
-            lights={[...lights, ...playerTokenLights].filter(light =>
-              light &&
-              light.position &&
-              typeof light.position.x === 'number' &&
-              typeof light.position.y === 'number' &&
-              typeof light.radius === 'number'
-            )}
-            globalLighting={globalLighting}
-            mapWidth={gMap?.width || width}
-            mapHeight={gMap?.height || height}
-          />
-        )}
 
         {/* Fog of War Layer for players - rendered after tokens and lighting so it occludes tokens */}
         {!isDM && fogData?.enabled && layerVisibility.fog && (() => {
@@ -2418,6 +2534,20 @@ function MapCanvas({
           open={showLightingPanel}
           onClose={() => setShowLightingPanel(false)}
           isDM={isDM}
+          onCenterCamera={(x, y) => {
+            const stage = stageRef.current;
+            if (stage) {
+              const scale = stage.scaleX();
+              const centerX = stage.width() / 2;
+              const centerY = stage.height() / 2;
+              
+              stage.position({
+                x: centerX - x * scale,
+                y: centerY - y * scale
+              });
+              stage.batchDraw();
+            }
+          }}
         />
       )}
       {isDM && showTokenEditor && selectedTokenId && (() => {

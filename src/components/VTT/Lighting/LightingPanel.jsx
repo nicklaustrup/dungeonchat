@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import './LightingPanel.css';
 
 /**
@@ -15,10 +15,16 @@ const LightingPanel = ({
   onClose,
   open = false,
   isDM = false,
-  onStartPlacingLight = null // Callback to enter "place light" mode
+  onStartPlacingLight = null, // Callback to enter "place light" mode
+  onCenterCamera = null // Callback to center camera on light position
 }) => {
   const [showEditor, setShowEditor] = useState(false);
   const [editingLight, setEditingLight] = useState(null);
+
+  // Dragging state
+  const [position, setPosition] = useState({ x: null, y: null });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   const handleEditLight = (light) => {
     setEditingLight(light);
@@ -83,6 +89,52 @@ const LightingPanel = ({
     return '🌙'; // Night
   };
 
+  // Drag handlers
+  const handleMouseDown = (e) => {
+    // Only start drag if clicking on header (not buttons)
+    if (e.target.closest('button')) return;
+
+    setIsDragging(true);
+    const panel = e.currentTarget.parentElement;
+    const rect = panel.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isDragging) return;
+
+    const newX = e.clientX - dragOffset.x;
+    const newY = e.clientY - dragOffset.y;
+
+    // Keep panel within viewport bounds
+    const maxX = window.innerWidth - 320; // panel width
+    const maxY = window.innerHeight - 100; // leave some space at bottom
+
+    setPosition({
+      x: Math.max(0, Math.min(newX, maxX)),
+      y: Math.max(0, Math.min(newY, maxY))
+    });
+  }, [isDragging, dragOffset]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Add/remove mouse event listeners for dragging
+  React.useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
   if (!isDM) {
     return null; // Only DM can control lighting
   }
@@ -92,10 +144,22 @@ const LightingPanel = ({
   }
 
   return (
-    <div className="lighting-panel">
-      <div className="lighting-panel-header">
+    <div
+      className="lighting-panel"
+      style={{
+        left: position.x !== null ? `${position.x}px` : undefined,
+        top: position.y !== null ? `${position.y}px` : undefined,
+        right: position.x !== null ? 'auto' : undefined,
+        cursor: isDragging ? 'grabbing' : undefined
+      }}
+    >
+      <div
+        className="lighting-panel-header"
+        onMouseDown={handleMouseDown}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+      >
         <h3>🔦 Lighting System</h3>
-        <button 
+        <button
           className="close-button"
           onClick={onClose}
           aria-label="Close lighting panel"
@@ -169,81 +233,81 @@ const LightingPanel = ({
             <div className="light-presets-grid">
               <button
                 className="preset-card"
-                onClick={() => onStartPlacingLight({ 
+                onClick={() => onStartPlacingLight({
                   type: 'point',
-                  color: '#FF8800', 
-                  radius: 40, 
-                  intensity: 0.8, 
+                  color: '#FF8800',
+                  radius: 40,
+                  intensity: 0.8,
                   flicker: true,
                   falloff: 'realistic'
                 })}
               >
-                🔥<br/>Torch
+                🔥<br />Torch
               </button>
               <button
                 className="preset-card"
-                onClick={() => onStartPlacingLight({ 
+                onClick={() => onStartPlacingLight({
                   type: 'point',
-                  color: '#FFB366', 
-                  radius: 30, 
-                  intensity: 0.9, 
+                  color: '#FFB366',
+                  radius: 30,
+                  intensity: 0.9,
                   flicker: false,
                   falloff: 'realistic'
                 })}
               >
-                🏮<br/>Lantern
+                🏮<br />Lantern
               </button>
               <button
                 className="preset-card"
-                onClick={() => onStartPlacingLight({ 
+                onClick={() => onStartPlacingLight({
                   type: 'point',
-                  color: '#FFD700', 
-                  radius: 10, 
-                  intensity: 0.6, 
+                  color: '#FFD700',
+                  radius: 10,
+                  intensity: 0.6,
                   flicker: true,
                   falloff: 'realistic'
                 })}
               >
-                🕯️<br/>Candle
+                🕯️<br />Candle
               </button>
               <button
                 className="preset-card"
-                onClick={() => onStartPlacingLight({ 
+                onClick={() => onStartPlacingLight({
                   type: 'point',
-                  color: '#FFFFFF', 
-                  radius: 40, 
-                  intensity: 1.0, 
+                  color: '#FFFFFF',
+                  radius: 40,
+                  intensity: 1.0,
                   flicker: false,
                   falloff: 'realistic'
                 })}
               >
-                ✨<br/>Light Spell
+                ✨<br />Light Spell
               </button>
               <button
                 className="preset-card"
-                onClick={() => onStartPlacingLight({ 
+                onClick={() => onStartPlacingLight({
                   type: 'point',
-                  color: '#4444FF', 
-                  radius: 30, 
-                  intensity: 0.9, 
+                  color: '#4444FF',
+                  radius: 30,
+                  intensity: 0.9,
                   animated: true,
                   falloff: 'realistic'
                 })}
               >
-                🔵<br/>Magical
+                🔵<br />Magical
               </button>
               <button
                 className="preset-card"
-                onClick={() => onStartPlacingLight({ 
+                onClick={() => onStartPlacingLight({
                   type: 'point',
-                  color: '#AA44FF', 
-                  radius: 30, 
-                  intensity: 0.9, 
+                  color: '#AA44FF',
+                  radius: 30,
+                  intensity: 0.9,
                   animated: true,
                   falloff: 'realistic'
                 })}
               >
-                🟣<br/>Purple
+                🟣<br />Purple
               </button>
             </div>
           </div>
@@ -270,17 +334,20 @@ const LightingPanel = ({
             ) : (
               <div className="lights-list">
                 {lights.map(light => (
-                  <div key={light.id} className="light-item">
-                    <div 
-                      className="light-color-indicator" 
+                  <div key={light.id} className="light-item" onClick={() => (
+                    onCenterCamera && light.position && (
+                      onCenterCamera(light.position.x, light.position.y)
+                    ))}>
+                    <div
+                      className="light-color-indicator"
                       style={{ backgroundColor: light.color }}
                     />
                     <div className="light-info">
                       <div className="light-name">
-                        {light.attachedTo ? '🔗 Token Light' : '💡 Static Light'}
+                        {light.name || (light.attachedTo ? '🔗 Token Light' : '💡 Static Light')}
                       </div>
                       <div className="light-details">
-                        Range: {light.radius}ft • 
+                        Range: {light.radius}ft •
                         {light.flicker && ' Flickering •'}
                         {light.animated && ' Animated •'}
                         {' '}{Math.round(light.intensity * 100)}%
@@ -290,12 +357,14 @@ const LightingPanel = ({
                       <button
                         className="icon-button"
                         onClick={() => handleEditLight(light)}
+                        title="Edit light properties"
                       >
                         🔧
                       </button>
                       <button
                         className="icon-button delete"
                         onClick={() => handleDeleteLight(light.id)}
+                        title="Delete this light"
                       >
                         🗑️
                       </button>
@@ -328,6 +397,7 @@ const LightingPanel = ({
  */
 const LightEditor = ({ light, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
+    name: light?.name || '',
     type: light?.type || 'point',
     radius: light?.radius || 40,
     intensity: light?.intensity || 0.8,
@@ -375,6 +445,20 @@ const LightEditor = ({ light, onSave, onCancel }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="light-editor-form">
+          {/* Name Field */}
+          <div className="form-group">
+            <label htmlFor="lightName">Light Name</label>
+            <input
+              type="text"
+              id="lightName"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              placeholder="e.g., Torch 1, Campfire"
+              className="text-input"
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #3a3a4e', background: '#2a2a3e', color: '#e0e0f0' }}
+            />
+          </div>
+
           {/* Presets */}
           <div className="form-group">
             <label>Quick Presets</label>
@@ -469,8 +553,8 @@ const LightEditor = ({ light, onSave, onCancel }) => {
               <label>
                 Flicker Intensity
                 <span className="control-value">
-                  {formData.flickerIntensity <= 0.33 ? 'Subtle' : 
-                   formData.flickerIntensity <= 0.66 ? 'Medium' : 'Strong'}
+                  {formData.flickerIntensity <= 0.33 ? 'Subtle' :
+                    formData.flickerIntensity <= 0.66 ? 'Medium' : 'Strong'}
                 </span>
               </label>
               <input
@@ -496,8 +580,8 @@ const LightEditor = ({ light, onSave, onCancel }) => {
               <label>
                 Pulse Intensity
                 <span className="control-value">
-                  {formData.pulseIntensity <= 0.33 ? 'Gentle' : 
-                   formData.pulseIntensity <= 0.66 ? 'Medium' : 'Dramatic'}
+                  {formData.pulseIntensity <= 0.33 ? 'Gentle' :
+                    formData.pulseIntensity <= 0.66 ? 'Medium' : 'Dramatic'}
                 </span>
               </label>
               <input
