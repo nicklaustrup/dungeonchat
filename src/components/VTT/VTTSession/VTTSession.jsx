@@ -412,8 +412,9 @@ function VTTSession() {
     if (!isUserDM || !activeMap || !activeMap.gridEnabled) return;
     
     try {
-      const gridWidth = Math.ceil(activeMap.width / activeMap.gridSize);
-      const gridHeight = Math.ceil(activeMap.height / activeMap.gridSize);
+      // Add 2 extra cells in each dimension (1 padding on each side) to prevent edge reveal when grid is offset
+      const gridWidth = Math.ceil(activeMap.width / activeMap.gridSize) + 2;
+      const gridHeight = Math.ceil(activeMap.height / activeMap.gridSize) + 2;
       
       await fogOfWarService.initializeFogOfWar(firestore, campaignId, activeMap.id, gridWidth, gridHeight);
       setFogOfWarEnabled(true);

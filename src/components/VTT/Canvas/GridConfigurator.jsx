@@ -110,8 +110,8 @@ export default function GridConfigurator({
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="range"
-              min={-100}
-              max={100}
+              min={Math.floor(-(gridSize / 2))}
+              max={Math.floor(gridSize / 2)}
               step={1}
               value={gridOffsetX}
               onChange={e => {
@@ -123,9 +123,11 @@ export default function GridConfigurator({
             />
             <input
               type="number"
+              min={Math.floor(-(gridSize / 2))}
+              max={Math.floor(gridSize / 2)}
               value={gridOffsetX}
               onChange={e => {
-                const v = parseInt(e.target.value,10) || 0;
+                const v = Math.max(Math.floor(-(gridSize / 2)), Math.min(Math.floor(gridSize / 2), parseInt(e.target.value,10) || 0));
                 setGridOffsetX(v);
                 debouncedCommit({ gridOffsetX: v });
               }}
@@ -138,8 +140,8 @@ export default function GridConfigurator({
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="range"
-              min={-100}
-              max={100}
+              min={Math.floor(-(gridSize / 2))}
+              max={Math.floor(gridSize / 2)}
               step={1}
               value={gridOffsetY}
               onChange={e => {
@@ -151,9 +153,11 @@ export default function GridConfigurator({
             />
             <input
               type="number"
+              min={Math.floor(-(gridSize / 2))}
+              max={Math.floor(gridSize / 2)}
               value={gridOffsetY}
               onChange={e => {
-                const v = parseInt(e.target.value,10) || 0;
+                const v = Math.max(Math.floor(-(gridSize / 2)), Math.min(Math.floor(gridSize / 2), parseInt(e.target.value,10) || 0));
                 setGridOffsetY(v);
                 debouncedCommit({ gridOffsetY: v });
               }}

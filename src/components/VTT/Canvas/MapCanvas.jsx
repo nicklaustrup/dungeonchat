@@ -487,8 +487,9 @@ function MapCanvas({
           // Adjust for grid offset before calculating cell position
           const adjustedX = token.position.x - offsetX;
           const adjustedY = token.position.y - offsetY;
-          const gridX = Math.floor(adjustedX / map.gridSize);
-          const gridY = Math.floor(adjustedY / map.gridSize);
+          // Add 1 to account for padding cell (fog grid has 1 extra cell on each side)
+          const gridX = Math.floor(adjustedX / map.gridSize) + 1;
+          const gridY = Math.floor(adjustedY / map.gridSize) + 1;
 
           // Check if player has a light source (torch/lantern) nearby
           const hasNearbyLight = lights.some(light => {
@@ -526,8 +527,9 @@ function MapCanvas({
           // Adjust for grid offset before calculating cell position
           const adjustedX = light.position.x - offsetX;
           const adjustedY = light.position.y - offsetY;
-          const gridX = Math.floor(adjustedX / map.gridSize);
-          const gridY = Math.floor(adjustedY / map.gridSize);
+          // Add 1 to account for padding cell (fog grid has 1 extra cell on each side)
+          const gridX = Math.floor(adjustedX / map.gridSize) + 1;
+          const gridY = Math.floor(adjustedY / map.gridSize) + 1;
           // Calculate reveal radius based on light radius (convert pixels to grid cells)
           const revealRadius = Math.ceil((light.radius || 40) / map.gridSize);
           await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, revealRadius);
@@ -917,8 +919,9 @@ function MapCanvas({
           const offsetY = map.gridOffsetY || 0;
           const adjustedX = finalPos.x - offsetX;
           const adjustedY = finalPos.y - offsetY;
-          const gridX = Math.floor(adjustedX / map.gridSize);
-          const gridY = Math.floor(adjustedY / map.gridSize);
+          // Add 1 to account for padding cell (fog grid has 1 extra cell on each side)
+          const gridX = Math.floor(adjustedX / map.gridSize) + 1;
+          const gridY = Math.floor(adjustedY / map.gridSize) + 1;
           await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, 3);
         }
       }
@@ -1549,8 +1552,9 @@ function MapCanvas({
             <Layer>
               {fogData.visibility && fogData.visibility.map((row, y) =>
                 row.map((isVisible, x) => {
-                  const cellX = x * gMap.gridSize + offsetX;
-                  const cellY = y * gMap.gridSize + offsetY;
+                  // Subtract 1 to account for padding cell (fog grid has 1 extra cell on each side)
+                  const cellX = (x - 1) * gMap.gridSize + offsetX;
+                  const cellY = (y - 1) * gMap.gridSize + offsetY;
                   if (cellX >= gMap.width || cellY >= gMap.height) return null;
                   if (!isVisible) {
                     return (
@@ -1586,8 +1590,9 @@ function MapCanvas({
             <Layer>
               {fogData.visibility && fogData.visibility.map((row, y) =>
                 row.map((isVisible, x) => {
-                  const cellX = x * gMap.gridSize + offsetX;
-                  const cellY = y * gMap.gridSize + offsetY;
+                  // Subtract 1 to account for padding cell (fog grid has 1 extra cell on each side)
+                  const cellX = (x - 1) * gMap.gridSize + offsetX;
+                  const cellY = (y - 1) * gMap.gridSize + offsetY;
                   if (cellX >= gMap.width || cellY >= gMap.height) return null;
                   if (!isVisible) {
                     return (
@@ -1615,8 +1620,9 @@ function MapCanvas({
               {!gMap.gridEnabled && fogData.visibility && fogData.visibility.map((row, y) =>
                 row.map((isVisible, x) => {
                   if (!isVisible) return null; // only outline revealed cells lightly
-                  const cellX = x * gMap.gridSize + offsetX;
-                  const cellY = y * gMap.gridSize + offsetY;
+                  // Subtract 1 to account for padding cell (fog grid has 1 extra cell on each side)
+                  const cellX = (x - 1) * gMap.gridSize + offsetX;
+                  const cellY = (y - 1) * gMap.gridSize + offsetY;
                   if (cellX >= gMap.width || cellY >= gMap.height) return null;
                   return (
                     <Rect
