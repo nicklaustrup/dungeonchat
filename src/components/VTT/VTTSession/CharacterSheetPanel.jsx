@@ -11,7 +11,7 @@ import { createPlayerStagedToken } from '../../../services/characterSheetService
 import './CharacterSheetPanel.css';
 
 function CharacterSheetPanel({ campaignId, isUserDM }) {
-  const { user, firestore } = useContext(FirebaseContext);
+  const { user, firestore, storage } = useContext(FirebaseContext);
   const [characters, setCharacters] = useState([]);
   const [selectedCharacterId, setSelectedCharacterId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -97,10 +97,17 @@ function CharacterSheetPanel({ campaignId, isUserDM }) {
       {characters.length > 1 && (
         <div className="character-tabs">
           {characters.map((char) => (
-            <button
+            <div
               key={char.id}
               className={`character-tab ${selectedCharacterId === char.id ? 'active' : ''}`}
               onClick={() => setSelectedCharacterId(char.id)}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setSelectedCharacterId(char.id);
+                }
+              }}
             >
               <span className="character-name">{char.name || 'Unnamed Character'}</span>
               <span className="character-class">
@@ -119,7 +126,7 @@ function CharacterSheetPanel({ campaignId, isUserDM }) {
                   {generatingTokenFor === char.id ? '⏳' : '🎭'}
                 </button>
               )}
-            </button>
+            </div>
           ))}
         </div>
       )}
@@ -129,6 +136,7 @@ function CharacterSheetPanel({ campaignId, isUserDM }) {
         {selectedCharacterId && (
           <CharacterSheet
             firestore={firestore}
+            storage={storage}
             campaignId={campaignId}
             userId={selectedCharacterId}
             isModal={false}

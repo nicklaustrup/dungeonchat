@@ -90,23 +90,23 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
     });
   };
 
-  const getAuthProviderIcon = (provider) => {
-    switch (provider) {
-      case 'google.com': return '🔴';
-      case 'github.com': return '⚫';
-      case 'password': return '📧';
-      default: return '👤';
-    }
-  };
+  // const getAuthProviderIcon = (provider) => {
+  //   switch (provider) {
+  //     case 'google.com': return '🔴';
+  //     case 'github.com': return '⚫';
+  //     case 'password': return '📧';
+  //     default: return '👤';
+  //   }
+  // };
 
-  const getAuthProviderName = (provider) => {
-    switch (provider) {
-      case 'google.com': return 'Google';
-      case 'github.com': return 'GitHub';
-      case 'password': return 'Email';
-      default: return 'Unknown';
-    }
-  };
+  // const getAuthProviderName = (provider) => {
+  //   switch (provider) {
+  //     case 'google.com': return 'Google';
+  //     case 'github.com': return 'GitHub';
+  //     case 'password': return 'Email';
+  //     default: return 'Unknown';
+  //   }
+  // };
 
   // Inline editing functions
   const startEditing = (field) => {
@@ -287,100 +287,20 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
                   </div>
                 )}
 
-                {/* Display Name Field - Inline Editable */}
-                {(profile?.displayName || isOwnProfile) && (
-                  <div className="profile-field-group">
-                    {isOwnProfile && editingField === 'displayName' ? (
-                      <div className="editing-field">
-                        <input
-                          type="text"
-                          value={fieldValues.displayName}
-                          onChange={(e) => handleFieldChange(e.target.value)}
-                          placeholder="Your full name (optional)"
-                          className="form-input"
-                          disabled={saving}
-                          autoFocus
-                        />
-                        <div className="field-actions">
-                          <button
-                            className="save-btn"
-                            onClick={saveField}
-                            disabled={saving}
-                            title="Save"
-                          >
-                            {saving ? '⏳' : '✓'}
-                          </button>
-                          <button
-                            className="cancel-btn"
-                            onClick={cancelEditing}
-                            disabled={saving}
-                            title="Cancel"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="display-field">
-                        {(fieldValues.displayName || profile?.displayName) && fieldValues.displayName !== fieldValues.username && (
-                          <p className="display-name">{fieldValues.displayName || profile?.displayName}</p>
-                        )}
-                        {isOwnProfile && (
-                          <button
-                            className="edit-btn"
-                            onClick={() => startEditing('displayName')}
-                            title="Edit display name"
-                          >
-                            ✏️
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 <div className="profile-metadata">
                   <div className="metadata-item">
                     <span className="metadata-label">Joined</span>
                     <span className="metadata-value">{formatJoinDate(profile?.createdAt)}</span>
                   </div>
-
-                  {profile?.authProvider && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Sign-in method</span>
-                      <span className="metadata-value">
-                        {getAuthProviderIcon(profile.authProvider)} {getAuthProviderName(profile.authProvider)}
-                      </span>
-                    </div>
-                  )}
-
-                  {profile?.showEmail && profile?.email && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Email</span>
-                      <span className="metadata-value">{profile.email}</span>
-                    </div>
-                  )}
-
-                  {profile?.emailVerified && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Email verified</span>
-                      <span className="metadata-value verified">✓ Verified</span>
-                    </div>
-                  )}
-
-                  {profile?.showLastActive && profile?.lastActive && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Last active</span>
-                      <span className="metadata-value">{formatJoinDate(profile.lastActive)}</span>
-                    </div>
-                  )}
                 </div>
               </div>
+            </div>
+          </div>
 
-              {/* Bio Field - Inline Editable */}
-              <div className="profile-bio">
-                <div className="profile-field-group">
-                  <h4>About</h4>
+          {/* Bio Field - Inline Editable */}
+          <div className="profile-bio-section">
+            <div className="profile-field-group">
+              <h4>About</h4>
                   {isOwnProfile && editingField === 'bio' ? (
                     <div className="editing-field">
                       <textarea
@@ -429,8 +349,6 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
                   )}
                 </div>
               </div>
-            </div>
-          </div>
         </div>
 
         {/* Actions */}

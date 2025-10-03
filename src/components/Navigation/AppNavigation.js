@@ -5,12 +5,14 @@ import SearchBar from '../ChatHeader/SearchBar';
 import CampaignSwitcher from './CampaignSwitcher';
 import { useFirebase } from '../../services/FirebaseContext';
 import './AppNavigation.css';
+import { ProfileDisplay } from '../ProfileDisplay/ProfileDisplay';
 
 function AppNavigation() {
   const location = useLocation();
   const { user } = useFirebase();
   const [searchCollapsed, setSearchCollapsed] = useState(true);
   const [localSearchTerm, setLocalSearchTerm] = useState('');
+  const [profileOpen, setProfileOpen] = useState(false);
   
   // Check if we're in a chat context that would have ChatStateProvider
   const isInChatContext = (location.pathname === '/lobby') || 
@@ -89,12 +91,10 @@ function AppNavigation() {
           <UserMenu
             user={user}
             onViewProfile={(user) => {
-              // TODO: Implement profile viewing
-              console.log('View profile:', user);
+              setProfileOpen(true);
             }}
             onEditProfile={() => {
-              // TODO: Implement profile editing
-              console.log('Edit profile');
+              setProfileOpen(true);
             }}
             openSettings={() => {
               // TODO: Implement settings
@@ -108,6 +108,13 @@ function AppNavigation() {
           />
         )}
       </div>
+      
+      {profileOpen && (
+        <ProfileDisplay
+          userId={user?.uid}
+          onClose={() => setProfileOpen(false)}
+        />
+      )}
     </nav>
   );
 }

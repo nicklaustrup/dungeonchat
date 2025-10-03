@@ -236,11 +236,17 @@ function VTTSession() {
         const profileSnap = await getDoc(profileRef);
         const profile = profileSnap.exists() ? profileSnap.data() : {};
 
+        // Priority system for token image:
+        // 1. Character avatar from character sheet (highest priority)
+        // 2. User profile photo (backup)
+        // 3. Empty string (will use default blue color in TokenSprite)
+        const tokenImageUrl = character.avatarUrl || profile.photoURL || user.photoURL || '';
+
         // Create staged player token
         const playerToken = {
           name: character.name || profile.displayName || user.displayName || 'Player',
           type: 'pc', // Use 'pc' to match TokenPalette
-          imageUrl: profile.photoURL || user.photoURL || '',
+          imageUrl: tokenImageUrl,
           position: { x: 100, y: 100 },
           size: { width: 50, height: 50 },
           color: '#4a9eff',

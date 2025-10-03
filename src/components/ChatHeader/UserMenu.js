@@ -16,8 +16,15 @@ export default function UserMenu({ user, onViewProfile, onEditProfile, onOpenSet
   const avatar = profile?.profilePictureURL || user.photoURL || '/logo192.png';
   const isLongUsername = display.length > 30;
 
-  const handleProfile = () => { onViewProfile && onViewProfile(user); close(); };
-  const handleEditProfile = () => { onEditProfile && onEditProfile(); close(); };
+  const handleProfile = () => { 
+    // Call onEditProfile which opens the ProfileDisplay modal with inline editing
+    if (onEditProfile) {
+      onEditProfile();
+    } else if (onViewProfile) {
+      onViewProfile(user);
+    }
+    close();
+  };
   const handleSettings = () => { openSettings(); if (onOpenSettings) onOpenSettings(); close(); };
 
   return (
@@ -47,7 +54,6 @@ export default function UserMenu({ user, onViewProfile, onEditProfile, onOpenSet
           </div>
           <div className="user-menu-section user-menu-actions">
             <button className="user-menu-item actionable" onClick={handleProfile}>View Profile</button>
-            <button className="user-menu-item actionable" onClick={handleEditProfile}>Edit Profile</button>
             {showSettings && (
               <button className="user-menu-item actionable" onClick={handleSettings}>Settings</button>
             )}

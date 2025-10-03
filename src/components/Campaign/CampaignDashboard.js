@@ -27,7 +27,7 @@ import SessionQuickNav from '../Session/SessionQuickNav';
 function CampaignDashboard() {
   const { campaignId } = useParams();
   const navigate = useNavigate();
-  const { firestore, user } = useFirebase();
+  const { firestore, storage, user } = useFirebase();
 
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -425,7 +425,9 @@ function CampaignDashboard() {
                             </div>
                             {/* RIGHT ELEMENT: Token Preview (Moved out of title div) */}
                             <div className="character-token" style={{ backgroundColor: character.tokenColor || '#4a90e2' }}>
-                              {character.imageUrl ? (
+                              {character.avatarUrl ? (
+                                <img src={character.avatarUrl} alt={character.name} />
+                              ) : character.imageUrl ? (
                                 <img src={character.imageUrl} alt={character.name} />
                               ) : (
                                 <span>{character.name.charAt(0)}</span>
@@ -461,32 +463,32 @@ function CampaignDashboard() {
                           <div className="character-card-actions">
                             {(isOwnCharacter || isUserDM) && (
                               <>
-                              <button
-                                onClick={() => {
-                                  setSelectedCharacter(character);
-                                  setShowCharacterSheet(true);
-                                }}
-                                className="btn btn-small btn-secondary"
-                              >
-                                View Sheet
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  if (window.confirm(`Are you sure you want to delete ${character.name || 'this character'}?`)) {
-                                    try {
-                                      await deleteCharacter(character.id);
-                                      await refreshCharacters();
-                                    } catch (err) {
-                                      console.error('Error deleting character:', err);
-                                      alert('Failed to delete character: ' + err.message);
+                                <button
+                                  onClick={() => {
+                                    setSelectedCharacter(character);
+                                    setShowCharacterSheet(true);
+                                  }}
+                                  className="btn btn-small btn-secondary"
+                                >
+                                  View Sheet
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (window.confirm(`Are you sure you want to delete ${character.name || 'this character'}?`)) {
+                                      try {
+                                        await deleteCharacter(character.id);
+                                        await refreshCharacters();
+                                      } catch (err) {
+                                        console.error('Error deleting character:', err);
+                                        alert('Failed to delete character: ' + err.message);
+                                      }
                                     }
-                                  }
-                                }}
-                                className="btn btn-small btn-danger"
-                                disabled={deletingCharacter}
-                              >
-                                {deletingCharacter ? 'Deleting...' : 'Delete'}
-                              </button>
+                                  }}
+                                  className="btn btn-small btn-danger"
+                                  disabled={deletingCharacter}
+                                >
+                                  {deletingCharacter ? 'Deleting...' : 'Delete'}
+                                </button>
                               </>
                             )}
                           </div>
@@ -681,6 +683,7 @@ function CampaignDashboard() {
           <div onClick={(e) => e.stopPropagation()}>
             <CharacterSheet
               firestore={firestore}
+              storage={storage}
               campaignId={campaignId}
               userId={selectedCharacter?.userId || user?.uid}
               isModal={true}

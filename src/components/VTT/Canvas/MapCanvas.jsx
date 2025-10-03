@@ -1068,6 +1068,7 @@ function MapCanvas({
         shapeOpacity={shapeOpacity}
         shapePersistent={shapePersistent}
         shapeVisibility={shapeVisibility}
+        onOpenFogPanel={() => showFogPanel(true)}
         onShapeColorChange={setShapeColor}
         onShapeOpacityChange={setShapeOpacity}
         onShapePersistentToggle={() => setShapePersistent(prev => !prev)}
@@ -1149,17 +1150,6 @@ function MapCanvas({
           >
             👁️ {localPlayerViewMode ? 'DM View' : 'Player View'}
           </button>
-
-          {onOpenFogPanel && (
-            <button
-              className="canvas-control-btn"
-              style={{ background: showFogPanel ? '#667eea' : '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
-              onClick={onOpenFogPanel}
-              title="Fog of War Controls"
-            >
-              🌫️ Fog
-            </button>
-          )}
 
           {onToggleTokenManager && (
             <button

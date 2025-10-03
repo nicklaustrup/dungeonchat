@@ -2,8 +2,9 @@
  * Character Sheet Display Component
  * Full D&D 5e character sheet with all stats and interactive elements
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { 
   calculateAbilityModifier, 
   calculateSkillModifier,
@@ -13,6 +14,7 @@ import './CharacterSheet.css';
 
 export function CharacterSheet({ 
   firestore, 
+  storage,
   campaignId, 
   userId, 
   onClose,
@@ -21,6 +23,8 @@ export function CharacterSheet({
   const [character, setCharacter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Load character data
   useEffect(() => {
@@ -70,6 +74,53 @@ export function CharacterSheet({
     }
   };
 
+  // Handle avatar image upload
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !storage) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be smaller than 5MB');
+      return;
+    }
+
+    try {
+      setUploadingAvatar(true);
+
+      // Upload to Firebase Storage
+      const storageRef = ref(storage, `characters/${campaignId}/${userId}/avatar_${Date.now()}.${file.name.split('.').pop()}`);
+      await uploadBytes(storageRef, file);
+      const avatarUrl = await getDownloadURL(storageRef);
+
+      // Update character sheet with new avatar URL
+      const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
+      await updateDoc(characterRef, {
+        avatarUrl,
+        updatedAt: new Date()
+      });
+
+      // Update local state
+      setCharacter(prev => ({
+        ...prev,
+        avatarUrl
+      }));
+
+      console.log('Avatar uploaded successfully:', avatarUrl);
+    } catch (err) {
+      console.error('Error uploading avatar:', err);
+      alert('Failed to upload avatar: ' + err.message);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   // Helper function to get ability score tooltips
   const getAbilityTooltip = (ability) => {
     const tooltips = {
@@ -85,6 +136,46 @@ export function CharacterSheet({
 
   const renderCharacterHeader = () => (
     <div className="character-header">
+      <div className="character-avatar-section">
+        <div className="character-avatar" onClick={() => fileInputRef.current?.click()} style={{ cursor: 'pointer' }} title="Click to upload character portrait">
+          {uploadingAvatar ? (
+            <div className="avatar-uploading">⏳</div>
+          ) : character.avatarUrl ? (
+            <img src={character.avatarUrl} alt={character.name} />
+          ) : (
+            <div className="avatar-placeholder">
+              <span>{character.name?.charAt(0) || '?'}</span>
+            </div>
+          )}
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleAvatarUpload}
+          style={{ display: 'none' }}
+        />
+        {character.avatarUrl && (
+          <button 
+            className="remove-avatar-btn"
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (window.confirm('Remove character portrait?')) {
+                try {
+                  const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
+                  await updateDoc(characterRef, { avatarUrl: null, updatedAt: new Date() });
+                  setCharacter(prev => ({ ...prev, avatarUrl: null }));
+                } catch (err) {
+                  console.error('Error removing avatar:', err);
+                }
+              }
+            }}
+            title="Remove portrait"
+          >
+            ✕
+          </button>
+        )}
+      </div>
       <div className="character-title">
         <h1>{character.name}</h1>
         <div className="character-subtitle" title="Character level, race, and class combination">

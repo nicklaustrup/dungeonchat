@@ -22,7 +22,7 @@ describe('UserMenu', () => {
     render(<UserMenu user={user} onViewProfile={onViewProfile} onEditProfile={onEditProfile} onOpenSettings={onOpenSettings} openSettings={openSettings} />);
     const chip = screen.getByRole('button', { name: /test user/i });
     fireEvent.click(chip);
-    const profileBtn = screen.getByRole('button', { name: /edit profile/i });
+    const profileBtn = screen.getByRole('button', { name: /view profile/i });
     fireEvent.click(profileBtn);
     expect(onEditProfile).toHaveBeenCalled();
 

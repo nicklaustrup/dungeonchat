@@ -52,7 +52,20 @@ const MapToolbar = ({
     onClearTempShapes,
     onClearAllShapes,
     onOpenGridConfig,
-    showKeyboardShortcuts = false // Controlled by MapCanvas now
+    showKeyboardShortcuts = false, // Controlled by MapCanvas now
+    // Fog-related props
+    fogOfWarEnabled,
+    onToggleFogEnabled,
+    onRevealAll,
+    onConcealAll,
+    onInitializeFog,
+    showFogPanel,
+    onOpenFogPanel,
+    onCloseFogPanel,
+    fogBrushSize,
+    onFogBrushSizeChange,
+    fogBrushMode,
+    onFogBrushModeChange,
 }) => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
@@ -182,6 +195,14 @@ const MapToolbar = ({
         };
     }, [isDragging, isResizing, position, width, MIN_WIDTH, MAX_WIDTH]);
 
+    const handleFogButtonClick = () => {
+        if (fogOfWarEnabled) {
+            onToggleFogEnabled(false);
+        } else {
+            onToggleFogEnabled(true);
+        }
+    };
+
     return (
         <div
             ref={toolbarRef}
@@ -273,6 +294,30 @@ const MapToolbar = ({
 
                         )}
 
+                        {isDM && onOpenFogPanel && (
+                            <button
+                                className="canvas-control-btn"
+                                style={{ background: showFogPanel ? '#667eea' : '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
+                                onClick={onOpenFogPanel}
+                                title="Fog of War Controls"
+                            >
+                                🌫️ Fog
+                            </button>
+                        )}
+
+                        <button
+                            className={`fog-button ${fogOfWarEnabled ? 'active' : ''}`}
+                            onClick={handleFogButtonClick}
+                        >
+                            {fogOfWarEnabled ? 'Disable Fog' : 'Enable Fog'}
+                        </button>
+                        {fogOfWarEnabled && (
+                            <div className="fog-controls">
+                                <button onClick={onRevealAll}>Reveal All</button>
+                                <button onClick={onConcealAll}>Conceal All</button>
+                                <button onClick={onInitializeFog}>Initialize Fog</button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

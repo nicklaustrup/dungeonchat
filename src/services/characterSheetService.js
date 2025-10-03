@@ -65,13 +65,19 @@ export async function createPlayerStagedToken(firestore, campaignId, userId, cha
     const profileSnap = await getDoc(profileRef);
     const profile = profileSnap.exists() ? profileSnap.data() : {};
     
+    // Priority system for token image:
+    // 1. Character avatar from character sheet (highest priority)
+    // 2. User profile photo (backup)
+    // 3. Empty string (will use default blue color in TokenSprite)
+    const tokenImageUrl = character.avatarUrl || profile.photoURL || '';
+    
     // Create staged player token using tokenService
     const { tokenService } = await import('./vtt/tokenService');
     
     const playerToken = {
       name: character.name,
       type: 'pc',
-      imageUrl: profile.photoURL || '',
+      imageUrl: tokenImageUrl,
       position: { x: 100, y: 100 },
       size: { width: 25, height: 25 }, // Start small (0.5x0.5)
       rotation: 0,

@@ -89,7 +89,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
+  padding: 1rem 1.5rem;
   background: var(--bg-primary, #f8f9fa);
   border-bottom: 1px solid var(--border-color, #e5e5e5);
   border-radius: 16px 16px 0 0;
@@ -120,14 +120,14 @@
 
 /* Content */
 .profile-display-content {
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
 /* Main Profile Info */
 .profile-main-info {
   display: flex;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
   align-items: flex-start;
 }
 
@@ -213,7 +213,7 @@
 }
 
 .profile-names {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 }
 
 .username {
@@ -230,27 +230,59 @@
   font-weight: 400;
 }
 
-.profile-bio {
-  margin-bottom: 1.5rem;
-  text-align: center;
+/* Bio Section - Now takes up majority of space */
+.profile-bio-section {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color, #e5e5e5);
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
 }
 
-.profile-bio h4 {
-  margin: 0 0 0.75rem 0;
+.profile-bio-section h4 {
+  margin: 0 0 1rem 0;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary, #333333);
+  text-align: center;
 }
 
-.profile-bio p {
-  margin: 0 auto;
-  line-height: 1.5;
+.profile-bio-section .profile-field-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-bio-section .display-field {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.profile-bio-section .display-field p {
+  margin: 0;
+  line-height: 1.6;
   color: var(--text-primary, #333333);
   background: var(--bg-primary, #f8f9fa);
   padding: 1rem;
   border-radius: 8px;
   border-left: 4px solid var(--primary-color, #007bff);
-  width: 80%;
+  flex: 1;
+  min-height: 180px;
+  width: 85%;
+}
+
+.profile-bio-section .editing-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-bio-section .form-textarea {
+  flex: 1;
+  min-height: 200px;
+  resize: vertical;
 }
 
 /* Metadata */
@@ -258,6 +290,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #e5e5e5);
+  margin-top: 1rem;
 }
 
 .metadata-item {
@@ -293,7 +328,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  padding: 1.5rem 2rem;
+  padding: 1rem 1.5rem;
   background: var(--bg-primary, #f8f9fa);
   border-top: 1px solid var(--border-color, #e5e5e5);
   border-radius: 0 0 16px 16px;
@@ -531,6 +566,8 @@
   flex-shrink: 0;
   opacity: 0;
   transition: opacity 0.2s ease, background-color 0.2s ease;
+  margin-left: 0.5rem;
+  align-self: flex-start;
 }
 
 .profile-field-group:hover .edit-btn,
