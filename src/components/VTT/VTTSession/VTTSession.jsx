@@ -100,6 +100,9 @@ function VTTSession() {
   const voiceDragStartRef = useRef({ x: 0, y: 0 });
   const notificationContainerRef = useRef(null);
 
+  // Camera center ref - used by MapCanvas to expose camera centering function
+  const centerCameraRef = useRef(null);
+
   // Load lighting system for active map
   const lightingHook = useLighting(firestore, campaignId, activeMap?.id, activeMap?.lighting);
 
@@ -505,6 +508,26 @@ function VTTSession() {
     }
   };
 
+  // Handle centering camera on a token from Token Manager
+  const handleCenterCameraOnToken = (x, y) => {
+    if (centerCameraRef.current) {
+      centerCameraRef.current(x, y);
+      console.log('VTTSession: Centering camera on token at:', x, y);
+    } else {
+      console.warn('VTTSession: Camera center function not available yet');
+    }
+  };
+
+
+  // Handle opening light editor from Token Manager Active tab
+  const handleOpenLightEditor = (light) => {
+    console.log('VTTSession: Opening light editor for:', light.name || light.type);
+    // Open the lighting panel if not already open
+    setShowLightingPanel(true);
+    // The LightingPanel component will need to handle selecting the specific light
+    // For now, just opening the panel will allow the DM to edit lights
+  };
+
   if (loading) {
     return (
       <div className="vtt-session-loading">
@@ -784,6 +807,7 @@ function VTTSession() {
               onShowEncounters={isUserDM ? () => togglePanel('encounter') : null}
               showTokenManager={showTokenManager}
               onToggleTokenManager={() => setShowTokenManager(!showTokenManager)}
+              onCenterCamera={centerCameraRef}
             />
           ) : (
             <div className="no-map-placeholder">
@@ -828,6 +852,9 @@ function VTTSession() {
                 }
               }}
               onTokenDeselect={() => setSelectedTokenId(null)}
+              onTokenSelect={setSelectedTokenId}
+              onCenterCamera={handleCenterCameraOnToken}
+              onOpenLightEditor={handleOpenLightEditor}
               onClose={() => setShowTokenManager(false)}
             />
           </div>
