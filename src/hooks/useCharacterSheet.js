@@ -4,11 +4,12 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  updateCharacterSheet, 
+import {
+  updateCharacterSheet,
   getCampaignCharacters,
   addExperience,
-  updateHitPoints
+  updateHitPoints,
+  deleteCharacterSheet
 } from '../services/characterSheetService';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -33,7 +34,7 @@ export function useCharacterSheet(firestore, campaignId, userId) {
 
     setLoading(true);
     const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
-    
+
     const unsubscribe = onSnapshot(
       characterRef,
       (doc) => {
@@ -165,10 +166,10 @@ export function useCharacterCreation(firestore, campaignId, userId) {
     try {
       setCreating(true);
       setError(null);
-      
+
       const { createCharacterSheet } = await import('../services/characterSheetService');
       const newCharacter = await createCharacterSheet(firestore, campaignId, userId, characterData);
-      
+
       return newCharacter;
     } catch (err) {
       setError(err.message);
@@ -182,5 +183,35 @@ export function useCharacterCreation(firestore, campaignId, userId) {
     creating,
     error,
     createCharacter
+  };
+}
+
+/** Hook for deleting a character sheet
+ * @param {Object} firestore - Firestore instance
+  * @param {string} campaignId - Campaign ID
+  * @param {string} userId - User ID
+  * @returns {Function} deleteCharacter function
+  */
+export function useDeleteCharacterSheet(firestore, campaignId, userId) {
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState(null);
+
+  const deleteCharacter = useCallback(async (characterId) => {
+    try {
+      setDeleting(true);
+      setError(null);
+      await deleteCharacterSheet(firestore, campaignId, userId, characterId);
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setDeleting(false);
+    }
+  }, [firestore, campaignId, userId]);
+
+  return {
+    deleting,
+    error,
+    deleteCharacter
   };
 }

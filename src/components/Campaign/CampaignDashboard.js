@@ -18,7 +18,7 @@ import PartyManagement from '../Session/PartyManagement';
 import VoiceChatPanel from '../Voice/VoiceChatPanel';
 import { CharacterCreationModal } from '../CharacterCreationModal';
 import { CharacterSheet } from '../CharacterSheet';
-import { useCharacterSheet, useCampaignCharacters } from '../../hooks/useCharacterSheet';
+import { useCharacterSheet, useCampaignCharacters, useDeleteCharacterSheet } from '../../hooks/useCharacterSheet';
 import MapLibrary from '../VTT/MapLibrary/MapLibrary';
 import MapEditor from '../VTT/MapEditor/MapEditor';
 import './CampaignDashboard.css';
@@ -28,7 +28,7 @@ function CampaignDashboard() {
   const { campaignId } = useParams();
   const navigate = useNavigate();
   const { firestore, user } = useFirebase();
-  
+
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,10 +42,11 @@ function CampaignDashboard() {
 
   // Use the custom hook for members with real-time updates
   const { members, loading: membersLoading, setMembers } = useCampaignMembers(firestore, campaignId);
-  
+
   // Character sheet hooks
   const { hasCharacter } = useCharacterSheet(firestore, campaignId, user?.uid);
   const { characters: campaignCharacters, refreshCharacters } = useCampaignCharacters(firestore, campaignId);
+  const { deleteCharacter, deleting: deletingCharacter } = useDeleteCharacterSheet(firestore, campaignId, user?.uid);
 
   useEffect(() => {
     if (!campaignId || !firestore || !user) return;
@@ -54,7 +55,7 @@ function CampaignDashboard() {
 
     // Listen to campaign changes
     const campaignRef = doc(firestore, 'campaigns', campaignId);
-    const unsubscribeCampaign = onSnapshot(campaignRef, 
+    const unsubscribeCampaign = onSnapshot(campaignRef,
       (doc) => {
         if (doc.exists()) {
           setCampaign({ id: doc.id, ...doc.data() });
@@ -91,7 +92,7 @@ function CampaignDashboard() {
 
   const isUserDM = campaign && user && campaign.dmId === user.uid;
   const userMember = members.find(member => member.userId === user.uid);
-  
+
   // Find DM member info
   const dmMember = members.find(member => member.userId === campaign?.dmId);
   const dmDisplayName = dmMember?.username || dmMember?.displayName || campaign?.dmName || 'Unknown DM';
@@ -159,7 +160,7 @@ function CampaignDashboard() {
           </div>
           <div className="campaign-actions">
             {!isUserDM && userMember && (
-              <button 
+              <button
                 onClick={() => setShowLeaveModal(true)}
                 className="btn btn-secondary"
               >
@@ -173,86 +174,86 @@ function CampaignDashboard() {
       <div className="campaign-content">
         <div className="campaign-sidebar">
           <nav className="campaign-nav">
-            <button 
+            <button
               className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
               onClick={() => setActiveTab('overview')}
             >
               Overview
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'members' ? 'active' : ''}`}
               onClick={() => setActiveTab('members')}
             >
               Members ({members.length})
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'channels' ? 'active' : ''}`}
               onClick={() => setActiveTab('channels')}
             >
               Channels
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'characters' ? 'active' : ''}`}
               onClick={() => setActiveTab('characters')}
             >
               Characters ({campaignCharacters.length})
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'dice-history' ? 'active' : ''}`}
               onClick={() => setActiveTab('dice-history')}
             >
               Dice History
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'initiative' ? 'active' : ''}`}
               onClick={() => setActiveTab('initiative')}
             >
               Initiative Tracker
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'session-notes' ? 'active' : ''}`}
               onClick={() => setActiveTab('session-notes')}
             >
               Session Notes
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'encounters' ? 'active' : ''}`}
               onClick={() => setActiveTab('encounters')}
             >
               Encounters
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'calendar' ? 'active' : ''}`}
               onClick={() => setActiveTab('calendar')}
             >
               Calendar
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'party' ? 'active' : ''}`}
               onClick={() => setActiveTab('party')}
             >
               Party Management
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'voice' ? 'active' : ''}`}
               onClick={() => setActiveTab('voice')}
             >
               🎙️ Voice Chat
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'maps' ? 'active' : ''}`}
               onClick={() => setActiveTab('maps')}
             >
               🗺️ Maps
             </button>
-            <button 
+            <button
               className={`nav-item ${activeTab === 'rules' ? 'active' : ''}`}
               onClick={() => setActiveTab('rules')}
             >
               Rules & Guidelines
             </button>
             {isUserDM && (
-              <button 
+              <button
                 className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
                 onClick={() => setActiveTab('settings')}
               >
@@ -294,7 +295,7 @@ function CampaignDashboard() {
                   </div>
                   <div className="detail-item detail-item-action">
                     <div className="campaign-quick-actions">
-                      <button 
+                      <button
                         onClick={() => navigate(`/campaign/${campaignId}/session`)}
                         className="btn btn-primary btn-vtt-session"
                         disabled={!userMember || userMember.status !== 'active'}
@@ -302,7 +303,7 @@ function CampaignDashboard() {
                       >
                         🎲 Go to Session
                       </button>
-                      <button 
+                      <button
                         onClick={handleJoinChat}
                         className="btn btn-secondary btn-open-chat"
                         disabled={!userMember || userMember.status !== 'active'}
@@ -310,7 +311,7 @@ function CampaignDashboard() {
                         Open Chat
                       </button>
                       <div onClick={() => setActiveTab('initiative')}>
-                        <InitiativeButton 
+                        <InitiativeButton
                           campaignId={campaignId}
                           size="medium"
                         />
@@ -319,7 +320,7 @@ function CampaignDashboard() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="overview-section">
                 <h3>Recent Activity</h3>
                 <div className="activity-list">
@@ -352,7 +353,7 @@ function CampaignDashboard() {
           )}
 
           {activeTab === 'members' && (
-            <CampaignMemberList 
+            <CampaignMemberList
               campaignId={campaignId}
               members={members}
               isUserDM={isUserDM}
@@ -361,7 +362,7 @@ function CampaignDashboard() {
           )}
 
           {activeTab === 'channels' && (
-            <ChannelSidebar 
+            <ChannelSidebar
               campaignId={campaignId}
               isUserDM={isUserDM}
             />
@@ -373,7 +374,7 @@ function CampaignDashboard() {
                 <h2>Campaign Characters</h2>
                 <div className="characters-actions">
                   {!hasCharacter && (
-                    <button 
+                    <button
                       onClick={() => setShowCharacterCreation(true)}
                       className="btn btn-primary"
                     >
@@ -381,7 +382,7 @@ function CampaignDashboard() {
                     </button>
                   )}
                   {hasCharacter && (
-                    <button 
+                    <button
                       onClick={() => setShowCharacterSheet(true)}
                       className="btn btn-secondary"
                     >
@@ -390,14 +391,14 @@ function CampaignDashboard() {
                   )}
                 </div>
               </div>
-              
+
               <div className="characters-content">
                 {campaignCharacters.length === 0 ? (
                   <div className="no-characters">
                     <h3>No Characters Yet</h3>
                     <p>Be the first to create a character for this campaign!</p>
                     {!hasCharacter && (
-                      <button 
+                      <button
                         onClick={() => setShowCharacterCreation(true)}
                         className="btn btn-primary"
                       >
@@ -410,14 +411,28 @@ function CampaignDashboard() {
                     {campaignCharacters.map(character => {
                       const member = members.find(m => m.userId === character.userId);
                       const isOwnCharacter = character.userId === user?.uid;
-                      
+
                       return (
                         <div key={character.id} className={`character-card ${isOwnCharacter ? 'own-character' : ''}`}>
                           <div className="character-card-header">
-                            <h4>{character.name}</h4>
-                            {isOwnCharacter && <span className="own-badge">Your Character</span>}
+                            {/* LEFT COLUMN: Title and Badge Stacked */}
+                            <div className="character-info-stack"> {/* <--- NEW CONTAINER */}
+                              <div className="character-card-title">
+                                <h4>{character.name}</h4>
+                              </div>
+                              {/* The badge is now a sibling to the title, but still within the info stack */}
+                              {isOwnCharacter && <span className="own-badge">Your Character</span>}
+                            </div>
+                            {/* RIGHT ELEMENT: Token Preview (Moved out of title div) */}
+                            <div className="character-token" style={{ backgroundColor: character.tokenColor || '#4a90e2' }}>
+                              {character.imageUrl ? (
+                                <img src={character.imageUrl} alt={character.name} />
+                              ) : (
+                                <span>{character.name.charAt(0)}</span>
+                              )}
+                            </div>
                           </div>
-                          
+
                           <div className="character-card-info">
                             <div className="character-level">Level {character.level}</div>
                             <div className="character-class-race">
@@ -427,7 +442,7 @@ function CampaignDashboard() {
                               Player: {member?.username || member?.displayName || character.playerName || 'Unknown'}
                             </div>
                           </div>
-                          
+
                           <div className="character-card-stats">
                             <div className="stat-item" title="Hit Points - The amount of damage your character can take before falling unconscious">
                               <span>HP:</span>
@@ -442,10 +457,11 @@ function CampaignDashboard() {
                               <span>{(character.experience || 0).toLocaleString()}</span>
                             </div>
                           </div>
-                          
+
                           <div className="character-card-actions">
                             {(isOwnCharacter || isUserDM) && (
-                              <button 
+                              <>
+                              <button
                                 onClick={() => {
                                   setSelectedCharacter(character);
                                   setShowCharacterSheet(true);
@@ -454,13 +470,32 @@ function CampaignDashboard() {
                               >
                                 View Sheet
                               </button>
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm(`Are you sure you want to delete ${character.name || 'this character'}?`)) {
+                                    try {
+                                      await deleteCharacter(character.id);
+                                      await refreshCharacters();
+                                    } catch (err) {
+                                      console.error('Error deleting character:', err);
+                                      alert('Failed to delete character: ' + err.message);
+                                    }
+                                  }
+                                }}
+                                className="btn btn-small btn-danger"
+                                disabled={deletingCharacter}
+                              >
+                                {deletingCharacter ? 'Deleting...' : 'Delete'}
+                              </button>
+                              </>
                             )}
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                )}
+                )
+                }
               </div>
             </div>
           )}
@@ -471,7 +506,7 @@ function CampaignDashboard() {
               <p className="tab-description">
                 View campaign dice roll history, statistics, and player performance across all channels.
               </p>
-              <DiceHistoryPanel 
+              <DiceHistoryPanel
                 firestore={firestore}
                 campaignId={campaignId}
                 userId={null} // Show all users' rolls
@@ -486,7 +521,7 @@ function CampaignDashboard() {
                 Manage combat initiative order, track HP, conditions, and turn progression for encounters.
               </p>
               <div className="initiative-content">
-                <InitiativeTracker 
+                <InitiativeTracker
                   campaignId={campaignId}
                   firestore={firestore}
                 />
@@ -541,10 +576,10 @@ function CampaignDashboard() {
                 Join voice chat to communicate with your party in real-time. Perfect for sessions, combat encounters, and roleplay.
               </p>
               <div className="voice-content">
-                <VoiceChatPanel 
+                <VoiceChatPanel
                   campaign={campaign}
-                  campaignId={campaignId} 
-                  roomId="voice-general" 
+                  campaignId={campaignId}
+                  roomId="voice-general"
                 />
               </div>
             </div>
@@ -558,7 +593,7 @@ function CampaignDashboard() {
                   <p className="tab-description">
                     Upload battle maps, configure grids, and manage your map library. {isUserDM ? 'As DM, you can create and edit maps.' : 'View maps shared by your DM.'}
                   </p>
-                  <MapLibrary 
+                  <MapLibrary
                     campaignId={campaignId}
                     onSelectMap={(map) => {
                       // TODO: Open map viewer
@@ -580,7 +615,7 @@ function CampaignDashboard() {
                   />
                 </>
               ) : (
-                <MapEditor 
+                <MapEditor
                   campaignId={campaignId}
                   existingMap={editingMap}
                   onSave={(savedMap) => {
@@ -598,14 +633,14 @@ function CampaignDashboard() {
           )}
 
           {activeTab === 'rules' && (
-            <CampaignRules 
+            <CampaignRules
               campaignId={campaignId}
               isUserDM={isUserDM}
             />
           )}
 
           {activeTab === 'settings' && isUserDM && (
-            <CampaignSettings 
+            <CampaignSettings
               campaign={campaign}
               onCampaignUpdate={setCampaign}
             />
@@ -613,7 +648,7 @@ function CampaignDashboard() {
         </div>
       </div>
       {/* Quick navigation bar for session-related tabs */}
-      {['session-notes','encounters','initiative','calendar','party'].includes(activeTab) && (
+      {['session-notes', 'encounters', 'initiative', 'calendar', 'party'].includes(activeTab) && (
         <SessionQuickNav
           activeTab={activeTab}
           onNavigate={setActiveTab}
@@ -624,7 +659,7 @@ function CampaignDashboard() {
 
       {/* Character Creation Modal */}
       {showCharacterCreation && (
-        <CharacterCreationModal 
+        <CharacterCreationModal
           isOpen={showCharacterCreation}
           onClose={() => setShowCharacterCreation(false)}
           firestore={firestore}
@@ -636,7 +671,7 @@ function CampaignDashboard() {
           }}
         />
       )}
-      
+
       {/* Character Sheet Modal */}
       {showCharacterSheet && (
         <div className="modal-overlay" onClick={() => {
@@ -644,7 +679,7 @@ function CampaignDashboard() {
           setSelectedCharacter(null);
         }}>
           <div onClick={(e) => e.stopPropagation()}>
-            <CharacterSheet 
+            <CharacterSheet
               firestore={firestore}
               campaignId={campaignId}
               userId={selectedCharacter?.userId || user?.uid}
@@ -668,13 +703,13 @@ function CampaignDashboard() {
               You'll lose access to all campaign channels and will need to be re-invited to rejoin.
             </p>
             <div className="modal-actions">
-              <button 
+              <button
                 onClick={() => setShowLeaveModal(false)}
                 className="btn btn-secondary"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleLeaveCampaign}
                 className="btn btn-danger"
               >

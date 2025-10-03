@@ -130,9 +130,17 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
                           </span>
                         </div>
                         <div className="character-stats">
-                          <span className="stat-item">HP: {memberCharacter.hitPoints.current}/{memberCharacter.hitPoints.maximum}</span>
-                          <span className="stat-item">AC: {memberCharacter.armorClass}</span>
-                          <span className="stat-item">XP: {memberCharacter.experiencePoints.toLocaleString()}</span>
+                          {memberCharacter.hitPoints && (
+                            <span className="stat-item">
+                              HP: {memberCharacter.hitPoints.current || 0}/{memberCharacter.hitPoints.maximum || 0}
+                            </span>
+                          )}
+                          {memberCharacter.armorClass !== undefined && (
+                            <span className="stat-item">AC: {memberCharacter.armorClass}</span>
+                          )}
+                          {memberCharacter.experiencePoints !== undefined && (
+                            <span className="stat-item">XP: {memberCharacter.experiencePoints.toLocaleString()}</span>
+                          )}
                         </div>
                       </div>
                     ) : (

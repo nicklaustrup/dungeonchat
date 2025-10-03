@@ -73,7 +73,7 @@ export async function createPlayerStagedToken(firestore, campaignId, userId, cha
       type: 'pc',
       imageUrl: profile.photoURL || '',
       position: { x: 100, y: 100 },
-      size: { width: 50, height: 50 },
+      size: { width: 25, height: 25 }, // Start small (0.5x0.5)
       rotation: 0,
       color: '#4a9eff',
       characterId: userId,

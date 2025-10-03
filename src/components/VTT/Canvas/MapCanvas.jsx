@@ -37,11 +37,11 @@ import './MapCanvas.css';
  * Main canvas component using Konva for rendering maps with pan and zoom
  * Now includes token rendering and interaction
  */
-function MapCanvas({ 
-  map, 
+function MapCanvas({
+  map,
   campaignId,
-  width, 
-  height, 
+  width,
+  height,
   isDM = false,
   selectedTokenId,
   onTokenSelect,
@@ -64,12 +64,12 @@ function MapCanvas({
   onToggleTokenManager,
   showMapLibrary = false,
   onToggleMapLibrary,
-  children 
+  children
 }) {
   const { firestore, user } = useContext(FirebaseContext);
   const stageRef = useRef(null);
   const [mapImage] = useImage(map?.imageUrl || '', 'anonymous');
-  
+
   // Custom hooks for organized state management
   const {
     stagePos,
@@ -79,7 +79,7 @@ function MapCanvas({
     setStageScale,
     setIsDragging
   } = useCanvasViewport({ minScale: 0.2, maxScale: 5, scaleBy: 1.05 });
-  
+
   const {
     activeTool,
     pingColor,
@@ -96,7 +96,7 @@ function MapCanvas({
     setShapePersistent,
     setShapeVisibility
   } = useCanvasTools('pointer'); // Set default tool to pointer
-  
+
   const {
     drawings,
     isDrawing,
@@ -113,36 +113,36 @@ function MapCanvas({
     setShapeStart,
     setShapePreview
   } = useDrawingState();
-  
+
   // Load tokens with real-time sync
   const { tokens, updateToken } = useTokens(campaignId, map?.id);
-  
+
   // Load lighting system
-  const { 
-    lights, 
+  const {
+    lights,
     globalLighting,
     createLight,
     updateLight,
     deleteLight,
-    updateGlobalLighting 
+    updateGlobalLighting
   } = useLighting(firestore, campaignId, map?.id, map?.lighting);
-  
+
   // Ping state
   const [pings, setPings] = useState([]);
-  
+
   // Shape preview state (for seeing other users' previews)
   const [otherUsersPreviews, setOtherUsersPreviews] = useState([]);
-  
+
   // Fog of War state
   const [fogData, setFogData] = useState(null);
-  
+
   // Ruler state
   const [rulerStart, setRulerStart] = useState(null);
   const [rulerEnd, setRulerEnd] = useState(null);
   const [snapToGrid, setSnapToGrid] = useState(false); // global snap
   const [rulerPersistent, setRulerPersistent] = useState(false);
   const [pinnedRulers, setPinnedRulers] = useState([]); // Array of pinned measurements
-  
+
   // Token-specific snapping toggle & drag highlight footprint
   const [tokenSnap, setTokenSnap] = useState(true);
   const [tokenSnapHighlight, setTokenSnapHighlight] = useState(null); // {x,y,w,h}
@@ -189,19 +189,19 @@ function MapCanvas({
   // Generate natural light for player tokens during dark ambience
   const playerTokenLights = useMemo(() => {
     if (!globalLighting?.enabled || !playerTokens.length) return [];
-    
+
     // Only add natural light if ambient is low (dark environment)
     const ambientLight = globalLighting.ambientLight || 0.7;
     if (ambientLight > 0.4) return []; // Bright enough, no need for token lights
-    
+
     // Create natural light sources for each player token
     return playerTokens
       .filter(token => token.position && typeof token.position.x === 'number' && typeof token.position.y === 'number')
       .map((token, index) => ({
         id: `player-light-${token.id}`,
-        position: { 
-          x: token.position.x, 
-          y: token.position.y 
+        position: {
+          x: token.position.x,
+          y: token.position.y
         },
         radius: 120, // Natural vision radius (~24ft at 5ft/square)
         intensity: 0.5, // Subtle natural light
@@ -227,7 +227,7 @@ function MapCanvas({
   // Close FX Library dropdown when clicking outside
   useEffect(() => {
     if (!showFXLibrary) return;
-    
+
     const handleClickOutside = (e) => {
       // Check if click is outside the FX Library dropdown
       const fxLibraryElement = document.querySelector('[data-fx-library]');
@@ -235,7 +235,7 @@ function MapCanvas({
         setShowFXLibrary(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showFXLibrary]);
@@ -250,7 +250,7 @@ function MapCanvas({
         });
       }
     };
-    
+
     window.addEventListener('deleteLight', handleDeleteLight);
     return () => window.removeEventListener('deleteLight', handleDeleteLight);
   }, [deleteLight]);
@@ -267,27 +267,27 @@ function MapCanvas({
   // Helper to snap point to nearest token center if within threshold
   const snapToTokenCenter = useCallback((pt, snapThreshold = 30) => {
     if (!tokens || tokens.length === 0) return pt;
-    
+
     let closestToken = null;
     let minDistance = snapThreshold;
-    
+
     // Find closest token center within threshold
     tokens.forEach(token => {
       const tokenCenter = {
         x: token.position.x,
         y: token.position.y
       };
-      
+
       const dx = pt.x - tokenCenter.x;
       const dy = pt.y - tokenCenter.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
+
       if (distance < minDistance) {
         minDistance = distance;
         closestToken = tokenCenter;
       }
     });
-    
+
     // Return snapped position if found, otherwise original
     return closestToken || pt;
   }, [tokens]);
@@ -297,7 +297,7 @@ function MapCanvas({
     // Try token snapping first (for targeting)
     const tokenSnapped = snapToTokenCenter(pt);
     if (tokenSnapped !== pt) return tokenSnapped;
-    
+
     // Fall back to grid snapping if enabled
     return maybeSnapPoint(pt);
   }, [snapToTokenCenter, maybeSnapPoint]);
@@ -322,14 +322,14 @@ function MapCanvas({
     const handleKeyPress = (e) => {
       // Only for DM
       if (!isDM) return;
-      
+
       // R key to toggle ruler tool
       if (e.key === 'r' || e.key === 'R') {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         e.preventDefault();
         setActiveTool(prev => prev === 'ruler' ? 'pointer' : 'ruler');
       }
-      
+
       // ESC key to clear ruler or close context menu
       if (e.key === 'Escape') {
         if (contextMenu) {
@@ -341,8 +341,8 @@ function MapCanvas({
           return;
         }
         if (activeTool === 'ruler') {
-        setRulerStart(null);
-        setRulerEnd(null);
+          setRulerStart(null);
+          setRulerEnd(null);
         }
       }
 
@@ -351,7 +351,7 @@ function MapCanvas({
         if (gMap?.id) {
           const next = !gMap.gridEnabled;
           setMapLive(m => m ? { ...m, gridEnabled: next } : m);
-          mapService.updateMap(firestore, campaignId, gMap.id, { gridEnabled: next }).catch(()=>{});
+          mapService.updateMap(firestore, campaignId, gMap.id, { gridEnabled: next }).catch(() => { });
         }
       }
       // Global snap S
@@ -365,10 +365,10 @@ function MapCanvas({
       // Undo/Redo - Disabled (future enhancement)
       // TODO: Re-enable when undo/redo stack is implemented
     };
-    
+
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDM, activeTool, contextMenu, mapContextMenu, gMap, firestore, campaignId]);
 
   // Reset position and scale when map changes
@@ -377,7 +377,7 @@ function MapCanvas({
       setStagePos({ x: 0, y: 0 });
       setStageScale(1);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gMap?.id]);
 
   // Subscribe to pings
@@ -396,7 +396,7 @@ function MapCanvas({
     if (!firestore || !campaignId || !map?.id) return;
 
     console.log('Setting up fog subscription for map:', map.id);
-    
+
     const unsubscribe = fogOfWarService.subscribeFogOfWar(firestore, campaignId, map.id, (data) => {
       setFogData(data);
     });
@@ -443,22 +443,22 @@ function MapCanvas({
       frameId = requestAnimationFrame(animate);
     };
     frameId = requestAnimationFrame(animate);
-    
+
     return () => cancelAnimationFrame(frameId);
   }, [shapes]);
 
   // Auto-cleanup fully faded shapes
   useEffect(() => {
     if (!firestore || !campaignId || !map?.id || !isDM) return;
-    
+
     const fadeStart = 3000;
     const fadeDuration = 2000;
     const now = Date.now();
-    
+
     shapes.filter(s => !s.persistent).forEach(shape => {
       const createdAt = shape.createdAt?.toDate ? shape.createdAt.toDate() : new Date();
       const age = now - createdAt.getTime();
-      
+
       // Delete if fully faded
       if (age > fadeStart + fadeDuration) {
         shapeService.deleteShape(firestore, campaignId, map.id, shape.id)
@@ -469,7 +469,7 @@ function MapCanvas({
 
   // Reveal fog around all player tokens when tokens or fog data changes
   useEffect(() => {
-  if (!firestore || !campaignId || !gMap?.id || !fogOfWarEnabled || !fogData?.enabled || !playerTokens.length) return;
+    if (!firestore || !campaignId || !gMap?.id || !fogOfWarEnabled || !fogData?.enabled || !playerTokens.length) return;
 
     const revealAroundPlayerTokens = async () => {
       try {
@@ -477,7 +477,7 @@ function MapCanvas({
         for (const token of playerTokens) {
           const gridX = Math.floor(token.position.x / map.gridSize);
           const gridY = Math.floor(token.position.y / map.gridSize);
-          
+
           // Check if player has a light source (torch/lantern) nearby
           const hasNearbyLight = lights.some(light => {
             if (!light.position) return false;
@@ -486,7 +486,7 @@ function MapCanvas({
             const distance = Math.sqrt(dx * dx + dy * dy);
             return distance < 30; // Within 30 pixels = carrying the light
           });
-          
+
           // Base reveal radius is 3, increase to 5 if carrying a light (torch)
           const revealRadius = hasNearbyLight ? 5 : 3;
           await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, revealRadius);
@@ -497,7 +497,7 @@ function MapCanvas({
     };
 
     revealAroundPlayerTokens();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, playerTokens.length, lights.length, map.gridSize, map.id]);
 
   // Reveal fog around light sources when lights or fog data changes
@@ -521,13 +521,13 @@ function MapCanvas({
     };
 
     revealAroundLights();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, lights.length, map.gridSize, map.id]);
 
   // Force re-render for fade animations (drawings)
   useEffect(() => {
     if (drawings.length === 0) return;
-    
+
     const interval = setInterval(() => {
       // Force re-render to update opacity calculations
       setDrawings(prev => [...prev]);
@@ -536,11 +536,11 @@ function MapCanvas({
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawings.length]);
-  
+
   // Force re-render for ping animations
   useEffect(() => {
     if (pings.length === 0) return;
-    
+
     const interval = setInterval(() => {
       // Force re-render to update ping opacity/color calculations
       setPings(prev => [...prev]);
@@ -625,11 +625,11 @@ function MapCanvas({
     if (e.target === e.target.getStage()) {
       const stage = stageRef.current;
       const pointer = stage.getPointerPosition();
-      
+
       // Convert screen coordinates to map coordinates
       const mapX = (pointer.x - stage.x()) / stage.scaleX();
       const mapY = (pointer.y - stage.y()) / stage.scaleY();
-      
+
       // Alt/Option + Click = Create Ping (regardless of active tool)
       if (e.evt.altKey) {
         try {
@@ -645,8 +645,8 @@ function MapCanvas({
         }
         return; // Don't handle other tools if Alt was pressed
       }
-      
-  // Handle based on active tool
+
+      // Handle based on active tool
       if (activeTool === 'arrow') {
         if (!arrowStart && e.evt.button !== 2) {
           setArrowStart(maybeSnapPoint({ x: mapX, y: mapY }));
@@ -659,18 +659,18 @@ function MapCanvas({
             console.error('Error creating arrow:', err);
           }
         }
-  } else if (activeTool === 'ruler') {
+      } else if (activeTool === 'ruler') {
         // Only process left-clicks for ruler tool
         if (e.evt.button === 2) {
           return; // Ignore right-clicks
         }
-        
+
         const gridSize = map?.gridSize || 50;
         let startX = mapX;
         let startY = mapY;
         let endX = mapX;
         let endY = mapY;
-        
+
         // Snap to grid if enabled
         if (snapToGrid) {
           startX = Math.round(mapX / gridSize) * gridSize;
@@ -678,7 +678,7 @@ function MapCanvas({
           endX = Math.round(mapX / gridSize) * gridSize;
           endY = Math.round(mapY / gridSize) * gridSize;
         }
-        
+
         if (!rulerStart) {
           // Set ruler start point
           setRulerStart({ x: startX, y: startY });
@@ -718,7 +718,7 @@ function MapCanvas({
           console.error('Error placing light:', error);
         });
         return;
-      } else if (['circle','rectangle','cone','line'].includes(activeTool)) {
+      } else if (['circle', 'rectangle', 'cone', 'line'].includes(activeTool)) {
         if (!shapeStart && e.evt.button !== 2) {
           setShapeStart(smartSnapPoint({ x: mapX, y: mapY }));
         } else if (shapeStart && e.evt.button !== 2) {
@@ -727,22 +727,22 @@ function MapCanvas({
             if (activeTool === 'circle') {
               const dx = end.x - shapeStart.x;
               const dy = end.y - shapeStart.y;
-              const radius = Math.sqrt(dx*dx + dy*dy);
-                await shapeService.createCircle(firestore, campaignId, map.id, shapeStart, radius, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
-                // TODO: Undo/redo for shape creation (future enhancement)
+              const radius = Math.sqrt(dx * dx + dy * dy);
+              await shapeService.createCircle(firestore, campaignId, map.id, shapeStart, radius, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+              // TODO: Undo/redo for shape creation (future enhancement)
             } else if (activeTool === 'rectangle') {
-                await shapeService.createRectangle(firestore, campaignId, map.id, shapeStart, end.x - shapeStart.x, end.y - shapeStart.y, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
-                // TODO: Undo/redo for shape creation (future enhancement)
+              await shapeService.createRectangle(firestore, campaignId, map.id, shapeStart, end.x - shapeStart.x, end.y - shapeStart.y, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+              // TODO: Undo/redo for shape creation (future enhancement)
             } else if (activeTool === 'cone') {
               const dx = end.x - shapeStart.x;
               const dy = end.y - shapeStart.y;
-              const length = Math.sqrt(dx*dx + dy*dy);
+              const length = Math.sqrt(dx * dx + dy * dy);
               const direction = (Math.atan2(dy, dx) * 180) / Math.PI;
-                await shapeService.createCone(firestore, campaignId, map.id, shapeStart, direction, length, 60, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
-                // TODO: Undo/redo for shape creation (future enhancement)
+              await shapeService.createCone(firestore, campaignId, map.id, shapeStart, direction, length, 60, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+              // TODO: Undo/redo for shape creation (future enhancement)
             } else if (activeTool === 'line') {
-                await shapeService.createLine(firestore, campaignId, map.id, shapeStart, end, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
-                // TODO: Undo/redo for shape creation (future enhancement)
+              await shapeService.createLine(firestore, campaignId, map.id, shapeStart, end, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+              // TODO: Undo/redo for shape creation (future enhancement)
             }
           } catch (err) {
             console.error('Error creating shape:', err);
@@ -753,12 +753,12 @@ function MapCanvas({
         }
         return; // Prevent token deselect
       }
-      
+
       // Deselect token
       if (onTokenSelect) {
         onTokenSelect(null);
       }
-      
+
       // Trigger map click handler
       if (onMapClick) {
         onMapClick({ x: mapX, y: mapY });
@@ -776,7 +776,7 @@ function MapCanvas({
       const pointer = stage.getPointerPosition();
       const mapX = (pointer.x - stage.x()) / stage.scaleX();
       const mapY = (pointer.y - stage.y()) / stage.scaleY();
-      
+
       setIsDrawing(true);
       setCurrentDrawing([mapX, mapY]);
     }
@@ -787,50 +787,50 @@ function MapCanvas({
     const pointer = stage.getPointerPosition();
     const mapX = (pointer.x - stage.x()) / stage.scaleX();
     const mapY = (pointer.y - stage.y()) / stage.scaleY();
-    
+
     if (activeTool === 'placeLight' && placingLight) {
       // Update light preview position
       const previewPos = maybeSnapPoint({ x: mapX, y: mapY });
       setLightPreviewPos(previewPos);
     } else if (activeTool === 'pen' && isDrawing) {
       setCurrentDrawing(prev => [...prev, mapX, mapY]);
-  } else if (activeTool === 'ruler' && rulerStart) {
+    } else if (activeTool === 'ruler' && rulerStart) {
       // Update ruler end point while dragging
       const gridSize = map?.gridSize || 50;
       let endX = mapX;
       let endY = mapY;
-      
+
       // Snap to grid if enabled
       if (snapToGrid) {
         endX = Math.round(mapX / gridSize) * gridSize;
         endY = Math.round(mapY / gridSize) * gridSize;
       }
-      
+
       setRulerEnd({ x: endX, y: endY });
-    } else if (['circle','rectangle','cone','line'].includes(activeTool) && shapeStart) {
+    } else if (['circle', 'rectangle', 'cone', 'line'].includes(activeTool) && shapeStart) {
       const end = smartSnapPoint({ x: mapX, y: mapY });
       let preview = null;
-      
+
       if (activeTool === 'circle') {
         const dx = end.x - shapeStart.x;
         const dy = end.y - shapeStart.y;
-        const radius = Math.sqrt(dx*dx + dy*dy);
+        const radius = Math.sqrt(dx * dx + dy * dy);
         preview = { type: 'circle', geometry: { x: shapeStart.x, y: shapeStart.y, radius }, color: shapeColor, opacity: shapeOpacity * 0.5 };
       } else if (activeTool === 'rectangle') {
         preview = { type: 'rectangle', geometry: { x: shapeStart.x, y: shapeStart.y, width: end.x - shapeStart.x, height: end.y - shapeStart.y }, color: shapeColor, opacity: shapeOpacity * 0.5 };
       } else if (activeTool === 'cone') {
         const dx = end.x - shapeStart.x;
         const dy = end.y - shapeStart.y;
-        const length = Math.sqrt(dx*dx + dy*dy);
+        const length = Math.sqrt(dx * dx + dy * dy);
         const direction = (Math.atan2(dy, dx) * 180) / Math.PI;
         preview = { type: 'cone', geometry: { x: shapeStart.x, y: shapeStart.y, direction, length, angle: 60 }, color: shapeColor, opacity: shapeOpacity * 0.5 };
       } else if (activeTool === 'line') {
         preview = { type: 'line', geometry: { x1: shapeStart.x, y1: shapeStart.y, x2: end.x, y2: end.y }, color: shapeColor, opacity: shapeOpacity * 0.5 };
       }
-      
+
       if (preview) {
         setShapePreview(preview);
-        
+
         // Broadcast preview to other users
         if (user?.uid && user?.displayName && firestore && campaignId && gMap?.id) {
           shapePreviewService.updateShapePreview(
@@ -902,7 +902,7 @@ function MapCanvas({
       }
       return; // Click-through when using tools
     }
-    
+
     if (e && e.cancelBubble !== undefined) {
       e.cancelBubble = true; // Prevent stage click
     }
@@ -929,28 +929,28 @@ function MapCanvas({
   // Handle drag-and-drop of tokens from Token Manager onto canvas
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = 'copy';
   }, []);
 
   const handleDrop = useCallback(async (e) => {
     e.preventDefault();
     if (!isDM) return; // Only DM can create tokens this way
-    
+
     try {
       const data = JSON.parse(e.dataTransfer.getData('application/json'));
-      
+
       // Check if this is a token type being dragged (not a staged token)
       if (data.fromTokenType) {
         // Get drop position relative to canvas
         const rect = e.currentTarget.getBoundingClientRect();
         const x = (e.clientX - rect.left - stagePos.x) / stageScale;
         const y = (e.clientY - rect.top - stagePos.y) / stageScale;
-        
+
         // Auto-increment token name if multiple of same type exist
         const existingTokens = tokens.filter(t => t.type === data.type);
         const number = existingTokens.length + 1;
         const tokenName = number > 1 ? `${data.name} ${number}` : data.name;
-        
+
         // Create token at drop position
         const pixelSize = data.size * 50;
         await tokenService.createToken(firestore, campaignId, map.id, {
@@ -966,12 +966,24 @@ function MapCanvas({
           createdBy: user.uid,
           createdAt: new Date()
         });
-        
+
         console.log(`[MapCanvas] Created ${data.type} token: ${tokenName} at (${Math.round(x)}, ${Math.round(y)})`);
-      } else if (data.fromStaging) {
-        // Handle staged token drop (existing functionality via Konva drag)
-        // This is handled by TokenSprite's drag-end event
-        console.log('[MapCanvas] Staged token drop - handled by TokenSprite');
+      } else if (data.id || data.tokenId) {
+        // Handle staged token being dragged onto map
+        const tokenId = data.id || data.tokenId;
+        
+        // Get drop position relative to canvas
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = (e.clientX - rect.left - stagePos.x) / stageScale;
+        const y = (e.clientY - rect.top - stagePos.y) / stageScale;
+
+        // Update token position and unstage it
+        await tokenService.updateToken(firestore, campaignId, map.id, tokenId, {
+          position: { x, y },
+          staged: false
+        });
+
+        console.log(`[MapCanvas] Placed staged token ${data.name} at (${Math.round(x)}, ${Math.round(y)})`);
       }
     } catch (err) {
       console.error('[MapCanvas] Failed to handle token drop:', err);
@@ -987,29 +999,29 @@ function MapCanvas({
   }
 
   return (
-    <div 
+    <div
       className="map-canvas-container"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
       {/* Map Toolbar */}
-      <MapToolbar 
-        activeTool={activeTool} 
+      <MapToolbar
+        activeTool={activeTool}
         onToolChange={setActiveTool}
         isDM={isDM}
         pingColor={pingColor}
         penColor={penColor}
         onPingColorChange={setPingColor}
         onPenColorChange={setPenColor}
-  snapToGrid={snapToGrid}
+        snapToGrid={snapToGrid}
         rulerPersistent={rulerPersistent}
-  onRulerSnapToggle={() => setSnapToGrid(prev => !prev)}
+        onRulerSnapToggle={() => setSnapToGrid(prev => !prev)}
         onRulerPersistentToggle={() => setRulerPersistent(prev => !prev)}
         onClearPinnedRulers={() => setPinnedRulers([])}
         pinnedRulersCount={pinnedRulers.length}
-  tokenSnap={tokenSnap}
-  onTokenSnapToggle={() => setTokenSnap(prev => !prev)}
-  onOpenGridConfig={() => setShowGridConfig(true)}
+        tokenSnap={tokenSnap}
+        onTokenSnapToggle={() => setTokenSnap(prev => !prev)}
+        onOpenGridConfig={() => setShowGridConfig(true)}
         shapeColor={shapeColor}
         shapeOpacity={shapeOpacity}
         shapePersistent={shapePersistent}
@@ -1037,7 +1049,7 @@ function MapCanvas({
           } catch (err) { console.error('Error clearing all shapes:', err); }
         }}
       />
-      
+
       {/* Canvas Control Buttons Container */}
       {isDM && (
         <div className="canvas-controls-top" style={{
@@ -1051,198 +1063,198 @@ function MapCanvas({
         }}>
           <button
             className="canvas-control-btn"
-            style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
-            onClick={() => setShowLayerManager(v=>!v)}
+            style={{ background: '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12 }}
+            onClick={() => setShowLayerManager(v => !v)}
             title="Toggle Layer Manager"
           >Layers</button>
-          
+
           <button
             className="canvas-control-btn"
-            style={{ background: showMapLibrary ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+            style={{ background: showMapLibrary ? '#667eea' : '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
             onClick={onToggleMapLibrary}
             title="Map Library"
           >
             <FiMap size={14} /> Library
           </button>
-          
+
           {onShowMaps && (
             <button
               className="canvas-control-btn"
-              style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
+              style={{ background: '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12 }}
               onClick={onShowMaps}
               title="Map Queue"
             >
               <FiMap size={14} style={{ marginRight: '4px' }} /> Maps
             </button>
           )}
-          
+
           {onShowEncounters && (
             <button
               className="canvas-control-btn"
-              style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12 }}
+              style={{ background: '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12 }}
               onClick={onShowEncounters}
               title="Encounter Builder"
             >
               <FiSettings size={14} style={{ marginRight: '4px' }} /> Encounters
             </button>
           )}
-          
+
           <button
             className="canvas-control-btn"
-            style={{ background: localPlayerViewMode ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
-            onClick={() => setLocalPlayerViewMode(v=>!v)}
+            style={{ background: localPlayerViewMode ? '#667eea' : '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
+            onClick={() => setLocalPlayerViewMode(v => !v)}
             title={localPlayerViewMode ? 'Exit Player View (Return to DM View)' : 'Preview Player View (Hide hidden tokens)'}
           >
             👁️ {localPlayerViewMode ? 'DM View' : 'Player View'}
           </button>
-          
+
           {onOpenFogPanel && (
             <button
               className="canvas-control-btn"
-              style={{ background: showFogPanel ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+              style={{ background: showFogPanel ? '#667eea' : '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
               onClick={onOpenFogPanel}
               title="Fog of War Controls"
             >
               🌫️ Fog
             </button>
           )}
-          
+
           {onToggleTokenManager && (
             <button
               className="canvas-control-btn"
-              style={{ background: showTokenManager ? '#667eea' : '#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
+              style={{ background: showTokenManager ? '#667eea' : '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
               onClick={onToggleTokenManager}
               title="Token Manager"
             >
               🎭 Tokens
             </button>
           )}
-          
+
           <button
             className="canvas-control-btn"
-            style={{ background:'#2d2d35', color:'#ddd', border:'1px solid #444', borderRadius:6, padding:'6px 10px', cursor:'pointer', fontSize:12, display:'flex', alignItems:'center', gap:'4px' }}
-            onClick={() => setShowFXLibrary(v=>!v)}
+            style={{ background: '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
+            onClick={() => setShowFXLibrary(v => !v)}
             title="FX Library - Lighting, Weather, Ambience"
           >
             ✨ FX Library
-            <span style={{ fontSize:10, marginLeft:2 }}>{showFXLibrary ? '▲' : '▼'}</span>
+            <span style={{ fontSize: 10, marginLeft: 2 }}>{showFXLibrary ? '▲' : '▼'}</span>
           </button>
         </div>
       )}
       {isDM && showFXLibrary && (
-        <div style={{ position:'absolute', top:60, left:220, zIndex:999998 }} data-fx-library>
-            <div style={{
-              position:'absolute',
-              top:0,
-              left:0,
-              background:'#2d2d35',
-              border:'1px solid #444',
-              borderRadius:6,
-              boxShadow:'0 4px 12px rgba(0,0,0,0.3)',
-              minWidth:180,
-              overflow:'hidden',
-              zIndex:140
-            }}>
-              <button
-                style={{
-                  width:'100%',
-                  background: showLightingPanel ? '#3a3a45' : 'transparent',
-                  color:'#ddd',
-                  border:'none',
-                  padding:'10px 12px',
-                  cursor:'pointer',
-                  fontSize:12,
-                  textAlign:'left',
-                  display:'flex',
-                  alignItems:'center',
-                  gap:'8px',
-                  transition:'background 0.2s'
-                }}
-                onClick={() => {
-                  setShowLightingPanel(v=>!v);
-                  // Keep dropdown open for multiple selections
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#3a3a45'}
-                onMouseLeave={(e) => e.currentTarget.style.background = showLightingPanel ? '#3a3a45' : 'transparent'}
-                title="Dynamic Lighting System"
-              >
-                <span style={{ fontSize:14 }}>💡</span>
-                <span>Lighting</span>
-                {showLightingPanel && <span style={{ marginLeft:'auto', fontSize:10 }}>●</span>}
-              </button>
-              <button
-                style={{
-                  width:'100%',
-                  background: showAudio ? '#3a3a45' : 'transparent',
-                  color:'#ddd',
-                  border:'none',
-                  padding:'10px 12px',
-                  cursor:'pointer',
-                  fontSize:12,
-                  textAlign:'left',
-                  display:'flex',
-                  alignItems:'center',
-                  gap:'8px',
-                  transition:'background 0.2s'
-                }}
-                onClick={() => {
-                  setShowAudio(v=>!v);
-                  // Keep dropdown open for multiple selections
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#3a3a45'}
-                onMouseLeave={(e) => e.currentTarget.style.background = showAudio ? '#3a3a45' : 'transparent'}
-                title="Ambient Audio & Music"
-              >
-                <span style={{ fontSize:14 }}>🎵</span>
-                <span>Audio</span>
-                {showAudio && <span style={{ marginLeft:'auto', fontSize:10 }}>●</span>}
-              </button>
-              <button
-                style={{
-                  width:'100%',
-                  background:'transparent',
-                  color:'#888',
-                  border:'none',
-                  padding:'10px 12px',
-                  cursor:'not-allowed',
-                  fontSize:12,
-                  textAlign:'left',
-                  display:'flex',
-                  alignItems:'center',
-                  gap:'8px'
-                }}
-                disabled
-                title="Weather Effects - Coming Soon"
-              >
-                <span style={{ fontSize:14 }}>🌧️</span>
-                <span>Weather</span>
-                <span style={{ marginLeft:'auto', fontSize:9, opacity:0.6 }}>Soon</span>
-              </button>
-              <button
-                style={{
-                  width:'100%',
-                  background:'transparent',
-                  color:'#888',
-                  border:'none',
-                  padding:'10px 12px',
-                  cursor:'not-allowed',
-                  fontSize:12,
-                  textAlign:'left',
-                  display:'flex',
-                  alignItems:'center',
-                  gap:'8px'
-                }}
-                disabled
-                title="Ambience Effects - Coming Soon"
-              >
-                <span style={{ fontSize:14 }}>✨</span>
-                <span>Ambience</span>
-                <span style={{ marginLeft:'auto', fontSize:9, opacity:0.6 }}>Soon</span>
-              </button>
-            </div>
+        <div style={{ position: 'absolute', top: 60, left: 220, zIndex: 999998 }} data-fx-library>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            background: '#2d2d35',
+            border: '1px solid #444',
+            borderRadius: 6,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            minWidth: 180,
+            overflow: 'hidden',
+            zIndex: 140
+          }}>
+            <button
+              style={{
+                width: '100%',
+                background: showLightingPanel ? '#3a3a45' : 'transparent',
+                color: '#ddd',
+                border: 'none',
+                padding: '10px 12px',
+                cursor: 'pointer',
+                fontSize: 12,
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.2s'
+              }}
+              onClick={() => {
+                setShowLightingPanel(v => !v);
+                // Keep dropdown open for multiple selections
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#3a3a45'}
+              onMouseLeave={(e) => e.currentTarget.style.background = showLightingPanel ? '#3a3a45' : 'transparent'}
+              title="Dynamic Lighting System"
+            >
+              <span style={{ fontSize: 14 }}>💡</span>
+              <span>Lighting</span>
+              {showLightingPanel && <span style={{ marginLeft: 'auto', fontSize: 10 }}>●</span>}
+            </button>
+            <button
+              style={{
+                width: '100%',
+                background: showAudio ? '#3a3a45' : 'transparent',
+                color: '#ddd',
+                border: 'none',
+                padding: '10px 12px',
+                cursor: 'pointer',
+                fontSize: 12,
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.2s'
+              }}
+              onClick={() => {
+                setShowAudio(v => !v);
+                // Keep dropdown open for multiple selections
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#3a3a45'}
+              onMouseLeave={(e) => e.currentTarget.style.background = showAudio ? '#3a3a45' : 'transparent'}
+              title="Ambient Audio & Music"
+            >
+              <span style={{ fontSize: 14 }}>🎵</span>
+              <span>Audio</span>
+              {showAudio && <span style={{ marginLeft: 'auto', fontSize: 10 }}>●</span>}
+            </button>
+            <button
+              style={{
+                width: '100%',
+                background: 'transparent',
+                color: '#888',
+                border: 'none',
+                padding: '10px 12px',
+                cursor: 'not-allowed',
+                fontSize: 12,
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              disabled
+              title="Weather Effects - Coming Soon"
+            >
+              <span style={{ fontSize: 14 }}>🌧️</span>
+              <span>Weather</span>
+              <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.6 }}>Soon</span>
+            </button>
+            <button
+              style={{
+                width: '100%',
+                background: 'transparent',
+                color: '#888',
+                border: 'none',
+                padding: '10px 12px',
+                cursor: 'not-allowed',
+                fontSize: 12,
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              disabled
+              title="Ambience Effects - Coming Soon"
+            >
+              <span style={{ fontSize: 14 }}>✨</span>
+              <span>Ambience</span>
+              <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.6 }}>Soon</span>
+            </button>
+          </div>
         </div>
       )}
-      
+
       <Stage
         ref={stageRef}
         width={width}
@@ -1263,21 +1275,21 @@ function MapCanvas({
           // Only show map context menu if right-clicking on empty space (not on a token)
           const target = e.target;
           // Check if we clicked on the stage itself or background layer elements (not tokens/lights)
-          if (target.constructor.name === 'Stage' || target.nodeType === 'Stage' || 
-              target.className === 'Image' || (target.className === 'Rect' && target.attrs.id !== 'token')) {
+          if (target.constructor.name === 'Stage' || target.nodeType === 'Stage' ||
+            target.className === 'Image' || (target.className === 'Rect' && target.attrs.id !== 'token')) {
             e.evt.preventDefault();
             const rect = e.currentTarget.container().getBoundingClientRect();
-            setMapContextMenu({ 
-              x: e.evt.clientX - rect.left, 
-              y: e.evt.clientY - rect.top 
+            setMapContextMenu({
+              x: e.evt.clientX - rect.left,
+              y: e.evt.clientY - rect.top
             });
           }
         }}
         draggable={activeTool !== 'pen'}
-        style={{ 
-          cursor: activeTool === 'pen' ? 'crosshair' : 
-                  activeTool === 'arrow' ? (arrowStart ? 'crosshair' : 'pointer') :
-                  isDragging ? 'grabbing' : 'grab' 
+        style={{
+          cursor: activeTool === 'pen' ? 'crosshair' :
+            activeTool === 'arrow' ? (arrowStart ? 'crosshair' : 'pointer') :
+              isDragging ? 'grabbing' : 'grab'
         }}
       >
         {/* Background Layer - includes map image and token snap highlight */}
@@ -1290,7 +1302,7 @@ function MapCanvas({
               listening={false}
             />
           )}
-          
+
           {/* Token snap highlight (shows target footprint while dragging) */}
           {gMap.gridEnabled && tokenSnap && tokenSnapHighlight && (() => {
             // Pulse parameters
@@ -1320,8 +1332,8 @@ function MapCanvas({
           })()}
         </Layer>
 
-  {/* Grid Layer */}
-  {gMap.gridEnabled && layerVisibility.grid && (
+        {/* Grid Layer */}
+        {gMap.gridEnabled && layerVisibility.grid && (
           <GridLayer
             width={gMap.width}
             height={gMap.height}
@@ -1334,43 +1346,43 @@ function MapCanvas({
           />
         )}
 
-  {/* Fog of War Layer (below tokens for players, above lighting for DM) - Always visible to players */}
+        {/* Fog of War Layer (below tokens for players, above lighting for DM) - Always visible to players */}
         {!isDM && fogData?.enabled && (() => {
           return (
-          <Layer>
-            {fogData.visibility && fogData.visibility.map((row, y) => 
-              row.map((isVisible, x) => {
-                const cellX = x * gMap.gridSize;
-                const cellY = y * gMap.gridSize;
-                if (cellX >= gMap.width || cellY >= gMap.height) return null;
-                if (!isVisible) {
-                  return (
-                    <Rect
-                      key={`fog-${x}-${y}`}
-                      x={cellX}
-                      y={cellY}
-                      width={gMap.gridSize}
-                      height={gMap.gridSize}
-                      fill="black"
-                      opacity={0.98}
-                      stroke="#0a0a0a"
-                      strokeWidth={0.5}
-                      listening={false}
-                      shadowColor="black"
-                      shadowBlur={5}
-                      shadowOpacity={0.9}
-                    />
-                  );
-                }
-                return null;
-              })
-            )}
-          </Layer>
+            <Layer>
+              {fogData.visibility && fogData.visibility.map((row, y) =>
+                row.map((isVisible, x) => {
+                  const cellX = x * gMap.gridSize;
+                  const cellY = y * gMap.gridSize;
+                  if (cellX >= gMap.width || cellY >= gMap.height) return null;
+                  if (!isVisible) {
+                    return (
+                      <Rect
+                        key={`fog-${x}-${y}`}
+                        x={cellX}
+                        y={cellY}
+                        width={gMap.gridSize}
+                        height={gMap.gridSize}
+                        fill="black"
+                        opacity={0.98}
+                        stroke="#0a0a0a"
+                        strokeWidth={0.5}
+                        listening={false}
+                        shadowColor="black"
+                        shadowBlur={5}
+                        shadowOpacity={0.9}
+                      />
+                    );
+                  }
+                  return null;
+                })
+              )}
+            </Layer>
           );
         })()}
 
-  {/* Token Layer */}
-  {layerVisibility.tokens && <Layer>
+        {/* Token Layer */}
+        {layerVisibility.tokens && <Layer>
           {tokens && tokens.map(token => {
             // Skip staged tokens (they're in EncounterBuilder)
             if (token.staged) {
@@ -1461,7 +1473,7 @@ function MapCanvas({
                   e.cancelBubble = true;
                   const stage = e.target.getStage();
                   const pos = stage.getPointerPosition();
-                  
+
                   // Show custom context menu
                   const menu = document.createElement('div');
                   menu.style.position = 'fixed';
@@ -1480,7 +1492,7 @@ function MapCanvas({
                     </div>
                   `;
                   document.body.appendChild(menu);
-                  
+
                   // Remove menu on next click
                   const removeMenu = () => {
                     menu.remove();
@@ -1503,84 +1515,84 @@ function MapCanvas({
               />
             </React.Fragment>
           ))}
-  </Layer>}
+        </Layer>}
 
-  {/* Lighting Layer - renders dynamic lighting effects */}
-  {lights && globalLighting && (
-    <LightingLayer
-      lights={[...lights, ...playerTokenLights].filter(light => 
-        light && 
-        light.position && 
-        typeof light.position.x === 'number' && 
-        typeof light.position.y === 'number' &&
-        typeof light.radius === 'number'
-      )}
-      globalLighting={globalLighting}
-      mapWidth={gMap?.width || width}
-      mapHeight={gMap?.height || height}
-    />
-  )}
+        {/* Lighting Layer - renders dynamic lighting effects */}
+        {lights && globalLighting && (
+          <LightingLayer
+            lights={[...lights, ...playerTokenLights].filter(light =>
+              light &&
+              light.position &&
+              typeof light.position.x === 'number' &&
+              typeof light.position.y === 'number' &&
+              typeof light.radius === 'number'
+            )}
+            globalLighting={globalLighting}
+            mapWidth={gMap?.width || width}
+            mapHeight={gMap?.height || height}
+          />
+        )}
 
-  {/* Fog of War Layer for DM (above lighting to show explored areas) */}
-  {isDM && !localPlayerViewMode && fogData?.enabled && layerVisibility.fog && (() => {
-    return (
-    <Layer>
-      {fogData.visibility && fogData.visibility.map((row, y) => 
-        row.map((isVisible, x) => {
-          const cellX = x * gMap.gridSize;
-          const cellY = y * gMap.gridSize;
-          if (cellX >= gMap.width || cellY >= gMap.height) return null;
-          if (!isVisible) {
-            return (
-              <Rect
-                key={`fog-dm-${x}-${y}`}
-                x={cellX}
-                y={cellY}
-                width={gMap.gridSize}
-                height={gMap.gridSize}
-                fill="black"
-                opacity={0.35}
-                stroke="#ff6b6b"
-                strokeWidth={1.5}
-                listening={false}
-                shadowColor="#ff0000"
-                shadowBlur={2}
-                shadowOpacity={0.5}
-              />
-            );
-          }
-          return null;
-        })
-      )}
-      {/* Dimmer pattern when grid disabled: outline faint cells to help DM orient fog */}
-      {!gMap.gridEnabled && fogData.visibility && fogData.visibility.map((row, y) =>
-        row.map((isVisible, x) => {
-          if (!isVisible) return null; // only outline revealed cells lightly
-          const cellX = x * gMap.gridSize;
-          const cellY = y * gMap.gridSize;
-          if (cellX >= gMap.width || cellY >= gMap.height) return null;
+        {/* Fog of War Layer for DM (above lighting to show explored areas) */}
+        {isDM && !localPlayerViewMode && fogData?.enabled && layerVisibility.fog && (() => {
           return (
-            <Rect
-              key={`fog-dimmer-${x}-${y}`}
-              x={cellX}
-              y={cellY}
-              width={gMap.gridSize}
-              height={gMap.gridSize}
-              fill={null}
-              stroke="#ff6b6b"
-              strokeWidth={0.4}
-              opacity={0.15}
-              listening={false}
-            />
+            <Layer>
+              {fogData.visibility && fogData.visibility.map((row, y) =>
+                row.map((isVisible, x) => {
+                  const cellX = x * gMap.gridSize;
+                  const cellY = y * gMap.gridSize;
+                  if (cellX >= gMap.width || cellY >= gMap.height) return null;
+                  if (!isVisible) {
+                    return (
+                      <Rect
+                        key={`fog-dm-${x}-${y}`}
+                        x={cellX}
+                        y={cellY}
+                        width={gMap.gridSize}
+                        height={gMap.gridSize}
+                        fill="black"
+                        opacity={0.35}
+                        stroke="#ff6b6b"
+                        strokeWidth={1.5}
+                        listening={false}
+                        shadowColor="#ff0000"
+                        shadowBlur={2}
+                        shadowOpacity={0.5}
+                      />
+                    );
+                  }
+                  return null;
+                })
+              )}
+              {/* Dimmer pattern when grid disabled: outline faint cells to help DM orient fog */}
+              {!gMap.gridEnabled && fogData.visibility && fogData.visibility.map((row, y) =>
+                row.map((isVisible, x) => {
+                  if (!isVisible) return null; // only outline revealed cells lightly
+                  const cellX = x * gMap.gridSize;
+                  const cellY = y * gMap.gridSize;
+                  if (cellX >= gMap.width || cellY >= gMap.height) return null;
+                  return (
+                    <Rect
+                      key={`fog-dimmer-${x}-${y}`}
+                      x={cellX}
+                      y={cellY}
+                      width={gMap.gridSize}
+                      height={gMap.gridSize}
+                      fill={null}
+                      stroke="#ff6b6b"
+                      strokeWidth={0.4}
+                      opacity={0.15}
+                      listening={false}
+                    />
+                  );
+                })
+              )}
+            </Layer>
           );
-        })
-      )}
-    </Layer>
-    );
-  })()}
+        })()}
 
-  {/* Drawing & Effects Layer - Shapes, Drawings, Rulers, Pings */}
-  {(layerVisibility.shapes || layerVisibility.pings) && <Layer>
+        {/* Drawing & Effects Layer - Shapes, Drawings, Rulers, Pings */}
+        {(layerVisibility.shapes || layerVisibility.pings) && <Layer>
           {/* Shapes (persisted) with fade-out for non-persistent */}
           {visibleShapes.map(shape => {
             // Calculate fade-out for non-persistent shapes
@@ -1595,7 +1607,7 @@ function MapCanvas({
                 effectiveOpacity = shape.opacity * (1 - fadeProgress);
               }
             }
-            
+
             if (shape.type === 'circle') {
               return <Circle key={shape.id} x={shape.geometry.x} y={shape.geometry.y} radius={shape.geometry.radius} fill={shape.color} opacity={effectiveOpacity} listening={false} />;
             }
@@ -1607,14 +1619,14 @@ function MapCanvas({
             }
             if (shape.type === 'cone') {
               const { x, y, direction, length, angle } = shape.geometry;
-              const half = (angle || 60)/2;
-              const startAngle = (direction - half) * (Math.PI/180);
-              const endAngle = (direction + half) * (Math.PI/180);
+              const half = (angle || 60) / 2;
+              const startAngle = (direction - half) * (Math.PI / 180);
+              const endAngle = (direction + half) * (Math.PI / 180);
               const x2 = x + Math.cos(startAngle) * length;
               const y2 = y + Math.sin(startAngle) * length;
               const x3 = x + Math.cos(endAngle) * length;
               const y3 = y + Math.sin(endAngle) * length;
-              return <Line key={shape.id} points={[x,y,x2,y2,x3,y3]} fill={shape.color} closed opacity={effectiveOpacity} listening={false} />;
+              return <Line key={shape.id} points={[x, y, x2, y2, x3, y3]} fill={shape.color} closed opacity={effectiveOpacity} listening={false} />;
             }
             return null;
           })}
@@ -1623,26 +1635,26 @@ function MapCanvas({
           {shapePreview && (() => {
             const preview = shapePreview;
             if (preview.type === 'circle') {
-              return <Circle x={preview.geometry.x} y={preview.geometry.y} radius={preview.geometry.radius} stroke={shapeColor} strokeWidth={2} dash={[6,4]} opacity={0.8} listening={false} />;
+              return <Circle x={preview.geometry.x} y={preview.geometry.y} radius={preview.geometry.radius} stroke={shapeColor} strokeWidth={2} dash={[6, 4]} opacity={0.8} listening={false} />;
             }
             if (preview.type === 'rectangle') {
-              const { x,y,width,height } = preview.geometry;
-              return <Rect x={x} y={y} width={width} height={height} stroke={shapeColor} strokeWidth={2} dash={[6,4]} opacity={0.8} listening={false} />;
+              const { x, y, width, height } = preview.geometry;
+              return <Rect x={x} y={y} width={width} height={height} stroke={shapeColor} strokeWidth={2} dash={[6, 4]} opacity={0.8} listening={false} />;
             }
             if (preview.type === 'line') {
-              const { x1,y1,x2,y2 } = preview.geometry;
-              return <Line points={[x1,y1,x2,y2]} stroke={shapeColor} strokeWidth={3} dash={[6,4]} opacity={0.8} listening={false} />;
+              const { x1, y1, x2, y2 } = preview.geometry;
+              return <Line points={[x1, y1, x2, y2]} stroke={shapeColor} strokeWidth={3} dash={[6, 4]} opacity={0.8} listening={false} />;
             }
             if (preview.type === 'cone') {
-              const { x,y,direction,length,angle } = preview.geometry;
-              const half = (angle || 60)/2;
-              const startAngle = (direction - half) * (Math.PI/180);
-              const endAngle = (direction + half) * (Math.PI/180);
+              const { x, y, direction, length, angle } = preview.geometry;
+              const half = (angle || 60) / 2;
+              const startAngle = (direction - half) * (Math.PI / 180);
+              const endAngle = (direction + half) * (Math.PI / 180);
               const x2 = x + Math.cos(startAngle) * length;
               const y2 = y + Math.sin(startAngle) * length;
               const x3 = x + Math.cos(endAngle) * length;
               const y3 = y + Math.sin(endAngle) * length;
-              return <Line points={[x,y,x2,y2,x3,y3]} stroke={shapeColor} strokeWidth={2} dash={[6,4]} opacity={0.8} closed listening={false} />;
+              return <Line points={[x, y, x2, y2, x3, y3]} stroke={shapeColor} strokeWidth={2} dash={[6, 4]} opacity={0.8} closed listening={false} />;
             }
             return null;
           })()}
@@ -1650,26 +1662,26 @@ function MapCanvas({
           {/* Other users' shape previews */}
           {otherUsersPreviews.map(preview => {
             if (preview.shapeType === 'circle') {
-              return <Circle key={preview.userId} x={preview.geometry.x} y={preview.geometry.y} radius={preview.geometry.radius} stroke={preview.color} strokeWidth={2} dash={[6,4]} opacity={preview.opacity * 0.6} listening={false} />;
+              return <Circle key={preview.userId} x={preview.geometry.x} y={preview.geometry.y} radius={preview.geometry.radius} stroke={preview.color} strokeWidth={2} dash={[6, 4]} opacity={preview.opacity * 0.6} listening={false} />;
             }
             if (preview.shapeType === 'rectangle') {
-              const { x,y,width,height } = preview.geometry;
-              return <Rect key={preview.userId} x={x} y={y} width={width} height={height} stroke={preview.color} strokeWidth={2} dash={[6,4]} opacity={preview.opacity * 0.6} listening={false} />;
+              const { x, y, width, height } = preview.geometry;
+              return <Rect key={preview.userId} x={x} y={y} width={width} height={height} stroke={preview.color} strokeWidth={2} dash={[6, 4]} opacity={preview.opacity * 0.6} listening={false} />;
             }
             if (preview.shapeType === 'line') {
-              const { x1,y1,x2,y2 } = preview.geometry;
-              return <Line key={preview.userId} points={[x1,y1,x2,y2]} stroke={preview.color} strokeWidth={3} dash={[6,4]} opacity={preview.opacity * 0.6} listening={false} />;
+              const { x1, y1, x2, y2 } = preview.geometry;
+              return <Line key={preview.userId} points={[x1, y1, x2, y2]} stroke={preview.color} strokeWidth={3} dash={[6, 4]} opacity={preview.opacity * 0.6} listening={false} />;
             }
             if (preview.shapeType === 'cone') {
-              const { x,y,direction,length,angle } = preview.geometry;
-              const half = (angle || 60)/2;
-              const startAngle = (direction - half) * (Math.PI/180);
-              const endAngle = (direction + half) * (Math.PI/180);
+              const { x, y, direction, length, angle } = preview.geometry;
+              const half = (angle || 60) / 2;
+              const startAngle = (direction - half) * (Math.PI / 180);
+              const endAngle = (direction + half) * (Math.PI / 180);
               const x2 = x + Math.cos(startAngle) * length;
               const y2 = y + Math.sin(startAngle) * length;
               const x3 = x + Math.cos(endAngle) * length;
               const y3 = y + Math.sin(endAngle) * length;
-              return <Line key={preview.userId} points={[x,y,x2,y2,x3,y3]} stroke={preview.color} strokeWidth={2} dash={[6,4]} opacity={preview.opacity * 0.6} closed listening={false} />;
+              return <Line key={preview.userId} points={[x, y, x2, y2, x3, y3]} stroke={preview.color} strokeWidth={2} dash={[6, 4]} opacity={preview.opacity * 0.6} closed listening={false} />;
             }
             return null;
           })}
@@ -1700,7 +1712,7 @@ function MapCanvas({
               />
             );
           })}
-          
+
           {/* Arrows with slow fade */}
           {drawings.filter(d => d.type === 'arrow').map(drawing => {
             // Calculate opacity based on age (fade from 0.9 to 0 over last 1 second)
@@ -1730,7 +1742,7 @@ function MapCanvas({
               />
             );
           })}
-          
+
           {/* Current drawing in progress */}
           {isDrawing && currentDrawing.length > 0 && (
             <Line
@@ -1744,7 +1756,7 @@ function MapCanvas({
               listening={false}
             />
           )}
-          
+
           {/* Pinned Rulers */}
           {pinnedRulers.map((ruler) => {
             const dx = ruler.end.x - ruler.start.x;
@@ -1756,7 +1768,7 @@ function MapCanvas({
             const feet = (parseFloat(gridSquares) * feetPerSquare).toFixed(0);
             const midX = (ruler.start.x + ruler.end.x) / 2;
             const midY = (ruler.start.y + ruler.end.y) / 2;
-            
+
             return (
               <Fragment key={ruler.id}>
                 <Line
@@ -1829,7 +1841,7 @@ function MapCanvas({
                 const feet = (parseFloat(gridSquares) * feetPerSquare).toFixed(0);
                 const midX = (rulerStart.x + rulerEnd.x) / 2;
                 const midY = (rulerStart.y + rulerEnd.y) / 2;
-                
+
                 return (
                   <Fragment>
                     {/* Start marker */}
@@ -1874,7 +1886,7 @@ function MapCanvas({
               })()}
             </Fragment>
           )}
-          
+
           {/* Arrow preview */}
           {arrowStart && (
             <Circle
@@ -1974,11 +1986,11 @@ function MapCanvas({
             const holdDuration = 2000; // 2s hold at full opacity
             const fadeStart = flashDuration + colorTransitionDuration + holdDuration; // Start fading at 2.5s
             const fadeDuration = 1000; // 1s fade out
-            
+
             let pingColor = ping.color || '#ffff00';
             let pingOpacity = 1;
             let shadowIntensity = 1;
-            
+
             // Phase 1: Bright white flash (0-0.2s)
             if (pingAge < flashDuration) {
               pingColor = '#ffffff';
@@ -2004,46 +2016,46 @@ function MapCanvas({
               pingOpacity = 1 - fadeProgress;
               shadowIntensity = 1 - fadeProgress;
             }
-            
+
             return (
-            <Fragment key={ping.id}>
-              {/* Vertical line up from center */}
-              <Line
-                points={[ping.x, ping.y, ping.x, ping.y - 24]}
-                stroke={pingColor}
-                strokeWidth={3}
-                opacity={pingOpacity}
-                listening={false}
-                shadowColor={pingColor}
-                shadowBlur={8 * shadowIntensity}
-                shadowOpacity={pingOpacity * 0.75}
-              />
-              {/* X shape - diagonal 1 */}
-              <Line
-                points={[ping.x - 12, ping.y - 12, ping.x + 12, ping.y + 12]}
-                stroke={pingColor}
-                strokeWidth={3}
-                opacity={pingOpacity}
-                listening={false}
-                shadowColor={pingColor}
-                shadowBlur={8 * shadowIntensity}
-                shadowOpacity={pingOpacity * 0.75}
-              />
-              {/* X shape - diagonal 2 */}
-              <Line
-                points={[ping.x - 12, ping.y + 12, ping.x + 12, ping.y - 12]}
-                stroke={pingColor}
-                strokeWidth={3}
-                opacity={pingOpacity}
-                listening={false}
-                shadowColor={pingColor}
-                shadowBlur={8 * shadowIntensity}
-                shadowOpacity={pingOpacity * 0.75}
-              />
-            </Fragment>
+              <Fragment key={ping.id}>
+                {/* Vertical line up from center */}
+                <Line
+                  points={[ping.x, ping.y, ping.x, ping.y - 24]}
+                  stroke={pingColor}
+                  strokeWidth={3}
+                  opacity={pingOpacity}
+                  listening={false}
+                  shadowColor={pingColor}
+                  shadowBlur={8 * shadowIntensity}
+                  shadowOpacity={pingOpacity * 0.75}
+                />
+                {/* X shape - diagonal 1 */}
+                <Line
+                  points={[ping.x - 12, ping.y - 12, ping.x + 12, ping.y + 12]}
+                  stroke={pingColor}
+                  strokeWidth={3}
+                  opacity={pingOpacity}
+                  listening={false}
+                  shadowColor={pingColor}
+                  shadowBlur={8 * shadowIntensity}
+                  shadowOpacity={pingOpacity * 0.75}
+                />
+                {/* X shape - diagonal 2 */}
+                <Line
+                  points={[ping.x - 12, ping.y + 12, ping.x + 12, ping.y - 12]}
+                  stroke={pingColor}
+                  strokeWidth={3}
+                  opacity={pingOpacity}
+                  listening={false}
+                  shadowColor={pingColor}
+                  shadowBlur={8 * shadowIntensity}
+                  shadowOpacity={pingOpacity * 0.75}
+                />
+              </Fragment>
             );
           })}
-  </Layer>}
+        </Layer>}
 
         {/* Additional layers */}
         {children}
@@ -2075,7 +2087,7 @@ function MapCanvas({
               // TODO: Undo/redo for grid updates (future enhancement)
             } catch (e) { console.error('Failed to update grid settings', e); }
           }}
-          //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
+        //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
         />
       )}
       {isDM && (
@@ -2107,7 +2119,7 @@ function MapCanvas({
           open={showAudio}
           onClose={() => setShowAudio(false)}
           isDM={isDM}
-          //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
+        //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
         />
       )}
       {isDM && (

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import TokenPalette from './TokenPalette';
 import TokenUploader from './TokenUploader';
 import { FirebaseContext } from '../../../services/FirebaseContext';
@@ -11,15 +11,15 @@ import './TokenManager.css';
  * Combines TokenPalette, TokenUploader, and TokenProperties
  * Manages token creation, editing, and deletion
  */
-const TokenManager = ({ 
-  campaignId, 
-  mapId, 
-  selectedToken, 
+const TokenManager = ({
+  campaignId,
+  mapId,
+  selectedToken,
   onTokenCreated,
   onTokenUpdated,
   onTokenDeleted,
   onTokenDeselect,
-  onClose 
+  onClose
 }) => {
   const { user, firestore, storage } = useContext(FirebaseContext);
   const [activeView, setActiveView] = useState('palette'); // 'palette', 'upload', 'properties', 'staging'
@@ -27,6 +27,9 @@ const TokenManager = ({
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [stagingTokens, setStagingTokens] = useState([]);
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
+  const sidebarResizeStartRef = useRef({ x: 0, width: 0 });
+  const [sidebarWidth, setSidebarWidth] = useState(420);
 
   // Auto-switch to palette tab when a token is selected to show its info
   useEffect(() => {
@@ -74,7 +77,7 @@ const TokenManager = ({
     try {
       // Convert size multiplier to pixel size structure
       // Player tokens from staging area start at 0.5 x 0.5 (tiny size = 25x25px)
-      const sizeMultiplier = tokenData.size || 1;
+      const sizeMultiplier = tokenData.size || 0.5;
       const baseSizeMultiplier = tokenData.type === 'pc' ? 0.5 : sizeMultiplier;
       const pixelSize = baseSizeMultiplier * 50;
 
@@ -89,10 +92,10 @@ const TokenManager = ({
 
       setSuccessMessage('Token created successfully!');
       setTimeout(() => setSuccessMessage(null), 3000);
-      
+
       // Switch to staging tab to see the new token
       setActiveView('staging');
-      
+
       if (onTokenCreated) {
         onTokenCreated(newToken);
       }
@@ -139,7 +142,7 @@ const TokenManager = ({
 
       setSuccessMessage('Custom token uploaded successfully!');
       setTimeout(() => setSuccessMessage(null), 3000);
-      
+
       if (onTokenCreated) {
         onTokenCreated(newToken);
       }
@@ -160,10 +163,10 @@ const TokenManager = ({
 
     try {
       await tokenService.updateToken(firestore, campaignId, mapId, tokenId, updates);
-      
+
       setSuccessMessage('Token updated successfully!');
       setTimeout(() => setSuccessMessage(null), 3000);
-      
+
       if (onTokenUpdated) {
         onTokenUpdated(tokenId, updates);
       }
@@ -183,10 +186,10 @@ const TokenManager = ({
 
     try {
       await tokenService.deleteToken(firestore, campaignId, mapId, tokenId);
-      
+
       setSuccessMessage('Token deleted successfully!');
       setTimeout(() => setSuccessMessage(null), 3000);
-      
+
       if (onTokenDeleted) {
         onTokenDeleted(tokenId);
       }
@@ -196,8 +199,49 @@ const TokenManager = ({
     }
   };
 
+  // Handle sidebar resize
+  useEffect(() => {
+    if (!isResizingSidebar) return;
+
+    const handleMouseMove = (e) => {
+      const deltaX = e.clientX - sidebarResizeStartRef.current.x;
+      // For right-side panel, dragging left (negative deltaX) should increase width
+      const newWidth = Math.max(300, Math.min(800, sidebarResizeStartRef.current.width - deltaX));
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizingSidebar(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizingSidebar]);
+
+  // Handle starting sidebar resize
+  const handleSidebarResizeStart = (e) => {
+    e.preventDefault();
+    setIsResizingSidebar(true);
+    sidebarResizeStartRef.current = {
+      x: e.clientX,
+      width: sidebarWidth
+    };
+  };
+
   return (
-    <div className="token-manager">
+    <div className="token-manager" style={{ width: sidebarWidth }}>
+      {/* Resize Handle - Left Edge */}
+      <div
+        className="token-manager-resize-handle"
+        onMouseDown={handleSidebarResizeStart}
+        title="Drag to resize panel"
+      />
+
       <div className="token-manager-header">
         <h3>🎭 Token Manager</h3>
         {onClose && (
@@ -269,35 +313,62 @@ const TokenManager = ({
               <div className="empty-staging">
                 <p>No staged tokens</p>
                 <small>Use the Palette or Upload tabs to create tokens</small>
-                <small style={{display: 'block', marginTop: '8px'}}>💡 Players with character sheets will auto-create tokens when they join</small>
+                <small style={{ display: 'block', marginTop: '8px' }}>💡 Players with character sheets will auto-create tokens when they join</small>
               </div>
             ) : (
               <div className="staged-token-list">
                 {stagingTokens.map((token) => (
-                  <div 
-                    key={token.id} 
+                  <div
+                    key={token.id}
                     className="staged-token-item"
                     draggable={true}
                     onDragStart={(e) => {
                       // Set token data for drag operation
-                      e.dataTransfer.setData('application/json', JSON.stringify({
-                        tokenId: token.id,
-                        fromStaging: true,
-                        tokenData: token
-                      }));
-                      e.dataTransfer.effectAllowed = 'move';
-                      console.log('Started dragging staged token:', token.name);
+                      // Create HTML drag image (colored circle matching token)
+                      const dragImage = document.createElement('div');
+                      dragImage.style.width = '30px';
+                      dragImage.style.height = '30px';
+                      dragImage.style.borderRadius = '50%';
+                      dragImage.style.backgroundColor = token.color || '#4a90e2';
+                      dragImage.style.border = '3px solid white';
+                      dragImage.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+                      dragImage.style.display = 'flex';
+                      dragImage.style.alignItems = 'center';
+                      dragImage.style.justifyContent = 'center';
+                      dragImage.style.fontSize = '20px';
+                      dragImage.style.fontWeight = 'bold';
+                      dragImage.style.color = 'white';
+                      dragImage.style.position = 'absolute';
+                      dragImage.style.top = '-1000px';
+                      dragImage.style.left = '-1000px';
+                      dragImage.style.zIndex = '9999';
+                      // Use first letter of token name or token type indicator
+                      dragImage.textContent = token.name ? token.name.charAt(0).toUpperCase() : '?';
+
+                      // Append to body temporarily so it renders
+                      document.body.appendChild(dragImage);
+
+                      e.dataTransfer.setDragImage(dragImage, 20, 20);
+                      e.dataTransfer.setData('application/json', JSON.stringify(token));
+                      e.dataTransfer.effectAllowed = 'copy';
+                      
+                      // Clean up drag image after a short delay to ensure it's used
+                      setTimeout(() => {
+                        document.body.removeChild(dragImage);
+                      }, 0);
+
+                      console.log('Started dragging staged token:', token);
                     }}
                   >
-                    <div 
-                      className="token-color-preview" 
+                    <div
+                      className="token-color-preview"
                       style={{ backgroundColor: token.color }}
                     />
                     <div className="token-info">
                       <span className="token-name">{token.name}</span>
                       <span className="token-type">{token.type}</span>
                     </div>
-                    <button 
+                    <button
                       className="reveal-button"
                       onClick={async () => {
                         try {
@@ -310,7 +381,7 @@ const TokenManager = ({
                     >
                       ✓ Reveal
                     </button>
-                    <button 
+                    <button
                       className="delete-button-small"
                       onClick={() => handleDeleteToken(token.id)}
                       title="Delete token"
@@ -339,8 +410,10 @@ const TokenManager = ({
             isUploading={isCreating}
           />
         )}
+
       </div>
-    </div>
+    </div >
+
   );
 };
 

@@ -1,12 +1,42 @@
 /* TokenManager.css - Main token management interface styles */
 
 .token-manager {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   background: var(--bg-secondary, #1e1e2e);
   border-radius: 8px;
   overflow: hidden;
+}
+
+/* Resize Handle - Left Edge */
+.token-manager-resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+  background: transparent;
+  z-index: 1000;
+  transition: background-color 0.2s ease;
+}
+
+.token-manager-resize-handle:hover {
+  background-color: rgba(102, 126, 234, 0.3);
+}
+
+.token-manager-resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
 }
 
 .token-manager-header {

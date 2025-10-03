@@ -161,8 +161,8 @@ const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, isCreating 
                 
                 // Create HTML drag image (colored circle with icon)
                 const dragImage = document.createElement('div');
-                dragImage.style.width = '60px';
-                dragImage.style.height = '60px';
+                dragImage.style.width = '30px';
+                dragImage.style.height = '30px';
                 dragImage.style.borderRadius = '50%';
                 dragImage.style.backgroundColor = template.color;
                 dragImage.style.border = '3px solid white';
