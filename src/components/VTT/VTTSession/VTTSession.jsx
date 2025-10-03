@@ -16,7 +16,6 @@ import InitiativeTracker from '../../Session/InitiativeTracker';
 import MapQueue from './MapQueue';
 import EncounterBuilder from './EncounterBuilder';
 import ResizablePanel from './ResizablePanel';
-import MapLibraryPanel from '../MapLibrary/MapLibraryPanel';
 import CharacterSheetPanel from './CharacterSheetPanel';
 import LightingPanel from '../Lighting/LightingPanel';
 import VoiceChatPanel from '../../Voice/VoiceChatPanel';
@@ -70,7 +69,6 @@ function VTTSession() {
   // Panel state
   const [activePanel, setActivePanel] = useState(null); // 'chat', 'notes', 'party', 'maps', 'encounter', 'initiative'
   const [showTokenManager, setShowTokenManager] = useState(false);
-  const [showMapLibrary, setShowMapLibrary] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(420);
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
@@ -786,8 +784,6 @@ function VTTSession() {
               onShowEncounters={isUserDM ? () => togglePanel('encounter') : null}
               showTokenManager={showTokenManager}
               onToggleTokenManager={() => setShowTokenManager(!showTokenManager)}
-              showMapLibrary={showMapLibrary}
-              onToggleMapLibrary={() => setShowMapLibrary(!showMapLibrary)}
             />
           ) : (
             <div className="no-map-placeholder">
@@ -917,20 +913,6 @@ function VTTSession() {
             closeFloatingPanel('party');
             setActivePanel('party');
             setIsSidebarOpen(true);
-          }}
-        />
-      )}
-
-      {/* Map Library Panel */}
-      {isUserDM && showMapLibrary && (
-        <MapLibraryPanel
-          firestore={firestore}
-          campaignId={campaignId}
-          open={showMapLibrary}
-          onClose={() => setShowMapLibrary(false)}
-          onSelect={(map) => {
-            handleMapSelect(map.id);
-            setShowMapLibrary(false);
           }}
         />
       )}

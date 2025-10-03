@@ -124,8 +124,6 @@ function MapCanvas({
   onShowEncounters,
   showTokenManager = false,
   onToggleTokenManager,
-  showMapLibrary = false,
-  onToggleMapLibrary,
   onCenterCamera,
   children
 }) {
@@ -1487,23 +1485,14 @@ function MapCanvas({
             title="Toggle Layer Manager"
           >Layers</button>
 
-          <button
-            className="canvas-control-btn"
-            style={{ background: showMapLibrary ? '#667eea' : '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
-            onClick={onToggleMapLibrary}
-            title="Map Library"
-          >
-            <FiMap size={14} /> Library
-          </button>
-
           {onShowMaps && (
             <button
               className="canvas-control-btn"
-              style={{ background: '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12 }}
+              style={{ background: '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
               onClick={onShowMaps}
-              title="Map Queue"
+              title="Map Library - Import and manage maps"
             >
-              <FiMap size={14} style={{ marginRight: '4px' }} /> Maps
+              <FiMap size={14} /> Maps
             </button>
           )}
 
