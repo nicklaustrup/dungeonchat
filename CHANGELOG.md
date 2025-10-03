@@ -1,3 +1,10 @@
+## [1.5.0](https://github.com/nicklaustrup/dungeonchat/compare/v1.4.1...v1.5.0) (2025-10-03)
+
+
+### Features
+
+* Add Phase 3 bug fixes, draggable lighting panel, and camera focus ([77fa9eb](https://github.com/nicklaustrup/dungeonchat/commit/77fa9eb4745bbfe7ccad79caec3af86c0943644a))
+
 ## [1.4.1](https://github.com/nicklaustrup/dungeonchat/compare/v1.4.0...v1.4.1) (2025-10-02)
 
 
