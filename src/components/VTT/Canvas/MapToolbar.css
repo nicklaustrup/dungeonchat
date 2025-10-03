@@ -7,12 +7,14 @@
   z-index: 100;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
-  width: 180px; /* Narrower overall width */
+  /* min-width: 60px; Minimum width for icon only LET REACT HANDLE THIS */
+  /* max-width: 300px; Maximum width LET REACT HANDLE THIS */
   max-height: 70vh; /* Constrain vertical size */
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* contain scrollable inner */
-  transition: all 0.18s ease;
+  /* IMPORTANT: allow settings flyout (positioned at left:100%) to be visible outside the toolbar width */
+  overflow: visible; /* scroll containment handled by .scrollable-body */
+  transition: none; /* Disable transitions when resizing */
 }
 
 .map-toolbar.dragging {
@@ -20,24 +22,84 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
+.map-toolbar.resizing {
+  cursor: ew-resize;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
 .map-toolbar.minimized {
   min-width: auto;
+  width: auto !important; /* Ensure minimal width when minimized */
+}
+
+/* Resize Handles - CRITICAL FIX */
+.resize-handle {
+  position: absolute;
+  top: 50px; /* Start below header */
+  height: calc(100% - 50px);
+  bottom: 0;
+  width: 5px;
+  cursor: ew-resize;
+  z-index: 25;               /* Above header (which is z-index: 20) */
+  background: transparent;   /* ensure clickable area exists */
+  pointer-events: all;       /* ensure handles are always interactive */
+}
+
+.resize-handle:hover {
+  background: rgba(102, 126, 234, 0.5);
+  box-shadow: inset 0 0 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Specific handles inherit from generic .resize-handle */
+.resize-handle-left {
+  left: 0;
+  width: 5px;
+}
+
+.resize-handle-right {
+  right: 0;
+  width: 5px;
+}
+
+.map-toolbar.minimized .resize-handle {
+  display: none;
 }
 
 .toolbar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: nowrap; /* Prevent wrapping in header */
   padding: 10px 12px;
   background: rgba(102, 126, 234, 0.2);
   border-bottom: 1px solid rgba(102, 126, 234, 0.3);
   border-radius: 14px 14px 0 0;
-  cursor: grab;
   user-select: none;
+  gap: 8px;
+  cursor: grab; /* Indicate draggable */
+  min-height: 44px; /* Fix height for resize handle positioning */
+  z-index: 20; /* Ensure header is above resize handles */
 }
 
-.toolbar-header:active {
+.map-toolbar.dragging .toolbar-header {
   cursor: grabbing;
+}
+
+/* Settings drop to second row on smaller widths */
+@media (max-width: 768px) {
+  .toolbar-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .toolbar-title {
+    text-align: center;
+  }
+  
+  .toolbar-controls {
+    justify-content: center;
+  }
 }
 
 .toolbar-title {
@@ -86,6 +148,11 @@
   scrollbar-width: thin;
   scrollbar-color: #667eea33 transparent;
   flex: 1;
+  cursor: grab;
+}
+
+.map-toolbar:not(.minimized) .scrollable-body:active {
+  cursor: grabbing;
 }
 
 .scrollable-body::-webkit-scrollbar {
@@ -115,6 +182,13 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.18s ease;
+  min-width: 40px; /* Ensure comfortable padding for icon-only mode */
+}
+
+/* Icon-only mode (when toolbar is narrow) */
+.map-toolbar .toolbar-button:not(:has(.toolbar-label)) {
+  padding: 10px;
+  justify-content: center;
 }
 
 .toolbar-button:hover {
@@ -134,27 +208,66 @@
 .toolbar-label {
   font-size: 0.85rem;
 }
-/* Settings Panel */
-.toolbar-settings {
-  padding: 10px;
-  border-top: 1px solid rgba(102, 126, 234, 0.3);
-  background: rgba(20, 20, 30, 0.5);
+
+/* Settings Panel - Adjacent Flyout */
+.toolbar-settings-panel {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 8px;
+  min-width: 280px;
+  max-width: 350px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--bg-secondary, rgba(30, 30, 40, 0.95));
+  border: 2px solid #667eea;
+  border-radius: 14px;
+  padding: 16px;
+  z-index: 150; /* ensure above toolbar internals & resize handles */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  animation: slideInRight 0.2s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.toolbar-settings-panel::-webkit-scrollbar {
+  width: 8px;
+}
+.toolbar-settings-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+.toolbar-settings-panel::-webkit-scrollbar-thumb {
+  background: #667eea55;
+  border-radius: 4px;
+}
+.toolbar-settings-panel::-webkit-scrollbar-thumb:hover {
+  background: #667eea88;
 }
 
 .setting-group {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .setting-group:last-child {
   margin-bottom: 0;
 }
 
-.setting-group label {
+.setting-group > label {
   display: block;
   color: #c0c0d0;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -183,6 +296,32 @@
   font-size: 0.85rem;
   font-family: 'Courier New', monospace;
   font-weight: 600;
+}
+
+.color-picker-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.opacity-slider {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.opacity-slider input[type="range"] {
+  width: 100%;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.opacity-slider span {
+  color: #c0c0d0;
+  font-size: 0.75rem;
+  text-align: center;
 }
 
 /* Ruler Settings */
@@ -316,12 +455,63 @@
   color: var(--text-primary, #2a2a3e);
 }
 
+/* Keyboard Shortcuts Panel */
+.toolbar-shortcuts {
+  padding: 10px;
+  border-top: 1px solid rgba(102, 126, 234, 0.3);
+  background: rgba(20, 20, 30, 0.5);
+}
+
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: #c0c0d0;
+}
+
+.shortcut-item kbd {
+  background: rgba(102, 126, 234, 0.2);
+  border: 1px solid rgba(102, 126, 234, 0.4);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #667eea;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.shortcut-item span {
+  flex: 1;
+  text-align: right;
+  color: #e0e0f0;
+  font-size: 0.75rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
-  .map-toolbar { width: 160px; }
   .toolbar-button { padding: 6px 8px; font-size: 0.7rem; }
 
   .toolbar-label {
     font-size: 0.8rem;
+  }
+  
+  /* On mobile, settings panel appears below instead of to the right */
+  .toolbar-settings-panel {
+    left: 0;
+    top: 100%;
+    margin-left: 0;
+    margin-top: 8px;
+    min-width: auto;
+    width: 100%;
   }
 }

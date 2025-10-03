@@ -106,7 +106,7 @@ function VTTSession() {
   const lightingHook = useLighting(firestore, campaignId, activeMap?.id, activeMap?.lighting);
   
   // Help tooltip state
-  const [helpTooltipDismissed, setHelpTooltipDismissed] = useState(false);
+  // Help tooltip state removed: tooltip behavior controlled elsewhere; state was unused and caused lint warnings
 
   // Hide app navigation on mount, restore on unmount
   useEffect(() => {
@@ -930,20 +930,6 @@ function VTTSession() {
           onClose={() => setShowLightingPanel(false)}
           isDM={isUserDM}
         />
-      )}
-
-      {/* Tool Instructions Tooltip */}
-      {!helpTooltipDismissed && (
-        <div className="vtt-help-tooltip">
-          <span>💡 Alt+Click to ping | Select tool to draw/point</span>
-          <button 
-            className="dismiss-tooltip-btn" 
-            onClick={() => setHelpTooltipDismissed(true)}
-            title="Dismiss"
-          >
-            ✕
-          </button>
-        </div>
       )}
 
       {/* Voice Chat Floating Panel */}

@@ -142,6 +142,7 @@ function MapCanvas({
   const [snapToGrid, setSnapToGrid] = useState(false); // global snap
   const [rulerPersistent, setRulerPersistent] = useState(false);
   const [pinnedRulers, setPinnedRulers] = useState([]); // Array of pinned measurements
+  const [rulerColor, setRulerColor] = useState('#00ff00'); // Default green ruler
 
   // Token-specific snapping toggle & drag highlight footprint
   const [tokenSnap, setTokenSnap] = useState(true);
@@ -152,6 +153,7 @@ function MapCanvas({
   const [showGridConfig, setShowGridConfig] = useState(false);
   const [contextMenu, setContextMenu] = useState(null); // { tokenId, x, y }
   const [mapContextMenu, setMapContextMenu] = useState(null); // { x, y }
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [layerVisibility, setLayerVisibility] = useState({ grid: true, fog: true, tokens: true, shapes: true, drawings: true, pings: true, rulers: true });
   // Undo/Redo state (future enhancement)
   // const [undoStack, setUndoStack] = useState([]);
@@ -1048,8 +1050,10 @@ function MapCanvas({
         isDM={isDM}
         pingColor={pingColor}
         penColor={penColor}
+        rulerColor={rulerColor}
         onPingColorChange={setPingColor}
         onPenColorChange={setPenColor}
+        onRulerColorChange={setRulerColor}
         snapToGrid={snapToGrid}
         rulerPersistent={rulerPersistent}
         onRulerSnapToggle={() => setSnapToGrid(prev => !prev)}
@@ -1059,6 +1063,7 @@ function MapCanvas({
         tokenSnap={tokenSnap}
         onTokenSnapToggle={() => setTokenSnap(prev => !prev)}
         onOpenGridConfig={() => setShowGridConfig(true)}
+        showKeyboardShortcuts={false}
         shapeColor={shapeColor}
         shapeOpacity={shapeOpacity}
         shapePersistent={shapePersistent}
@@ -1322,11 +1327,14 @@ function MapCanvas({
             });
           }
         }}
-        draggable={activeTool !== 'pen'}
+        draggable={activeTool === 'pointer'}
         style={{
-          cursor: activeTool === 'pen' ? 'crosshair' :
-            activeTool === 'arrow' ? (arrowStart ? 'crosshair' : 'pointer') :
-              isDragging ? 'grabbing' : 'grab'
+          cursor: activeTool === 'pointer' ? (isDragging ? 'grabbing' : 'grab') :
+            activeTool === 'pen' ? 'crosshair' :
+            activeTool === 'arrow' ? (arrowStart ? 'crosshair' : 'cell') :
+            activeTool === 'ruler' ? 'crosshair' :
+            ['circle', 'rectangle', 'cone', 'line'].includes(activeTool) ? 'cell' :
+            isDragging ? 'grabbing' : 'default'
         }}
       >
         {/* Background Layer - includes map image and token snap highlight */}
@@ -1878,7 +1886,7 @@ function MapCanvas({
             <Fragment>
               <Line
                 points={[rulerStart.x, rulerStart.y, rulerEnd.x, rulerEnd.y]}
-                stroke="#00ff00"
+                stroke={rulerColor}
                 strokeWidth={2}
                 dash={[10, 5]}
                 listening={false}
@@ -1902,7 +1910,7 @@ function MapCanvas({
                       x={rulerStart.x}
                       y={rulerStart.y}
                       radius={5}
-                      fill="#00ff00"
+                      fill={rulerColor}
                       listening={false}
                     />
                     {/* End marker */}
@@ -1910,7 +1918,7 @@ function MapCanvas({
                       x={rulerEnd.x}
                       y={rulerEnd.y}
                       radius={5}
-                      fill="#00ff00"
+                      fill={rulerColor}
                       listening={false}
                     />
                     {/* Distance label background */}
@@ -2127,6 +2135,79 @@ function MapCanvas({
           ⟲
         </button>
       </div>
+
+      {/* Floating Keyboard Shortcuts Button (Bottom-Left) */}
+      <button
+        className="floating-help-button"
+        onClick={() => setShowKeyboardShortcuts(!showKeyboardShortcuts)}
+        title="Keyboard Shortcuts"
+        aria-label="Toggle keyboard shortcuts"
+        aria-pressed={showKeyboardShortcuts}
+      >
+        ⌨️
+      </button>
+
+      {/* Keyboard Shortcuts Panel */}
+      {showKeyboardShortcuts && (
+        <div className="keyboard-shortcuts-panel">
+          <div className="shortcuts-header">
+            <h3>⌨️ Keyboard Shortcuts</h3>
+            <button
+              className="shortcuts-close-btn"
+              onClick={() => setShowKeyboardShortcuts(false)}
+              aria-label="Close shortcuts"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="shortcuts-content">
+            <div className="shortcut-item">
+              <kbd>Alt + Click</kbd>
+              <span>Ping location</span>
+            </div>
+            <div className="shortcut-item">
+              <kbd>R</kbd>
+              <span>Toggle Ruler tool</span>
+            </div>
+            <div className="shortcut-item">
+              <kbd>G</kbd>
+              <span>Toggle Grid</span>
+            </div>
+            <div className="shortcut-item">
+              <kbd>S</kbd>
+              <span>Toggle Snap to Grid</span>
+            </div>
+            <div className="shortcut-item">
+              <kbd>T</kbd>
+              <span>Toggle Token Snap</span>
+            </div>
+            <div className="shortcut-item">
+              <kbd>Esc</kbd>
+              <span>Clear/Cancel</span>
+            </div>
+            {isDM && (
+              <>
+                <div className="shortcut-item">
+                  <kbd>Ctrl + Z</kbd>
+                  <span>Undo</span>
+                </div>
+                <div className="shortcut-item">
+                  <kbd>Ctrl + Shift + Z</kbd>
+                  <span>Redo</span>
+                </div>
+              </>
+            )}
+            <div className="shortcut-item">
+              <kbd>Mouse Wheel</kbd>
+              <span>Zoom in/out</span>
+            </div>
+            <div className="shortcut-item">
+              <kbd>Click + Drag</kbd>
+              <span>Pan map</span>
+            </div>
+          </div>
+        </div>
+      )}
       {isDM && (
         <GridConfigurator
           open={showGridConfig}
