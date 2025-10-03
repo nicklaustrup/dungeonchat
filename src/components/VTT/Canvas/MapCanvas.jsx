@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useContext, Fragment, useMemo, useC
 import { Stage, Layer, Image as KonvaImage, Rect, Line, Arrow, Circle, Text as KonvaText } from 'react-konva';
 import useImage from 'use-image';
 import { FiMap, FiSettings } from 'react-icons/fi';
+import { Keyboard, Info } from "lucide-react";
 import GridLayer from './GridLayer';
 import TokenSprite from '../TokenManager/TokenSprite';
 import MapToolbar from './MapToolbar';
@@ -325,6 +326,95 @@ function MapCanvas({
       y: Math.min(Math.max(pos.y, halfH), Math.max(halfH, h - halfH))
     };
   }, [gMap]);
+
+  // Check if a point is within map boundaries
+  const isPointInMapBounds = useCallback((pos) => {
+    if (!gMap) return true; // If no map loaded, allow by default
+    const w = gMap.width || 0;
+    const h = gMap.height || 0;
+    return pos.x >= 0 && pos.x <= w && pos.y >= 0 && pos.y <= h;
+  }, [gMap]);
+
+  // Timeout refs for unfinished shapes/drawings
+  const shapeTimeoutRef = useRef(null);
+  const rulerTimeoutRef = useRef(null);
+  const arrowTimeoutRef = useRef(null);
+
+  // Auto-clear unfinished shapes after 30 seconds
+  useEffect(() => {
+    if (shapeStart) {
+      // Clear any existing timeout
+      if (shapeTimeoutRef.current) {
+        clearTimeout(shapeTimeoutRef.current);
+      }
+      // Set new timeout
+      shapeTimeoutRef.current = setTimeout(() => {
+        setShapeStart(null);
+        setShapePreview(null);
+        console.log('Shape drawing cancelled due to inactivity');
+      }, 30000); // 30 seconds
+    } else {
+      // Clear timeout when shape is completed or cancelled
+      if (shapeTimeoutRef.current) {
+        clearTimeout(shapeTimeoutRef.current);
+        shapeTimeoutRef.current = null;
+      }
+    }
+    return () => {
+      if (shapeTimeoutRef.current) {
+        clearTimeout(shapeTimeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shapeStart]);
+
+  // Auto-clear unfinished ruler after 30 seconds
+  useEffect(() => {
+    if (rulerStart) {
+      if (rulerTimeoutRef.current) {
+        clearTimeout(rulerTimeoutRef.current);
+      }
+      rulerTimeoutRef.current = setTimeout(() => {
+        setRulerStart(null);
+        setRulerEnd(null);
+        console.log('Ruler measurement cancelled due to inactivity');
+      }, 30000);
+    } else {
+      if (rulerTimeoutRef.current) {
+        clearTimeout(rulerTimeoutRef.current);
+        rulerTimeoutRef.current = null;
+      }
+    }
+    return () => {
+      if (rulerTimeoutRef.current) {
+        clearTimeout(rulerTimeoutRef.current);
+      }
+    };
+  }, [rulerStart]);
+
+  // Auto-clear unfinished arrow after 30 seconds
+  useEffect(() => {
+    if (arrowStart) {
+      if (arrowTimeoutRef.current) {
+        clearTimeout(arrowTimeoutRef.current);
+      }
+      arrowTimeoutRef.current = setTimeout(() => {
+        setArrowStart(null);
+        console.log('Arrow drawing cancelled due to inactivity');
+      }, 30000);
+    } else {
+      if (arrowTimeoutRef.current) {
+        clearTimeout(arrowTimeoutRef.current);
+        arrowTimeoutRef.current = null;
+      }
+    }
+    return () => {
+      if (arrowTimeoutRef.current) {
+        clearTimeout(arrowTimeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [arrowStart]);
 
   // Keyboard shortcut handler (R ruler, G grid, S snap, T token snap, Ctrl+Z undo, Ctrl+Shift+Z redo)
   useEffect(() => {
@@ -670,12 +760,23 @@ function MapCanvas({
       // Handle based on active tool
       if (activeTool === 'arrow') {
         if (!arrowStart && e.evt.button !== 2) {
-          setArrowStart(maybeSnapPoint({ x: mapX, y: mapY }));
+          const snappedPoint = maybeSnapPoint({ x: mapX, y: mapY });
+          if (isPointInMapBounds(snappedPoint)) {
+            setArrowStart(snappedPoint);
+          } else {
+            console.log('Cannot start arrow outside map bounds');
+          }
         } else if (arrowStart && e.evt.button !== 2) {
           try {
             const end = maybeSnapPoint({ x: mapX, y: mapY });
-            await drawingService.createArrow(firestore, campaignId, map.id, arrowStart, end, '#ffff00', user.uid);
-            setArrowStart(null);
+            if (isPointInMapBounds(end)) {
+              await drawingService.createArrow(firestore, campaignId, map.id, arrowStart, end, '#ffff00', user.uid);
+              setArrowStart(null);
+            } else {
+              console.log('Cannot end arrow outside map bounds');
+              // Still clear the arrow start to prevent stuck state
+              setArrowStart(null);
+            }
           } catch (err) {
             console.error('Error creating arrow:', err);
           }
@@ -705,22 +806,33 @@ function MapCanvas({
         }
 
         if (!rulerStart) {
-          // Set ruler start point
-          setRulerStart({ x: startX, y: startY });
-        } else {
-          // Complete measurement
-          if (rulerPersistent) {
-            // Pin the measurement
-            setPinnedRulers(prev => [
-              ...prev,
-              {
-                id: Date.now(),
-                start: rulerStart,
-                end: { x: endX, y: endY }
-              }
-            ]);
+          // Set ruler start point only if within bounds
+          const startPoint = { x: startX, y: startY };
+          if (isPointInMapBounds(startPoint)) {
+            setRulerStart(startPoint);
+            setRulerEnd(startPoint);
+          } else {
+            console.log('Cannot start ruler outside map bounds');
           }
-          // Clear current ruler
+        } else {
+          // Complete measurement - check if end point is valid
+          const endPoint = { x: endX, y: endY };
+          if (isPointInMapBounds(endPoint)) {
+            if (rulerPersistent) {
+              // Pin the measurement
+              setPinnedRulers(prev => [
+                ...prev,
+                {
+                  id: Date.now(),
+                  start: rulerStart,
+                  end: endPoint
+                }
+              ]);
+            }
+          } else {
+            console.log('Cannot end ruler outside map bounds');
+          }
+          // Always clear ruler state on second click
           setRulerStart(null);
           setRulerEnd(null);
         }
@@ -745,9 +857,22 @@ function MapCanvas({
         return;
       } else if (['circle', 'rectangle', 'cone', 'line'].includes(activeTool)) {
         if (!shapeStart && e.evt.button !== 2) {
-          setShapeStart(smartSnapPoint({ x: mapX, y: mapY }));
+          const snappedPoint = smartSnapPoint({ x: mapX, y: mapY });
+          if (isPointInMapBounds(snappedPoint)) {
+            setShapeStart(snappedPoint);
+          } else {
+            console.log('Cannot start shape outside map bounds');
+          }
         } else if (shapeStart && e.evt.button !== 2) {
-          const end = maybeSnapPoint({ x: mapX, y: mapY });
+          const snappedEnd = maybeSnapPoint({ x: mapX, y: mapY });
+          if (!isPointInMapBounds(snappedEnd)) {
+            console.log('Cannot end shape outside map bounds');
+            // Clear the shape start to prevent stuck state
+            setShapeStart(null);
+            setShapePreview(null);
+            return;
+          }
+          const end = snappedEnd;
           try {
             if (activeTool === 'circle') {
               const dx = end.x - shapeStart.x;
@@ -802,8 +927,13 @@ function MapCanvas({
       const mapX = (pointer.x - stage.x()) / stage.scaleX();
       const mapY = (pointer.y - stage.y()) / stage.scaleY();
 
-      setIsDrawing(true);
-      setCurrentDrawing([mapX, mapY]);
+      // Check if starting point is within map bounds
+      if (isPointInMapBounds({ x: mapX, y: mapY })) {
+        setIsDrawing(true);
+        setCurrentDrawing([mapX, mapY]);
+      } else {
+        console.log('Cannot start drawing outside map bounds');
+      }
     }
   };
 
@@ -837,7 +967,13 @@ function MapCanvas({
 
       setRulerEnd({ x: endX, y: endY });
     } else if (['circle', 'rectangle', 'cone', 'line'].includes(activeTool) && shapeStart) {
-      const end = smartSnapPoint({ x: mapX, y: mapY });
+      const snappedEnd = smartSnapPoint({ x: mapX, y: mapY });
+      // Only show preview if end point would be valid
+      if (!isPointInMapBounds(snappedEnd)) {
+        setShapePreview(null);
+        return;
+      }
+      const end = snappedEnd;
       let preview = null;
 
       if (activeTool === 'circle') {
@@ -2154,14 +2290,15 @@ function MapCanvas({
         aria-label="Toggle keyboard shortcuts"
         aria-pressed={showKeyboardShortcuts}
       >
-        ⌨️
+        <Info size={20} />
       </button>
 
       {/* Keyboard Shortcuts Panel */}
       {showKeyboardShortcuts && (
         <div className="keyboard-shortcuts-panel">
           <div className="shortcuts-header">
-            <h3>⌨️ Keyboard Shortcuts</h3>
+            <Keyboard size={25}/>
+            <h3> Keyboard Shortcuts</h3>
             <button
               className="shortcuts-close-btn"
               onClick={() => setShowKeyboardShortcuts(false)}

@@ -9,7 +9,7 @@
   backdrop-filter: blur(10px);
   /* min-width: 60px; Minimum width for icon only LET REACT HANDLE THIS */
   /* max-width: 300px; Maximum width LET REACT HANDLE THIS */
-  max-height: 70vh; /* Constrain vertical size */
+  max-height: calc(100vh - 80px); /* Prevent overlap with top controls (leaves 80px for canvas-controls-top) */
   display: flex;
   flex-direction: column;
   /* IMPORTANT: allow settings flyout (positioned at left:100%) to be visible outside the toolbar width */
@@ -230,7 +230,7 @@
   margin-left: 8px;
   min-width: 280px;
   max-width: 350px;
-  max-height: 70vh;
+  max-height: calc(100vh - 316px); /* Match toolbar max-height to prevent overlap */
   overflow-y: auto;
   background: var(--bg-secondary, rgba(30, 30, 40, 0.95));
   border: 2px solid #667eea;
