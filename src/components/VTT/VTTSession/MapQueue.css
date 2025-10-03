@@ -379,6 +379,24 @@
   gap: 20px;
 }
 
+.import-flyout-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.import-flyout-content::-webkit-scrollbar-track {
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 4px;
+}
+
+.import-flyout-content::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.4);
+  border-radius: 4px;
+}
+
+.import-flyout-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.6);
+}
+
 /* Import Form */
 .import-form {
   display: flex;
@@ -517,6 +535,24 @@
   gap: 8px;
   max-height: 300px;
   overflow-y: auto;
+}
+
+.pending-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pending-list::-webkit-scrollbar-track {
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 4px;
+}
+
+.pending-list::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.4);
+  border-radius: 4px;
+}
+
+.pending-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.6);
 }
 
 .pending-item {
@@ -660,6 +696,24 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.preview-flyout-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.preview-flyout-content::-webkit-scrollbar-track {
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 4px;
+}
+
+.preview-flyout-content::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.4);
+  border-radius: 4px;
+}
+
+.preview-flyout-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.6);
 }
 
 .preview-image-large {
