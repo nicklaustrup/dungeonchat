@@ -372,6 +372,11 @@ const MapToolbar = ({
                                     if (showGridConfig) {
                                         setShowGridConfig(false);
                                     }
+                                    if (showBoundaryPanel) {
+                                        onCloseBoundaryPanel?.();
+                                    }
+                                    // Reset boundary mode when opening settings
+                                    if (onBoundaryModeChange) onBoundaryModeChange(null);
                                     setShowSettings(true);
                                 }
                             }}
