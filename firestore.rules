@@ -242,6 +242,16 @@ service cloud.firestore {
           allow create, update, delete: if request.auth != null && 
             request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
         }
+
+        // Boundaries collection - Movement restrictions system
+        match /boundaries/{boundaryId} {
+          // Only DM can read boundaries (they are invisible to players)
+          allow read: if request.auth != null && 
+            request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+          // Only DM can create/update/delete boundaries
+          allow create, update, delete: if request.auth != null && 
+            request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+        }
       }
 
       // Ambient audio tracks for the campaign

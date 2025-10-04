@@ -23,12 +23,54 @@ function TokenSprite({
   mapHeight,
   onDragMovePreview,
   onContextMenu,
-  showGhost = false // Show ghost at original position during drag
+  showGhost = false, // Show ghost at original position during drag
+  boundaryCollision = false, // Visual feedback when token hits a boundary
+  boundaries = [] // Array of boundaries for collision detection
 }) {
   const [image] = useImage(token.imageUrl || '', 'anonymous');
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState(null);
   const [currentDragPos, setCurrentDragPos] = useState(null);
+  const [isOverBoundary, setIsOverBoundary] = useState(false); // Track if currently over a boundary
+
+  // Helper function to check if position crosses boundaries
+  const checkBoundaryCollision = (from, to) => {
+    if (!boundaries || boundaries.length === 0) return false;
+
+    for (const boundary of boundaries) {
+      if (boundary.type === 'line') {
+        // Check line-line intersection
+        if (linesIntersect(
+          from.x, from.y, to.x, to.y,
+          boundary.start.x, boundary.start.y, boundary.end.x, boundary.end.y
+        )) {
+          return true;
+        }
+      } else if (boundary.type === 'painted') {
+        // Check if destination point is in a painted boundary cell
+        const gridX = Math.floor((to.x - gridOffsetX) / gridSize);
+        const gridY = Math.floor((to.y - gridOffsetY) / gridSize);
+        
+        if (boundary.cells && boundary.cells.some(cell => 
+          cell.gridX === gridX && cell.gridY === gridY
+        )) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  // Line-line intersection algorithm
+  const linesIntersect = (x1, y1, x2, y2, x3, y3, x4, y4) => {
+    const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+    if (Math.abs(denom) < 0.0001) return false;
+    
+    const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+    const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+    
+    return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
+  };
 
   const handleDragEnd = (e) => {
     e.cancelBubble = true;
@@ -48,8 +90,11 @@ function TokenSprite({
       (mapHeight && y > mapHeight - tokenRadius) // Too far bottom
     );
 
-    if (isOffLimits && dragStartPos) {
-      // Reset to ghost position if dropped in off-limits area
+    // Check for boundary collision
+    const crossesBoundary = dragStartPos && checkBoundaryCollision(dragStartPos, { x, y });
+
+    if ((isOffLimits || crossesBoundary) && dragStartPos) {
+      // Reset to ghost position if dropped in off-limits area or crosses boundary
       x = dragStartPos.x;
       y = dragStartPos.y;
       node.x(x);
@@ -59,6 +104,7 @@ function TokenSprite({
     setIsDragging(false);
     setDragStartPos(null);
     setCurrentDragPos(null);
+    setIsOverBoundary(false); // Clear boundary state
     if (gridSize) {
       const altPressed = e.evt?.altKey;
       const snapActive = tokenSnap ? !altPressed : altPressed;
@@ -135,6 +181,13 @@ function TokenSprite({
     const rawX = node.x();
     const rawY = node.y();
     const altPressed = e.evt?.altKey;
+
+    // Check for boundary collision during drag (real-time feedback)
+    if (dragStartPos) {
+      const currentPos = { x: rawX, y: rawY };
+      const colliding = checkBoundaryCollision(dragStartPos, currentPos);
+      setIsOverBoundary(colliding);
+    }
 
     // Determine whether snapping is active: if tokenSnap is true, Alt disables; if false, Alt enables.
     const snapActive = tokenSnap ? !altPressed : altPressed;
@@ -297,8 +350,11 @@ function TokenSprite({
           radius={(tokenSize + 2) / 2}
           fill={tokenColor}
           opacity={token.isHidden ? 0.3 : 0.8}
-          strokeWidth={isSelected ? 1.5 : 1}
-          stroke={isSelected ? '#fff' : '#000'}
+          strokeWidth={(boundaryCollision || isOverBoundary) ? 4 : (isSelected ? 1.5 : 1)}
+          stroke={(boundaryCollision || isOverBoundary) ? '#FF0000' : (isSelected ? '#fff' : '#000')}
+          shadowColor={(boundaryCollision || isOverBoundary) ? '#FF0000' : undefined}
+          shadowBlur={(boundaryCollision || isOverBoundary) ? 15 : undefined}
+          shadowOpacity={(boundaryCollision || isOverBoundary) ? 0.8 : undefined}
         />
 
 

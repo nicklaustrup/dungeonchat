@@ -16,7 +16,13 @@ function FogPanel({
   brushSize,
   onBrushSizeChange,
   brushMode,
-  onBrushModeChange
+  onBrushModeChange,
+  fogGridVisible,
+  onFogGridVisibleChange,
+  fogGridColor,
+  onFogGridColorChange,
+  fogOpacity,
+  onFogOpacityChange
 }) {
   if (!open) return null;
 
@@ -48,9 +54,60 @@ function FogPanel({
         </div>
       </div>
 
-      {/* Brush Mode */}
+      {/* Fog Grid Visibility */}
       {fogEnabled && (
         <>
+          <div className="setting-divider" />
+          <div className="setting-group">
+            <label>Fog Grid</label>
+            <div className="checkbox-group">
+              <label className="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  checked={fogGridVisible} 
+                  onChange={(e) => onFogGridVisibleChange?.(e.target.checked)}
+                />
+                <span>Show Fog Grid</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Fog Grid Color */}
+          {fogGridVisible && (
+            <>
+              <div className="setting-divider" />
+              <div className="setting-group">
+                <label>Fog Grid Color</label>
+                <div className="color-picker-group">
+                  <input
+                    type="color"
+                    value={fogGridColor}
+                    onChange={(e) => onFogGridColorChange?.(e.target.value)}
+                    className="color-input"
+                  />
+                  <span className="color-value">{fogGridColor}</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Fog Opacity */}
+          <div className="setting-divider" />
+          <div className="setting-group">
+            <label>Fog Opacity: {Math.round(fogOpacity * 100)}%</label>
+            <div className="opacity-slider">
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={Math.round(fogOpacity * 100)}
+                onChange={(e) => onFogOpacityChange?.(parseInt(e.target.value, 10) / 100)}
+              />
+            </div>
+          </div>
+
+          {/* Brush Mode */}
           <div className="setting-divider" />
           <div className="setting-group">
             <label>Brush Mode</label>

@@ -245,6 +245,26 @@ export const fogOfWarService = {
    */
   async resetFogOfWar(firestore, campaignId, mapId) {
     return this.resetAllFog(firestore, campaignId, mapId);
+  },
+
+  /**
+   * Update fog visual configuration (color, opacity, grid visibility)
+   */
+  async updateFogConfig(firestore, campaignId, mapId, config) {
+    try {
+      const fogRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'fog', 'current');
+      
+      const updates = {
+        ...config,
+        updatedAt: new Date().toISOString()
+      };
+      
+      await updateDoc(fogRef, updates);
+      return true;
+    } catch (error) {
+      console.error('Error updating fog config:', error);
+      throw error;
+    }
   }
 };
 

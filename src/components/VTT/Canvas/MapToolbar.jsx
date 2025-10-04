@@ -11,9 +11,11 @@ import {
     Triangle,
     Grid,
     Ruler,
-    CloudFog
+    CloudFog,
+    Shield
 } from 'lucide-react';
 import FogPanel from './FogPanel';
+import BoundaryPanel from './BoundaryPanel';
 import './MapToolbar.css';
 
 /**
@@ -71,6 +73,35 @@ const MapToolbar = ({
     onFogBrushSizeChange,
     fogBrushMode,
     onFogBrushModeChange,
+    fogGridVisible,
+    onFogGridVisibleChange,
+    fogGridColor,
+    onFogGridColorChange,
+    fogOpacity,
+    onFogOpacityChange,
+    // Boundary-related props
+    boundariesEnabled,
+    onToggleBoundariesEnabled,
+    boundariesVisible,
+    onToggleBoundariesVisible,
+    showBoundaryPanel,
+    onOpenBoundaryPanel,
+    onCloseBoundaryPanel,
+    boundaryMode,
+    onBoundaryModeChange,
+    boundarySnapToGrid,
+    onBoundarySnapToGridToggle,
+    boundaryBrushSize,
+    onBoundaryBrushSizeChange,
+    boundaryBrushMode,
+    onBoundaryBrushModeChange,
+    boundaryLineColor,
+    onBoundaryLineColorChange,
+    boundaryGridColor,
+    onBoundaryGridColorChange,
+    boundaryOpacity,
+    onBoundaryOpacityChange,
+    onClearAllBoundaries,
 }) => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
@@ -232,7 +263,29 @@ const MapToolbar = ({
             if (showGridConfig) {
                 setShowGridConfig(false);
             }
+            if (showBoundaryPanel) {
+                onCloseBoundaryPanel?.();
+            }
             onOpenFogPanel?.();
+        }
+    };
+
+    const handleBoundaryButtonClick = () => {
+        // Toggle boundary panel
+        if (showBoundaryPanel) {
+            onCloseBoundaryPanel?.();
+        } else {
+            // Close other panels if open
+            if (showSettings) {
+                setShowSettings(false);
+            }
+            if (showGridConfig) {
+                setShowGridConfig(false);
+            }
+            if (showFogPanel) {
+                onCloseFogPanel?.();
+            }
+            onOpenBoundaryPanel?.();
         }
     };
 
@@ -247,6 +300,9 @@ const MapToolbar = ({
             }
             if (showFogPanel) {
                 onCloseFogPanel?.();
+            }
+            if (showBoundaryPanel) {
+                onCloseBoundaryPanel?.();
             }
             setShowGridConfig(true);
         }
@@ -341,7 +397,18 @@ const MapToolbar = ({
                                 <button
                                     key={tool.id}
                                     className={`toolbar-button ${activeTool === tool.id ? 'active' : ''}`}
-                                    onClick={() => onToolChange(tool.id)}
+                                    onClick={() => {
+                                        onToolChange(tool.id);
+                                        // Close panels when switching to a different tool
+                                        if (showFogPanel) onCloseFogPanel?.();
+                                        if (showBoundaryPanel) onCloseBoundaryPanel?.();
+                                        // Close grid config if open
+                                        if (showGridConfig) setShowGridConfig(false);
+                                        // Reset all panel modes when switching to any tool
+                                        if (onBoundaryModeChange) onBoundaryModeChange(null);
+                                        if (onFogBrushModeChange) onFogBrushModeChange('reveal');
+                                        if (onBoundaryBrushModeChange) onBoundaryBrushModeChange('paint');
+                                    }}
                                     aria-label={`${tool.label} - ${tool.description}`}
                                     aria-pressed={activeTool === tool.id}
                                 >
@@ -372,6 +439,18 @@ const MapToolbar = ({
                             >
                                 <CloudFog size={20} />
                                 {width > 100 && <span className="toolbar-label">Fog</span>}
+                            </button>
+                        )}
+
+                        {isDM && (
+                            <button
+                                className={`toolbar-button ${showBoundaryPanel ? 'active' : ''}`}
+                                onClick={handleBoundaryButtonClick}
+                                aria-label="Toggle Boundary Controls"
+                                aria-pressed={showBoundaryPanel}
+                            >
+                                <Shield size={20} />
+                                {width > 100 && <span className="toolbar-label">Boundaries</span>}
                             </button>
                         )}
                     </div>
@@ -708,7 +787,11 @@ const MapToolbar = ({
             {showFogPanel && !isMinimized && isDM && (
                 <FogPanel
                     open={showFogPanel}
-                    onClose={onCloseFogPanel}
+                    onClose={() => {
+                        onCloseFogPanel?.();
+                        // Reset fog brush mode when closing panel
+                        if (onFogBrushModeChange) onFogBrushModeChange('reveal');
+                    }}
                     fogEnabled={fogOfWarEnabled}
                     onToggleFog={onToggleFogEnabled}
                     onRevealAll={onRevealAll}
@@ -717,6 +800,44 @@ const MapToolbar = ({
                     onBrushSizeChange={onFogBrushSizeChange}
                     brushMode={fogBrushMode}
                     onBrushModeChange={onFogBrushModeChange}
+                    fogGridVisible={fogGridVisible}
+                    onFogGridVisibleChange={onFogGridVisibleChange}
+                    fogGridColor={fogGridColor}
+                    onFogGridColorChange={onFogGridColorChange}
+                    fogOpacity={fogOpacity}
+                    onFogOpacityChange={onFogOpacityChange}
+                />
+            )}
+
+            {/* Boundary Panel - Adjacent Flyout */}
+            {showBoundaryPanel && !isMinimized && isDM && (
+                <BoundaryPanel
+                    open={showBoundaryPanel}
+                    onClose={() => {
+                        onCloseBoundaryPanel?.();
+                        // Reset boundary modes when closing panel
+                        if (onBoundaryModeChange) onBoundaryModeChange(null);
+                        if (onBoundaryBrushModeChange) onBoundaryBrushModeChange('paint');
+                    }}
+                    boundariesEnabled={boundariesEnabled}
+                    onToggleBoundaries={onToggleBoundariesEnabled}
+                    boundariesVisible={boundariesVisible}
+                    onToggleVisibility={onToggleBoundariesVisible}
+                    boundaryMode={boundaryMode}
+                    onBoundaryModeChange={onBoundaryModeChange}
+                    snapToGrid={boundarySnapToGrid}
+                    onSnapToGridToggle={onBoundarySnapToGridToggle}
+                    brushSize={boundaryBrushSize}
+                    onBrushSizeChange={onBoundaryBrushSizeChange}
+                    brushMode={boundaryBrushMode}
+                    onBrushModeChange={onBoundaryBrushModeChange}
+                    lineColor={boundaryLineColor}
+                    onLineColorChange={onBoundaryLineColorChange}
+                    gridColor={boundaryGridColor}
+                    onGridColorChange={onBoundaryGridColorChange}
+                    boundaryOpacity={boundaryOpacity}
+                    onBoundaryOpacityChange={onBoundaryOpacityChange}
+                    onClearAll={onClearAllBoundaries}
                 />
             )}
         </div>

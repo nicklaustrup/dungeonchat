@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FirebaseContext } from '../../../services/FirebaseContext';
 import { mapService } from '../../../services/vtt/mapService';
 import { fogOfWarService } from '../../../services/vtt/fogOfWarService';
+import { boundaryService } from '../../../services/vtt/boundaryService';
 import { tokenService } from '../../../services/vtt/tokenService';
 import MapCanvas from '../Canvas/MapCanvas';
 import TokenManager from '../TokenManager/TokenManager';
@@ -88,6 +89,21 @@ function VTTSession() {
   const [showFogPanel, setShowFogPanel] = useState(false);
   const [fogBrushSize, setFogBrushSize] = useState(3);
   const [fogBrushMode, setFogBrushMode] = useState('reveal'); // 'reveal' | 'conceal'
+  const [fogGridVisible, setFogGridVisible] = useState(false);
+  const [fogGridColor, setFogGridColor] = useState('#ff0000');
+  const [fogOpacity, setFogOpacity] = useState(0.35);
+
+  // Boundary state
+  const [boundariesEnabled, setBoundariesEnabled] = useState(false);
+  const [boundariesVisible, setBoundariesVisible] = useState(true);
+  const [showBoundaryPanel, setShowBoundaryPanel] = useState(false);
+  const [boundaryMode, setBoundaryMode] = useState(null); // null | 'line' | 'paint'
+  const [boundarySnapToGrid, setBoundarySnapToGrid] = useState(true);
+  const [boundaryBrushSize, setBoundaryBrushSize] = useState(2);
+  const [boundaryBrushMode, setBoundaryBrushMode] = useState('paint'); // 'paint' | 'erase'
+  const [boundaryLineColor, setBoundaryLineColor] = useState('#ff0000');
+  const [boundaryGridColor, setBoundaryGridColor] = useState('#ff0000');
+  const [boundaryOpacity, setBoundaryOpacity] = useState(0.7);
 
   // Lighting state
   const [showLightingPanel, setShowLightingPanel] = useState(false);
@@ -283,6 +299,18 @@ function VTTSession() {
     return () => unsubscribe();
   }, [firestore, campaignId, activeMap?.id]);
 
+  // Subscribe to boundary state
+  useEffect(() => {
+    if (!firestore || !campaignId || !activeMap?.id) return;
+
+    const unsubscribe = boundaryService.subscribeToBoundaryState(firestore, campaignId, activeMap.id, (state) => {
+      setBoundariesEnabled(state.enabled);
+      setBoundariesVisible(state.visible);
+    });
+
+    return () => unsubscribe();
+  }, [firestore, campaignId, activeMap?.id]);
+
   // Handle sidebar resize
   useEffect(() => {
     if (!isResizingSidebar) return;
@@ -438,6 +466,50 @@ function VTTSession() {
       setFogOfWarEnabled(true);
     } catch (err) {
       console.error('Error initializing fog of war:', err);
+    }
+  };
+
+  // Boundary handlers
+  const handleOpenBoundaryPanel = () => {
+    if (!isUserDM || !activeMap) return;
+    setShowBoundaryPanel(true);
+  };
+
+  const handleToggleBoundariesEnabled = async (enabled) => {
+    if (!isUserDM || !activeMap) return;
+
+    try {
+      await boundaryService.updateBoundaryState(firestore, campaignId, activeMap.id, { enabled });
+      setBoundariesEnabled(enabled);
+    } catch (err) {
+      console.error('Error toggling boundaries:', err);
+      alert('Failed to toggle boundaries: ' + err.message);
+    }
+  };
+
+  const handleToggleBoundariesVisible = async (visible) => {
+    if (!isUserDM || !activeMap) return;
+
+    try {
+      await boundaryService.updateBoundaryState(firestore, campaignId, activeMap.id, { visible });
+      setBoundariesVisible(visible);
+    } catch (err) {
+      console.error('Error toggling boundary visibility:', err);
+      alert('Failed to toggle boundary visibility: ' + err.message);
+    }
+  };
+
+  const handleClearAllBoundaries = async () => {
+    if (!isUserDM || !activeMap) return;
+
+    const confirm = window.confirm('Are you sure you want to delete all boundaries on this map? This cannot be undone.');
+    if (!confirm) return;
+
+    try {
+      await boundaryService.clearAllBoundaries(firestore, campaignId, activeMap.id);
+    } catch (err) {
+      console.error('Error clearing boundaries:', err);
+      alert('Failed to clear boundaries: ' + err.message);
     }
   };
 
@@ -802,7 +874,35 @@ function VTTSession() {
               onFogBrushSizeChange={setFogBrushSize}
               fogBrushMode={fogBrushMode}
               onFogBrushModeChange={setFogBrushMode}
+              fogGridVisible={fogGridVisible}
+              onFogGridVisibleChange={setFogGridVisible}
+              fogGridColor={fogGridColor}
+              onFogGridColorChange={setFogGridColor}
+              fogOpacity={fogOpacity}
+              onFogOpacityChange={setFogOpacity}
               onInitializeFog={handleInitializeFog}
+              boundariesEnabled={boundariesEnabled}
+              boundariesVisible={boundariesVisible}
+              showBoundaryPanel={showBoundaryPanel}
+              onOpenBoundaryPanel={handleOpenBoundaryPanel}
+              onCloseBoundaryPanel={() => setShowBoundaryPanel(false)}
+              onToggleBoundariesEnabled={handleToggleBoundariesEnabled}
+              onToggleBoundariesVisible={handleToggleBoundariesVisible}
+              boundaryMode={boundaryMode}
+              onBoundaryModeChange={setBoundaryMode}
+              boundarySnapToGrid={boundarySnapToGrid}
+              onBoundarySnapToGridToggle={() => setBoundarySnapToGrid(!boundarySnapToGrid)}
+              boundaryBrushSize={boundaryBrushSize}
+              onBoundaryBrushSizeChange={setBoundaryBrushSize}
+              boundaryBrushMode={boundaryBrushMode}
+              onBoundaryBrushModeChange={setBoundaryBrushMode}
+              boundaryLineColor={boundaryLineColor}
+              onBoundaryLineColorChange={setBoundaryLineColor}
+              boundaryGridColor={boundaryGridColor}
+              onBoundaryGridColorChange={setBoundaryGridColor}
+              boundaryOpacity={boundaryOpacity}
+              onBoundaryOpacityChange={setBoundaryOpacity}
+              onClearAllBoundaries={handleClearAllBoundaries}
               onShowMaps={isUserDM ? () => togglePanel('maps') : null}
               onShowEncounters={isUserDM ? () => togglePanel('encounter') : null}
               showTokenManager={showTokenManager}

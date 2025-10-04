@@ -26,6 +26,7 @@ import useLighting from '../../../hooks/vtt/useLighting';
 import { tokenService } from '../../../services/vtt/tokenService';
 import { pingService } from '../../../services/vtt/pingService';
 import { fogOfWarService } from '../../../services/vtt/fogOfWarService';
+import { boundaryService } from '../../../services/vtt/boundaryService';
 import { drawingService } from '../../../services/vtt/drawingService';
 import { shapeService } from '../../../services/vtt/shapeService';
 import { shapePreviewService } from '../../../services/vtt/shapePreviewService';
@@ -119,7 +120,36 @@ function MapCanvas({
   onFogBrushSizeChange,
   fogBrushMode = 'reveal',
   onFogBrushModeChange,
+  fogGridVisible = false,
+  onFogGridVisibleChange,
+  fogGridColor = '#ff0000',
+  onFogGridColorChange,
+  fogOpacity = 0.35,
+  onFogOpacityChange,
   onInitializeFog,
+  // Boundary props
+  boundariesEnabled = false,
+  boundariesVisible = true,
+  showBoundaryPanel = false,
+  onOpenBoundaryPanel,
+  onCloseBoundaryPanel,
+  onToggleBoundariesEnabled,
+  onToggleBoundariesVisible,
+  boundaryMode = 'line',
+  onBoundaryModeChange,
+  boundarySnapToGrid = true,
+  onBoundarySnapToGridToggle,
+  boundaryBrushSize = 2,
+  onBoundaryBrushSizeChange,
+  boundaryBrushMode = 'paint',
+  onBoundaryBrushModeChange,
+  boundaryLineColor = '#ff0000',
+  onBoundaryLineColorChange,
+  boundaryGridColor = '#ff0000',
+  onBoundaryGridColorChange,
+  boundaryOpacity = 0.7,
+  onBoundaryOpacityChange,
+  onClearAllBoundaries,
   onShowMaps,
   onShowEncounters,
   showTokenManager = false,
@@ -199,6 +229,16 @@ function MapCanvas({
   const [isFogBrushing, setIsFogBrushing] = useState(false); // Track if actively painting fog
   const [fogBrushActive, setFogBrushActive] = useState(false); // Track if fog brush tool is enabled
   const [lastFogCell, setLastFogCell] = useState(null); // Track last painted cell to avoid redundant updates
+
+  // Boundary state
+  const [boundaries, setBoundaries] = useState([]);
+  const [isBoundaryDrawing, setIsBoundaryDrawing] = useState(false); // Track if actively drawing boundary
+  const [boundaryStart, setBoundaryStart] = useState(null); // Start point for line boundaries
+  const [boundaryPreview, setBoundaryPreview] = useState(null); // Preview line while drawing
+  const [isPaintingBoundary, setIsPaintingBoundary] = useState(false); // Track if painting boundaries
+  const [lastBoundaryCell, setLastBoundaryCell] = useState(null); // Track last painted cell
+  const [paintedCellsBuffer, setPaintedCellsBuffer] = useState([]); // Buffer cells for batch update
+  const [boundaryCollisionToken, setBoundaryCollisionToken] = useState(null); // Token ID that hit a boundary (for visual feedback)
 
   // Ruler state
   const [rulerStart, setRulerStart] = useState(null);
@@ -481,7 +521,7 @@ function MapCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [arrowStart]);
 
-  // Keyboard shortcut handler (R ruler, G grid, S snap, T token snap, Ctrl+Z undo, Ctrl+Shift+Z redo)
+  // Keyboard shortcut handler (R ruler, G grid, S snap, T token snap, B boundaries, L line mode, P paint mode)
   useEffect(() => {
     const handleKeyPress = (e) => {
       // Only for DM
@@ -526,6 +566,35 @@ function MapCanvas({
       if (e.key === 't' || e.key === 'T') {
         setTokenSnap(prev => !prev);
       }
+      
+      // Boundary shortcuts
+      // B key to toggle boundary panel
+      if (e.key === 'b' || e.key === 'B') {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+        if (onOpenBoundaryPanel) {
+          onOpenBoundaryPanel();
+        }
+      }
+      
+      // L key for Line boundary mode (when panel is open)
+      if ((e.key === 'l' || e.key === 'L') && showBoundaryPanel) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+        if (onBoundaryModeChange) {
+          onBoundaryModeChange('line');
+        }
+      }
+      
+      // P key for Paint boundary mode (when panel is open)
+      if ((e.key === 'p' || e.key === 'P') && showBoundaryPanel) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+        if (onBoundaryModeChange) {
+          onBoundaryModeChange('paint');
+        }
+      }
+      
       // Undo/Redo - Disabled (future enhancement)
       // TODO: Re-enable when undo/redo stack is implemented
     };
@@ -533,7 +602,7 @@ function MapCanvas({
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDM, activeTool, contextMenu, mapContextMenu, gMap, firestore, campaignId]);
+  }, [isDM, activeTool, contextMenu, mapContextMenu, gMap, firestore, campaignId, showBoundaryPanel, onOpenBoundaryPanel, onBoundaryModeChange]);
 
   // Reset position and scale when map changes
   useEffect(() => {
@@ -570,11 +639,68 @@ function MapCanvas({
       unsubscribe();
     };
   }, [firestore, campaignId, map?.id]);
+  
+  // Load fog configuration from Firestore when fogData changes (only once on load)
+  useEffect(() => {
+    if (!fogData || !isDM) return;
+    
+    // Only load if values are different from current (prevent loops)
+    if (fogData.fogGridColor && fogData.fogGridColor !== fogGridColor && onFogGridColorChange) {
+      onFogGridColorChange(fogData.fogGridColor);
+    }
+    if (typeof fogData.fogGridVisible === 'boolean' && fogData.fogGridVisible !== fogGridVisible && onFogGridVisibleChange) {
+      onFogGridVisibleChange(fogData.fogGridVisible);
+    }
+    if (typeof fogData.fogOpacity === 'number' && fogData.fogOpacity !== fogOpacity && onFogOpacityChange) {
+      onFogOpacityChange(fogData.fogOpacity);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fogData?.fogGridColor, fogData?.fogGridVisible, fogData?.fogOpacity, isDM]);
+
+  // Sync fog configuration to Firestore when it changes
+  useEffect(() => {
+    if (!firestore || !campaignId || !map?.id || !fogData || !isDM) return;
+    
+    const timeoutId = setTimeout(async () => {
+      try {
+        await fogOfWarService.updateFogConfig(firestore, campaignId, map.id, {
+          fogGridColor,
+          fogGridVisible,
+          fogOpacity
+        });
+      } catch (error) {
+        console.error('Error syncing fog config:', error);
+      }
+    }, 500); // Debounce
+    
+    return () => clearTimeout(timeoutId);
+  }, [fogGridColor, fogGridVisible, fogOpacity, firestore, campaignId, map?.id, fogData, isDM]);
+
+  // Subscribe to boundaries
+  useEffect(() => {
+    if (!firestore || !campaignId || !map?.id) return;
+
+    console.log('Setting up boundaries subscription for map:', map.id);
+
+    const unsubscribe = boundaryService.subscribeToBoundaries(firestore, campaignId, map.id, (newBoundaries) => {
+      setBoundaries(newBoundaries);
+      console.log('Boundaries updated:', newBoundaries.length, 'boundaries');
+    });
+
+    return () => {
+      console.log('Unsubscribing from boundaries');
+      unsubscribe();
+    };
+  }, [firestore, campaignId, map?.id]);
+
+  // Debug: Log boundary mode changes
+  useEffect(() => {
+    console.log('[BOUNDARY MODE DEBUG] boundaryMode changed to:', boundaryMode, '| activeTool:', activeTool);
+  }, [boundaryMode, activeTool]);
 
   // Enable fog brush when fog panel is open and fog is enabled
   useEffect(() => {
     const shouldActivate = isDM && showFogPanel && fogOfWarEnabled && fogData?.enabled;
-    console.log('[FOG BRUSH] Brush active state:', shouldActivate, '(panel:', showFogPanel, 'enabled:', fogOfWarEnabled, 'fogData:', !!fogData, ')');
     setFogBrushActive(shouldActivate);
     
     // Reset brushing state when deactivated
@@ -582,7 +708,7 @@ function MapCanvas({
       setIsFogBrushing(false);
       setLastFogCell(null);
     }
-  }, [isDM, showFogPanel, fogOfWarEnabled, fogData]);
+  }, [isDM, showFogPanel, fogOfWarEnabled, fogData?.enabled]);
 
   // Subscribe to drawings
   useEffect(() => {
@@ -802,6 +928,7 @@ function MapCanvas({
   };
 
   const handleDragEnd = (e) => {
+    console.log('[DRAG END] Camera drag ended');
     setStagePos({
       x: e.target.x(),
       y: e.target.y(),
@@ -1079,7 +1206,69 @@ function MapCanvas({
     }
   }, [map, fogData, fogBrushSize, fogBrushMode, firestore, campaignId, lastFogCell]);
 
+  // Paint boundary at pointer position with brush size
+  const paintBoundaryAtPointer = useCallback((e) => {
+    if (!map) return;
+
+    const stage = stageRef.current;
+    const pointer = stage.getPointerPosition();
+    const mapX = (pointer.x - stage.x()) / stage.scaleX();
+    const mapY = (pointer.y - stage.y()) / stage.scaleY();
+
+    const gridSize = map.gridSize || 50;
+    const offsetX = map.gridOffsetX || 0;
+    const offsetY = map.gridOffsetY || 0;
+
+    // Calculate grid cell position
+    const adjustedX = mapX - offsetX;
+    const adjustedY = mapY - offsetY;
+    const centerGridX = Math.floor(adjustedX / gridSize);
+    const centerGridY = Math.floor(adjustedY / gridSize);
+
+    // Skip if we just painted this cell
+    const cellKey = `${centerGridX},${centerGridY}`;
+    if (lastBoundaryCell === cellKey) {
+      return;
+    }
+    setLastBoundaryCell(cellKey);
+
+    console.log('[BOUNDARY] Painting at grid cell:', centerGridX, centerGridY, 'with brush size:', boundaryBrushSize, 'mode:', boundaryBrushMode);
+
+    // Paint in circular area based on brush size
+    const radius = Math.floor(boundaryBrushSize / 2);
+    const newCells = [];
+
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance <= radius) {
+          const gridX = centerGridX + dx;
+          const gridY = centerGridY + dy;
+          
+          // Prevent painting outside map bounds
+          const cellX = gridX * gridSize + offsetX;
+          const cellY = gridY * gridSize + offsetY;
+          if (cellX < 0 || cellY < 0 || cellX >= map.width || cellY >= map.height) {
+            continue;
+          }
+
+          // Add to buffer if not already present
+          const exists = paintedCellsBuffer.some(c => c.gridX === gridX && c.gridY === gridY);
+          if (!exists) {
+            newCells.push({ gridX, gridY });
+          }
+        }
+      }
+    }
+
+    if (newCells.length > 0) {
+      setPaintedCellsBuffer(prev => [...prev, ...newCells]);
+      console.log('[BOUNDARY] Buffered', newCells.length, 'new cells');
+    }
+  }, [map, boundaryBrushSize, boundaryBrushMode, lastBoundaryCell, paintedCellsBuffer]);
+
   const handleMouseDown = (e) => {
+    console.log('[MOUSE DOWN DEBUG] Target:', e.target.constructor.name, '| fogBrushActive:', fogBrushActive, '| activeTool:', activeTool, '| boundaryMode:', boundaryMode, '| isFogBrushing:', isFogBrushing);
     // Fog brush painting
     if (fogBrushActive && isDM && fogOfWarEnabled && fogData?.enabled && e.target === e.target.getStage()) {
       console.log('[FOG BRUSH] Mouse down - starting fog brush painting');
@@ -1089,6 +1278,48 @@ function MapCanvas({
       setIsFogBrushing(true);
       paintFogAtPointer(e);
       return;
+    }
+
+    // Boundary drawing (DM only, when boundary panel is open)
+    if (isDM && showBoundaryPanel && boundariesEnabled && e.target === e.target.getStage()) {
+      if (e.evt.button === 2) {
+        return; // Ignore right-clicks
+      }
+
+      const stage = stageRef.current;
+      const pointer = stage.getPointerPosition();
+      let mapX = (pointer.x - stage.x()) / stage.scaleX();
+      let mapY = (pointer.y - stage.y()) / stage.scaleY();
+
+      if (boundaryMode === 'line') {
+        // Line boundary drawing
+        if (boundarySnapToGrid && gMap?.gridSize) {
+          // Snap to grid intersections
+          const gridSize = gMap.gridSize;
+          const offsetX = gMap.gridOffsetX || 0;
+          const offsetY = gMap.gridOffsetY || 0;
+          mapX = Math.round((mapX - offsetX) / gridSize) * gridSize + offsetX;
+          mapY = Math.round((mapY - offsetY) / gridSize) * gridSize + offsetY;
+        }
+        
+        // Prevent boundaries off map
+        if (mapX < 0 || mapY < 0 || mapX > gMap.width || mapY > gMap.height) {
+          console.warn('[BOUNDARY] Cannot place boundary outside map bounds');
+          return;
+        }
+        setIsBoundaryDrawing(true);
+        setBoundaryStart({ x: mapX, y: mapY });
+        setBoundaryPreview({ x: mapX, y: mapY });
+        console.log('[BOUNDARY] Started line boundary at:', mapX, mapY);
+        return;
+      } else if (boundaryMode === 'paint') {
+        // Paint boundary mode
+        setIsPaintingBoundary(true);
+        setPaintedCellsBuffer([]);
+        setLastBoundaryCell(null);
+        paintBoundaryAtPointer(e);
+        return;
+      }
     }
 
     if (activeTool === 'pen' && e.target === e.target.getStage()) {
@@ -1120,6 +1351,33 @@ function MapCanvas({
     // Fog brush painting while dragging
     if (isFogBrushing && fogBrushActive && isDM && fogOfWarEnabled && fogData?.enabled) {
       paintFogAtPointer(e);
+      return;
+    }
+
+    // Boundary drawing preview
+    if (isBoundaryDrawing && boundaryMode === 'line' && boundaryStart) {
+      let endX = mapX;
+      let endY = mapY;
+
+      if (boundarySnapToGrid && gMap?.gridSize) {
+        const gridSize = gMap.gridSize;
+        const offsetX = gMap.gridOffsetX || 0;
+        const offsetY = gMap.gridOffsetY || 0;
+        endX = Math.round((endX - offsetX) / gridSize) * gridSize + offsetX;
+        endY = Math.round((endY - offsetY) / gridSize) * gridSize + offsetY;
+      }
+      
+      // Clamp to map bounds
+      endX = Math.max(0, Math.min(endX, gMap.width));
+      endY = Math.max(0, Math.min(endY, gMap.height));
+
+      setBoundaryPreview({ x: endX, y: endY });
+      return;
+    }
+
+    // Boundary painting while dragging
+    if (isPaintingBoundary && boundaryMode === 'paint') {
+      paintBoundaryAtPointer(e);
       return;
     }
 
@@ -1200,6 +1458,79 @@ function MapCanvas({
       return;
     }
 
+    // Finish line boundary
+    if (isBoundaryDrawing && boundaryMode === 'line' && boundaryStart && boundaryPreview) {
+      try {
+        // Only create boundary if there's a meaningful distance
+        const dx = boundaryPreview.x - boundaryStart.x;
+        const dy = boundaryPreview.y - boundaryStart.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > 5) { // Minimum 5 pixels
+          await boundaryService.createBoundary(
+            firestore,
+            campaignId,
+            map.id,
+            boundaryStart,
+            boundaryPreview,
+            user.uid,
+            boundarySnapToGrid
+          );
+          console.log('[BOUNDARY] Created line boundary');
+        }
+      } catch (err) {
+        console.error('Error creating line boundary:', err);
+      }
+      setIsBoundaryDrawing(false);
+      setBoundaryStart(null);
+      setBoundaryPreview(null);
+      return;
+    }
+
+    // Finish painting boundary
+    if (isPaintingBoundary && boundaryMode === 'paint') {
+      try {
+        if (paintedCellsBuffer.length > 0) {
+          // Create or update painted boundary
+          if (boundaryBrushMode === 'paint') {
+            await boundaryService.createPaintedBoundary(
+              firestore,
+              campaignId,
+              map.id,
+              paintedCellsBuffer,
+              user.uid
+            );
+            console.log('[BOUNDARY] Created painted boundary with', paintedCellsBuffer.length, 'cells');
+          } else {
+            // Erase mode - remove cells from existing painted boundaries
+            // Find painted boundaries that contain any of these cells and remove them
+            const paintedBoundaries = boundaries.filter(b => b.type === 'painted');
+            for (const boundary of paintedBoundaries) {
+              const cellsToRemove = paintedCellsBuffer.filter(cell =>
+                boundary.cells.some(bc => bc.gridX === cell.gridX && bc.gridY === cell.gridY)
+              );
+              if (cellsToRemove.length > 0) {
+                await boundaryService.removePaintedCells(
+                  firestore,
+                  campaignId,
+                  map.id,
+                  boundary.id,
+                  cellsToRemove
+                );
+              }
+            }
+            console.log('[BOUNDARY] Erased', paintedCellsBuffer.length, 'cells from boundaries');
+          }
+        }
+      } catch (err) {
+        console.error('Error finishing painted boundary:', err);
+      }
+      setIsPaintingBoundary(false);
+      setPaintedCellsBuffer([]);
+      setLastBoundaryCell(null);
+      return;
+    }
+
     if (activeTool === 'pen' && isDrawing && currentDrawing.length > 0) {
       try {
         // Convert flat array to points array
@@ -1220,6 +1551,10 @@ function MapCanvas({
   const handleTokenDragEnd = useCallback(async (tokenId, newPosition) => {
     try {
       const token = tokens.find(t => t.id === tokenId);
+      if (!token) return;
+      
+      const originalPos = token.position;
+      
       // TODO: Track beforePos for undo/redo (future enhancement)
       // Apply snap if enabled
       let finalPos = newPosition;
@@ -1236,6 +1571,40 @@ function MapCanvas({
       }
       // Clamp to map bounds
       finalPos = clampTokenCenter(finalPos, token);
+      
+      // Check boundary collisions if boundaries are enabled
+      if (boundariesEnabled && boundaries && boundaries.length > 0) {
+        const gridSize = map?.gridSize || 50;
+        const gridOffset = {
+          x: map?.gridOffsetX || 0,
+          y: map?.gridOffsetY || 0
+        };
+        
+        // Check if the move crosses any boundaries
+        const crossesBoundary = boundaryService.checkBoundaryCrossing(
+          originalPos,
+          finalPos,
+          boundaries,
+          gridSize,
+          gridOffset
+        );
+        
+        if (crossesBoundary) {
+          // Reject the move - keep token at original position
+          console.log(`Token ${tokenId} movement blocked by boundary`);
+          
+          // Visual feedback: Flash the token red briefly
+          setBoundaryCollisionToken(tokenId);
+          setTimeout(() => {
+            setBoundaryCollisionToken(null);
+          }, 300);
+          
+          // Update local state to snap back to original position
+          updateToken(tokenId, { position: originalPos });
+          return; // Don't save the new position to Firestore
+        }
+      }
+      
       await tokenService.updateTokenPosition(firestore, campaignId, map.id, tokenId, finalPos);
       updateToken(tokenId, { position: finalPos });
       // Undo/redo disabled for token moves (future enhancement)
@@ -1254,7 +1623,7 @@ function MapCanvas({
     } catch (err) {
       console.error('Error updating token position:', err);
     }
-  }, [tokens, snapToGrid, map?.gridSize, map?.gridOffsetX, map?.gridOffsetY, map?.id, map?.gridEnabled, clampTokenCenter, firestore, campaignId, updateToken, fogOfWarEnabled, fogData?.enabled]);
+  }, [tokens, snapToGrid, map?.gridSize, map?.gridOffsetX, map?.gridOffsetY, map?.id, map?.gridEnabled, clampTokenCenter, firestore, campaignId, updateToken, fogOfWarEnabled, fogData?.enabled, boundariesEnabled, boundaries]);
 
   // Handle token selection
   const handleTokenClick = useCallback((tokenId, e) => {
@@ -1449,6 +1818,35 @@ function MapCanvas({
         onFogBrushSizeChange={onFogBrushSizeChange}
         fogBrushMode={fogBrushMode}
         onFogBrushModeChange={onFogBrushModeChange}
+        fogGridVisible={fogGridVisible}
+        onFogGridVisibleChange={onFogGridVisibleChange}
+        fogGridColor={fogGridColor}
+        onFogGridColorChange={onFogGridColorChange}
+        fogOpacity={fogOpacity}
+        onFogOpacityChange={onFogOpacityChange}
+        // Boundary-related props
+        boundariesEnabled={boundariesEnabled}
+        onToggleBoundariesEnabled={onToggleBoundariesEnabled}
+        boundariesVisible={boundariesVisible}
+        onToggleBoundariesVisible={onToggleBoundariesVisible}
+        showBoundaryPanel={showBoundaryPanel}
+        onOpenBoundaryPanel={onOpenBoundaryPanel}
+        onCloseBoundaryPanel={onCloseBoundaryPanel}
+        boundaryMode={boundaryMode}
+        onBoundaryModeChange={onBoundaryModeChange}
+        boundarySnapToGrid={boundarySnapToGrid}
+        onBoundarySnapToGridToggle={onBoundarySnapToGridToggle}
+        boundaryBrushSize={boundaryBrushSize}
+        onBoundaryBrushSizeChange={onBoundaryBrushSizeChange}
+        boundaryBrushMode={boundaryBrushMode}
+        onBoundaryBrushModeChange={onBoundaryBrushModeChange}
+        boundaryLineColor={boundaryLineColor}
+        onBoundaryLineColorChange={onBoundaryLineColorChange}
+        boundaryGridColor={boundaryGridColor}
+        onBoundaryGridColorChange={onBoundaryGridColorChange}
+        boundaryOpacity={boundaryOpacity}
+        onBoundaryOpacityChange={onBoundaryOpacityChange}
+        onClearAllBoundaries={onClearAllBoundaries}
         onShapeColorChange={setShapeColor}
         onShapeOpacityChange={setShapeOpacity}
         onShapePersistentToggle={() => setShapePersistent(prev => !prev)}
@@ -1668,7 +2066,10 @@ function MapCanvas({
         y={stagePos.y}
         onWheel={handleWheel}
         onDragEnd={handleDragEnd}
-        onDragStart={() => setIsDragging(true)}
+        onDragStart={() => {
+          console.log('[DRAG START] Camera drag started');
+          setIsDragging(true);
+        }}
         onClick={handleStageClick}
         onTap={handleStageClick}
         onMouseDown={handleMouseDown}
@@ -1688,7 +2089,7 @@ function MapCanvas({
             });
           }
         }}
-        draggable={activeTool === 'pointer' && !fogBrushActive}
+        draggable={activeTool === 'pointer' && boundaryMode === null && !isFogBrushing}
         style={{
           cursor: fogBrushActive ? (fogBrushMode === 'reveal' ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${Math.min(fogBrushSize * 8, 48)}' height='${Math.min(fogBrushSize * 8, 48)}' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10' opacity='0.5'/%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") ${Math.min(fogBrushSize * 4, 24)} ${Math.min(fogBrushSize * 4, 24)}, crosshair` : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${Math.min(fogBrushSize * 8, 48)}' height='${Math.min(fogBrushSize * 8, 48)}' viewBox='0 0 24 24' fill='none' stroke='%2366B3FF' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10' opacity='0.5'/%3E%3Cpath d='M3 3l18 18M21 3L3 21'/%3E%3C/svg%3E") ${Math.min(fogBrushSize * 4, 24)} ${Math.min(fogBrushSize * 4, 24)}, crosshair`) :
             activeTool === 'pointer' ? (isDragging ? 'grabbing' : 'grab') :
@@ -1753,6 +2154,98 @@ function MapCanvas({
           />
         )}
 
+        {/* Boundary Layer (DM only, when visible) */}
+        {isDM && boundariesEnabled && boundariesVisible && (
+          <Layer>
+            {/* Rendered line boundaries */}
+            {boundaries.filter(b => b.type === 'line').map(boundary => (
+              <Line
+                key={boundary.id}
+                points={[boundary.start.x, boundary.start.y, boundary.end.x, boundary.end.y]}
+                stroke={boundaryLineColor}
+                strokeWidth={3}
+                dash={[10, 5]}
+                opacity={boundaryOpacity}
+                listening={false}
+                shadowColor={boundaryLineColor}
+                shadowBlur={8}
+                shadowOpacity={0.4}
+              />
+            ))}
+
+            {/* Rendered painted boundaries */}
+            {boundaries.filter(b => b.type === 'painted').map(boundary => {
+              const gridSize = gMap.gridSize || 50;
+              const offsetX = gMap.gridOffsetX || 0;
+              const offsetY = gMap.gridOffsetY || 0;
+              // Convert hex color to rgba for fill
+              const hexToRgba = (hex, alpha) => {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+              };
+              return boundary.cells.map((cell, idx) => (
+                <Rect
+                  key={`${boundary.id}-${idx}`}
+                  x={cell.gridX * gridSize + offsetX}
+                  y={cell.gridY * gridSize + offsetY}
+                  width={gridSize}
+                  height={gridSize}
+                  fill={hexToRgba(boundaryGridColor, 0.2)}
+                  stroke={boundaryGridColor}
+                  strokeWidth={2}
+                  listening={false}
+                  opacity={boundaryOpacity}
+                />
+              ));
+            })}
+
+            {/* Preview line while drawing */}
+            {isBoundaryDrawing && boundaryStart && boundaryPreview && (
+              <Line
+                points={[boundaryStart.x, boundaryStart.y, boundaryPreview.x, boundaryPreview.y]}
+                stroke={boundaryLineColor}
+                strokeWidth={3}
+                dash={[10, 5]}
+                opacity={0.9}
+                listening={false}
+                shadowColor={boundaryLineColor}
+                shadowBlur={10}
+                shadowOpacity={0.6}
+              />
+            )}
+
+            {/* Preview painted cells while painting */}
+            {isPaintingBoundary && paintedCellsBuffer.length > 0 && (() => {
+              const gridSize = gMap.gridSize || 50;
+              const offsetX = gMap.gridOffsetX || 0;
+              const offsetY = gMap.gridOffsetY || 0;
+              // Convert hex color to rgba for preview
+              const hexToRgba = (hex, alpha) => {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+              };
+              return paintedCellsBuffer.map((cell, idx) => (
+                <Rect
+                  key={`preview-${idx}`}
+                  x={cell.gridX * gridSize + offsetX}
+                  y={cell.gridY * gridSize + offsetY}
+                  width={gridSize}
+                  height={gridSize}
+                  fill={boundaryBrushMode === 'paint' ? hexToRgba(boundaryGridColor, 0.4) : "rgba(0, 255, 0, 0.3)"}
+                  stroke={boundaryBrushMode === 'paint' ? boundaryGridColor : "#00FF00"}
+                  strokeWidth={2}
+                  listening={false}
+                  opacity={0.8}
+                />
+              ));
+            })()}
+          </Layer>
+        )}
+
         {/* Lighting Layer - renders BEFORE tokens so lights don't overlap token ghosts */}
         {lights && globalLighting && (
           <LightingLayer
@@ -1802,6 +2295,8 @@ function MapCanvas({
                 onDragMovePreview={(data) => setTokenSnapHighlight(data)}
                 listening={activeTool === 'pointer'}
                 showGhost={false}
+                boundaryCollision={boundaryCollisionToken === token.id}
+                boundaries={boundariesEnabled ? boundaries : []}
                 onContextMenu={(evt) => {
                   evt.cancelBubble = true;
                   const raw = evt.evt;
@@ -1984,11 +2479,11 @@ function MapCanvas({
                         width={gMap.gridSize}
                         height={gMap.gridSize}
                         fill="black"
-                        opacity={0.35}
-                        stroke="#ff6b6b"
-                        strokeWidth={1.5}
+                        opacity={fogOpacity}
+                        stroke={fogGridVisible ? fogGridColor : '#ff6b6b'}
+                        strokeWidth={fogGridVisible ? 1 : 1.5}
                         listening={false}
-                        shadowColor="#ff0000"
+                        shadowColor={fogGridVisible ? fogGridColor : '#ff0000'}
                         shadowBlur={2}
                         shadowOpacity={0.5}
                       />
@@ -2023,7 +2518,7 @@ function MapCanvas({
               )}
             </Layer>
           );
-        })()}  
+        })()}
 
         {/* Drawing & Effects Layer - Shapes, Drawings, Rulers, Pings */}
         {(layerVisibility.shapes || layerVisibility.pings) && <Layer>
@@ -2561,6 +3056,18 @@ function MapCanvas({
             </div>
             {isDM && (
               <>
+                <div className="shortcut-item">
+                  <kbd>B</kbd>
+                  <span>Toggle Boundary Panel</span>
+                </div>
+                <div className="shortcut-item">
+                  <kbd>L</kbd>
+                  <span>Boundary Line Mode</span>
+                </div>
+                <div className="shortcut-item">
+                  <kbd>P</kbd>
+                  <span>Boundary Paint Mode</span>
+                </div>
                 <div className="shortcut-item">
                   <kbd>Ctrl + Z</kbd>
                   <span>Undo</span>
