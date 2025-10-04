@@ -266,6 +266,8 @@ const MapToolbar = ({
             if (showBoundaryPanel) {
                 onCloseBoundaryPanel?.();
             }
+            // Reset boundary mode when opening fog panel
+            if (onBoundaryModeChange) onBoundaryModeChange(null);
             onOpenFogPanel?.();
         }
     };
@@ -274,6 +276,8 @@ const MapToolbar = ({
         // Toggle boundary panel
         if (showBoundaryPanel) {
             onCloseBoundaryPanel?.();
+            // Reset boundary mode when closing boundary panel
+            if (onBoundaryModeChange) onBoundaryModeChange(null);
         } else {
             // Close other panels if open
             if (showSettings) {
@@ -285,6 +289,8 @@ const MapToolbar = ({
             if (showFogPanel) {
                 onCloseFogPanel?.();
             }
+            // Reset boundary mode when opening boundary panel (to start fresh)
+            if (onBoundaryModeChange) onBoundaryModeChange(null);
             onOpenBoundaryPanel?.();
         }
     };
@@ -304,6 +310,8 @@ const MapToolbar = ({
             if (showBoundaryPanel) {
                 onCloseBoundaryPanel?.();
             }
+            // Reset boundary mode when opening grid config
+            if (onBoundaryModeChange) onBoundaryModeChange(null);
             setShowGridConfig(true);
         }
     };
