@@ -113,15 +113,15 @@ Instead of embedding the SessionSettings modal component, integrated the session
 **Priority**: 🟠 High (Feature enhancement for campaign customization)
 **Date Found**: October 5, 2025
 **Date Fixed**: October 5, 2025
-**Files**: CampaignSettings.js, CampaignSettings.css, storage (Firebase)
+**Files**: CampaignSettings.js, CampaignSettings.css, CampaignDashboard.js, CampaignDashboard.css, CampaignBrowser.js, CampaignBrowser.css, storage.rules
 
 **Problem**: Players could not customize campaign appearance with a header photo. Campaign cards lacked visual distinction.
 
 **Requirements Implemented**:
 1. ✅ Added campaign photo upload option in Campaign Settings (General Settings section)
 2. ✅ All players (not just DM) can upload campaign header photo
-3. ⏳ Display photo in Campaign Dashboard header (pending implementation)
-4. ⏳ Display photo in campaign cards on Browse Campaigns page (pending implementation)
+3. ✅ Display photo in Campaign Dashboard header
+4. ✅ Display photo in campaign cards on Browse Campaigns page
 5. ✅ Stored in Firebase Storage under `/campaigns/{campaignId}/header.jpg`
 
 **Tasks Completed**:
@@ -134,15 +134,18 @@ Instead of embedding the SessionSettings modal component, integrated the session
 - [x] Added "Remove Photo" button
 - [x] Added upload/remove handlers with error handling
 - [x] Added CSS styling for photo preview and actions
+- [x] Display header photo as background in CampaignDashboard with fade effect
+- [x] Display thumbnail in CampaignBrowser cards with fade effect
+- [x] Updated Storage security rules to allow campaign members to upload
+- [x] Deployed Storage rules to Firebase
 - [x] Tested build: Compiled successfully
 
-**Still Needed**:
-- [ ] Display header photo in CampaignDashboard
-- [ ] Display thumbnail in CampaignBrowser campaign cards
-- [ ] Update Storage security rules to allow campaign members to upload
+**Optional Future Enhancements**:
 - [ ] Add image resize/optimization (max 1920x400px, compress to <500KB)
+- [ ] Add cropping tool for photo uploads
+- [ ] Add photo library/templates
 
-**Goal**: ✅ Campaign photo upload working in settings. Next: Display in dashboard and browse page.
+**Goal**: ✅ Campaign photo upload and display fully implemented!
 
 ---
 
