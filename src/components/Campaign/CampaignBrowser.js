@@ -5,6 +5,7 @@ import campaignRequestService from '../../services/campaign/campaignRequestServi
 import { useAuth } from '../../hooks/useAuth';
 import { useFirebase } from '../../services/FirebaseContext';
 import { CampaignContext } from '../../contexts/CampaignContext';
+import UserProfileModal from '../UserProfileModal/UserProfileModal';
 import './CampaignBrowser.css';
 
 const CampaignBrowser = () => {
@@ -25,7 +26,8 @@ const CampaignBrowser = () => {
     message: ''
   });
   const [pendingRequests, setPendingRequests] = useState({});
-  
+  const [selectedUserId, setSelectedUserId] = useState(null);
+
   const { firestore } = useFirebase();
 
   const { user } = useAuth();
@@ -312,7 +314,16 @@ const CampaignBrowser = () => {
                       <strong>Players:</strong> {formatPlayerCount(campaign.currentPlayers, campaign.maxPlayers)}
                     </div>
                     <div className="detail-item">
-                      <strong>DM:</strong> {campaign.dmName || 'Unknown'}
+                      <strong>DM:</strong>{' '}
+                      <span
+                        className="clickable-username"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUserId(campaign.dmId);
+                        }}
+                      >
+                        {campaign.dmName || 'Unknown'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -385,7 +396,16 @@ const CampaignBrowser = () => {
                       <strong>Players:</strong> {formatPlayerCount(campaign.currentPlayers, campaign.maxPlayers)}
                     </div>
                     <div className="detail-item">
-                      <strong>DM:</strong> {campaign.dmName || 'Unknown'}
+                      <strong>DM:</strong>{' '}
+                      <span
+                        className="clickable-username"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUserId(campaign.dmId);
+                        }}
+                      >
+                        {campaign.dmName || 'Unknown'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -581,6 +601,15 @@ const CampaignBrowser = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* User Profile Modal */}
+      {selectedUserId && (
+        <UserProfileModal
+          userId={selectedUserId}
+          isOpen={!!selectedUserId}
+          onClose={() => setSelectedUserId(null)}
+        />
       )}
     </div>
   );
