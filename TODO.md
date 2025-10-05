@@ -165,32 +165,51 @@ Instead of embedding the SessionSettings modal component, integrated the session
 ---
 
 ### Campaign Cards - Equal Size & Preview Page 🎨
-**Status**: ⏳ Not Started
+**Status**: ✅ Complete
 **Priority**: 🟠 High (UX improvement for browse experience)
 **Date Found**: October 5, 2025
-**Files**: CampaignBrowser.js, CampaignBrowser.css, App.js (routing)
+**Date Fixed**: October 5, 2025
+**Files**: CampaignBrowser.js, CampaignBrowser.css, CampaignPreview.js, CampaignPreview.css, AppRouter.js
 
 **Problem**: Campaign cards have varying heights based on content, creating an unbalanced grid layout. No preview page before joining.
 
 **Requirements**:
-1. Standardize all campaign card heights (based on full bio + 2 tag rows)
-2. Create Campaign Preview page with read-only overview
-3. Clicking campaign card title or "Join" button opens preview page
-4. Preview page shows Campaign Overview without action buttons
+1. ✅ Standardize all campaign card heights (based on full bio + 2 tag rows)
+2. ✅ Create Campaign Preview page with read-only overview
+3. ✅ Clicking campaign card opens preview page (or dashboard for user's campaigns)
+4. ✅ Preview page shows Campaign Overview with join functionality
 
-**Tasks**:
-- [ ] Set fixed height for `.campaign-card` in CSS
-- [ ] Add text overflow handling (ellipsis for long descriptions)
-- [ ] Create new `CampaignPreview.js` component
-- [ ] Add route `/campaigns/:campaignId/preview` in App.js
-- [ ] Display campaign overview in preview (name, description, DM, members, schedule)
-- [ ] Remove action buttons from preview page
-- [ ] Add "Join Campaign" button to preview page (if not already member)
-- [ ] Update campaign card onClick to navigate to preview
-- [ ] Update "Join" button to navigate to preview
-- [ ] Test responsive layout
+**Tasks Completed**:
+- [x] Set fixed height (420px) for `.campaign-card` with flexbox layout
+- [x] Added text overflow handling with 3-line description clamp
+- [x] Created new `CampaignPreview.js` component (320 lines)
+- [x] Created `CampaignPreview.css` with responsive design (300 lines)
+- [x] Added route `/campaigns/:campaignId/preview` in AppRouter.js
+- [x] Display full campaign overview in preview:
+  - Campaign photo header with gradient fade
+  - Name, description, DM info
+  - Player list with profile pictures
+  - Schedule display
+  - Tag badges
+  - System badge
+- [x] Added "Join Campaign" modal in preview page (if not member)
+- [x] Added "Open Campaign Dashboard" button for members
+- [x] Updated campaign cards to be clickable:
+  - User's campaigns: navigate to dashboard
+  - Other campaigns: navigate to preview page
+- [x] Changed "Join Campaign" button to "View Campaign" in browser
+- [x] Added stopPropagation to prevent double-navigation
+- [x] Tested responsive layout with mobile breakpoints
 
-**Goal**: Consistent campaign card grid and preview page for better browsing UX.
+**Implementation Details**:
+- Cards now use `cursor: pointer` and onClick handlers
+- Description uses `-webkit-line-clamp: 3` for 3-line max
+- Campaign actions pushed to bottom with `margin-top: auto`
+- Preview page matches campaign browser badge styling
+- Join modal prevents joining without character selection
+- Back navigation to campaign browser included
+
+**Goal**: ✅ Consistent campaign card grid and preview page for better browsing UX.
 
 ---
 
