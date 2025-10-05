@@ -165,12 +165,14 @@ export default function FriendsListModal({ isOpen, onClose }) {
               <h3>Search Results</h3>
               {searchResults.map(result => (
                 <div key={result.id} className="user-item">
-                  <img
-                    src={result.profilePictureURL || '/logo192.png'}
-                    alt={result.username}
-                    className="user-avatar"
-                  />
-                  <span className="user-name">{result.username}</span>
+                  <div className="user-info" onClick={() => handleViewProfile(result.id)}>
+                    <img
+                      src={result.profilePictureURL || '/logo192.png'}
+                      alt={result.username}
+                      className="user-avatar"
+                    />
+                    <span className="user-name clickable-username">{result.username}</span>
+                  </div>
                   <button
                     className="add-friend-btn"
                     onClick={() => handleAddFriend(result.id)}

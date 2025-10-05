@@ -35,7 +35,7 @@ export function useCampaignMembers(firestore, campaignId) {
                   const profileData = profileDoc.data();
                   memberData.displayName = profileData.displayName || 'Unknown User';
                   memberData.username = profileData.username || null;
-                  memberData.photoURL = profileData.photoURL || null;
+                  memberData.photoURL = profileData.profilePictureURL || profileData.photoURL || null;
                   memberData.email = profileData.email || null;
                 } else {
                   memberData.displayName = 'Unknown User';

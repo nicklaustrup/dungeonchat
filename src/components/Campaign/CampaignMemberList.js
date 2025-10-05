@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useFirebase } from '../../services/FirebaseContext';
 import { updateCampaignMember, removeCampaignMember } from '../../services/campaign/campaignService';
-import { useCampaignCharacters, invalidateCampaignCharacters } from '../../services/cache';
+import { useCampaignCharacters, invalidateCampaignCharacters, useCachedUserProfileData } from '../../services/cache';
 import UserProfileModal from '../UserProfileModal/UserProfileModal';
 import './CampaignMemberList.css';
 
@@ -68,6 +68,166 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
     return characters.find(char => char.userId === userId);
   };
 
+  // Component to render member with cached profile data
+  const MemberItem = ({ member }) => {
+    const { profileData, loading: profileLoading } = useCachedUserProfileData(member.userId);
+    const memberCharacter = getMemberCharacter(member.userId);
+    
+    // Debug logging (can be removed after verification)
+    if (profileData && !profileLoading) {
+      console.log('Profile data for', member.userId, ':', {
+        profilePictureURL: profileData.profilePictureURL,
+        photoURL: profileData.photoURL,
+        memberPhotoURL: member.photoURL,
+        username: profileData.username,
+        displayName: profileData.displayName
+      });
+    }
+    
+    const profilePictureURL = profileData?.profilePictureURL || profileData?.photoURL || member.photoURL;
+    const displayName = profileData?.username || profileData?.displayName || member.username || member.displayName || 'Unknown User';
+
+    return (
+      <div key={member.userId} className="member-item">
+        <div className="member-info">
+          <div className="member-avatar">
+            {profilePictureURL ? (
+              <img src={profilePictureURL} alt={displayName} className="member-avatar-img" />
+            ) : (
+              <span className="role-icon" title={member.role}>
+                {getRoleIcon(member.role)}
+              </span>
+            )}
+          </div>
+          <div className="member-details">
+            <div className="member-name">
+              <span
+                className="clickable-username"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedUserId(member.userId);
+                }}
+              >
+                {member.role === 'dm'
+                  ? displayName
+                  : (memberCharacter?.name || member.characterName || displayName)
+                }
+              </span>
+              {member.role === 'dm' && <span className="dm-badge">DM</span>}
+            </div>
+            {member.role !== 'dm' && (
+              <div className="character-info">
+                {memberCharacter ? (
+                  <div className="character-details">
+                    <div className="character-basic">
+                      <span className="character-label">Character:</span> 
+                      <span className="character-name">{memberCharacter.name}</span>
+                      <span className="character-class-race">
+                        Level {memberCharacter.level} {memberCharacter.race} {memberCharacter.class}
+                      </span>
+                    </div>
+                    <div className="character-stats">
+                      {memberCharacter.hitPoints && (
+                        <span className="stat-item">
+                          HP: {memberCharacter.hitPoints.current || 0}/{memberCharacter.hitPoints.maximum || 0}
+                        </span>
+                      )}
+                      {memberCharacter.armorClass !== undefined && (
+                        <span className="stat-item">AC: {memberCharacter.armorClass}</span>
+                      )}
+                      {memberCharacter.experiencePoints !== undefined && (
+                        <span className="stat-item">XP: {memberCharacter.experiencePoints.toLocaleString()}</span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="no-character-sheet">
+                    <span className="no-character">📝 No character sheet created</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="member-meta">
+              <span 
+                className="member-status-indicator"
+                style={{ backgroundColor: getStatusColor(member.status) }}
+                title={member.status}
+              >
+                {member.status}
+              </span>
+              {member.joinedAt && (
+                <span className="joined-date">
+                  Joined {member.joinedAt.toDate().toLocaleDateString()}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {isUserDM && member.role !== 'dm' && (
+          <div className="member-actions">
+            {member.status === 'pending' && (
+              <>
+                <button
+                  onClick={() => handleMemberAction(member.userId, 'updateStatus', 'active')}
+                  className="btn btn-sm btn-success"
+                  disabled={loading}
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => handleMemberAction(member.userId, 'remove')}
+                  className="btn btn-sm btn-danger"
+                  disabled={loading}
+                >
+                  Reject
+                </button>
+              </>
+            )}
+            
+            {member.status === 'active' && (
+              <>
+                <button
+                  onClick={() => handleMemberAction(member.userId, 'updateStatus', 'banned')}
+                  className="btn btn-sm btn-warning"
+                  disabled={loading}
+                >
+                  Ban
+                </button>
+                <button
+                  onClick={() => handleMemberAction(member.userId, 'remove')}
+                  className="btn btn-sm btn-danger"
+                  disabled={loading}
+                >
+                  Remove
+                </button>
+              </>
+            )}
+
+            {member.status === 'banned' && (
+              <>
+                <button
+                  onClick={() => handleMemberAction(member.userId, 'updateStatus', 'active')}
+                  className="btn btn-sm btn-success"
+                  disabled={loading}
+                >
+                  Unban
+                </button>
+                <button
+                  onClick={() => handleMemberAction(member.userId, 'remove')}
+                  className="btn btn-sm btn-danger"
+                  disabled={loading}
+                >
+                  Remove
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Sort members: DM first, then by role, then by display name
   const sortedMembers = [...members].sort((a, b) => {
     if (a.role === 'dm') return -1;
@@ -103,142 +263,9 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
       )}
 
       <div className="member-list">
-        {sortedMembers.map(member => {
-          const memberCharacter = getMemberCharacter(member.userId);
-          
-          return (
-            <div key={member.userId} className="member-item">
-            <div className="member-info">
-              <div className="member-avatar">
-                <span className="role-icon" title={member.role}>
-                  {getRoleIcon(member.role)}
-                </span>
-              </div>
-              <div className="member-details">
-                <div className="member-name">
-                  <span
-                    className="clickable-username"
-                    onClick={() => setSelectedUserId(member.userId)}
-                  >
-                    {member.role === 'dm'
-                      ? (member.username || member.displayName || 'Unknown DM')
-                      : (memberCharacter?.name || member.characterName || member.username || member.displayName || 'Unknown Player')
-                    }
-                  </span>
-                  {member.role === 'dm' && <span className="dm-badge">DM</span>}
-                </div>
-                {member.role !== 'dm' && (
-                  <div className="character-info">
-                    {memberCharacter ? (
-                      <div className="character-details">
-                        <div className="character-basic">
-                          <span className="character-label">Character:</span> 
-                          <span className="character-name">{memberCharacter.name}</span>
-                          <span className="character-class-race">
-                            Level {memberCharacter.level} {memberCharacter.race} {memberCharacter.class}
-                          </span>
-                        </div>
-                        <div className="character-stats">
-                          {memberCharacter.hitPoints && (
-                            <span className="stat-item">
-                              HP: {memberCharacter.hitPoints.current || 0}/{memberCharacter.hitPoints.maximum || 0}
-                            </span>
-                          )}
-                          {memberCharacter.armorClass !== undefined && (
-                            <span className="stat-item">AC: {memberCharacter.armorClass}</span>
-                          )}
-                          {memberCharacter.experiencePoints !== undefined && (
-                            <span className="stat-item">XP: {memberCharacter.experiencePoints.toLocaleString()}</span>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="no-character-sheet">
-                        <span className="no-character">📝 No character sheet created</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                <div className="member-meta">
-                  <span 
-                    className="member-status-indicator"
-                    style={{ backgroundColor: getStatusColor(member.status) }}
-                    title={member.status}
-                  >
-                    {member.status}
-                  </span>
-                  {member.joinedAt && (
-                    <span className="joined-date">
-                      Joined {member.joinedAt.toDate().toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {isUserDM && member.role !== 'dm' && (
-              <div className="member-actions">
-                {member.status === 'pending' && (
-                  <>
-                    <button
-                      onClick={() => handleMemberAction(member.userId, 'updateStatus', 'active')}
-                      className="btn btn-sm btn-success"
-                      disabled={loading}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => handleMemberAction(member.userId, 'remove')}
-                      className="btn btn-sm btn-danger"
-                      disabled={loading}
-                    >
-                      Reject
-                    </button>
-                  </>
-                )}
-                
-                {member.status === 'active' && (
-                  <>
-                    <button
-                      onClick={() => handleMemberAction(member.userId, 'updateStatus', 'banned')}
-                      className="btn btn-sm btn-warning"
-                      disabled={loading}
-                    >
-                      Ban
-                    </button>
-                    <button
-                      onClick={() => handleMemberAction(member.userId, 'remove')}
-                      className="btn btn-sm btn-danger"
-                      disabled={loading}
-                    >
-                      Remove
-                    </button>
-                  </>
-                )}
-
-                {member.status === 'banned' && (
-                  <>
-                    <button
-                      onClick={() => handleMemberAction(member.userId, 'updateStatus', 'active')}
-                      className="btn btn-sm btn-success"
-                      disabled={loading}
-                    >
-                      Unban
-                    </button>
-                    <button
-                      onClick={() => handleMemberAction(member.userId, 'remove')}
-                      className="btn btn-sm btn-danger"
-                      disabled={loading}
-                    >
-                      Remove
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        );
-        })}
+        {sortedMembers.map(member => (
+          <MemberItem key={member.userId} member={member} />
+        ))}
 
         {members.length === 0 && (
           <div className="empty-state">
