@@ -29,6 +29,7 @@
 import firestoreCacheImport from './FirestoreCache';
 import { useCachedDocument, useCachedQuery } from './useCachedDocument';
 import { useCachedUserProfile } from './useCachedUserProfile';
+import { useCachedUserProfileData } from './useCachedUserProfileData';
 import {
   useJoinedCampaigns,
   useCreatedCampaigns,
@@ -161,6 +162,7 @@ const cacheExports = {
   useCachedDocument,
   useCachedQuery,
   useCachedUserProfile,
+  useCachedUserProfileData,
   useJoinedCampaigns,
   useCreatedCampaigns,
   useAllUserCampaigns,
