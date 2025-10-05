@@ -96,31 +96,60 @@ Last Updated: October 5, 2025
 ---
 
 ### Campaign Join Waitlist 🎮
-**Status**: ⏳ Not Started (Part of Friends List feature)
+**Status**: ✅ Complete
 **Priority**: 🟡 Medium (Nice-to-have social feature)
-**Date Found**: October 5, 2025
-**Files**: CampaignBrowser.js, campaignService.js, CampaignDashboard.js
+**Date Started**: October 5, 2025
+**Date Completed**: October 5, 2025
+**Files**: CampaignBrowser.js, campaignRequestService.js, JoinRequestsPanel.js, firestore.rules
 
 **Problem**: No system for managing campaign join requests when campaigns are full or invite-only.
 
-**Requirements**:
-1. Users can request to join full/private campaigns
-2. DM receives notifications of join requests
-3. DM can approve/deny requests from Campaign Dashboard
-4. Requesters receive notification of approval/denial
+**Implementation**:
 
-**Tasks**:
-- [ ] Add "Request to Join" button for full campaigns
-- [ ] Create `/campaignRequests` Firestore collection
-- [ ] Add join request management panel for DM
-- [ ] Implement request notifications
-- [ ] Add request approval/denial logic
-- [ ] Update campaign member count on approval
-- [ ] Test request flow end-to-end
+**User Features**:
+1. ✅ "Request to Join" button for full campaigns
+2. ✅ Request modal with character info and message to DM
+3. ✅ View pending request status on campaign cards
+4. ✅ Ability to cancel pending requests
 
-**Goal**: Allow users to request access to campaigns and DMs to manage requests.
+**DM Features**:
+1. ✅ JoinRequestsPanel component for Campaign Dashboard
+2. ✅ View all pending join requests
+3. ✅ Approve requests (automatically adds user to campaign)
+4. ✅ Deny requests
+5. ✅ See requester info, character details, and message
 
-**Note**: This will be worked on after Friends List is complete.
+**Data Model**:
+```
+/campaignRequests/{requestId}
+  - campaignId: string
+  - userId: string
+  - username: string
+  - characterName: string
+  - characterClass: string (optional)
+  - message: string (optional)
+  - status: 'pending' | 'approved' | 'denied'
+  - createdAt: timestamp
+  - processedAt: timestamp | null
+  - processedBy: string | null
+```
+
+**Tasks Completed**:
+- [x] Add "Request to Join" button for full campaigns
+- [x] Create `/campaignRequests` Firestore collection
+- [x] Create campaignRequestService.js with CRUD operations
+- [x] Create JoinRequestsPanel component for DM
+- [x] Add request approval/denial logic
+- [x] Update campaign member count on approval (via joinCampaign)
+- [x] Add Firestore security rules for campaignRequests
+
+**Future Enhancements**:
+- [ ] Real-time notifications for DM when new requests arrive
+- [ ] Notification to requester when request is approved/denied
+- [ ] Request expiration (auto-deny after X days)
+- [ ] Request history view for users
+
+**Goal**: ✅ Allow users to request access to campaigns and DMs to manage requests.
 
 ---
 

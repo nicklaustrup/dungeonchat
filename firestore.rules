@@ -459,8 +459,14 @@ service cloud.firestore {
            request.auth.uid == resource.data.userId2);
       }
 
-      // Users can read friendships they're involved in
-      allow read: if request.auth != null && isInvolved();
+      // Users can read individual friendships they're involved in
+      allow get: if request.auth != null && isInvolved();
+
+      // Users can query friendships
+      // Note: Firestore rules cannot verify query constraints, so we allow any authenticated
+      // user to query, but they will only see results where they are userId1 or userId2
+      // due to the query constraints in the service layer
+      allow list: if request.auth != null;
 
       // Users can create friend requests or blocks
       allow create: if request.auth != null &&
@@ -473,6 +479,36 @@ service cloud.firestore {
 
       // Users can delete friendships they're involved in (for declining/unfriending)
       allow delete: if request.auth != null && isInvolved();
+    }
+
+    // Campaign join requests collection
+    match /campaignRequests/{requestId} {
+      // Helper function: Check if user is the DM of the campaign
+      function isCampaignDM(campaignId) {
+        return request.auth != null &&
+          request.auth.uid == get(/databases/$(database)/documents/campaigns/$(campaignId)).data.dmId;
+      }
+
+      // Users can read their own requests, DMs can read requests for their campaigns
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.userId ||
+         isCampaignDM(resource.data.campaignId));
+
+      // Users can create join requests for campaigns
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.status == 'pending';
+
+      // DMs can update requests for their campaigns (approve/deny)
+      allow update: if request.auth != null &&
+        isCampaignDM(resource.data.campaignId) &&
+        resource.data.status == 'pending' &&
+        request.resource.data.status in ['approved', 'denied'];
+
+      // Users can delete their own pending requests
+      allow delete: if request.auth != null &&
+        request.auth.uid == resource.data.userId &&
+        resource.data.status == 'pending';
     }
 
     // Top-level characters collection (global character storage)

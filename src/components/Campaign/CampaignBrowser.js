@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { searchCampaigns, joinCampaign } from '../../services/campaign/campaignService';
+import campaignRequestService from '../../services/campaign/campaignRequestService';
 import { useAuth } from '../../hooks/useAuth';
 import { useFirebase } from '../../services/FirebaseContext';
 import { CampaignContext } from '../../contexts/CampaignContext';
@@ -16,11 +17,14 @@ const CampaignBrowser = () => {
   const [selectedTags, setSelectedTags] = useState([]);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [characterInfo, setCharacterInfo] = useState({
     characterName: '',
-    characterClass: ''
+    characterClass: '',
+    message: ''
   });
+  const [pendingRequests, setPendingRequests] = useState({});
   
   const { firestore } = useFirebase();
 
@@ -131,12 +135,50 @@ const CampaignBrowser = () => {
       setCurrentCampaign(selectedCampaign);
       navigate(`/campaign/${selectedCampaign.id}`);
     } catch (err) {
-      setError('Failed to join campaign');
+      setError(err.message || 'Failed to join campaign');
       console.error('Error joining campaign:', err);
     } finally {
       setLoading(false);
       setShowJoinModal(false);
-      setCharacterInfo({ characterName: '', characterClass: '' });
+      setCharacterInfo({ characterName: '', characterClass: '', message: '' });
+    }
+  };
+
+  const handleRequestToJoin = (campaign) => {
+    setSelectedCampaign(campaign);
+    setShowRequestModal(true);
+  };
+
+  const handleRequestSubmit = async () => {
+    if (!characterInfo.characterName.trim()) {
+      setError('Character name is required');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await campaignRequestService.createJoinRequest(
+        firestore,
+        selectedCampaign.id,
+        user.uid,
+        characterInfo
+      );
+
+      // Update local pending requests state
+      setPendingRequests(prev => ({
+        ...prev,
+        [selectedCampaign.id]: true
+      }));
+
+      setShowRequestModal(false);
+      setCharacterInfo({ characterName: '', characterClass: '', message: '' });
+      setError(null);
+      alert('Join request sent successfully! The DM will review your request.');
+    } catch (err) {
+      setError(err.message || 'Failed to send join request');
+      console.error('Error sending join request:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -362,16 +404,33 @@ const CampaignBrowser = () => {
                   <span className={`status ${campaign.status}`}>
                     {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                   </span>
-                  <button
-                    className="btn btn-primary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/campaigns/${campaign.id}/preview`);
-                    }}
-                    disabled={campaign.currentPlayers >= campaign.maxPlayers}
-                  >
-                    {campaign.currentPlayers >= campaign.maxPlayers ? 'Full' : 'View Campaign'}
-                  </button>
+                  {campaign.currentPlayers >= campaign.maxPlayers ? (
+                    pendingRequests[campaign.id] ? (
+                      <button className="btn btn-secondary" disabled>
+                        Request Pending
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRequestToJoin(campaign);
+                        }}
+                      >
+                        Request to Join
+                      </button>
+                    )
+                  ) : (
+                    <button
+                      className="btn btn-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/campaigns/${campaign.id}/preview`);
+                      }}
+                    >
+                      View Campaign
+                    </button>
+                  )}
                 </div>
               </div>
             ))
@@ -437,6 +496,87 @@ const CampaignBrowser = () => {
                 disabled={loading || !characterInfo.characterName.trim()}
               >
                 {loading ? 'Joining...' : 'Join Campaign'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Request to Join Modal */}
+      {showRequestModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h2>Request to Join {selectedCampaign?.name}</h2>
+              <button
+                className="close-btn"
+                onClick={() => setShowRequestModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <p className="modal-info">
+                This campaign is currently full. You can submit a join request and the DM will be notified.
+              </p>
+
+              <div className="form-group">
+                <label htmlFor="characterName">Character Name *</label>
+                <input
+                  id="characterName"
+                  type="text"
+                  value={characterInfo.characterName}
+                  onChange={(e) => setCharacterInfo(prev => ({
+                    ...prev,
+                    characterName: e.target.value
+                  }))}
+                  placeholder="Enter your character's name"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="characterClass">Character Class (Optional)</label>
+                <input
+                  id="characterClass"
+                  type="text"
+                  value={characterInfo.characterClass}
+                  onChange={(e) => setCharacterInfo(prev => ({
+                    ...prev,
+                    characterClass: e.target.value
+                  }))}
+                  placeholder="e.g., Fighter, Wizard, Rogue"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="message">Message to DM (Optional)</label>
+                <textarea
+                  id="message"
+                  value={characterInfo.message}
+                  onChange={(e) => setCharacterInfo(prev => ({
+                    ...prev,
+                    message: e.target.value
+                  }))}
+                  placeholder="Tell the DM why you'd like to join..."
+                  rows="4"
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowRequestModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleRequestSubmit}
+                disabled={loading || !characterInfo.characterName.trim()}
+              >
+                {loading ? 'Sending...' : 'Send Request'}
               </button>
             </div>
           </div>
