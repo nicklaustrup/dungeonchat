@@ -140,10 +140,10 @@ Instead of embedding the SessionSettings modal component, integrated the session
 - [x] Deployed Storage rules to Firebase
 - [x] Tested build: Compiled successfully
 
-**Issues Found - Need Fixes**:
-- [ ] Only DMs should be able to upload/remove campaign header (currently all members can)
-- [ ] Campaign photo fade in dashboard is too dark (reduce opacity)
-- [ ] Campaign cards in browser are too large - photo should be background of card header, not separate element
+**Issues Found - All Fixed** ✅:
+- [x] Only DMs can upload/remove campaign header (players can view in settings)
+- [x] Campaign photo fade in dashboard reduced from 0.3 to 0.15 opacity
+- [x] Campaign cards now use photo as background of card header with gradient overlay
 
 **Optional Future Enhancements**:
 - [ ] Add image resize/optimization (max 1920x400px, compress to <500KB)
