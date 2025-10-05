@@ -61,9 +61,13 @@ export async function searchUsersByUsername(searchTerm) {
   // Filter results in memory for partial matches
   const matchingUserIds = [];
   snapshot.forEach(doc => {
-    const username = doc.data().username?.toLowerCase() || '';
-    if (username.includes(searchLower)) {
-      matchingUserIds.push(doc.data().userId);
+    const data = doc.data();
+    const username = data.username?.toLowerCase() || '';
+    const userId = data.userId || data.uid;
+
+    // Only add if we have both username and userId
+    if (username.includes(searchLower) && userId) {
+      matchingUserIds.push(userId);
     }
   });
 
@@ -72,6 +76,8 @@ export async function searchUsersByUsername(searchTerm) {
   const userProfiles = [];
 
   for (const userId of limitedUserIds) {
+    if (!userId) continue; // Skip if userId is undefined/null
+
     const userDoc = await getDoc(doc(firestore, 'userProfiles', userId));
     if (userDoc.exists()) {
       userProfiles.push({
