@@ -42,6 +42,13 @@
   font-weight: 600;
 }
 
+.settings-header .btn-secondary {
+  width: auto;
+  min-width: fit-content;
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+}
+
 .settings-description {
   margin: 0;
   padding: 1rem 0;
@@ -88,6 +95,34 @@
 
 .form-group {
   margin-bottom: 1rem;
+}
+
+.form-help-text {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0.5rem 0;
+}
+
+.photo-preview {
+  margin: 0.5rem 0;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.campaign-photo-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .form-group:last-child {

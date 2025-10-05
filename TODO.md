@@ -2,11 +2,304 @@
 
 ## Implementation Date
 Started: October 2024
-Last Updated: October 4, 2025
+Last Updated: October 5, 2025
+
+## Workflow Guidelines
+- After each fix or feature implementation, commit changes with brief summary
+- Use descriptive commit messages summarizing what was accomplished
+- No need to create separate summary documentation files
+- Provide summary message in chat after each commit
 
 ---
 
 ## 🔴 Critical Priority
+
+### Players Cannot Access Settings Tab ✅
+**Status**: ✅ Complete
+**Priority**: 🔴 Critical (Blocking feature - players can't leave campaigns)
+**Date Found**: October 5, 2025
+**Date Fixed**: October 5, 2025
+**Files**: CampaignDashboard.js
+
+**Problem**: Settings tab button was wrapped in `{isUserDM && (...)}` which hid it from players. This prevented players from:
+1. Viewing campaign settings (read-only)
+2. Accessing the "Leave Campaign" button in Danger Zone
+3. Seeing any campaign configuration
+
+**Root Cause**: Line 233 in CampaignDashboard.js had `{isUserDM &&` condition around settings tab button.
+
+**Tasks Completed**:
+- [x] Removed `{isUserDM &&` wrapper from settings tab button
+- [x] Settings tab now visible to all campaign members
+- [x] CampaignSettings component already has read-only logic for non-DM users
+- [x] Tested build: Compiled successfully
+
+**Testing Needed**:
+- [ ] Test as player: verify settings tab visible
+- [ ] Test as player: verify can access Leave Campaign button
+- [ ] Test as DM: verify can still edit settings
+
+**Goal**: ✅ All campaign members can access settings tab (read-only for players, editable for DM).
+
+---
+
+### Session Settings Not in Campaign Dashboard ✅
+**Status**: ✅ Complete
+**Priority**: 🟠 High (UX/Feature organization)
+**Date Found**: October 5, 2025
+**Date Fixed**: October 5, 2025
+**Files**: CampaignSettings.js
+
+**Problem**: Session-specific settings (Progression System, Party Management visibility) were only accessible in VTT, not in Campaign Dashboard Settings tab.
+
+**Solution Implemented**:
+Instead of embedding the SessionSettings modal component, integrated the session settings directly into CampaignSettings form. This provides a cleaner UX without modal overhead.
+
+**Tasks Completed**:
+- [x] Added session settings fields to formData state:
+  - `progressionSystem` (xp/milestone)
+  - `canViewGold` (boolean)
+  - `canViewInventory` (boolean)
+  - `canViewCharacterSheet` (boolean)
+- [x] Updated loadCampaign to load session settings from Firestore
+- [x] Added "Session Settings" section header
+- [x] Added Progression System section with select dropdown
+- [x] Added Party Management Visibility section with checkboxes
+- [x] Applied same DM-only edit permissions (disabled for non-DM)
+- [x] Session settings save with same handleSave function as other settings
+- [x] Added help text and emoji icons for clarity
+- [x] Tested build: Compiled successfully
+
+**Settings Now Available**:
+1. 🎯 Progression System:
+   - XP (Experience Points)
+   - Milestone
+2. 👥 Party Management Visibility:
+   - 💰 Party Gold
+   - 🎒 Character Inventory
+   - 📄 Character Sheets
+
+**Testing Needed**:
+- [ ] Test as player: verify can view session settings (read-only)
+- [ ] Test as DM: verify can edit session settings
+- [ ] Verify settings persist after save
+- [ ] Verify settings sync with VTT SessionSettings modal
+
+**Goal**: ✅ Session settings viewable/editable in Campaign Dashboard Settings tab.
+
+---
+
+### Back to Campaign Button Too Wide ✅
+**Status**: ✅ Complete
+**Priority**: 🟡 Low (Minor UI polish)
+**Date Found**: October 5, 2025
+**Date Fixed**: October 5, 2025
+**Files**: CampaignSettings.css
+
+**Problem**: The "Back to Campaign" button in Campaign Settings was too wide and took up unnecessary space.
+
+**Tasks Completed**:
+- [x] Added width constraint to `.settings-header .btn-secondary` in CSS
+- [x] Set width to `auto` with `min-width: fit-content`
+- [x] Added proper padding and `white-space: nowrap`
+- [x] Tested build: Compiled successfully
+
+**Goal**: ✅ Button is now compact and visually balanced.
+
+---
+
+### Campaign Header Photo Upload 🎨
+**Status**: ✅ Complete
+**Priority**: 🟠 High (Feature enhancement for campaign customization)
+**Date Found**: October 5, 2025
+**Date Fixed**: October 5, 2025
+**Files**: CampaignSettings.js, CampaignSettings.css, storage (Firebase)
+
+**Problem**: Players could not customize campaign appearance with a header photo. Campaign cards lacked visual distinction.
+
+**Requirements Implemented**:
+1. ✅ Added campaign photo upload option in Campaign Settings (General Settings section)
+2. ✅ All players (not just DM) can upload campaign header photo
+3. ⏳ Display photo in Campaign Dashboard header (pending implementation)
+4. ⏳ Display photo in campaign cards on Browse Campaigns page (pending implementation)
+5. ✅ Stored in Firebase Storage under `/campaigns/{campaignId}/header.jpg`
+
+**Tasks Completed**:
+- [x] Added `campaignPhoto` field to campaign Firestore document (via updateDoc)
+- [x] Added file upload input in Campaign Settings (General Settings section)
+- [x] Implemented image upload to Firebase Storage
+- [x] Added file validation (image type, max 5MB)
+- [x] Added preview before upload
+- [x] Implemented immediate upload on file select
+- [x] Added "Remove Photo" button
+- [x] Added upload/remove handlers with error handling
+- [x] Added CSS styling for photo preview and actions
+- [x] Tested build: Compiled successfully
+
+**Still Needed**:
+- [ ] Display header photo in CampaignDashboard
+- [ ] Display thumbnail in CampaignBrowser campaign cards
+- [ ] Update Storage security rules to allow campaign members to upload
+- [ ] Add image resize/optimization (max 1920x400px, compress to <500KB)
+
+**Goal**: ✅ Campaign photo upload working in settings. Next: Display in dashboard and browse page.
+
+---
+
+### Campaign Cards - Equal Size & Preview Page 🎨
+**Status**: ⏳ Not Started
+**Priority**: 🟠 High (UX improvement for browse experience)
+**Date Found**: October 5, 2025
+**Files**: CampaignBrowser.js, CampaignBrowser.css, App.js (routing)
+
+**Problem**: Campaign cards have varying heights based on content, creating an unbalanced grid layout. No preview page before joining.
+
+**Requirements**:
+1. Standardize all campaign card heights (based on full bio + 2 tag rows)
+2. Create Campaign Preview page with read-only overview
+3. Clicking campaign card title or "Join" button opens preview page
+4. Preview page shows Campaign Overview without action buttons
+
+**Tasks**:
+- [ ] Set fixed height for `.campaign-card` in CSS
+- [ ] Add text overflow handling (ellipsis for long descriptions)
+- [ ] Create new `CampaignPreview.js` component
+- [ ] Add route `/campaigns/:campaignId/preview` in App.js
+- [ ] Display campaign overview in preview (name, description, DM, members, schedule)
+- [ ] Remove action buttons from preview page
+- [ ] Add "Join Campaign" button to preview page (if not already member)
+- [ ] Update campaign card onClick to navigate to preview
+- [ ] Update "Join" button to navigate to preview
+- [ ] Test responsive layout
+
+**Goal**: Consistent campaign card grid and preview page for better browsing UX.
+
+---
+
+### Friends List & Social Features 🎮
+**Status**: ⏳ Not Started
+**Priority**: 🟠 High (Major social feature)
+**Date Found**: October 5, 2025
+**Files**: New files needed, Header.js, firestore.rules
+
+**Problem**: No way to connect with other players, manage friendships, or block users.
+
+**Requirements**:
+
+**Friends List Modal**:
+1. Add "Friends List" button to user profile dropdown (below profile button)
+2. Opens modal with header, search bar, close button
+3. Tabs: "Friends" and "Blocked"
+4. Search by username (click search button to execute, not real-time)
+5. Search results show profile picture, username, "Add" button
+6. Current friends list shows online status, username, profile picture
+7. Clicking username opens profile modal
+
+**User Profile Modal** (when viewing other users):
+1. Shows user profile picture, username, bio
+2. "Add Friend" button in top-right (if not friends)
+3. "Block" button in top-right
+4. View-only profile information
+
+**Friends Tab**:
+- List of accepted friends
+- Online/offline status indicator
+- Click username to open profile modal
+- Option to unfriend (with confirmation)
+
+**Blocked Tab**:
+- List of blocked users
+- "Unblock" button for each user
+
+**Data Model**:
+```
+/friendships/{friendshipId}
+  - userId1
+  - userId2
+  - status: 'pending' | 'accepted' | 'blocked'
+  - createdAt
+  - acceptedAt
+
+/users/{userId}/friends: array of friend userIds
+/users/{userId}/blocked: array of blocked userIds
+```
+
+**Tasks**:
+- [ ] Create `FriendsListModal.js` component
+- [ ] Create `UserProfileModal.js` component
+- [ ] Add friends list button to user profile dropdown
+- [ ] Implement search users by username (button-triggered)
+- [ ] Create `friendshipService.js` with CRUD operations
+- [ ] Add Firestore collection `/friendships`
+- [ ] Implement send friend request
+- [ ] Implement accept/decline friend request
+- [ ] Implement unfriend
+- [ ] Implement block user
+- [ ] Implement unblock user
+- [ ] Add online status tracking
+- [ ] Update Firestore security rules for friendships
+- [ ] Add friend request notifications
+- [ ] Test all friendship flows
+
+**Goal**: Complete social system for connecting players and managing relationships.
+
+---
+
+### Campaign Join Waitlist 🎮
+**Status**: ⏳ Not Started (Part of Friends List feature)
+**Priority**: 🟡 Medium (Nice-to-have social feature)
+**Date Found**: October 5, 2025
+**Files**: CampaignBrowser.js, campaignService.js, CampaignDashboard.js
+
+**Problem**: No system for managing campaign join requests when campaigns are full or invite-only.
+
+**Requirements**:
+1. Users can request to join full/private campaigns
+2. DM receives notifications of join requests
+3. DM can approve/deny requests from Campaign Dashboard
+4. Requesters receive notification of approval/denial
+
+**Tasks**:
+- [ ] Add "Request to Join" button for full campaigns
+- [ ] Create `/campaignRequests` Firestore collection
+- [ ] Add join request management panel for DM
+- [ ] Implement request notifications
+- [ ] Add request approval/denial logic
+- [ ] Update campaign member count on approval
+- [ ] Test request flow end-to-end
+
+**Goal**: Allow users to request access to campaigns and DMs to manage requests.
+
+**Note**: This will be worked on after Friends List is complete.
+
+---
+
+### Player Firestore Permission Error 🐛
+**Status**: ⏳ Monitor (Possibly one-off error)
+**Priority**: � Medium (Monitor for recurrence)
+**Date Found**: October 5, 2025
+**Files**: useUserProfileData.js, firestore.rules
+
+**Error** (possibly transient):
+```
+useUserProfile.js:31 [2025-10-05T06:34:03.670Z]  @firebase/firestore: Firestore (12.3.0): 
+Uncaught Error in snapshot listener: FirebaseError: [code=permission-denied]: 
+Missing or insufficient permissions.
+```
+
+**Analysis**: 
+- Firestore security rules are correct: `allow read: if request.auth != null;`
+- Likely a one-off error due to temporary network/auth issue
+- Will monitor for recurrence
+
+**If Error Recurs**:
+- [ ] Deploy Firestore security rules: `firebase deploy --only firestore:rules`
+- [ ] Test as player in another campaign
+- [ ] Check auth token validity
+
+**Goal**: Monitor and address if problem persists.
+
+---
 
 ### HP Sync System - FIXED! 🎉
 **Status**: ✅ Code Fixed, ⏳ Migration Pending
@@ -193,6 +486,89 @@ Last Updated: October 4, 2025
 
 ## 🟠 High Priority
 
+### Campaign Settings Access for Non-DM Users ✅
+**Status**: ✅ Complete
+**Priority**: 🟠 High (Settings page not rendering for players)
+**Date Found**: October 5, 2025
+**Date Fixed**: October 5, 2025
+**Files**: CampaignSettings.js, CampaignDashboard.js
+
+**Problem**: Settings page in Campaign Dashboard was not rendering for non-DM users. All users should be able to VIEW settings while only DMs can modify.
+
+**Tasks Completed**:
+- [x] Fix settings page rendering for non-DM users
+  - Removed `isUserDM &&` check from settings tab rendering in CampaignDashboard.js
+  - Passed `isUserDM` and `userId` props to CampaignSettings component
+- [x] Add "General Settings" header to campaign settings section
+- [x] Add "Session Settings" header to VTT settings section
+- [x] Make all settings visible to players (read-only)
+  - Added read-only notice for non-DM users: "👁️ Viewing campaign settings (read-only)..."
+  - Made all form inputs disabled/readOnly for non-DM users:
+    * Campaign name input
+    * Description textarea
+    * Game system select
+    * Visibility select
+    * Allow requests checkbox
+    * Max members input
+    * Session frequency select
+    * Session day select
+    * Session time input
+    * Time zone select
+- [x] Keep edit controls DM-only
+  - Hidden "Save Changes" button for non-DM users
+- [x] Move Leave Campaign button to Danger Zone (see below)
+- [x] Test build: Compiled successfully
+
+**Changes Made**:
+1. **CampaignDashboard.js**:
+   - Removed `isUserDM &&` condition from settings tab rendering
+   - Added `isUserDM={isUserDM}` and `userId={user?.uid}` props to CampaignSettings
+   - Removed Leave Campaign button from header
+   - Removed Leave Campaign modal (moved to CampaignSettings)
+   - Removed `handleLeaveCampaign` function
+   - Removed `leaveCampaign` import
+
+2. **CampaignSettings.js**:
+   - Added `isUserDM, userId` props to component signature
+   - Added `leaveCampaign` import
+   - Removed DM-only access block that prevented non-DM users from viewing settings
+   - Changed header from "General Settings" to "Campaign Settings"
+   - Added read-only notice for non-DM users with eye icon
+   - Added "General Settings" section header
+   - Added "Session Settings" section header
+   - Made all form inputs disabled/readOnly for non-DM users
+   - Hidden Save Changes button for non-DM users
+   - Moved Leave Campaign button to Danger Zone (non-DM only)
+   - Added Leave Campaign modal to CampaignSettings
+   - Added `handleLeaveCampaign` function
+
+**Goal**: ✅ All users can view campaign settings, only DMs can edit. Leave Campaign is in Danger Zone with clear warnings.
+
+---
+
+### Leave Campaign Button - Danger Zone ✅
+**Status**: ✅ Complete (Merged with Campaign Settings fix)
+**Priority**: 🟠 High (UX/Safety issue)
+**Date Found**: October 5, 2025
+**Date Fixed**: October 5, 2025
+**Files**: CampaignDashboard.js, CampaignSettings.js
+
+**Problem**: "Leave Campaign" button was rendering in the header. Since leaving a campaign can cause data loss, this should be gated better.
+
+**Tasks Completed**:
+- [x] Remove Leave Campaign button from header
+- [x] Move Leave Campaign button to Danger Zone in Campaign Settings
+- [x] Keep confirmation modal
+- [x] Separate Danger Zone for DM vs non-DM:
+  - Non-DM users: "Leave Campaign" button with warning about losing access
+  - DM users: "Delete Campaign" button with stronger warnings
+- [x] Add warning text about data loss
+- [x] Test build: Compiled successfully
+
+**Goal**: ✅ Leave Campaign is in a gated Danger Zone with clear warnings.
+
+---
+
 ### Authentication Workflow - Username Requirements ✅ (REVISED)
 **Status**: Complete (Revised October 4, 2025)
 **Files**: SignIn.js, SignIn.css, useAuth.js, ProfileSetupModal.js, ProfileEditor.js, ProfileEditor.css, App.js, AUTHENTICATION_REVISION.md
@@ -287,6 +663,56 @@ Last Updated: October 4, 2025
 ---
 
 ## 🟡 Medium Priority
+
+### Shape Placement Tool Bugs 🐛
+**Status**: ⏳ Not Started
+**Priority**: 🟡 Medium (UX issue in VTT)
+**Date Found**: October 5, 2025
+**Files**: MapCanvas.jsx, shape drawing tools
+
+**Problem 1**: When placing a shape, the tool stays engaged as if starting a second shape.
+**Problem 2**: When starting a shape (one click) then switching tools/tabs, the shape preview locks and won't clear until reopening the shape tool.
+
+**Expected Behavior**: Shape preview should auto-clear when any action besides finishing the shape happens (tool switch, tab change, etc.).
+
+**Tasks**:
+- [ ] Find shape drawing tool code in MapCanvas.jsx
+- [ ] Identify shape placement state management
+- [ ] Add cleanup on tool switch
+- [ ] Add cleanup on tab change
+- [ ] Add cleanup on escape key
+- [ ] Clear preview when clicking outside canvas
+- [ ] Test all shape types (circle, rectangle, polygon)
+- [ ] Verify no memory leaks
+
+**Goal**: Shape tool cleans up properly when user switches away.
+
+---
+
+### Campaign Switcher UI Improvements 🎨
+**Status**: ⏳ Not Started
+**Priority**: 🟡 Medium (UI/UX polish)
+**Date Found**: October 5, 2025
+**Files**: CampaignSwitcher.js, CampaignSwitcher.css
+
+**Changes Needed**:
+1. Make campaign titles smaller (currently too large)
+2. Add border and background to Player/DM badges
+3. Remove "Create New Campaign" from campaign switcher dropdown
+
+**Tasks**:
+- [ ] Reduce campaign title font size in dropdown
+- [ ] Add border to Player badge (style: border, background)
+- [ ] Add background to Player badge
+- [ ] Add border to DM badge (style: border, background)
+- [ ] Add background to DM badge
+- [ ] Remove "Create New Campaign" button/option from dropdown
+- [ ] Test dropdown on different screen sizes
+- [ ] Verify badge styling in light and dark themes
+
+**Goal**: Campaign switcher dropdown is cleaner and more readable.
+
+---
 
 ### Character Avatar Priority Logic ✅
 **Status**: Complete

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFirebase } from '../../services/FirebaseContext';
-import { leaveCampaign } from '../../services/campaign/campaignService';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { useCampaignMembers } from '../../hooks/useCampaignMembers';
 import CampaignMemberList from './CampaignMemberList';
@@ -33,7 +32,6 @@ function CampaignDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
@@ -75,16 +73,6 @@ function CampaignDashboard() {
     // Cleanup function
     return () => unsubscribeCampaign();
   }, [campaignId, firestore, user]);
-
-  const handleLeaveCampaign = async () => {
-    try {
-      await leaveCampaign(firestore, campaignId, user.uid);
-      navigate('/campaigns');
-    } catch (err) {
-      console.error('Error leaving campaign:', err);
-      setError('Failed to leave campaign. Please try again.');
-    }
-  };
 
   const handleJoinChat = () => {
     navigate(`/campaign/${campaignId}/chat`);
@@ -156,16 +144,6 @@ function CampaignDashboard() {
                   <span key={tag} className="tag">{tag}</span>
                 ))}
               </div>
-            )}
-          </div>
-          <div className="campaign-actions">
-            {!isUserDM && userMember && (
-              <button
-                onClick={() => setShowLeaveModal(true)}
-                className="btn btn-secondary"
-              >
-                Leave Campaign
-              </button>
             )}
           </div>
         </div>
@@ -252,14 +230,12 @@ function CampaignDashboard() {
             >
               Rules & Guidelines
             </button>
-            {isUserDM && (
-              <button
-                className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-                onClick={() => setActiveTab('settings')}
-              >
-                Settings
-              </button>
-            )}
+            <button
+              className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('settings')}
+            >
+              Settings
+            </button>
           </nav>
         </div>
 
@@ -642,10 +618,12 @@ function CampaignDashboard() {
             />
           )}
 
-          {activeTab === 'settings' && isUserDM && (
+          {activeTab === 'settings' && (
             <CampaignSettings
               campaign={campaign}
               onCampaignUpdate={setCampaign}
+              isUserDM={isUserDM}
+              userId={user?.uid}
             />
           )}
         </div>
@@ -697,32 +675,6 @@ function CampaignDashboard() {
         </div>
       )}
 
-      {/* Leave Campaign Modal */}
-      {showLeaveModal && (
-        <div className="modal-overlay" onClick={() => setShowLeaveModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>Leave Campaign</h3>
-            <p>Are you sure you want to leave "{campaign.name}"?</p>
-            <p className="warning-text">
-              You'll lose access to all campaign channels and will need to be re-invited to rejoin.
-            </p>
-            <div className="modal-actions">
-              <button
-                onClick={() => setShowLeaveModal(false)}
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleLeaveCampaign}
-                className="btn btn-danger"
-              >
-                Leave Campaign
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
