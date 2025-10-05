@@ -8,9 +8,7 @@ import {
   where,
   getDocs,
   getDoc,
-  serverTimestamp,
-  or,
-  and
+  serverTimestamp
 } from 'firebase/firestore';
 import { firestore } from './firebase';
 
@@ -370,35 +368,46 @@ export async function getFriends(userId) {
 export async function getPendingFriendRequests(userId) {
   const friendshipsRef = collection(firestore, 'friendships');
 
-  // Query for pending friendships where this user is involved but not the initiator
-  const q = query(
+  // We need to do two separate queries because of Firestore composite filter limitations
+  // Query 1: userId1 == userId AND status == 'pending'
+  const q1 = query(
     friendshipsRef,
-    where('status', '==', 'pending'),
-    or(
-      and(where('userId1', '==', userId), where('initiatorId', '!=', userId)),
-      and(where('userId2', '==', userId), where('initiatorId', '!=', userId))
-    )
+    where('userId1', '==', userId),
+    where('status', '==', 'pending')
   );
 
-  const snapshot = await getDocs(q);
+  // Query 2: userId2 == userId AND status == 'pending'
+  const q2 = query(
+    friendshipsRef,
+    where('userId2', '==', userId),
+    where('status', '==', 'pending')
+  );
+
+  const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
   const requests = [];
 
-  for (const docSnap of snapshot.docs) {
+  // Process results from both queries
+  const allDocs = [...snapshot1.docs, ...snapshot2.docs];
+
+  for (const docSnap of allDocs) {
     const data = docSnap.data();
     const initiatorId = data.initiatorId;
 
-    // Fetch initiator profile
-    const initiatorDoc = await getDoc(doc(firestore, 'userProfiles', initiatorId));
+    // Only include requests where this user is NOT the initiator (received requests)
+    if (initiatorId !== userId) {
+      // Fetch initiator profile
+      const initiatorDoc = await getDoc(doc(firestore, 'userProfiles', initiatorId));
 
-    if (initiatorDoc.exists()) {
-      requests.push({
-        id: docSnap.id,
-        friendship: data,
-        from: {
-          id: initiatorId,
-          ...initiatorDoc.data()
-        }
-      });
+      if (initiatorDoc.exists()) {
+        requests.push({
+          id: docSnap.id,
+          friendship: data,
+          from: {
+            id: initiatorId,
+            ...initiatorDoc.data()
+          }
+        });
+      }
     }
   }
 
