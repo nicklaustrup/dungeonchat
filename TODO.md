@@ -687,7 +687,7 @@ Missing or insufficient permissions.
 - [x] Add performance monitoring - Cache statistics tracking
 - [x] Create comprehensive documentation - FIREBASE_CACHING_SYSTEM.md
 
-**Next Steps** (Future Integration):
+**Next Steps** (Integration & Migration):
 - [ ] Migrate existing components to use cached hooks
 - [ ] Add caching to Token service (useToken, TokenService)
 - [ ] Add caching to Avatar service (useAvatar, AvatarService)
@@ -698,6 +698,102 @@ Missing or insufficient permissions.
 **Goal**: ✅ Core infrastructure complete. Reduce Firebase reads by 60-80% through intelligent caching with proper invalidation.
 
 **Documentation**: See FIREBASE_CACHING_SYSTEM.md for complete API reference, usage examples, and migration guide.
+
+---
+
+### Firebase Caching System - Component Migration 🗄️
+**Status**: ⏳ Not Started
+**Priority**: 🟠 High (Performance optimization - next phase)
+**Date Found**: October 5, 2025
+**Files**: Multiple components across application
+
+**Problem**: Core caching infrastructure is complete, but existing components still use direct Firebase calls without caching.
+
+**Migration Strategy**: Incremental migration as we touch files during normal development. No massive refactor needed.
+
+**Phase 1: User Profile Migration**
+- [ ] Find all components using `useUserProfile` hook
+- [ ] Replace with `useCachedUserProfile` from cache
+- [ ] Test profile updates and cache invalidation
+- [ ] Verify real-time updates still work
+- [ ] Components to migrate:
+  - [ ] UserMenu.js
+  - [ ] ProfileEditor.js
+  - [ ] ChatHeader.js
+  - [ ] Any other profile displays
+
+**Phase 2: Campaign Components**
+- [ ] Replace manual campaign queries with `useJoinedCampaigns()`
+- [ ] Replace single campaign fetches with `useCachedCampaign(id)`
+- [ ] Add cache invalidation to campaign mutations:
+  - [ ] `campaignService.updateCampaign()` → call `invalidateCampaign(id)`
+  - [ ] `campaignService.joinCampaign()` → call `invalidateUserCampaigns(userId)`
+  - [ ] `campaignService.leaveCampaign()` → call `invalidateUserCampaigns(userId)`
+  - [ ] `campaignService.createCampaign()` → call `invalidateUserCampaigns(userId)`
+- [ ] Components to migrate:
+  - [ ] CampaignBrowser.js
+  - [ ] CampaignDashboard.js
+  - [ ] CampaignSwitcher.js
+  - [ ] CampaignSettings.js
+
+**Phase 3: Character Components**
+- [ ] Replace manual character queries with `useUserCharacters()`
+- [ ] Replace campaign character queries with `useCampaignCharacters(id)`
+- [ ] Replace single character fetches with `useCachedCharacter(id)`
+- [ ] Add cache invalidation to character mutations:
+  - [ ] `characterService.updateCharacter()` → call `invalidateCharacter(id)`
+  - [ ] `characterService.createCharacter()` → call `invalidateUserCharacters(userId)`
+  - [ ] `characterService.deleteCharacter()` → call `invalidateUserCharacters(userId)`
+- [ ] Components to migrate:
+  - [ ] CharacterSheet.js
+  - [ ] CharacterCreationModal.js
+  - [ ] PartyManagement.js
+  - [ ] CharacterSelector components
+
+**Phase 4: Performance Monitoring**
+- [ ] Create Developer Performance Dashboard component
+- [ ] Add cache statistics display:
+  - [ ] Cache hits/misses chart
+  - [ ] Hit rate percentage
+  - [ ] Total cached items
+  - [ ] Cache size in memory
+  - [ ] Recent invalidations log
+- [ ] Add Firebase read monitoring:
+  - [ ] Track Firebase reads before/after caching
+  - [ ] Display read reduction percentage
+  - [ ] Show reads per component
+- [ ] Add performance metrics:
+  - [ ] Average component load time
+  - [ ] Network request count
+  - [ ] Real-time listener count
+- [ ] Make dashboard DM-only or dev-mode only
+- [ ] Add toggle to enable/disable cache monitoring
+- [ ] Position: Floating panel or settings tab
+
+**Phase 5: Additional Services**
+- [ ] Token service caching (if needed)
+- [ ] Avatar service caching
+- [ ] Map service caching
+- [ ] Other services as identified
+
+**Testing Checklist**:
+- [ ] Verify cached data displays correctly
+- [ ] Test real-time updates still work
+- [ ] Verify cache invalidation on mutations
+- [ ] Check no stale data issues
+- [ ] Monitor Firebase read count reduction
+- [ ] Test cache statistics accuracy
+- [ ] Verify memory usage acceptable
+- [ ] Test cache on mobile devices
+
+**Success Metrics**:
+- 📉 Firebase reads reduced by 60-80%
+- ⚡ Component load times reduced by 30-50%
+- 🎯 Cache hit rate above 70%
+- 💾 Memory usage under 50MB for cache
+- 📊 Performance dashboard showing real-time stats
+
+**Goal**: Migrate all major components to use caching hooks, monitor performance improvements with developer dashboard.
 
 ---
 
@@ -878,6 +974,46 @@ Missing or insufficient permissions.
 ---
 
 ## 🟡 Medium Priority
+
+### Fog Controls Panel - Show Fog Grid Toggle 🐛
+**Status**: ⏳ Not Started
+**Priority**: 🟡 Medium (UX/functionality issue in VTT)
+**Date Found**: October 5, 2025
+**Files**: FogPanel.jsx, MapCanvas.jsx, fog rendering logic
+
+**Problem**: "Show Fog Grid" checkbox in Fog Controls panel creates a new fog grid instead of toggling DM visibility of existing fog.
+
+**Current Behavior**:
+- Clicking "Show Fog Grid" creates a new fog of war grid
+- This is unnecessary because a fog grid already exists
+- No way to toggle DM view of fog without using layer controls
+
+**Expected Behavior**:
+1. "Show Fog Grid" should toggle DM visibility of Fog of War layer
+   - When **enabled**: DM sees fog areas with visual grid/overlay
+   - When **disabled**: DM sees black fog rendering (same as players)
+2. Fog Layer toggle button (in layer controls) should hide fog completely for DM
+   - Allows DM to work without fog obstruction
+   - Separate control from "Show Fog Grid"
+
+**Two-Level Fog Control**:
+- **Show Fog Grid** (Fog Panel): Toggle between DM fog view (grid overlay) and player fog view (black fog)
+- **Fog Layer Toggle** (Layer Controls): Show/hide fog layer entirely for DM
+
+**Tasks**:
+- [ ] Find "Show Fog Grid" checkbox handler in FogPanel.jsx
+- [ ] Remove fog grid creation logic from checkbox
+- [ ] Add state for DM fog visibility mode (grid vs black)
+- [ ] Update fog rendering to respect visibility mode
+- [ ] When disabled: render black fog (player view)
+- [ ] When enabled: render fog with DM grid overlay
+- [ ] Ensure Fog Layer toggle still works independently
+- [ ] Test both controls work correctly together
+- [ ] Update UI labels/tooltips for clarity
+
+**Goal**: "Show Fog Grid" toggles DM fog view mode (grid overlay vs black fog), not create new grid.
+
+---
 
 ### Shape Placement Tool Bugs 🐛
 **Status**: ⏳ Not Started
