@@ -145,6 +145,10 @@ Instead of embedding the SessionSettings modal component, integrated the session
 - [x] Campaign photo fade in dashboard reduced from 0.3 to 0.15 opacity
 - [x] Campaign cards now use photo as background of card header with gradient overlay
 
+**New Issue - Need Fix**:
+- [ ] my-campaign-badge overlapping campaign-system badge in campaign cards
+- [ ] Need separate row for badges: campaign title on first row, badges on second row (campaign badge left, system badge right)
+
 **Optional Future Enhancements**:
 - [ ] Add image resize/optimization (max 1920x400px, compress to <500KB)
 - [ ] Add cropping tool for photo uploads

@@ -250,10 +250,7 @@
 }
 
 .my-campaign-badge {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: var(--primary-color);
+  background: rgba(var(--primary-color-rgb, 11, 147, 246), 0.9);
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
@@ -263,9 +260,15 @@
   letter-spacing: 0.5px;
 }
 
+.campaign-badges {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .campaign-card.my-campaign .campaign-header {
   position: relative;
-  padding-right: 4rem;
 }
 
 /* Campaign List */
@@ -324,11 +327,13 @@
 .campaign-header {
   position: relative;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.5rem;
   background-position: center;
   background-size: cover;
   border-radius: 6px 6px 0 0;
   overflow: hidden;
+  margin-bottom: 0.75rem;
 }
 
 .campaign-header::before {
@@ -345,8 +350,6 @@
 .campaign-header > * {
   position: relative;
   z-index: 1;
-  align-items: flex-start;
-  margin-bottom: 0.75rem;
 }
 
 .campaign-header h3 {
@@ -371,14 +374,11 @@
   border-radius: 20px;
   font-size: 0.875rem;
   font-weight: 500;
-  margin-left: 1rem;
   white-space: nowrap;
 }
 
 @media (max-width: 480px) {
   .campaign-system {
-    margin-left: 0;
-    margin-top: 0.5rem;
     font-size: 0.8rem;
   }
 }
