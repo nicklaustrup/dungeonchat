@@ -231,6 +231,174 @@ Missing or insufficient permissions.
 
 ## 🟠 High Priority
 
+### Token, Player, and DM Inventory System 🎒
+**Status**: ⏳ Not Started
+**Priority**: 🟠 High (Core gameplay feature)
+**Date Started**: TBD
+**Files**: InventorySystem.js, ItemManager.js, TokenInventory.js, CharacterSheet.js, PartyManagement.js
+
+**Description**: Comprehensive inventory management system for tokens, players, and DM-controlled items.
+
+**Features**:
+
+**Token Inventory**:
+- [ ] Each token can carry items
+- [ ] Weight/capacity limits based on character stats
+- [ ] Quick access inventory panel on token selection
+- [ ] Drag-and-drop items between tokens
+- [ ] Equipment slots (weapons, armor, accessories)
+- [ ] Consumables vs permanent items
+
+**Player Inventory (Character Sheet)**:
+- [ ] Full inventory management in character sheet
+- [ ] Item categories (weapons, armor, potions, misc)
+- [ ] Item search and filtering
+- [ ] Sort by name, weight, value, type
+- [ ] Equipped items visualization
+- [ ] Currency tracking (gold, silver, copper)
+- [ ] Encumbrance calculation
+
+**DM Inventory Controls**:
+- [ ] View all player inventories
+- [ ] Add/remove items from any inventory
+- [ ] Award loot to party or individuals
+- [ ] Create custom items on-the-fly
+- [ ] Item templates library
+- [ ] Bulk item operations
+
+**Item Properties**:
+- [ ] Name, description, icon/image
+- [ ] Weight, value, rarity
+- [ ] Item type (weapon, armor, consumable, etc.)
+- [ ] Magical properties/effects
+- [ ] Quantity/stackable
+- [ ] Attunement requirements
+
+**Data Model**:
+```
+/campaigns/{campaignId}/items/{itemId}
+  - name: string
+  - description: string
+  - type: string
+  - weight: number
+  - value: number
+  - rarity: string
+  - quantity: number
+  - properties: object
+  - createdBy: string (DM userId)
+
+/campaigns/{campaignId}/characters/{characterId}/inventory
+  - items: array of itemIds with quantities
+  - equipped: object (slot -> itemId)
+  - currency: { gold, silver, copper }
+  - capacity: number
+  - encumbrance: number
+
+/campaigns/{campaignId}/tokens/{tokenId}/inventory
+  - items: array (if different from character)
+  - quickAccess: array of itemIds
+```
+
+**Tasks**:
+- [ ] Design inventory data model
+- [ ] Create InventorySystem.js component
+- [ ] Create ItemManager.js for CRUD operations
+- [ ] Add inventory to CharacterSheet
+- [ ] Add inventory panel to token selection
+- [ ] Implement drag-and-drop functionality
+- [ ] Add weight/capacity calculations
+- [ ] Create item templates library
+- [ ] Add DM inventory controls
+- [ ] Implement `canViewInventory` permission
+- [ ] Add inventory to Party Panel (conditional)
+- [ ] Create item icons/images system
+- [ ] Add Firestore security rules for items
+
+**Goal**: Complete inventory management system for all tokens, players, and DM oversight.
+
+---
+
+### Item Creation and Player Trade System 🤝
+**Status**: ⏳ Not Started
+**Priority**: 🟠 High (Depends on Inventory System)
+**Date Started**: TBD
+**Files**: ItemCreator.js, TradeModal.js, itemService.js, tradeService.js
+
+**Description**: Allow DMs to create custom items and players to trade items with each other.
+
+**Item Creation (DM Only)**:
+- [ ] Item creation modal with form
+- [ ] Name, description, icon selection
+- [ ] Type selection (weapon, armor, potion, etc.)
+- [ ] Weight and value inputs
+- [ ] Rarity selection (common, uncommon, rare, etc.)
+- [ ] Magical properties editor
+- [ ] Custom stat modifiers (AC, damage, etc.)
+- [ ] Image upload for custom items
+- [ ] Save to item templates library
+- [ ] Duplicate existing items
+- [ ] Import from D&D 5e SRD items
+
+**Player Trade System**:
+- [ ] Initiate trade with another player
+- [ ] Trade request notification
+- [ ] Trade window with both inventories
+- [ ] Drag items to trade offer
+- [ ] Include currency in trades
+- [ ] Both players must confirm trade
+- [ ] Cancel trade at any time
+- [ ] Trade history log
+- [ ] DM can view/approve/reject trades (optional setting)
+- [ ] Trade restrictions (cannot trade quest items, etc.)
+
+**Item Templates Library**:
+- [ ] Pre-made item templates (D&D 5e SRD)
+- [ ] Custom DM-created templates
+- [ ] Search and filter templates
+- [ ] Categories and tags
+- [ ] Quick add from library
+- [ ] Export/import item sets
+
+**Data Model**:
+```
+/campaigns/{campaignId}/itemTemplates/{templateId}
+  - name, description, properties (same as items)
+  - isGlobal: boolean (available to all campaigns)
+  - createdBy: string (DM userId)
+
+/campaigns/{campaignId}/trades/{tradeId}
+  - initiatorId: string
+  - recipientId: string
+  - initiatorItems: array of { itemId, quantity }
+  - recipientItems: array of { itemId, quantity }
+  - initiatorCurrency: { gold, silver, copper }
+  - recipientCurrency: { gold, silver, copper }
+  - initiatorConfirmed: boolean
+  - recipientConfirmed: boolean
+  - status: 'pending' | 'completed' | 'cancelled'
+  - createdAt: timestamp
+  - completedAt: timestamp | null
+```
+
+**Tasks**:
+- [ ] Create ItemCreator.js component
+- [ ] Add item creation modal for DM
+- [ ] Implement item templates library
+- [ ] Import D&D 5e SRD items
+- [ ] Create TradeModal.js component
+- [ ] Create tradeService.js with trade logic
+- [ ] Implement trade request system
+- [ ] Add trade notifications
+- [ ] Implement drag-and-drop for trades
+- [ ] Add trade confirmation flow
+- [ ] Create trade history view
+- [ ] Add DM trade oversight controls (optional)
+- [ ] Add Firestore security rules for trades
+
+**Goal**: Full item creation system for DMs and player-to-player trading functionality.
+
+---
+
 ### Firebase Caching System - Component Migration 🗄️
 **Status**: ✅ Phase 1, 2 & 3 Complete ✅
 **Priority**: 🟠 High (Performance optimization - ongoing)
@@ -281,6 +449,222 @@ Missing or insufficient permissions.
 - [ ] Other services as identified
 
 **Goal**: Migrate all major components to use caching hooks, monitor performance improvements with developer dashboard.
+
+---
+
+### Notifications System 🔔
+**Status**: ⏳ Not Started
+**Priority**: 🟠 High (Important UX feature)
+**Date Started**: TBD
+**Files**: NotificationsDropdown.js, NotificationService.js, UserMenu.js, firestore.rules
+
+**Description**: Comprehensive notification system to keep users informed of important events.
+
+**Notification Types**:
+- [ ] Friend requests (new, accepted, declined)
+- [ ] New messages in campaigns
+- [ ] Campaign invitations
+- [ ] Join request responses (approved/denied)
+- [ ] Trade requests and completions
+- [ ] Item awarded by DM
+- [ ] Level up notifications
+- [ ] Session starting soon
+- [ ] Mentioned in chat (@username)
+- [ ] System announcements
+
+**UI Components**:
+- [ ] Notification bell icon in header (next to user menu)
+- [ ] Badge showing unread count
+- [ ] Dropdown panel with notification list
+- [ ] Mark individual as read
+- [ ] Mark all as read button
+- [ ] Clear all notifications
+- [ ] Click notification to navigate to relevant page
+- [ ] Notification settings link
+
+**Notification Item Display**:
+- [ ] Icon based on type
+- [ ] Title and description
+- [ ] Timestamp ("5 minutes ago")
+- [ ] Read/unread indicator
+- [ ] Action buttons (Accept/Decline, View, etc.)
+- [ ] Delete individual notification
+
+**Real-time Updates**:
+- [ ] Real-time listener for new notifications
+- [ ] Toast notification for urgent items (optional)
+- [ ] Sound notification (optional, user setting)
+- [ ] Desktop notifications (optional, user setting)
+- [ ] Notification badge updates in real-time
+
+**Data Model**:
+```
+/userProfiles/{userId}/notifications/{notificationId}
+  - type: string (friend_request, campaign_message, etc.)
+  - title: string
+  - message: string
+  - icon: string (emoji or icon name)
+  - read: boolean
+  - actionUrl: string (navigate on click)
+  - actionData: object (additional data for actions)
+  - createdAt: timestamp
+  - expiresAt: timestamp | null
+  - senderId: string | null (who triggered it)
+  - senderName: string | null
+```
+
+**Tasks**:
+- [ ] Create NotificationsDropdown.js component
+- [ ] Add notification bell to header (UserMenu area)
+- [ ] Create NotificationService.js
+- [ ] Implement real-time listener
+- [ ] Add notification badge with count
+- [ ] Implement mark as read functionality
+- [ ] Add notification creation helpers
+- [ ] Integrate with friend request system
+- [ ] Integrate with campaign messaging
+- [ ] Integrate with trade system
+- [ ] Add notification settings (see Player Settings)
+- [ ] Add Firestore security rules for notifications
+- [ ] Implement notification expiration/cleanup
+- [ ] Add toast notifications (optional)
+- [ ] Add sound and desktop notifications (optional)
+
+**Goal**: Keep users informed of important events with a comprehensive notification system.
+
+---
+
+### Player Settings Modal ⚙️
+**Status**: ⏳ Not Started
+**Priority**: 🟠 High (Important for user privacy and experience)
+**Date Started**: TBD
+**Files**: PlayerSettingsModal.js, UserMenu.js, userSettingsService.js
+
+**Description**: Comprehensive settings modal allowing players to customize their experience and privacy.
+
+**Settings Categories**:
+
+**Privacy Settings**:
+- [ ] Profile visibility (public, friends only, private)
+- [ ] Show email in profile (toggle)
+- [ ] Show last active status (toggle)
+- [ ] Who can send friend requests (everyone, friends of friends, no one)
+- [ ] Block incoming friend requests (toggle)
+- [ ] Who can view character sheets (everyone, friends, campaign members only)
+- [ ] Who can send campaign invites (everyone, friends only)
+
+**Notification Settings**:
+- [ ] Enable/disable notifications (master toggle)
+- [ ] Friend request notifications (toggle)
+- [ ] Campaign message notifications (toggle)
+- [ ] Mention notifications (toggle)
+- [ ] Trade notifications (toggle)
+- [ ] DM announcement notifications (toggle)
+- [ ] Email notifications (toggle)
+- [ ] Desktop notifications (toggle)
+- [ ] Sound notifications (toggle)
+- [ ] Notification sound selection
+
+**Display Settings**:
+- [ ] Theme preference (light, dark, auto)
+- [ ] Chat message size (small, medium, large)
+- [ ] Show dice roll animations (toggle)
+- [ ] Show profile pictures in chat (toggle)
+- [ ] Compact mode for lists (toggle)
+- [ ] Reduced motion (accessibility)
+- [ ] High contrast mode (accessibility)
+
+**Chat Settings**:
+- [ ] Profanity filter enabled (toggle)
+- [ ] Enter to send messages (toggle vs Ctrl+Enter)
+- [ ] Show typing indicators (toggle)
+- [ ] Message preview length
+- [ ] Auto-scroll chat (toggle)
+
+**Gameplay Settings**:
+- [ ] Default dice roll visibility (public, private, DM only)
+- [ ] Show HP on tokens (toggle)
+- [ ] Token name display preference (character name, username, both)
+- [ ] Grid snap sensitivity
+- [ ] Fog of war visibility (DM only)
+
+**Account Settings**:
+- [ ] Change username
+- [ ] Change password
+- [ ] Change email
+- [ ] Download my data (GDPR)
+- [ ] Delete account (with confirmation)
+
+**UI Structure**:
+- [ ] Modal with sidebar navigation
+- [ ] Categories in sidebar (Privacy, Notifications, Display, etc.)
+- [ ] Settings panel on right with form inputs
+- [ ] Save button (or auto-save)
+- [ ] Reset to defaults button
+- [ ] Search settings functionality
+
+**Data Model**:
+```
+/userProfiles/{userId}/settings
+  - privacy: object
+    - profileVisibility: string
+    - showEmail: boolean
+    - showLastActive: boolean
+    - friendRequestsFrom: string
+    - blockFriendRequests: boolean
+    - characterSheetVisibility: string
+    - campaignInvitesFrom: string
+  - notifications: object
+    - enabled: boolean
+    - friendRequests: boolean
+    - campaignMessages: boolean
+    - mentions: boolean
+    - trades: boolean
+    - dmAnnouncements: boolean
+    - email: boolean
+    - desktop: boolean
+    - sound: boolean
+    - soundType: string
+  - display: object
+    - theme: string
+    - chatMessageSize: string
+    - showDiceAnimations: boolean
+    - showProfilePictures: boolean
+    - compactMode: boolean
+    - reducedMotion: boolean
+    - highContrast: boolean
+  - chat: object
+    - profanityFilter: boolean
+    - enterToSend: boolean
+    - showTypingIndicators: boolean
+    - messagePreviewLength: number
+    - autoScroll: boolean
+  - gameplay: object
+    - defaultRollVisibility: string
+    - showHpOnTokens: boolean
+    - tokenNameDisplay: string
+    - gridSnapSensitivity: number
+```
+
+**Tasks**:
+- [ ] Create PlayerSettingsModal.js component
+- [ ] Add "Settings" option to user menu dropdown
+- [ ] Design settings categories and layout
+- [ ] Create userSettingsService.js
+- [ ] Implement privacy settings
+- [ ] Implement notification settings
+- [ ] Implement display settings
+- [ ] Implement chat settings
+- [ ] Implement gameplay settings
+- [ ] Implement account settings
+- [ ] Add settings search functionality
+- [ ] Implement auto-save or save button
+- [ ] Add reset to defaults functionality
+- [ ] Apply settings throughout application
+- [ ] Add Firestore security rules for settings
+- [ ] Add settings migration for existing users
+
+**Goal**: Comprehensive player settings for privacy, notifications, and user experience customization.
 
 ---
 
@@ -438,6 +822,127 @@ Missing or insufficient permissions.
 ---
 
 ## 🔵 Technical Debt & Refactoring
+
+### Complete Project Audit & Refactoring 🔍
+**Status**: ⏳ Not Started
+**Priority**: 🔵 Technical (High Impact)
+**Date Started**: TBD
+**Files**: Multiple (entire codebase)
+
+**Description**: Comprehensive audit of the entire project to improve code quality, reduce technical debt, and optimize performance.
+
+**Audit Categories**:
+
+**1. Duplicate Code Detection**:
+- [ ] Identify duplicate logic across components
+- [ ] Extract common patterns into reusable hooks
+- [ ] Create shared utility functions
+- [ ] Consolidate similar components
+- [ ] Remove copy-pasted code blocks
+- [ ] Document common patterns
+
+**2. Firebase Cache Implementation Opportunities**:
+- [ ] Audit all Firestore queries
+- [ ] Identify uncached real-time listeners
+- [ ] Add caching to remaining components
+- [ ] Remove redundant Firebase reads
+- [ ] Consolidate duplicate queries
+- [ ] Implement query result caching
+- [ ] Add cache invalidation strategies
+
+**3. Remove Backwards Compatibility Hacks**:
+- [ ] Identify temporary fixes and workarounds
+- [ ] Remove deprecated code paths
+- [ ] Clean up migration code
+- [ ] Remove feature flags for completed features
+- [ ] Update data models to current schema
+- [ ] Remove fallback logic for old data
+- [ ] Document breaking changes
+
+**4. Data Model Streamlining**:
+- [ ] Audit Firestore collection structure
+- [ ] Identify redundant fields
+- [ ] Normalize data where appropriate
+- [ ] Remove unused fields
+- [ ] Consolidate related collections
+- [ ] Optimize indexes
+- [ ] Document final data models
+- [ ] Create migration plan for schema changes
+
+**5. Documentation Cleanup**:
+- [ ] Remove outdated documentation files
+- [ ] Consolidate similar docs
+- [ ] Update README with current features
+- [ ] Create concise feature documentation
+- [ ] Remove temporary summary files
+- [ ] Standardize documentation format
+- [ ] Create single source of truth for each topic
+- [ ] Archive old implementation notes
+
+**6. Code Quality Improvements**:
+- [ ] Remove unused imports
+- [ ] Remove dead code (unreachable)
+- [ ] Fix ESLint warnings
+- [ ] Standardize error handling
+- [ ] Add missing prop types
+- [ ] Improve variable naming
+- [ ] Add JSDoc comments to services
+- [ ] Extract magic numbers to constants
+
+**7. Performance Optimizations**:
+- [ ] Identify expensive re-renders
+- [ ] Add React.memo where appropriate
+- [ ] Optimize expensive computations
+- [ ] Reduce bundle size
+- [ ] Lazy load heavy components
+- [ ] Optimize images and assets
+- [ ] Remove unused dependencies
+
+**8. Architectural Improvements**:
+- [ ] Separate business logic from UI
+- [ ] Create consistent service layer
+- [ ] Standardize state management patterns
+- [ ] Improve component composition
+- [ ] Reduce prop drilling
+- [ ] Create custom hooks for common logic
+- [ ] Improve error boundaries
+
+**9. Testing Infrastructure**:
+- [ ] Add unit tests for critical paths
+- [ ] Test all service functions
+- [ ] Test custom hooks
+- [ ] Add integration tests
+- [ ] Test edge cases
+- [ ] Improve test coverage reporting
+
+**10. Security Audit**:
+- [ ] Review Firestore security rules
+- [ ] Check for exposed secrets
+- [ ] Validate all user inputs
+- [ ] Review authentication flows
+- [ ] Check for XSS vulnerabilities
+- [ ] Review permission checks
+- [ ] Audit third-party dependencies
+
+**Tools to Use**:
+- [ ] ESLint for code quality
+- [ ] SonarQube for code analysis (optional)
+- [ ] Bundle analyzer for size optimization
+- [ ] React DevTools Profiler for performance
+- [ ] Chrome DevTools for network analysis
+- [ ] Lighthouse for overall performance
+
+**Deliverables**:
+- [ ] Audit report with findings
+- [ ] Prioritized refactoring task list
+- [ ] Updated documentation
+- [ ] Performance metrics before/after
+- [ ] Migration guides for breaking changes
+- [ ] Best practices guide
+
+**Goal**: Clean, efficient, maintainable codebase with reduced technical debt and improved performance.
+
+---
 
 ### Component Architecture ⏳
 **Status**: Ongoing
@@ -684,6 +1189,18 @@ When adding a new feature to this TODO:
 
 **Notes**: Any additional context
 ```
+
+---
+
+## 📌 Notes
+
+- This document should be the single source of truth for all TODOs
+- Update status regularly: ⏳ Not Started, 🔄 In Progress, ✅ Complete, ❌ Blocked
+- When a feature is complete, create a summary document and remove from here
+- Keep this document organized by priority
+- Archive completed sections to separate file if needed
+
+---
 
 ---
 
