@@ -153,6 +153,55 @@ Last Updated: October 5, 2025
 
 ---
 
+### Clickable Usernames 🎮
+**Status**: ✅ Complete
+**Priority**: 🟠 High (Major UX improvement)
+**Date Started**: October 5, 2025
+**Date Completed**: October 5, 2025
+**Files**: FriendsListModal.js, CampaignBrowser.js, CampaignPreview.js, CampaignDashboard.js, CampaignMemberList.js, VoiceChatPanel.js, clickable-username.css
+
+**Problem**: Usernames displayed throughout the app were not interactive, making it difficult to view user profiles quickly.
+
+**Implementation**:
+
+**Locations Made Clickable**:
+1. ✅ Friends list (all tabs: Friends, Pending, Blocked)
+2. ✅ Campaign browser page (DM names)
+3. ✅ Campaign preview page (DM names)
+4. ✅ Campaign dashboard Overview tab (DM names)
+5. ✅ Campaign dashboard Members tab (all member names)
+6. ✅ Voice chat modal (participant names)
+
+**Styling**:
+- ✅ Blue color (#1976d2) for clickable usernames
+- ✅ Darker blue (#0d47a1) on hover
+- ✅ Pointer cursor to indicate clickability
+- ✅ Underline text decoration on hover
+- ✅ Dark theme support (lighter blue #64b5f6)
+- ✅ Smooth transition animations
+
+**User Experience**:
+- Clicking any username opens UserProfileModal
+- Shows user profile, friendship status, and actions
+- Consistent behavior across entire application
+- Visual cues make it clear usernames are interactive
+
+**Tasks Completed**:
+- [x] Create global `clickable-username.css` with reusable styles
+- [x] Add clickable DM names in CampaignBrowser
+- [x] Add clickable DM names in CampaignPreview
+- [x] Add clickable DM names in Campaign Dashboard Overview
+- [x] Add clickable member names in Campaign Dashboard Members tab
+- [x] Add clickable participant names in Voice Chat Panel
+- [x] Add clickable usernames in FriendsListModal (all tabs)
+- [x] Import and add UserProfileModal to all components
+- [x] Remove duplicate FriendsListModal.js file
+- [x] Update styling with blue colors for better visibility
+
+**Goal**: ✅ Make all usernames throughout the app clickable to quickly view user profiles and manage friendships.
+
+---
+
 ### Player Firestore Permission Error 🐛
 **Status**: ⏳ Monitor (Possibly one-off error)
 **Priority**: 🟡 Medium (Monitor for recurrence)
