@@ -16,8 +16,7 @@ function ChatHeader({
   setSearchTerm,
   onViewProfile,
   awayAfterSeconds,
-  setAwayAfterSeconds,
-  onOpenSettings
+  setAwayAfterSeconds
 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileEditorOpen, setProfileEditorOpen] = useState(false);
@@ -40,10 +39,6 @@ function ChatHeader({
 
   const toggleSearch = () => setSearchCollapsed(c => !c);
 
-  const handleEditProfile = () => {
-    setProfileEditorOpen(true);
-  };
-
   return (
     <>
       <header className={`App-header ${isMobile ? 'mobile-condense' : ''}`}>
@@ -57,8 +52,6 @@ function ChatHeader({
                   user={user}
                   onViewProfile={onViewProfile}
                   openSettings={() => setSettingsOpen(true)}
-                  onOpenSettings={onOpenSettings}
-                  onEditProfile={handleEditProfile}
                 />
                 <SearchBar value={searchTerm} onChange={setSearchTerm} collapsed={false} onToggle={() => {}} disableClose />
               </div>
@@ -78,8 +71,6 @@ function ChatHeader({
                     user={user}
                     onViewProfile={onViewProfile}
                     openSettings={() => setSettingsOpen(true)}
-                    onOpenSettings={onOpenSettings}
-                    onEditProfile={handleEditProfile}
                   />
                   <SearchBar
                     value={searchTerm}

@@ -64,13 +64,6 @@ function AppNavigation() {
         >
           Campaigns
         </Link>
-        
-        <Link 
-          to="/create-campaign" 
-          className="nav-cta"
-        >
-          Create Campaign
-        </Link>
       </div>
       
       <div className="nav-center">
@@ -93,18 +86,10 @@ function AppNavigation() {
             onViewProfile={(user) => {
               setProfileOpen(true);
             }}
-            onEditProfile={() => {
-              setProfileOpen(true);
-            }}
             openSettings={() => {
               // TODO: Implement settings
               console.log('Open settings');
             }}
-            onOpenSettings={() => {
-              // TODO: Implement settings
-              console.log('Open settings');
-            }}
-            showSettings={false}
           />
         )}
       </div>

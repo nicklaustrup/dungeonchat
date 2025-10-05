@@ -16,21 +16,18 @@ describe('UserMenu', () => {
 
   test('invokes profile and settings callbacks then closes', () => {
     const onViewProfile = jest.fn();
-    const onEditProfile = jest.fn();
-    const onOpenSettings = jest.fn();
     const openSettings = jest.fn();
-    render(<UserMenu user={user} onViewProfile={onViewProfile} onEditProfile={onEditProfile} onOpenSettings={onOpenSettings} openSettings={openSettings} />);
+    render(<UserMenu user={user} onViewProfile={onViewProfile} openSettings={openSettings} />);
     const chip = screen.getByRole('button', { name: /test user/i });
     fireEvent.click(chip);
     const profileBtn = screen.getByRole('button', { name: /view profile/i });
     fireEvent.click(profileBtn);
-    expect(onEditProfile).toHaveBeenCalled();
+    expect(onViewProfile).toHaveBeenCalled();
 
     fireEvent.click(chip); // reopen
     const settingsBtn = screen.getByRole('button', { name: /settings/i });
     fireEvent.click(settingsBtn);
     expect(openSettings).toHaveBeenCalled();
-    expect(onOpenSettings).toHaveBeenCalled();
   });
 
   test('applies long-username class for usernames over 30 characters', () => {
