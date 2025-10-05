@@ -145,10 +145,15 @@ Instead of embedding the SessionSettings modal component, integrated the session
 - [x] Campaign photo fade in dashboard reduced from 0.3 to 0.15 opacity
 - [x] Campaign cards now use photo as background of card header with gradient overlay
 
-**Issue Fixed** ✅:
+**Issues Fixed** ✅:
 - [x] Fixed my-campaign-badge overlapping campaign-system badge
 - [x] Campaign title now on first row, badges on second row with space-between layout
 - [x] Campaign badge aligned left, system badge aligned right
+
+**New Issues - Need Fixes**:
+- [ ] Campaign header ::before overlay is black - should match card background color
+- [ ] Swap badge positions: DM/Player badge on right, System badge on left
+- [ ] Make DM/Player badge more striking with gold background color
 
 **Optional Future Enhancements**:
 - [ ] Add image resize/optimization (max 1920x400px, compress to <500KB)

@@ -249,10 +249,10 @@ const CampaignBrowser = () => {
                 >
                   <h3>{campaign.name}</h3>
                   <div className="campaign-badges">
+                    <div className="campaign-system">{campaign.gameSystem}</div>
                     <div className="my-campaign-badge">
                       {campaign.dmId === user.uid ? 'DM' : 'Player'}
                     </div>
-                    <div className="campaign-system">{campaign.gameSystem}</div>
                   </div>
                 </div>
                 
