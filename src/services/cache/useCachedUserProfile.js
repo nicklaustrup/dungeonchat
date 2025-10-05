@@ -176,7 +176,7 @@ export function useCachedUserProfile() {
     }
 
     try {
-      const url = await uploadProfilePicture(user.uid, file, storage, firestore);
+      const url = await uploadProfilePicture(file, user.uid, storage);
       
       // Invalidate profile picture cache
       firestoreCache.invalidateField('userProfiles', user.uid, 'profilePictureURL');
@@ -186,7 +186,7 @@ export function useCachedUserProfile() {
       console.error('Error uploading profile picture:', err);
       throw err;
     }
-  }, [user, storage, firestore]);
+  }, [user, storage]);
 
   /**
    * Delete profile picture with cache invalidation

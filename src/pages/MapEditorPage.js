@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFirebase } from '../services/FirebaseContext';
-import { getUserCampaigns } from '../services/campaign/campaignService';
+import { useJoinedCampaigns } from '../services/cache';
 import MapEditor from '../components/VTT/MapEditor/MapEditor';
 import QuickCampaignCreator from '../components/VTT/QuickCampaignCreator';
 import './MapEditorPage.css';
@@ -13,41 +13,25 @@ import './MapEditorPage.css';
 function MapEditorPage() {
   const { campaignId: routeCampaignId } = useParams();
   const navigate = useNavigate();
-  const { firestore, user } = useFirebase();
+  const { user } = useFirebase();
   
   const [selectedCampaignId, setSelectedCampaignId] = useState(routeCampaignId || null);
-  const [userCampaigns, setUserCampaigns] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Use cached campaigns hook
+  const { campaigns: userCampaigns, loading } = useJoinedCampaigns();
 
-  // Load user's campaigns
+  // Handle campaign selection when campaigns load
   useEffect(() => {
-    if (!user || !firestore) {
-      setLoading(false);
-      return;
-    }
-
-    const loadCampaigns = async () => {
-      try {
-        const campaigns = await getUserCampaigns(firestore, user.uid);
-        setUserCampaigns(campaigns);
-        
-        // If no campaign selected and user has campaigns, select the first one
-        if (!selectedCampaignId && campaigns.length > 0) {
-          setSelectedCampaignId(campaigns[0].id);
-        } else if (!selectedCampaignId && campaigns.length === 0) {
-          setError('You need to create a campaign first to use the Map Editor.');
-        }
-      } catch (err) {
-        console.error('Error loading campaigns:', err);
-        setError('Failed to load campaigns. Please try again.');
-      } finally {
-        setLoading(false);
+    if (!loading && userCampaigns) {
+      // If no campaign selected and user has campaigns, select the first one
+      if (!selectedCampaignId && userCampaigns.length > 0) {
+        setSelectedCampaignId(userCampaigns[0].id);
+      } else if (!selectedCampaignId && userCampaigns.length === 0) {
+        setError('You need to create a campaign first to use the Map Editor.');
       }
-    };
-
-    loadCampaigns();
-  }, [user, firestore, selectedCampaignId]);
+    }
+  }, [loading, userCampaigns, selectedCampaignId]);
 
   const handleSave = (savedMap) => {
     console.log('Map saved:', savedMap);

@@ -2,7 +2,7 @@ import React from 'react';
 import { getFallbackAvatar } from '../../../utils/avatar';
 import { useProfanityFilter } from '../../../utils/profanityFilter';
 import { useProfanityFilterContext } from '../../../contexts/ProfanityFilterContext';
-import { useUserProfileData } from '../../../hooks/useUserProfileData';
+import { useCachedUserProfileData } from '../../../services/cache';
 import { useCachedUserProfile } from '../../../services/cache';
 import { useFirebase } from '../../../services/FirebaseContext';
 
@@ -22,7 +22,7 @@ export default function InlineReplyContext({ replyTo, onViewProfile, onNavigate 
   const { id, uid, displayName, text, type, photoURL } = replyTo || {};
   
   // Get enhanced profile data for this user
-  const { profileData } = useUserProfileData(uid);
+  const { profileData } = useCachedUserProfileData(uid);
   
   // For the current user, we should use the profile from the global context
   // For other users, we use the fetched profile data

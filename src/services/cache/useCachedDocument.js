@@ -60,6 +60,7 @@ export function useCachedDocument(firestore, collection, docId, options = {}) {
         
         // Cache the result
         firestoreCache.set(cacheKey, docData, ttl);
+        console.log('%c[CACHE] 💾 SET', 'background: #3b82f6; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold', cacheKey);
         setData(docData);
       } else {
         setData(null);
@@ -172,13 +173,13 @@ export function useCachedQuery(firestore, queryFn, cacheKey, options = {}) {
       // Check cache first
       const cached = firestoreCache.get(cacheKey);
       if (cached !== null) {
-        console.log(`[CACHE] 🎯 HIT: ${cacheKey}`);
+        console.log('%c[CACHE] 🎯 HIT', 'background: #22c55e; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold', cacheKey);
         setData(cached);
         setLoading(false);
         return;
       }
 
-      console.log(`[CACHE] ❌ MISS: ${cacheKey}`);
+      console.log('%c[CACHE] ❌ MISS', 'background: #ef4444; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold', cacheKey);
       // Cache miss - fetch from Firestore
       const q = queryFn();
       const snapshot = await q.get();
@@ -190,6 +191,7 @@ export function useCachedQuery(firestore, queryFn, cacheKey, options = {}) {
 
       // Cache the results
       firestoreCache.set(cacheKey, results, ttl);
+      console.log('%c[CACHE] 💾 SET', 'background: #3b82f6; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold', cacheKey);
       setData(results);
     } catch (err) {
       console.error(`Error loading query ${cacheKey}:`, err);

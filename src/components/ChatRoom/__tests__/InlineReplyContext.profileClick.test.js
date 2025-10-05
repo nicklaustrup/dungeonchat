@@ -4,12 +4,9 @@ import '@testing-library/jest-dom';
 import InlineReplyContext from '../parts/InlineReplyContext';
 
 // Mock dependencies
-jest.mock('../../../hooks/useUserProfileData', () => ({
-  useUserProfileData: jest.fn()
-}));
-
-jest.mock('../../../hooks/useUserProfile', () => ({
-  useUserProfile: jest.fn()
+jest.mock('../../../services/cache', () => ({
+  useCachedUserProfileData: jest.fn(),
+  useCachedUserProfile: jest.fn()
 }));
 
 jest.mock('../../../services/FirebaseContext', () => ({
@@ -29,8 +26,7 @@ jest.mock('../../../utils/profanityFilter', () => ({
 }));
 
 // Import the mocked functions
-import { useUserProfileData } from '../../../hooks/useUserProfileData';
-import { useUserProfile } from '../../../hooks/useUserProfile';
+import { useCachedUserProfileData, useCachedUserProfile } from '../../../services/cache';
 import { useFirebase } from '../../../services/FirebaseContext';
 import { useProfanityFilterContext } from '../../../contexts/ProfanityFilterContext';
 import { getFallbackAvatar } from '../../../utils/avatar';
@@ -67,11 +63,11 @@ describe('InlineReplyContext Profile Click', () => {
       profanityFilterEnabled: false
     });
 
-    useUserProfile.mockReturnValue({
+    useCachedUserProfile.mockReturnValue({
       profile: null // Current user profile not relevant for this test
     });
 
-    useUserProfileData.mockReturnValue({
+    useCachedUserProfileData.mockReturnValue({
       profileData: mockRepliedToProfile
     });
 
@@ -144,7 +140,7 @@ describe('InlineReplyContext Profile Click', () => {
     const mockOnNavigate = jest.fn();
     
     // Mock a profile with placeholder URL
-    useUserProfileData.mockReturnValue({
+    useCachedUserProfileData.mockReturnValue({
       profileData: {
         ...mockRepliedToProfile,
         profilePictureURL: 'https://via.placeholder.com/150'
@@ -178,7 +174,7 @@ describe('InlineReplyContext Profile Click', () => {
     const mockOnNavigate = jest.fn();
     
     // Mock a profile with placeholder URL
-    useUserProfileData.mockReturnValue({
+    useCachedUserProfileData.mockReturnValue({
       profileData: {
         ...mockRepliedToProfile,
         profilePictureURL: 'https://via.placeholder.com/150'

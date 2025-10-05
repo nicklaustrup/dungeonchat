@@ -25,7 +25,7 @@ import MessageHeader from './parts/MessageHeader';
 import HoverTimestamp from './parts/HoverTimestamp';
 import { useReactions } from '../../hooks/useReactions';
 import { useMessageMenuPosition } from '../../hooks/useMessageMenuPosition';
-import { useUserProfileData } from '../../hooks/useUserProfileData';
+import { useCachedUserProfileData } from '../../services/cache';
 import { useCachedUserProfile } from '../../services/cache';
 import DiceRollDisplay from '../DiceRoll/DiceRollDisplay';
 
@@ -68,7 +68,7 @@ function ChatMessage(props) {
     const { searchTerm, onReply, isReplyTarget, onViewProfile, showMeta = true } = props;
 
     // Get enhanced profile data for this user
-    const { profileData } = useUserProfileData(uid);
+    const { profileData } = useCachedUserProfileData(uid);
 
     // Get campaign member data if in a campaign context
     const campaignMemberData = useCampaignMember(campaignId, uid);

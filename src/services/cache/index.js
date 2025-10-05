@@ -56,6 +56,7 @@ export { useCachedDocument, useCachedQuery } from './useCachedDocument';
 
 // User profile caching
 export { useCachedUserProfile } from './useCachedUserProfile';
+export { useCachedUserProfileData } from './useCachedUserProfileData';
 
 // Campaign caching
 export {
