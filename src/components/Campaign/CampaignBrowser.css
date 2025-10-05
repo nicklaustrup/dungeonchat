@@ -382,6 +382,8 @@
   font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
+  min-width: 100px;
+  text-align: center;
 }
 
 @media (max-width: 480px) {
@@ -412,7 +414,6 @@
 
 .campaign-tags {
   margin-bottom: 0.75rem;
-  flex: 1;
   overflow: hidden;
 }
 
@@ -483,6 +484,8 @@
   flex-wrap: wrap;
   gap: 0.25rem;
   margin-bottom: 0.75rem;
+  max-height: 48px;
+  overflow: hidden;
 }
 
 .campaign-tags .tag {

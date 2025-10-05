@@ -15,10 +15,7 @@ function CampaignPreview() {
   const [error, setError] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joining, setJoining] = useState(false);
-  const [characterInfo, setCharacterInfo] = useState({
-    characterName: '',
-    characterClass: ''
-  });
+  const [requestMessage, setRequestMessage] = useState('');
 
   const loadCampaign = async () => {
     try {
@@ -59,15 +56,12 @@ function CampaignPreview() {
   };
 
   const handleJoinSubmit = async () => {
-    if (!characterInfo.characterName.trim()) {
-      setError('Character name is required');
-      return;
-    }
-
     try {
       setJoining(true);
       setError(null);
-      await joinCampaign(firestore, campaignId, user.uid, characterInfo);
+      await joinCampaign(firestore, campaignId, user.uid, {
+        requestMessage: requestMessage.trim()
+      });
       navigate(`/campaign/${campaignId}`);
     } catch (err) {
       console.error('Error joining campaign:', err);
@@ -84,8 +78,8 @@ function CampaignPreview() {
   if (loading) {
     return (
       <div className="campaign-preview">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
+        <div className="preview-loading-container">
+          <div className="preview-loading-spinner"></div>
           <p>Loading campaign...</p>
         </div>
       </div>
@@ -95,7 +89,7 @@ function CampaignPreview() {
   if (error && !campaign) {
     return (
       <div className="campaign-preview">
-        <div className="error-container">
+        <div className="preview-error-container">
           <h2>Error</h2>
           <p>{error}</p>
           <button onClick={() => navigate('/campaigns')} className="btn btn-primary">
@@ -128,7 +122,7 @@ function CampaignPreview() {
           {/* Back button */}
           <button 
             onClick={() => navigate('/campaigns')} 
-            className="btn btn-secondary back-btn"
+            className="btn btn-secondary preview-back-btn"
           >
             ← Back to Campaigns
           </button>
@@ -138,8 +132,8 @@ function CampaignPreview() {
             <h1>{campaign.name}</h1>
             
             <div className="preview-badges">
-              <span className="badge badge-system">{campaign.gameSystem}</span>
-              <span className={`badge badge-status status-${campaign.status}`}>
+              <span className="preview-badge preview-badge-system">{campaign.gameSystem}</span>
+              <span className={`preview-badge preview-badge-status preview-status-${campaign.status}`}>
                 {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
               </span>
             </div>
@@ -150,7 +144,7 @@ function CampaignPreview() {
             {campaign.tags && campaign.tags.length > 0 && (
               <div className="preview-tags">
                 {campaign.tags.map(tag => (
-                  <span key={tag} className="tag">
+                  <span key={tag} className="preview-tag">
                     {formatTag(tag)}
                   </span>
                 ))}
@@ -159,20 +153,20 @@ function CampaignPreview() {
 
             {/* Campaign details */}
             <div className="preview-details">
-              <div className="detail-row">
-                <div className="detail-item">
+              <div className="preview-detail-row">
+                <div className="preview-detail-item">
                   <strong>Dungeon Master:</strong>
                   <span>{campaign.dmName || 'Unknown'}</span>
                 </div>
-                <div className="detail-item">
+                <div className="preview-detail-item">
                   <strong>Players:</strong>
                   <span>{campaign.currentPlayers}/{campaign.maxPlayers}</span>
                 </div>
               </div>
 
               {campaign.sessionFrequency && (
-                <div className="detail-row">
-                  <div className="detail-item">
+                <div className="preview-detail-row">
+                  <div className="preview-detail-item">
                     <strong>Session Frequency:</strong>
                     <span>{campaign.sessionFrequency}</span>
                   </div>
@@ -180,13 +174,13 @@ function CampaignPreview() {
               )}
 
               {campaign.sessionDay && (
-                <div className="detail-row">
-                  <div className="detail-item">
+                <div className="preview-detail-row">
+                  <div className="preview-detail-item">
                     <strong>Session Day:</strong>
                     <span>{campaign.sessionDay}</span>
                   </div>
                   {campaign.sessionTime && (
-                    <div className="detail-item">
+                    <div className="preview-detail-item">
                       <strong>Session Time:</strong>
                       <span>{campaign.sessionTime} {campaign.timeZone || ''}</span>
                     </div>
@@ -194,12 +188,12 @@ function CampaignPreview() {
                 </div>
               )}
 
-              <div className="detail-row">
-                <div className="detail-item">
+              <div className="preview-detail-row">
+                <div className="preview-detail-item">
                   <strong>Visibility:</strong>
                   <span>{campaign.visibility === 'public' ? 'Public' : 'Private'}</span>
                 </div>
-                <div className="detail-item">
+                <div className="preview-detail-item">
                   <strong>Accepting Requests:</strong>
                   <span>{campaign.allowRequests ? 'Yes' : 'No'}</span>
                 </div>
@@ -211,14 +205,14 @@ function CampaignPreview() {
               {isMember ? (
                 <button 
                   onClick={handleJoinClick}
-                  className="btn btn-primary btn-large"
+                  className="btn btn-primary preview-btn-large"
                 >
                   Open Campaign Dashboard
                 </button>
               ) : (
                 <button 
                   onClick={handleJoinClick}
-                  className="btn btn-primary btn-large"
+                  className="btn btn-primary preview-btn-large"
                   disabled={isFull}
                 >
                   {isFull ? 'Campaign Full' : 'Join Campaign'}
@@ -226,60 +220,41 @@ function CampaignPreview() {
               )}
             </div>
 
-            {error && <div className="error-message">{error}</div>}
+            {error && <div className="preview-error-message">{error}</div>}
           </div>
         </div>
       </div>
 
       {/* Join Modal */}
       {showJoinModal && (
-        <div className="modal-overlay" onClick={() => setShowJoinModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="preview-modal-overlay" onClick={() => setShowJoinModal(false)}>
+          <div className="preview-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="preview-modal-header">
               <h2>Join {campaign.name}</h2>
               <button 
-                className="modal-close"
+                className="preview-modal-close"
                 onClick={() => setShowJoinModal(false)}
               >
                 ✕
               </button>
             </div>
 
-            <div className="modal-body">
-              <p>Enter your character information to join this campaign:</p>
+            <div className="preview-modal-body">
+              <p>Send a request to join this campaign. Your username will be included automatically.</p>
 
-              <div className="form-group">
-                <label htmlFor="characterName">Character Name *</label>
-                <input
-                  type="text"
-                  id="characterName"
-                  value={characterInfo.characterName}
-                  onChange={(e) => setCharacterInfo({
-                    ...characterInfo,
-                    characterName: e.target.value
-                  })}
-                  placeholder="Enter character name"
-                  maxLength={50}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="characterClass">Character Class (optional)</label>
-                <input
-                  type="text"
-                  id="characterClass"
-                  value={characterInfo.characterClass}
-                  onChange={(e) => setCharacterInfo({
-                    ...characterInfo,
-                    characterClass: e.target.value
-                  })}
-                  placeholder="e.g., Fighter, Wizard, Ranger"
-                  maxLength={50}
+              <div className="preview-form-group">
+                <label htmlFor="requestMessage">Message (optional)</label>
+                <textarea
+                  id="requestMessage"
+                  value={requestMessage}
+                  onChange={(e) => setRequestMessage(e.target.value)}
+                  placeholder="Introduce yourself or explain why you'd like to join..."
+                  maxLength={500}
                 />
               </div>
             </div>
 
-            <div className="modal-actions">
+            <div className="preview-modal-actions">
               <button 
                 onClick={() => setShowJoinModal(false)}
                 className="btn btn-secondary"
@@ -290,9 +265,9 @@ function CampaignPreview() {
               <button 
                 onClick={handleJoinSubmit}
                 className="btn btn-primary"
-                disabled={joining || !characterInfo.characterName.trim()}
+                disabled={joining}
               >
-                {joining ? 'Joining...' : 'Join Campaign'}
+                {joining ? 'Sending Request...' : 'Send Join Request'}
               </button>
             </div>
           </div>

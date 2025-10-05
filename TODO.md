@@ -14,6 +14,65 @@ Last Updated: October 5, 2025
 
 ## 🔴 Critical Priority
 
+### Campaign Browser & Preview Page Visual Fixes 🎨
+**Status**: ⏳ Not Started
+**Priority**: 🔴 Critical (Visual bugs affecting campaign browser and preview)
+**Date Found**: October 5, 2025
+**Files**: CampaignBrowser.css, CampaignBrowser.js, CampaignPreview.css, CampaignPreview.js
+
+**Problem**: Multiple visual issues in campaign browser cards and preview page. CSS naming conflicts causing style bleeding. Cards look inconsistent due to variable-width badges and unlimited tag heights.
+
+**Issues**:
+
+**Campaign Browser Cards**:
+1. ❌ Campaign-system badge has variable width (should be fixed width for consistency)
+2. ❌ Campaign tags container has unlimited height (should be fixed to ~2 rows)
+3. ❌ Tags are using flex: 1 to fill space (removed, but need height constraint)
+4. Cards look inconsistent at a glance due to varying badge/tag sizes
+
+**Campaign Preview Page**:
+1. ❌ CSS naming conflicts with CampaignBrowser causing broken layout
+2. ❌ Need `.preview-` prefix on all classes to avoid conflicts
+3. ❌ Page layout appears broken (see screenshot)
+4. ❌ Badges, tags, detail items, modal classes all conflicting
+
+**Join Campaign Modal**:
+1. ❌ Current modal asks for "Character Name" and "Character Class"
+2. ❌ Should only ask for "Request Message" (optional text box)
+3. ❌ Username should be auto-filled (no manual entry)
+4. Simpler UX for campaign join requests
+
+**Tasks**:
+- [ ] Fix `.campaign-system` badge in CampaignBrowser to have fixed width (e.g., 120px)
+- [ ] Add fixed height to `.campaign-tags` container (e.g., ~60px for 2 rows)
+- [ ] Add overflow handling for tags (hide overflow or scroll)
+- [ ] Rename ALL CSS classes in CampaignPreview.css with `.preview-` prefix:
+  - `.badge` → `.preview-badge`
+  - `.badge-system` → `.preview-badge-system`
+  - `.badge-status` → `.preview-badge-status`
+  - `.status-*` → `.preview-status-*`
+  - `.tag` → `.preview-tag`
+  - `.detail-row` → `.preview-detail-row`
+  - `.detail-item` → `.preview-detail-item`
+  - `.modal-*` → `.preview-modal-*`
+  - `.form-group` → `.preview-form-group`
+  - `.loading-*` → `.preview-loading-*`
+  - `.error-*` → `.preview-error-*`
+  - All other generic classes
+- [ ] Update CampaignPreview.js to use new prefixed class names
+- [ ] Simplify Join Campaign modal in CampaignPreview.js:
+  - Remove characterName and characterClass fields
+  - Add requestMessage field (textarea, optional)
+  - Auto-use user.displayName or user profile username
+  - Update joinCampaign service call
+- [ ] Test campaign browser card consistency
+- [ ] Test preview page renders correctly without conflicts
+- [ ] Test join campaign flow with new simpler modal
+
+**Goal**: Consistent campaign card appearance, fixed preview page layout, and simplified join flow.
+
+---
+
 ### Players Cannot Access Settings Tab ✅
 **Status**: ✅ Complete
 **Priority**: 🔴 Critical (Blocking feature - players can't leave campaigns)
@@ -522,6 +581,52 @@ Missing or insufficient permissions.
 ---
 
 ## 🟠 High Priority
+
+### Firebase Caching System for Service Calls 🗄️
+**Status**: ⏳ Not Started
+**Priority**: 🟠 High (Performance & cost optimization)
+**Date Found**: October 5, 2025
+**Files**: Multiple services and hooks across application
+
+**Problem**: Every hook that interacts with Firebase services (Profiles, Avatars, Tokens, Campaigns, etc.) makes direct Firebase calls without caching. This leads to excessive Firebase reads and costs.
+
+**Requirements**:
+1. Implement caching system for all Firebase service calls
+2. Use proper cache invalidation strategy
+3. Cache should be granular (e.g., Token HP invalidation doesn't invalidate entire token)
+4. Consider using React Query, SWR, or custom cache implementation
+
+**Affected Services/Hooks**:
+- User Profiles (useProfile, ProfileService)
+- Avatars (useAvatar, AvatarService)
+- Tokens (useToken, TokenService)
+- Campaigns (useCampaign, CampaignService)
+- Characters (useCharacter, CharacterService)
+- Maps (useMap, MapService)
+- And others...
+
+**Cache Invalidation Strategy**:
+- Field-level invalidation (e.g., Token HP change invalidates only HP cache)
+- Time-based expiration (TTL)
+- Manual invalidation on updates/deletes
+- Optimistic updates with cache rollback on error
+
+**Tasks**:
+- [ ] Research caching libraries (React Query vs SWR vs custom)
+- [ ] Design cache key structure (e.g., `profile:${userId}`, `token:${tokenId}:hp`)
+- [ ] Implement base caching layer
+- [ ] Add cache to ProfileService and useProfile hook
+- [ ] Add cache to TokenService and useToken hook
+- [ ] Add cache to CampaignService and useCampaign hook
+- [ ] Add cache to other services systematically
+- [ ] Implement cache invalidation on mutations
+- [ ] Add cache TTL configuration
+- [ ] Test cache behavior and invalidation
+- [ ] Monitor Firebase read reduction
+
+**Goal**: Reduce Firebase reads by 60-80% through intelligent caching with proper invalidation.
+
+---
 
 ### Campaign Settings Access for Non-DM Users ✅
 **Status**: ✅ Complete
