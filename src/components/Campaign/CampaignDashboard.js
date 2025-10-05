@@ -127,6 +127,9 @@ function CampaignDashboard() {
   return (
     <div className="campaign-dashboard">
       <div className="campaign-header">
+        {campaign.campaignPhoto && (
+          <div className="campaign-header-photo" style={{ backgroundImage: `url(${campaign.campaignPhoto})` }} />
+        )}
         <div className="campaign-header-content">
           <div className="campaign-info">
             <h1>{campaign.name}</h1>

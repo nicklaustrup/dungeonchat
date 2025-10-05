@@ -239,6 +239,9 @@ const CampaignBrowser = () => {
           <div className="campaigns-list">
             {userCampaigns.map(campaign => (
               <div key={campaign.id} className="campaign-card my-campaign">
+                {campaign.campaignPhoto && (
+                  <div className="campaign-card-photo" style={{ backgroundImage: `url(${campaign.campaignPhoto})` }} />
+                )}
                 <div className="campaign-header">
                   <h3>{campaign.name}</h3>
                   <div className="campaign-system">{campaign.gameSystem}</div>
@@ -301,6 +304,9 @@ const CampaignBrowser = () => {
           ) : (
             campaigns.map(campaign => (
               <div key={campaign.id} className="campaign-card">
+                {campaign.campaignPhoto && (
+                  <div className="campaign-card-photo" style={{ backgroundImage: `url(${campaign.campaignPhoto})` }} />
+                )}
                 <div className="campaign-header">
                   <h3>{campaign.name}</h3>
                   <div className="campaign-system">{campaign.gameSystem}</div>
