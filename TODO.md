@@ -1593,6 +1593,116 @@ Missing or insufficient permissions.
 
 ---
 
+### Folder Structure & Organization Audit 🗂️
+**Status**: ⏳ Not Started
+**Priority**: 🔵 Technical (High Impact)
+**Date Started**: TBD
+**Files**: Multiple (entire codebase)
+
+**Description**: Audit the project's folder structure and organizational hierarchy to improve maintainability, reduce complexity, and fix broken imports.
+
+**Audit Areas**:
+
+**1. Folder Structure Analysis**:
+- [ ] Map current folder hierarchy
+- [ ] Identify redundant or confusing folder names
+- [ ] Check for inconsistent nesting levels
+- [ ] Document current organization patterns
+- [ ] Identify folders that could be consolidated
+- [ ] Check for orphaned or unused folders
+
+**2. File Organization**:
+- [ ] Group related components together
+- [ ] Separate UI components from business logic
+- [ ] Organize by feature vs by type (decide on convention)
+- [ ] Check for misplaced files
+- [ ] Identify files that should be co-located
+- [ ] Review service file organization
+
+**3. Import Path Analysis**:
+- [ ] Audit all import statements
+- [ ] Identify broken imports
+- [ ] Find circular dependencies
+- [ ] Check for overly complex import paths
+- [ ] Identify opportunities for barrel exports (index.js)
+- [ ] Document import conventions
+
+**4. Consolidation Opportunities**:
+- [ ] Merge similar/related folders
+- [ ] Create feature-based folder structure
+- [ ] Consolidate utility functions
+- [ ] Group related services
+- [ ] Organize hooks by functionality
+- [ ] Consolidate component folders
+
+**5. Naming Conventions**:
+- [ ] Standardize folder naming (camelCase vs PascalCase vs kebab-case)
+- [ ] Ensure consistent file naming
+- [ ] Review component naming conventions
+- [ ] Standardize service file names
+- [ ] Check for naming conflicts
+
+**6. Module Organization**:
+- [ ] Create clear boundaries between modules
+- [ ] Separate concerns (UI, logic, data)
+- [ ] Group by domain (auth, campaigns, characters, etc.)
+- [ ] Create shared/common folder for reusables
+- [ ] Organize constants and types
+
+**Proposed Structure** (to be refined during audit):
+```
+src/
+├── components/
+│   ├── common/          # Shared UI components
+│   ├── auth/            # Authentication components
+│   ├── campaigns/       # Campaign-related components
+│   ├── characters/      # Character-related components
+│   ├── maps/            # Map and VTT components
+│   └── ...
+├── services/            # Firebase and API services
+├── hooks/               # Custom React hooks
+├── contexts/            # React contexts
+├── utils/               # Utility functions
+├── constants/           # Constants and enums
+├── styles/              # Global styles
+└── assets/              # Images, fonts, etc.
+```
+
+**Tasks**:
+- [ ] Create folder structure diagram (current state)
+- [ ] Identify all broken imports
+- [ ] Fix broken imports
+- [ ] Create consolidation plan
+- [ ] Move files to new structure (if needed)
+- [ ] Update all import paths
+- [ ] Add barrel exports (index.js) where appropriate
+- [ ] Test all imports after restructure
+- [ ] Update documentation with new structure
+- [ ] Create import path guide
+
+**Breaking Changes**:
+- [ ] Document all file moves
+- [ ] Update any external references
+- [ ] Check for hardcoded paths
+- [ ] Update build configuration if needed
+
+**Tools to Use**:
+- [ ] ESLint for unused imports
+- [ ] Madge for circular dependency detection
+- [ ] VS Code search for import analysis
+- [ ] Git for safe refactoring (track moves)
+
+**Deliverables**:
+- [ ] Current structure documentation
+- [ ] Proposed structure documentation
+- [ ] Migration guide
+- [ ] Updated import conventions guide
+- [ ] List of all fixed broken imports
+
+**Goal**: Clean, logical folder structure that's easy to navigate, with no broken imports and clear organizational patterns.
+
+---
+
 ### Component Architecture ⏳
 **Status**: Ongoing
 
@@ -1637,7 +1747,7 @@ Missing or insufficient permissions.
 ## 🟣 Known Issues & Bugs
 
 ### High Priority Bugs 🐛
-- None currently identified
+- [ ] Chat message Options button not working
 
 ### Medium Priority Bugs 🐛
 - [ ] Portrait fallback image error handling (partially fixed)
