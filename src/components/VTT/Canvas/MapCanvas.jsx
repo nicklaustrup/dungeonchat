@@ -536,7 +536,7 @@ function MapCanvas({
         setActiveTool(prev => prev === 'ruler' ? 'pointer' : 'ruler');
       }
 
-      // ESC key to clear ruler or close context menu
+      // ESC key to clear ruler, shapes, or close context menu
       if (e.key === 'Escape') {
         if (contextMenu) {
           setContextMenu(null);
@@ -546,6 +546,14 @@ function MapCanvas({
           setMapContextMenu(null);
           return;
         }
+        // Clear in-progress shape
+        if (shapeStart || shapePreview) {
+          setShapeStart(null);
+          setShapePreview(null);
+          console.log('Shape preview cleared by Escape key');
+          return;
+        }
+        // Clear ruler
         if (activeTool === 'ruler') {
           setRulerStart(null);
           setRulerEnd(null);
@@ -699,6 +707,19 @@ function MapCanvas({
   useEffect(() => {
     console.log('[BOUNDARY MODE DEBUG] boundaryMode changed to:', boundaryMode, '| activeTool:', activeTool);
   }, [boundaryMode, activeTool]);
+
+  // Clear shape preview when switching away from shape tools
+  useEffect(() => {
+    const shapeTools = ['circle', 'rectangle', 'cone', 'line'];
+    if (!shapeTools.includes(activeTool)) {
+      // User switched away from shape tool - clear any in-progress shape
+      if (shapeStart || shapePreview) {
+        setShapeStart(null);
+        setShapePreview(null);
+        console.log('Shape preview cleared due to tool switch');
+      }
+    }
+  }, [activeTool, shapeStart, shapePreview, setShapeStart, setShapePreview]);
 
   // Enable fog brush when fog panel is open and fog is enabled
   useEffect(() => {
@@ -2482,12 +2503,12 @@ function MapCanvas({
                         height={gMap.gridSize}
                         fill="black"
                         opacity={fogOpacity}
-                        stroke={fogGridVisible ? fogGridColor : '#ff6b6b'}
-                        strokeWidth={fogGridVisible ? 1 : 1.5}
+                        stroke={fogGridVisible ? fogGridColor : 'transparent'}
+                        strokeWidth={fogGridVisible ? 1 : 0}
                         listening={false}
-                        shadowColor={fogGridVisible ? fogGridColor : '#ff0000'}
-                        shadowBlur={2}
-                        shadowOpacity={0.5}
+                        shadowColor={fogGridVisible ? fogGridColor : 'transparent'}
+                        shadowBlur={fogGridVisible ? 2 : 0}
+                        shadowOpacity={fogGridVisible ? 0.5 : 0}
                       />
                     );
                   }
