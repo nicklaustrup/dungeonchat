@@ -1,3 +1,23 @@
+## [1.7.0](https://github.com/nicklaustrup/dungeonchat/compare/v1.6.1...v1.7.0) (2025-10-05)
+
+
+### Features
+
+* **clickable-usernames:** add clickable DM name in CampaignPreview ([64a00d5](https://github.com/nicklaustrup/dungeonchat/commit/64a00d5b7aca291a4d25b84df1ca46c5c78ed9b9))
+* **clickable-usernames:** add clickable names in Campaign Dashboard ([ee2334c](https://github.com/nicklaustrup/dungeonchat/commit/ee2334c63eb373e2d4610c93caf069c16805aa07))
+* **clickable-usernames:** add global styles and clickable DM names ([1f01416](https://github.com/nicklaustrup/dungeonchat/commit/1f014163d1ed3759bc65e2b4e39041705da03209))
+* **clickable-usernames:** complete clickable username implementation ([d1e1748](https://github.com/nicklaustrup/dungeonchat/commit/d1e174840f5e705381161d0f16138eb48bca9d27))
+* implement campaign join waitlist system ([cc11400](https://github.com/nicklaustrup/dungeonchat/commit/cc114007a29552938affc3024dcbb2240c74bc25))
+* implement friends list and social features ([317e41b](https://github.com/nicklaustrup/dungeonchat/commit/317e41b4a2218f2729038df693128200f9e73a3f))
+* reorganize UserProfileModal with better button placement ([eaa7926](https://github.com/nicklaustrup/dungeonchat/commit/eaa7926f72ac0c8786a5d38dbd0c5bc6f8436b24))
+
+
+### Bug Fixes
+
+* add fallback for getDisplayInfo in ChatPage ([133b315](https://github.com/nicklaustrup/dungeonchat/commit/133b31510d59c80fd477d6ff37d197f0572aca3e))
+* handle missing userId in username search ([f88db3c](https://github.com/nicklaustrup/dungeonchat/commit/f88db3c98fb8c42974c392930f9bd2ef0d4c17b5))
+* resolve composite filter query error in friendshipService ([afd6235](https://github.com/nicklaustrup/dungeonchat/commit/afd62356502465676c17d259b28eb37a3df41468))
+
 ## [1.6.1](https://github.com/nicklaustrup/dungeonchat/compare/v1.6.0...v1.6.1) (2025-10-05)
 
 
