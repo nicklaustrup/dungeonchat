@@ -49,14 +49,13 @@ import {
   invalidateCharacter,
   invalidateAllCharacters
 } from './useCharactersCache';
+
+// Re-export core services
 export { default as firestoreCache } from './FirestoreCache';
 export { useCachedDocument, useCachedQuery } from './useCachedDocument';
 
 // User profile caching
-export { 
-  useCachedUserProfile,
-  default as userProfileCache 
-} from './useCachedUserProfile';
+export { useCachedUserProfile } from './useCachedUserProfile';
 
 // Campaign caching
 export {
