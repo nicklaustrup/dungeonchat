@@ -5,6 +5,7 @@ import LandingPage from '../components/Landing/LandingPage';
 import CampaignBrowser from '../components/Campaign/CampaignBrowser';
 import CampaignDashboard from '../components/Campaign/CampaignDashboard';
 import CampaignCreator from '../components/Campaign/CampaignCreator';
+import CampaignPreview from '../components/Campaign/CampaignPreview';
 import VoiceChatDemo from '../pages/VoiceChatDemo/VoiceChatDemo';
 import MapEditorPage from '../pages/MapEditorPage';
 import VTTSession from '../components/VTT/VTTSession/VTTSession';
@@ -36,6 +37,7 @@ function AppRouter() {
           
           {/* Campaign routes */}
           <Route path="/campaigns" element={<CampaignBrowser />} />
+          <Route path="/campaigns/:campaignId/preview" element={<CampaignPreview />} />
           <Route path="/create-campaign" element={<CampaignCreator />} />
           <Route 
             path="/campaign/:campaignId" 

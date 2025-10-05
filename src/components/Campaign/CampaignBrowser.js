@@ -238,7 +238,11 @@ const CampaignBrowser = () => {
           <h2>My Campaigns</h2>
           <div className="campaigns-list">
             {userCampaigns.map(campaign => (
-              <div key={campaign.id} className="campaign-card my-campaign">
+              <div 
+                key={campaign.id} 
+                className="campaign-card my-campaign"
+                onClick={() => handleJoinCampaign(campaign)}
+              >
                 <div 
                   className="campaign-header"
                   style={campaign.campaignPhoto ? {
@@ -287,7 +291,10 @@ const CampaignBrowser = () => {
                   </span>
                   <button
                     className="btn btn-primary"
-                    onClick={() => handleJoinCampaign(campaign)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleJoinCampaign(campaign);
+                    }}
                   >
                     Open Campaign
                   </button>
@@ -309,7 +316,11 @@ const CampaignBrowser = () => {
             </div>
           ) : (
             campaigns.map(campaign => (
-              <div key={campaign.id} className="campaign-card">
+              <div 
+                key={campaign.id} 
+                className="campaign-card"
+                onClick={() => navigate(`/campaigns/${campaign.id}/preview`)}
+              >
                 <div 
                   className="campaign-header"
                   style={campaign.campaignPhoto ? {
@@ -353,10 +364,13 @@ const CampaignBrowser = () => {
                   </span>
                   <button
                     className="btn btn-primary"
-                    onClick={() => handleJoinCampaign(campaign)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/campaigns/${campaign.id}/preview`);
+                    }}
                     disabled={campaign.currentPlayers >= campaign.maxPlayers}
                   >
-                    {campaign.currentPlayers >= campaign.maxPlayers ? 'Full' : 'Join Campaign'}
+                    {campaign.currentPlayers >= campaign.maxPlayers ? 'Full' : 'View Campaign'}
                   </button>
                 </div>
               </div>
