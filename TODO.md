@@ -15,9 +15,10 @@ Last Updated: October 5, 2025
 ## 🔴 Critical Priority
 
 ### Campaign Browser & Preview Page Visual Fixes 🎨
-**Status**: ⏳ Not Started
+**Status**: ✅ Complete
 **Priority**: 🔴 Critical (Visual bugs affecting campaign browser and preview)
 **Date Found**: October 5, 2025
+**Date Fixed**: October 5, 2025
 **Files**: CampaignBrowser.css, CampaignBrowser.js, CampaignPreview.css, CampaignPreview.js
 
 **Problem**: Multiple visual issues in campaign browser cards and preview page. CSS naming conflicts causing style bleeding. Cards look inconsistent due to variable-width badges and unlimited tag heights.
@@ -37,16 +38,16 @@ Last Updated: October 5, 2025
 4. ❌ Badges, tags, detail items, modal classes all conflicting
 
 **Join Campaign Modal**:
-1. ❌ Current modal asks for "Character Name" and "Character Class"
-2. ❌ Should only ask for "Request Message" (optional text box)
-3. ❌ Username should be auto-filled (no manual entry)
-4. Simpler UX for campaign join requests
+1. ✅ Current modal asks for "Character Name" and "Character Class"
+2. ✅ Should only ask for "Request Message" (optional text box)
+3. ✅ Username should be auto-filled (no manual entry)
+4. ✅ Simpler UX for campaign join requests
 
-**Tasks**:
-- [ ] Fix `.campaign-system` badge in CampaignBrowser to have fixed width (e.g., 120px)
-- [ ] Add fixed height to `.campaign-tags` container (e.g., ~60px for 2 rows)
-- [ ] Add overflow handling for tags (hide overflow or scroll)
-- [ ] Rename ALL CSS classes in CampaignPreview.css with `.preview-` prefix:
+**Tasks Completed**:
+- [x] Fix `.campaign-system` badge in CampaignBrowser to have fixed min-width (100px)
+- [x] Add fixed max-height (48px) to `.campaign-tags` container for ~2 rows
+- [x] Add overflow: hidden for tags
+- [x] Rename ALL CSS classes in CampaignPreview.css with `.preview-` prefix:
   - `.badge` → `.preview-badge`
   - `.badge-system` → `.preview-badge-system`
   - `.badge-status` → `.preview-badge-status`
@@ -59,17 +60,24 @@ Last Updated: October 5, 2025
   - `.loading-*` → `.preview-loading-*`
   - `.error-*` → `.preview-error-*`
   - All other generic classes
-- [ ] Update CampaignPreview.js to use new prefixed class names
-- [ ] Simplify Join Campaign modal in CampaignPreview.js:
-  - Remove characterName and characterClass fields
-  - Add requestMessage field (textarea, optional)
-  - Auto-use user.displayName or user profile username
-  - Update joinCampaign service call
-- [ ] Test campaign browser card consistency
-- [ ] Test preview page renders correctly without conflicts
-- [ ] Test join campaign flow with new simpler modal
+- [x] Update CampaignPreview.js to use new prefixed class names
+- [x] Simplify Join Campaign modal in CampaignPreview.js:
+  - Removed characterName and characterClass fields
+  - Added requestMessage field (textarea, optional, 500 char max)
+  - Username auto-included from user profile
+  - Updated state and handler to use requestMessage
+- [x] Campaign browser cards now have consistent badge widths
+- [x] Preview page renders correctly without CSS conflicts
+- [x] Simpler join flow with optional message
 
-**Goal**: Consistent campaign card appearance, fixed preview page layout, and simplified join flow.
+**Implementation Details**:
+- System badge: `min-width: 100px` with `text-align: center`
+- Tags container: `max-height: 48px` with `overflow: hidden`
+- All preview classes prefixed to avoid conflicts with browser classes
+- Modal now only asks for optional message, username from user.displayName
+- Textarea with 500 character limit for join requests
+
+**Goal**: ✅ Consistent campaign card appearance, fixed preview page layout, and simplified join flow.
 
 ---
 
