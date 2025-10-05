@@ -3,15 +3,12 @@ import './UserProfileModal.css';
 import { getFallbackAvatar } from '../../utils/avatar';
 import { usePresence, usePresenceMeta } from '../../services/PresenceContext';
 import { useFirebase } from '../../services/FirebaseContext';
+import { useCachedUserProfileData } from '../../services/cache';
 import friendshipService from '../../services/friendshipService';
-import { doc, getDoc } from 'firebase/firestore';
-import { firestore } from '../../services/firebase';
 
 function UserProfileModal({ user, userId, isOpen, onClose }) {
     const { user: currentUser } = useFirebase();
-    const [profileData, setProfileData] = useState(null);
     const [friendshipStatus, setFriendshipStatus] = useState('none');
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     // Determine which user ID to use
@@ -21,40 +18,26 @@ function UserProfileModal({ user, userId, isOpen, onClose }) {
     const presence = usePresence(targetUserId);
     const { awayAfterSeconds } = usePresenceMeta();
 
-    // Load user profile data if userId is provided
+    // Use cached profile data for better performance
+    const { profileData, loading } = useCachedUserProfileData(targetUserId);
+
+    // Load friendship status
     useEffect(() => {
-        async function loadProfile() {
-            if (!targetUserId) {
-                setLoading(false);
+        async function loadFriendshipStatus() {
+            if (!currentUser || !targetUserId || targetUserId === currentUser.uid) {
                 return;
             }
 
-            setLoading(true);
             try {
-                // Fetch user profile from Firestore
-                const userDoc = await getDoc(doc(firestore, 'userProfiles', targetUserId));
-                if (userDoc.exists()) {
-                    setProfileData({
-                        id: targetUserId,
-                        ...userDoc.data()
-                    });
-                }
-
-                // Get friendship status if viewing another user
-                if (currentUser && targetUserId !== currentUser.uid) {
-                    const status = await friendshipService.getFriendshipStatus(currentUser.uid, targetUserId);
-                    setFriendshipStatus(status);
-                }
+                const status = await friendshipService.getFriendshipStatus(currentUser.uid, targetUserId);
+                setFriendshipStatus(status);
             } catch (err) {
-                console.error('Error loading profile:', err);
-                setError('Failed to load profile');
-            } finally {
-                setLoading(false);
+                console.error('Error loading friendship status:', err);
             }
         }
 
         if (isOpen) {
-            loadProfile();
+            loadFriendshipStatus();
         }
     }, [targetUserId, currentUser, isOpen]);
 
@@ -95,7 +78,8 @@ function UserProfileModal({ user, userId, isOpen, onClose }) {
     }
 
     // Use either provided user object or loaded profile data
-    const displayUser = user || profileData;
+    // profileData from cache has the actual data, no need for id field
+    const displayUser = user || (profileData ? { ...profileData, id: targetUserId, uid: targetUserId } : null);
     if (!displayUser && !loading) {
         return null;
     }
