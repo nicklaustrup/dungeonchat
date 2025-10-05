@@ -124,36 +124,11 @@ function VTTSession() {
   const voiceDragStartRef = useRef({ x: 0, y: 0 });
   const notificationContainerRef = useRef(null);
 
-  // Migration button state
-  const [isMigrating, setIsMigrating] = useState(false);
-  const [migrationComplete, setMigrationComplete] = useState(false);
-
   // Camera center ref - used by MapCanvas to expose camera centering function
   const centerCameraRef = useRef(null);
 
   // Load lighting system for active map
   const lightingHook = useLighting(firestore, campaignId, activeMap?.id, activeMap?.lighting);
-
-  // Help tooltip state
-  // Help tooltip state removed: tooltip behavior controlled elsewhere; state was unused and caused lint warnings
-
-  // Handle HP sync migration
-  const handleFixHPSync = async () => {
-    if (!campaignId || !firestore) return;
-    
-    setIsMigrating(true);
-    try {
-      const { fixTokenUserIds } = await import('../../../utils/fixTokenUserIds');
-      const fixedCount = await fixTokenUserIds(firestore, campaignId);
-      setMigrationComplete(true);
-      alert(`✅ Fixed ${fixedCount} token(s)! HP sync is now working. Refresh the page to see changes.`);
-    } catch (error) {
-      console.error('Migration error:', error);
-      alert('❌ Migration failed: ' + error.message);
-    } finally {
-      setIsMigrating(false);
-    }
-  };
 
   // Hide app navigation on mount, restore on unmount
   useEffect(() => {
@@ -773,20 +748,6 @@ function VTTSession() {
         </div>
 
         <div className="toolbar-right">
-          {/* HP Sync Migration Button - DM only, hide after completion */}
-          {isUserDM && !migrationComplete && (
-            <button
-              className="toolbar-button"
-              onClick={handleFixHPSync}
-              disabled={isMigrating}
-              title="Fix HP sync for existing tokens (run once)"
-              aria-label="Fix HP sync"
-              style={{ backgroundColor: '#8b5cf6', color: 'white' }}
-            >
-              {isMigrating ? '⏳' : '🔧'}
-              <span>{isMigrating ? 'Fixing...' : 'Fix HP Sync'}</span>
-            </button>
-          )}
           <button
             className="toolbar-button"
             onClick={() => setShowSessionSettings(true)}
