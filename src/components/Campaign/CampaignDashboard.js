@@ -21,6 +21,7 @@ import { useCampaignCharacters, invalidateCampaignCharacters, invalidateUserChar
 import { deleteCharacterSheet } from '../../services/characterSheetService';
 import MapLibrary from '../VTT/MapLibrary/MapLibrary';
 import MapEditor from '../VTT/MapEditor/MapEditor';
+import UserProfileModal from '../UserProfileModal/UserProfileModal';
 import './CampaignDashboard.css';
 import SessionQuickNav from '../Session/SessionQuickNav';
 
@@ -39,6 +40,7 @@ function CampaignDashboard() {
   const [showMapEditor, setShowMapEditor] = useState(false);
   const [editingMap, setEditingMap] = useState(null);
   const [deletingCharacter, setDeletingCharacter] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   // Use the custom hook for members with real-time updates
   const { members, loading: membersLoading, setMembers } = useCampaignMembers(firestore, campaignId);
@@ -253,7 +255,12 @@ function CampaignDashboard() {
                 <div className="detail-grid">
                   <div className="detail-item">
                     <label>Dungeon Master</label>
-                    <span>{dmDisplayName}</span>
+                    <span
+                      className="clickable-username"
+                      onClick={() => setSelectedUserId(campaign.dmId)}
+                    >
+                      {dmDisplayName}
+                    </span>
                   </div>
                   <div className="detail-item">
                     <label>Game System</label>
@@ -685,6 +692,15 @@ function CampaignDashboard() {
             />
           </div>
         </div>
+      )}
+
+      {/* User Profile Modal */}
+      {selectedUserId && (
+        <UserProfileModal
+          userId={selectedUserId}
+          isOpen={!!selectedUserId}
+          onClose={() => setSelectedUserId(null)}
+        />
       )}
 
     </div>

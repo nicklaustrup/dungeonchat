@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useFirebase } from '../../services/FirebaseContext';
 import { updateCampaignMember, removeCampaignMember } from '../../services/campaign/campaignService';
 import { useCampaignCharacters, invalidateCampaignCharacters } from '../../services/cache';
+import UserProfileModal from '../UserProfileModal/UserProfileModal';
 import './CampaignMemberList.css';
 
 function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) {
   const { firestore } = useFirebase();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   // Get character information for all campaign members (cached with real-time updates)
   const { characters } = useCampaignCharacters(campaignId);
@@ -114,10 +116,15 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
               </div>
               <div className="member-details">
                 <div className="member-name">
-                  {member.role === 'dm' 
-                    ? (member.username || member.displayName || 'Unknown DM')
-                    : (memberCharacter?.name || member.characterName || member.username || member.displayName || 'Unknown Player')
-                  }
+                  <span
+                    className="clickable-username"
+                    onClick={() => setSelectedUserId(member.userId)}
+                  >
+                    {member.role === 'dm'
+                      ? (member.username || member.displayName || 'Unknown DM')
+                      : (memberCharacter?.name || member.characterName || member.username || member.displayName || 'Unknown Player')
+                    }
+                  </span>
                   {member.role === 'dm' && <span className="dm-badge">DM</span>}
                 </div>
                 {member.role !== 'dm' && (
@@ -256,6 +263,15 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
           </div>
         </div>
       </div>
+
+      {/* User Profile Modal */}
+      {selectedUserId && (
+        <UserProfileModal
+          userId={selectedUserId}
+          isOpen={!!selectedUserId}
+          onClose={() => setSelectedUserId(null)}
+        />
+      )}
     </div>
   );
 }
