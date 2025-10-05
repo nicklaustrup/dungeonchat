@@ -103,6 +103,15 @@ export function clearAllCache() {
 }
 
 /**
+ * Destroy cache instance (for testing/cleanup)
+ * Clears cache and stops background intervals
+ */
+export function destroyCache() {
+  const cache = require('./FirestoreCache').default;
+  cache.destroy();
+}
+
+/**
  * Log cache statistics to console
  * Useful for debugging cache performance
  */

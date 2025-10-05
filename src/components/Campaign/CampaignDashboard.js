@@ -17,7 +17,8 @@ import PartyManagement from '../Session/PartyManagement';
 import VoiceChatPanel from '../Voice/VoiceChatPanel';
 import { CharacterCreationModal } from '../CharacterCreationModal';
 import { CharacterSheet } from '../CharacterSheet';
-import { useCharacterSheet, useCampaignCharacters, useDeleteCharacterSheet } from '../../hooks/useCharacterSheet';
+import { useCampaignCharacters, invalidateCampaignCharacters, invalidateUserCharacters } from '../../services/cache';
+import { deleteCharacterSheet } from '../../services/characterSheetService';
 import MapLibrary from '../VTT/MapLibrary/MapLibrary';
 import MapEditor from '../VTT/MapEditor/MapEditor';
 import './CampaignDashboard.css';
@@ -37,14 +38,16 @@ function CampaignDashboard() {
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
   const [showMapEditor, setShowMapEditor] = useState(false);
   const [editingMap, setEditingMap] = useState(null);
+  const [deletingCharacter, setDeletingCharacter] = useState(false);
 
   // Use the custom hook for members with real-time updates
   const { members, loading: membersLoading, setMembers } = useCampaignMembers(firestore, campaignId);
 
-  // Character sheet hooks
-  const { hasCharacter } = useCharacterSheet(firestore, campaignId, user?.uid);
-  const { characters: campaignCharacters, refreshCharacters } = useCampaignCharacters(firestore, campaignId);
-  const { deleteCharacter, deleting: deletingCharacter } = useDeleteCharacterSheet(firestore, campaignId);
+  // Character sheet hooks (cached with real-time updates)
+  const { characters: campaignCharacters, refresh: refreshCharacters } = useCampaignCharacters(campaignId);
+
+  // Check if user has a character (derived from campaignCharacters)
+  const hasCharacter = campaignCharacters.some(char => char.userId === user?.uid || char.uid === user?.uid);
 
   useEffect(() => {
     if (!campaignId || !firestore || !user) return;
@@ -455,12 +458,18 @@ function CampaignDashboard() {
                                   onClick={async () => {
                                     if (window.confirm(`Are you sure you want to delete ${character.name || 'this character'}?`)) {
                                       try {
+                                        setDeletingCharacter(true);
                                         // Use character.userId (the owner's ID) which is the Firestore document ID
-                                        await deleteCharacter(character.userId);
-                                        await refreshCharacters();
+                                        await deleteCharacterSheet(firestore, campaignId, character.userId);
+                                        // Invalidate character caches
+                                        invalidateUserCharacters(character.userId);
+                                        invalidateCampaignCharacters(campaignId);
+                                        // Refresh will happen automatically via real-time listeners
                                       } catch (err) {
                                         console.error('Error deleting character:', err);
                                         alert('Failed to delete character: ' + err.message);
+                                      } finally {
+                                        setDeletingCharacter(false);
                                       }
                                     }
                                   }}

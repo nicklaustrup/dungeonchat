@@ -14,6 +14,7 @@ import {
   calculateAbilityModifier 
 } from '../models/CharacterSheet';
 import { useCharacterCreation } from '../hooks/useCharacterSheet';
+import { invalidateUserCharacters, invalidateCampaignCharacters } from '../services/cache';
 import { useFirebase } from '../services/FirebaseContext';
 import { useChatTheme } from '../contexts/ChatStateContext';
 import './CharacterCreationModal.css';
@@ -100,6 +101,9 @@ export function CharacterCreationModal({
   const handleCreateCharacter = async () => {
     try {
       const newCharacter = await createCharacter(characterData);
+      // Invalidate character caches after creation
+      invalidateUserCharacters(userId);
+      invalidateCampaignCharacters(campaignId);
       onCharacterCreated?.(newCharacter);
       onClose();
     } catch (err) {

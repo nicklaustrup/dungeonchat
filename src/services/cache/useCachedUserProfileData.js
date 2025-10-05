@@ -1,14 +1,17 @@
 import { useCachedDocument } from './useCachedDocument';
+import { useFirebase } from '../FirebaseContext';
 
 /**
  * Hook to fetch cached profile data for a specific user ID
  * Used for displaying enhanced profile information in messages
  * Uses caching with real-time updates
- * 
+ *
  * @param {string} userId - The user ID to fetch profile data for
  * @returns {Object} { profileData, loading, error, refresh, invalidate }
  */
 export function useCachedUserProfileData(userId) {
+  const { firestore } = useFirebase();
+
   const {
     data: profileData,
     loading,
@@ -16,11 +19,13 @@ export function useCachedUserProfileData(userId) {
     refresh,
     invalidate
   } = useCachedDocument(
-    userId ? 'userProfiles' : null,
+    firestore,
+    'userProfiles',
     userId,
     {
       ttl: 5 * 60 * 1000, // 5 minutes
-      enableRealtime: true // Real-time updates for profile changes
+      realtime: true, // Real-time updates for profile changes
+      disabled: !userId
     }
   );
 

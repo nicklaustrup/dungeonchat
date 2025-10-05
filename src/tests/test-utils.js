@@ -54,6 +54,72 @@ jest.mock('../hooks/useUserProfileData', () => ({
   })
 }));
 
+// Mock cached hooks to prevent Firebase errors in tests
+jest.mock('../services/cache', () => ({
+  __esModule: true,
+  useCachedUserProfile: () => ({
+    profile: mockProfileData,
+    loading: false,
+    error: null,
+    updateProfile: jest.fn(),
+    updateUsername: jest.fn(),
+    uploadPicture: jest.fn(),
+    deletePicture: jest.fn(),
+    checkUsernameAvailability: jest.fn(),
+    createProfile: jest.fn(),
+    refresh: jest.fn(),
+    invalidate: jest.fn(),
+    updatePrivacySettings: jest.fn(),
+    toggleProfanityFilter: mockToggleProfanityFilter,
+    getDisplayInfo: jest.fn(),
+    profanityFilterEnabled: true,
+    isProfileComplete: true,
+    needsOnboarding: false
+  }),
+  useCachedUserProfileData: (userId) => ({
+    profileData: null, // Return null so components use the displayName from message
+    loading: false,
+    error: null,
+    refresh: jest.fn(),
+    invalidate: jest.fn()
+  }),
+  useJoinedCampaigns: () => ({
+    campaigns: [],
+    loading: false,
+    error: null,
+    refresh: jest.fn(),
+    invalidate: jest.fn()
+  }),
+  useCachedCampaign: (id) => ({
+    campaign: id ? { id, name: 'Test Campaign' } : null,
+    loading: false,
+    error: null,
+    refresh: jest.fn(),
+    invalidate: jest.fn()
+  }),
+  useUserCharacters: () => ({
+    characters: [],
+    loading: false,
+    error: null,
+    refresh: jest.fn(),
+    invalidate: jest.fn()
+  }),
+  useCampaignCharacters: (id) => ({
+    characters: [],
+    loading: false,
+    error: null,
+    refresh: jest.fn(),
+    invalidate: jest.fn()
+  }),
+  useCachedCharacter: (id) => ({
+    character: id ? { id, name: 'Test Character' } : null,
+    loading: false,
+    error: null,
+    refresh: jest.fn(),
+    invalidate: jest.fn()
+  })
+}));
+
 // Custom render function that includes necessary providers
 export function renderWithProviders(ui, options = {}) {
   function Wrapper({ children }) {

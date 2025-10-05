@@ -444,7 +444,44 @@ service cloud.firestore {
     match /userCampaigns/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-    
+
+    // Top-level characters collection (global character storage)
+    match /characters/{characterId} {
+      // Helper function: Check if user is a member of the character's campaign
+      function isCampaignMember() {
+        return request.auth != null &&
+          (resource.data.campaignId == null ||
+           exists(/databases/$(database)/documents/campaigns/$(resource.data.campaignId)/members/$(request.auth.uid)));
+      }
+
+      // Helper function: Check if user is the DM of the character's campaign
+      function isCampaignDM() {
+        return request.auth != null &&
+          resource.data.campaignId != null &&
+          request.auth.uid == get(/databases/$(database)/documents/campaigns/$(resource.data.campaignId)).data.dmId;
+      }
+
+      // Campaign members and DM can read character sheets in their campaign
+      allow read: if request.auth != null &&
+        (isCampaignMember() || isCampaignDM());
+
+      // Users can create their own character sheets if they're a campaign member
+      allow create: if request.auth != null &&
+        (request.resource.data.userId == request.auth.uid || request.resource.data.uid == request.auth.uid) &&
+        (request.resource.data.campaignId == null ||
+         exists(/databases/$(database)/documents/campaigns/$(request.resource.data.campaignId)/members/$(request.auth.uid)));
+
+      // Users can update their own character sheets, DM can update characters in their campaign only
+      allow update: if request.auth != null &&
+        ((resource.data.userId == request.auth.uid || resource.data.uid == request.auth.uid) ||
+         isCampaignDM());
+
+      // Users can delete their own character sheets, DM can delete characters in their campaign only
+      allow delete: if request.auth != null &&
+        ((resource.data.userId == request.auth.uid || resource.data.uid == request.auth.uid) ||
+         isCampaignDM());
+    }
+
     // Deny all other reads/writes
     match /{document=**} {
       allow read, write: if false;

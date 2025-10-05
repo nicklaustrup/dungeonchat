@@ -166,10 +166,18 @@ class FirestoreCache {
     for (const unsubscribe of this.listeners.values()) {
       unsubscribe();
     }
-    
+
     this.cache.clear();
     this.listeners.clear();
     this.stats.invalidations += this.cache.size;
+  }
+
+  /**
+   * Destroy the cache instance (for testing/cleanup)
+   */
+  destroy() {
+    this.clear();
+    this.stopCleanupInterval();
   }
 
   /**
@@ -234,6 +242,11 @@ class FirestoreCache {
 
 // Create singleton instance
 const firestoreCache = new FirestoreCache();
+
+// Expose to window for debugging/monitoring in browser console
+if (typeof window !== 'undefined') {
+  window.firestoreCache = firestoreCache;
+}
 
 // Export both the class and singleton
 export { FirestoreCache };

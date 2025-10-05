@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { useFirebase } from '../../services/FirebaseContext';
 import { updateCampaignMember, removeCampaignMember } from '../../services/campaign/campaignService';
-import { useCampaignCharacters } from '../../hooks/useCharacterSheet';
+import { useCampaignCharacters, invalidateCampaignCharacters } from '../../services/cache';
 import './CampaignMemberList.css';
 
 function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) {
   const { firestore } = useFirebase();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
-  // Get character information for all campaign members
-  const { characters } = useCampaignCharacters(firestore, campaignId);
+
+  // Get character information for all campaign members (cached with real-time updates)
+  const { characters } = useCampaignCharacters(campaignId);
 
   const handleMemberAction = async (memberId, action, newStatus = null) => {
     if (!isUserDM) return;
@@ -24,6 +24,8 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
         // Update local state
         const updatedMembers = members.filter(member => member.userId !== memberId);
         onMembersUpdate(updatedMembers);
+        // Invalidate campaign characters cache since member was removed
+        invalidateCampaignCharacters(campaignId);
       } else if (action === 'updateStatus' && newStatus) {
         await updateCampaignMember(firestore, campaignId, memberId, { status: newStatus });
         // Update local state

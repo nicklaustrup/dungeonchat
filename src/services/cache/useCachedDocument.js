@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, getDocs, onSnapshot } from 'firebase/firestore';
 import firestoreCache from './FirestoreCache';
 
 /**
@@ -44,13 +44,13 @@ export function useCachedDocument(firestore, collection, docId, options = {}) {
       // Check cache first
       const cached = firestoreCache.get(cacheKey);
       if (cached !== null) {
-        console.log(`[CACHE] 🎯 HIT: ${cacheKey}`);
+        console.warn('%c[CACHE] 🎯 HIT', 'background: #22c55e; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold', cacheKey);
         setData(cached);
         setLoading(false);
         return;
       }
 
-      console.log(`[CACHE] ❌ MISS: ${cacheKey}`);
+      console.warn('%c[CACHE] ❌ MISS', 'background: #ef4444; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold', cacheKey);
       // Cache miss - fetch from Firestore
       const docRef = doc(firestore, collection, docId);
       const docSnap = await getDoc(docRef);
@@ -179,10 +179,10 @@ export function useCachedQuery(firestore, queryFn, cacheKey, options = {}) {
         return;
       }
 
-      console.log('%c[CACHE] ❌ MISS', 'background: #ef4444; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold', cacheKey);
+      console.warn('%c[CACHE] ❌ MISS', 'background: #ef4444; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold', cacheKey);
       // Cache miss - fetch from Firestore
       const q = queryFn();
-      const snapshot = await q.get();
+      const snapshot = await getDocs(q);
 
       const results = snapshot.docs.map(doc => ({
         id: doc.id,

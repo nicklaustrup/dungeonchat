@@ -1,9 +1,9 @@
 # Firebase Caching System - Migration Handoff Document
 
-**Date Created**: October 5, 2025  
-**Status**: Phase 1 & 2 Complete ✅ | Phase 3 Ready to Start  
-**Current Branch**: main  
-**Last Commit**: Staged but not committed (git timeout issue)
+**Date Created**: October 5, 2025
+**Status**: Phase 1, 2 & 3 Complete ✅ | Bug Fixes Applied ✅ | Firestore Config Updated ✅
+**Current Branch**: main
+**Last Commit**: Pending (git timeout - manual commit needed)
 
 ---
 
@@ -103,7 +103,30 @@ Migrated **4 additional components** (18 total):
 - 📊 **Expected**: 70-90% reduction in Firebase reads for chat profile lookups
 - 📊 **Expected**: 50-70% reduction in campaign list fetches
 
-#### **Bug Fixes Applied**
+#### **Phase 3: Character Components Migration** (100% Complete)
+Migrated **3 components** from direct character hooks to cached hooks:
+
+1. ✅ **CampaignMemberList.js** → Uses `useCampaignCharacters(campaignId)`
+   - Added cache invalidation on member removal
+   - Removed firestore parameter (uses context)
+
+2. ✅ **CampaignDashboard.js** → Uses `useCampaignCharacters(campaignId)`
+   - Migrated from multiple hooks to single cached hook
+   - Added cache invalidation on character deletion
+   - Replaced `useDeleteCharacterSheet` with direct service call
+
+3. ✅ **CharacterCreationModal.js** → Added cache invalidation
+   - Invalidates user and campaign character caches after creation
+   - Ensures lists update immediately
+
+**Phase 3 Results**:
+- ✅ 3 components successfully migrated (21 total across all phases)
+- ✅ All character mutations have cache invalidation
+- ✅ Tests passing (66 suites, 282 tests, 0 failures)
+- 📊 **Expected**: 60-80% reduction in character data Firebase reads
+- 📊 **Expected**: 30-50% faster character list loading
+
+#### **Critical Bug Fixes Applied**
 1. ✅ **Profile Picture Upload Bug**: Fixed parameter order in `uploadProfilePicture()` call
    - Was: `uploadProfilePicture(user.uid, file, storage, firestore)`
    - Fixed: `uploadProfilePicture(file, user.uid, storage)`
@@ -111,15 +134,56 @@ Migrated **4 additional components** (18 total):
 2. ✅ **Cache Logging Enhancement**: Changed `console.log()` to `console.warn()` for visibility
    - Styled logs with CSS backgrounds: 🎯 HIT (green), ❌ MISS (red), 💾 SET (blue), 🗑️ EVICT (orange)
 
+3. ✅ **Missing Firestore Parameter**: Fixed `useCachedUserProfileData` hook
+   - Added `useFirebase` hook and `firestore` parameter
+   - Changed from conditional collection to `disabled` option
+   - Hook now functional instead of broken
+
+4. ✅ **Inconsistent Console Logging**: Fixed plain `console.log()` in `useCachedDocument`
+   - Lines 47, 53 now use styled `console.warn()` matching query hook pattern
+   - Cache logs now visible and styled in browser console
+
+5. ✅ **Wrong Firebase API**: Fixed Firebase v8 to v9 API migration
+   - Replaced `q.get()` with `getDocs(q)`
+   - Added missing `getDocs` import from firebase/firestore
+   - Query caching now functional
+
+6. ✅ **Missing Window Global**: Exposed cache to window object
+   - Added `window.firestoreCache = firestoreCache`
+   - Can now monitor cache from browser console: `window.firestoreCache.getStats()`
+
+7. ✅ **Test Hanging**: Added cleanup method for test environment
+   - Added `destroy()` method to clear cleanup interval
+   - Exported `destroyCache()` function
+   - Tests no longer hang waiting for intervals
+
+8. ✅ **Test Mocks**: Added comprehensive cached hook mocks
+   - Added mocks for all 7 cached hooks in `test-utils.js`
+   - Fixed `useCachedUserProfileData` to return null (allows component displayName fallback)
+   - All tests now passing (66 suites, 282 tests)
+
+#### **Firestore Configuration Updates**
+1. ✅ **Security Rules**: Added top-level `characters` collection permissions
+   - Campaign members can read characters in their campaigns
+   - Users can create/update their own characters
+   - DM can modify characters only in their campaigns (not globally)
+   - Proper permission checks using campaign membership
+
+2. ✅ **Composite Indexes**: Added 4 new indexes for cached queries
+   - `campaigns`: `members` (CONTAINS) + `lastActivityAt` (DESC) - for `useJoinedCampaigns`
+   - `campaigns`: `createdBy` (ASC) + `createdAt` (DESC) - for `useCreatedCampaigns`
+   - `characters`: `campaignId` (ASC) + `createdAt` (ASC) - for `useCampaignCharacters`
+   - `characters`: `uid` (ASC) + `createdAt` (DESC) - for `useUserCharacters`
+
 ---
 
-## 🚧 Current State
+## ✅ Phase 3 Complete + Critical Bugs Fixed
 
-### Files Staged for Commit (Not Yet Committed)
-Git commit timed out, but all changes are staged and ready:
+### All Changes (Phases 1, 2, 3 + Bug Fixes)
+Git commands timing out - manual commit needed. All changes are ready:
 
+**Phase 1 & 2 Files** (Previously staged):
 ```
-Changes to be committed:
   modified:   TODO.md
   modified:   src/components/ChatRoom/ChatMessage.js
   modified:   src/components/ChatRoom/__tests__/InlineReplyContext.profileClick.test.js
@@ -133,9 +197,74 @@ Changes to be committed:
   new file:   src/services/cache/useCachedUserProfileData.js
 ```
 
-**Action Required**: Commit these changes before proceeding:
+**Phase 3 Files** (New):
+```
+  modified:   src/components/Campaign/CampaignMemberList.js
+  modified:   src/components/Campaign/CampaignDashboard.js
+  modified:   src/components/CharacterCreationModal.js
+```
+
+**Bug Fixes** (New):
+```
+  modified:   src/services/cache/useCachedUserProfileData.js (added firestore param)
+  modified:   src/services/cache/useCachedDocument.js (fixed console logs, Firebase v9 API)
+  modified:   src/services/cache/FirestoreCache.js (added window global, destroy method)
+  modified:   src/services/cache/index.js (added destroyCache export)
+  modified:   src/tests/test-utils.js (added cache hook mocks)
+```
+
+**Firestore Configuration** (New):
+```
+  modified:   firestore.rules (added characters collection permissions)
+  modified:   firestore.indexes.json (added 4 composite indexes)
+```
+
+**Action Required**: Deploy Firestore configuration and commit changes:
 ```bash
-git commit -m "Phase 2: Migrate campaign and profile data components to cached hooks
+# 1. Deploy Firestore rules and indexes
+firebase deploy --only firestore:rules
+firebase deploy --only firestore:indexes
+
+# 2. Commit all changes
+git add -A
+git commit -m "Phase 3: Character caching migration + critical bug fixes + Firestore config
+
+PHASE 3: Character Components Migration
+- CampaignMemberList: Now uses useCampaignCharacters (cached)
+- CampaignDashboard: Migrated to cached character hooks with invalidation
+- CharacterCreationModal: Added cache invalidation after character creation
+
+CRITICAL BUG FIXES:
+1. useCachedUserProfileData: Added missing firestore parameter and useFirebase hook
+2. useCachedDocument: Fixed console logging (console.warn with styled output)
+3. useCachedDocument: Fixed Firebase v9 API (getDocs instead of q.get())
+4. FirestoreCache: Exposed to window.firestoreCache for debugging
+5. FirestoreCache: Added destroy() method to fix test hanging
+6. test-utils: Added mocks for all cached hooks
+
+FIRESTORE CONFIGURATION:
+- Added top-level characters collection security rules
+- DM can only modify characters in their campaigns
+- Campaign members can read/update their own characters
+- Added 4 composite indexes:
+  * campaigns: members (CONTAINS) + lastActivityAt (DESC)
+  * campaigns: createdBy (ASC) + createdAt (DESC)
+  * characters: campaignId (ASC) + createdAt (ASC)
+  * characters: uid (ASC) + createdAt (DESC)
+
+TEST RESULTS:
+- 66 test suites passing (282 tests)
+- 12 skipped, 0 failures
+- All cached hooks properly mocked
+
+BENEFITS:
+- Expected 60-80% reduction in character data reads
+- Cache statistics accessible via window.firestoreCache.getStats()
+- Styled console logs for cache monitoring
+- Real-time updates maintained via Firestore listeners
+
+Phase 3 complete: 21 components total migrated (14 Phase 1 + 4 Phase 2 + 3 Phase 3)"
+```
 
 Created useCachedUserProfileData hook for viewing other users' profiles:
 - Caches profile lookups by userId
@@ -177,9 +306,9 @@ Expected: 70-90% reduction in profile lookup reads, 50-70% reduction in campaign
 
 ---
 
-## 🎯 Phase 3: Character Components (NEXT PHASE)
+## ✅ Phase 3: Character Components (COMPLETE)
 
-### Objective
+### Objective ✅
 Migrate character-related components from direct Firebase calls to cached hooks, reducing character data reads by 60-80%.
 
 ### Target Components
@@ -607,18 +736,18 @@ src/
 
 ---
 
-## 🎯 Success Criteria for Phase 3
+## ✅ Success Criteria for Phase 3 (MET)
 
 ### Completion Checklist
-- [ ] `CampaignMemberList.js` migrated to cached hooks
-- [ ] `CampaignDashboard.js` migrated to cached hooks
-- [ ] All character mutations have cache invalidation
-- [ ] Tests updated with new mocks
-- [ ] All tests passing
-- [ ] Build compiles without errors
-- [ ] Manual testing completed
-- [ ] Cache hit rate >70%
-- [ ] Changes committed
+- [x] `CampaignMemberList.js` migrated to cached hooks
+- [x] `CampaignDashboard.js` migrated to cached hooks
+- [x] All character mutations have cache invalidation
+- [x] Tests updated with new mocks
+- [x] All tests passing (66 suites, 282 tests, 0 failures)
+- [x] Build compiles without errors
+- [ ] Manual testing completed (user testing needed)
+- [ ] Cache hit rate >70% (requires deployment and monitoring)
+- [ ] Changes committed (pending - git timeout)
 
 ### Expected Outcomes
 - 📉 **60-80% reduction** in character data Firebase reads

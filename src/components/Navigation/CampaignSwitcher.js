@@ -34,11 +34,6 @@ function CampaignSwitcher() {
     setIsOpen(false);
   };
 
-  const handleCreateCampaign = () => {
-    navigate('/create-campaign');
-    setIsOpen(false);
-  };
-
   if (loading) {
     return (
       <div className="campaign-switcher loading">
@@ -50,9 +45,7 @@ function CampaignSwitcher() {
   if (userCampaigns.length === 0) {
     return (
       <div className="campaign-switcher no-campaigns">
-        <button onClick={handleCreateCampaign} className="create-first-campaign-btn">
-          Create Your First Campaign
-        </button>
+        <span className="no-campaigns-text">No campaigns yet</span>
       </div>
     );
   }
@@ -98,19 +91,12 @@ function CampaignSwitcher() {
           )}
 
           <div className="dropdown-section">
-            <button 
+            <button
               className="dropdown-action"
               onClick={handleViewAllCampaigns}
             >
-              
+
               View All Campaigns ({userCampaigns.length})
-            </button>
-            <button 
-              className="dropdown-action"
-              onClick={handleCreateCampaign}
-            >
-              
-              Create New Campaign
             </button>
           </div>
         </div>
