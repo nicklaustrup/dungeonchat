@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import useUserProfile from '../hooks/useUserProfile';
+import { useCachedUserProfile } from '../services/cache';
 
 /**
  * Context for managing profanity filter state across the application
@@ -9,7 +9,7 @@ import useUserProfile from '../hooks/useUserProfile';
 const ProfanityFilterContext = createContext(null);
 
 export function ProfanityFilterProvider({ children }) {
-  const { profanityFilterEnabled, toggleProfanityFilter, loading } = useUserProfile();
+  const { profanityFilterEnabled, toggleProfanityFilter, loading } = useCachedUserProfile();
 
   const value = {
     profanityFilterEnabled,

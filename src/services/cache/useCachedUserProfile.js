@@ -3,7 +3,7 @@ import { doc, setDoc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { useFirebase } from '../FirebaseContext';
 import { useCachedDocument } from './useCachedDocument';
 import firestoreCache from './FirestoreCache';
-import { uploadProfilePicture, deleteProfilePicture } from '../utils/profilePictureUtils';
+import { uploadProfilePicture, deleteProfilePicture } from '../../utils/profilePictureUtils';
 import { httpsCallable } from 'firebase/functions';
 
 /**
@@ -254,6 +254,10 @@ export function useCachedUserProfile() {
     }
   }, [user, firestore]);
 
+  // Computed properties for onboarding status (compatibility with original useUserProfile)
+  const isProfileComplete = !!(profile?.username && profile?.username.trim());
+  const needsOnboarding = !profile?.username || !profile?.username.trim();
+
   return {
     profile,
     loading,
@@ -265,7 +269,10 @@ export function useCachedUserProfile() {
     checkUsernameAvailability,
     createProfile,
     refresh,
-    invalidate
+    invalidate,
+    // Onboarding status
+    isProfileComplete,
+    needsOnboarding
   };
 }
 

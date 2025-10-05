@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ProfanityFilterProvider, useProfanityFilterContext } from '../ProfanityFilterContext';
 
-// Mock the useUserProfile hook
+// Mock the useCachedUserProfile hook
 const mockToggleProfanityFilter = jest.fn();
 const mockProfileData = {
   profanityFilterEnabled: true,
@@ -10,9 +10,8 @@ const mockProfileData = {
   loading: false
 };
 
-jest.mock('../../hooks/useUserProfile', () => ({
-  __esModule: true,
-  default: () => mockProfileData
+jest.mock('../../services/cache', () => ({
+  useCachedUserProfile: () => mockProfileData
 }));
 
 // Test component that uses the context

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUserProfile } from '../../hooks/useUserProfile';
+import { useCachedUserProfile } from '../../services/cache';
 import { ProfileDisplay } from '../ProfileDisplay/ProfileDisplay';
 import './SettingsMenu.css';
 
@@ -13,7 +13,7 @@ export function SettingsMenu({ isOpen, onClose, onForceProfileSetup }) {
     profanityFilterEnabled, 
     toggleProfanityFilter, 
     getDisplayInfo 
-  } = useUserProfile();
+  } = useCachedUserProfile();
   
   const [activeView, setActiveView] = useState('main'); // main, profile
   const [updating, setUpdating] = useState(false);

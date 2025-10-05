@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { useFirebase } from '../../services/FirebaseContext';
-import { useUserProfile } from '../../hooks/useUserProfile';
+import { useCachedUserProfile } from '../../services/cache';
 import './ProfileDisplay.css';
 
 /**
@@ -13,9 +13,9 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
   const { firestore, user } = useFirebase();
   const {
     updateProfile,
-    uploadProfilePictureFile,
+    uploadPicture: uploadProfilePictureFile,
     updatePrivacySettings
-  } = useUserProfile();
+  } = useCachedUserProfile();
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);

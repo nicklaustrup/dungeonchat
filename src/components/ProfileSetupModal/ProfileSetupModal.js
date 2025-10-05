@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUserProfile } from '../../hooks/useUserProfile';
+import { useCachedUserProfile } from '../../services/cache';
 import { ProfileEditor } from '../ProfileEditor/ProfileEditor';
 import './ProfileSetupModal.css';
 
@@ -9,7 +9,7 @@ import './ProfileSetupModal.css';
  * Username is required for OAuth users - cannot be skipped
  */
 export function ProfileSetupModal({ onComplete, canSkip = false }) {
-  const { needsOnboarding, isProfileComplete } = useUserProfile();
+  const { needsOnboarding, isProfileComplete } = useCachedUserProfile();
   const [currentStep, setCurrentStep] = useState(1);
 
   // Don't show modal if profile is already complete

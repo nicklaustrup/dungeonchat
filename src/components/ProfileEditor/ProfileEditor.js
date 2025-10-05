@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { CircleCheck, Hourglass } from 'lucide-react';
-import { useUserProfile } from '../../hooks/useUserProfile';
+import { useCachedUserProfile } from '../../services/cache';
 import './ProfileEditor.css';
 
 // Cache TTL in milliseconds (5 minutes)
@@ -15,10 +15,10 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
     profile, 
     updateProfile, 
     checkUsernameAvailability, 
-    uploadProfilePictureFile,
+    uploadPicture: uploadProfilePictureFile,
     updatePrivacySettings,
     loading 
-  } = useUserProfile();
+  } = useCachedUserProfile();
   
   const [formData, setFormData] = useState({
     username: profile?.username || '',

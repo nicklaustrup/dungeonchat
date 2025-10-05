@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { useUserProfile } from '../../hooks/useUserProfile';
+import { useCachedUserProfile } from '../../services/cache';
 import './LandingPage.css';
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile } = useUserProfile();
+  const { profile } = useCachedUserProfile();
 
   // Use username from profile, fallback to display name, then to 'Adventurer'
   const displayName = profile?.username || user?.displayName || 'Adventurer';

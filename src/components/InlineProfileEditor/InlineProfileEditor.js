@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useUserProfile } from '../../hooks/useUserProfile';
+import { useCachedUserProfile } from '../../services/cache';
 import './InlineProfileEditor.css';
 
 /**
@@ -11,9 +11,9 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
     profile, 
     updateProfile, 
     checkUsernameAvailability,
-    uploadProfilePictureFile,
+    uploadPicture: uploadProfilePictureFile,
     loading 
-  } = useUserProfile();
+  } = useCachedUserProfile();
   
   const [editingField, setEditingField] = useState(null);
   const [fieldValues, setFieldValues] = useState({

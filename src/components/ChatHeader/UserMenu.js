@@ -2,12 +2,12 @@ import React from 'react';
 import SignOut from '../SignOut/SignOut';
 import useMenuToggle from './hooks/useMenuToggle';
 import useTruncationObserver from './hooks/useTruncationObserver';
-import { useUserProfile } from '../../hooks/useUserProfile';
+import { useCachedUserProfile } from '../../services/cache';
 
 export default function UserMenu({ user, onViewProfile, openSettings, children }) {
   const { open, toggle, close, triggerRef, menuRef } = useMenuToggle();
   const { register, recompute } = useTruncationObserver();
-  const { profile } = useUserProfile();
+  const { profile } = useCachedUserProfile();
 
   if (!user) return null;
 

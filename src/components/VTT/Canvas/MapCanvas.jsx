@@ -31,7 +31,7 @@ import { drawingService } from '../../../services/vtt/drawingService';
 import { shapeService } from '../../../services/vtt/shapeService';
 import { shapePreviewService } from '../../../services/vtt/shapePreviewService';
 import { FirebaseContext } from '../../../services/FirebaseContext';
-import { useUserProfile } from '../../../hooks/useUserProfile';
+import { useCachedUserProfile } from '../../../services/cache';
 import { generateLightName } from '../../../utils/lightNameGenerator';
 import './MapCanvas.css';
 
@@ -159,7 +159,7 @@ function MapCanvas({
   children
 }) {
   const { firestore, user } = useContext(FirebaseContext);
-  const { profile: userProfile } = useUserProfile(); // Get profile with username
+  const { profile: userProfile } = useCachedUserProfile(); // Get profile with username
   const stageRef = useRef(null);
   const [mapImage] = useImage(map?.imageUrl || '', 'anonymous');
 

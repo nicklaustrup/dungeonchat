@@ -11,7 +11,7 @@ import { ProfileSetupModal } from './components/ProfileSetupModal/ProfileSetupMo
 import { useViewportInfo } from './hooks/useViewportInfo';
 import { useVirtualKeyboard } from './hooks/useVirtualKeyboard';
 import { useInitTelemetry } from './hooks/useInitTelemetry';
-import { useUserProfile } from './hooks/useUserProfile';
+import { useCachedUserProfile } from './services/cache';
 import { useFirebase } from './services/FirebaseContext';
 
 
@@ -24,7 +24,7 @@ function App() {
   useInitTelemetry();
   
   const { user } = useFirebase();
-  const { needsOnboarding, isProfileComplete, loading: profileLoading } = useUserProfile();
+  const { needsOnboarding, isProfileComplete, loading: profileLoading } = useCachedUserProfile();
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [forceProfileSetup, setForceProfileSetup] = useState(false);
   

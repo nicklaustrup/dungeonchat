@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import { ref as databaseRef, onDisconnect as rtdbOnDisconnect, set as rtdbSet, update as rtdbUpdate } from 'firebase/database';
 import { useFirebase } from '../services/FirebaseContext';
-import useUserProfile from '../hooks/useUserProfile';
+import { useCachedUserProfile } from '../services/cache';
 import { useCampaign } from '../contexts/CampaignContext';
 import { useCampaignChatContext } from '../hooks/useCampaignChatContext';
 import { useChatState, useChatTheme, useChatSound, useChatSearch, useChatReply, useChatImage, useChatScroll } from '../contexts/ChatStateContext';
@@ -19,7 +19,7 @@ const UserProfileModal = React.lazy(() => import('../components/UserProfileModal
 function ChatPage({ campaignContext = false, showHeader = true }) {
   const { campaignId, channelId } = useParams();
   const { user, rtdb, firestore } = useFirebase();
-  const { profile, getDisplayInfo } = useUserProfile();
+  const { profile, getDisplayInfo } = useCachedUserProfile();
   const { currentChannel } = useCampaign();
   const { state, actions } = useChatState();
   

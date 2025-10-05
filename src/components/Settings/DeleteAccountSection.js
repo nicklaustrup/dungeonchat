@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFirebase } from '../../services/FirebaseContext';
-import useUserProfile from '../../hooks/useUserProfile';
+import { useCachedUserProfile } from '../../services/cache';
 import { deleteUserAccount, confirmAccountDeletion } from '../../services/userDeletionService';
 import './DeleteAccountSection.css';
 
@@ -13,7 +13,7 @@ import './DeleteAccountSection.css';
  */
 function DeleteAccountSection() {
   const { functions, auth } = useFirebase();
-  const { profile } = useUserProfile();
+  const { profile } = useCachedUserProfile();
   const navigate = useNavigate();
   
   const [isDeleting, setIsDeleting] = useState(false);
