@@ -239,10 +239,14 @@ const CampaignBrowser = () => {
           <div className="campaigns-list">
             {userCampaigns.map(campaign => (
               <div key={campaign.id} className="campaign-card my-campaign">
-                {campaign.campaignPhoto && (
-                  <div className="campaign-card-photo" style={{ backgroundImage: `url(${campaign.campaignPhoto})` }} />
-                )}
-                <div className="campaign-header">
+                <div 
+                  className="campaign-header"
+                  style={campaign.campaignPhoto ? {
+                    backgroundImage: `url(${campaign.campaignPhoto})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  } : {}}
+                >
                   <h3>{campaign.name}</h3>
                   <div className="campaign-system">{campaign.gameSystem}</div>
                   <div className="my-campaign-badge">
@@ -304,10 +308,14 @@ const CampaignBrowser = () => {
           ) : (
             campaigns.map(campaign => (
               <div key={campaign.id} className="campaign-card">
-                {campaign.campaignPhoto && (
-                  <div className="campaign-card-photo" style={{ backgroundImage: `url(${campaign.campaignPhoto})` }} />
-                )}
-                <div className="campaign-header">
+                <div 
+                  className="campaign-header"
+                  style={campaign.campaignPhoto ? {
+                    backgroundImage: `url(${campaign.campaignPhoto})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  } : {}}
+                >
                   <h3>{campaign.name}</h3>
                   <div className="campaign-system">{campaign.gameSystem}</div>
                 </div>

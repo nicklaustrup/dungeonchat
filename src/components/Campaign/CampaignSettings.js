@@ -402,7 +402,10 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
           <div className="form-group">
             <label>Campaign Header Photo</label>
             <p className="form-help-text">
-              Upload a banner image for your campaign. Visible in the campaign dashboard and browse page. (Max 5MB)
+              {isUserDM 
+                ? 'Upload a banner image for your campaign. Visible in the campaign dashboard and browse page. (Max 5MB)'
+                : 'Campaign header photo set by the DM. Visible in the campaign dashboard and browse page.'
+              }
             </p>
 
             {(campaign?.campaignPhoto || photoPreview) && (
@@ -415,30 +418,32 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
               </div>
             )}
 
-            <div className="photo-actions">
-              <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'inline-block' }}>
-                {uploadingPhoto ? 'Uploading...' : (campaign?.campaignPhoto ? 'Change Photo' : 'Upload Photo')}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoSelect}
-                  disabled={uploadingPhoto}
-                  style={{ display: 'none' }}
-                />
-              </label>
+            {isUserDM && (
+              <div className="photo-actions">
+                <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'inline-block' }}>
+                  {uploadingPhoto ? 'Uploading...' : (campaign?.campaignPhoto ? 'Change Photo' : 'Upload Photo')}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoSelect}
+                    disabled={uploadingPhoto}
+                    style={{ display: 'none' }}
+                  />
+                </label>
 
-              {campaign?.campaignPhoto && (
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={handlePhotoRemove}
-                  disabled={uploadingPhoto}
-                  style={{ marginLeft: '0.5rem' }}
-                >
-                  Remove Photo
-                </button>
-              )}
-            </div>
+                {campaign?.campaignPhoto && (
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={handlePhotoRemove}
+                    disabled={uploadingPhoto}
+                    style={{ marginLeft: '0.5rem' }}
+                  >
+                    Remove Photo
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
