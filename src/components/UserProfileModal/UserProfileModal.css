@@ -134,13 +134,106 @@
 
 /* Firefox scrollbar styling */
 @supports (scrollbar-color: auto) {
-  .user-profile-modal { 
-    scrollbar-width: thin; 
-    scrollbar-color: transparent transparent; 
+  .user-profile-modal {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
   }
-  
+
   .user-profile-modal:hover,
-  .user-profile-modal.scrolling { 
-    scrollbar-color: var(--primary-color) var(--bg-primary); 
+  .user-profile-modal.scrolling {
+    scrollbar-color: var(--primary-color) var(--bg-primary);
   }
+}
+
+/* Profile bio */
+.profile-bio {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* Profile actions */
+.profile-actions {
+    display: flex;
+    gap: 10px;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-action-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.profile-action-btn.add-friend {
+    background: var(--primary-color, #4CAF50);
+    color: white;
+}
+
+.profile-action-btn.add-friend:hover {
+    background: var(--primary-hover, #45a049);
+    transform: translateY(-1px);
+}
+
+.profile-action-btn.pending {
+    background: var(--secondary-color, #757575);
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.profile-action-btn.block {
+    background: var(--danger-color, #f44336);
+    color: white;
+}
+
+.profile-action-btn.block:hover {
+    background: #d32f2f;
+    transform: translateY(-1px);
+}
+
+.profile-action-btn.unblock {
+    background: var(--primary-color, #4CAF50);
+    color: white;
+}
+
+.profile-action-btn.unblock:hover {
+    background: var(--primary-hover, #45a049);
+    transform: translateY(-1px);
+}
+
+.profile-action-note {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.profile-action-note.friends-badge {
+    color: var(--primary-color, #4CAF50);
+    font-weight: 600;
+    font-style: normal;
+}
+
+.profile-error {
+    background: #ffebee;
+    color: #c62828;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin: 10px 0;
+}
+
+/* Dark theme support */
+.dark-theme .profile-error {
+    background: rgba(244, 67, 54, 0.2);
+    color: #ff5252;
 }

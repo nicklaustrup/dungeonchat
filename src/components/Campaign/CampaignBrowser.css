@@ -487,8 +487,7 @@
   flex-wrap: wrap;
   gap: 0.25rem;
   margin-bottom: 0.75rem;
-  min-height: 48px;
-  max-height: 48px;
+  height: 60px;
   overflow: hidden;
 }
 
@@ -499,6 +498,7 @@
   border-radius: 8px;
   font-size: 0.7rem;
   font-weight: 500;
+  height: fit-content;
 }
 
 .campaign-actions {

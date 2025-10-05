@@ -5,6 +5,11 @@ service cloud.firestore {
     match /userProfiles/{userId} {
       allow read: if request.auth != null; // Allow authenticated users to read any profile
       allow write: if request.auth != null && request.auth.uid == userId; // Only allow writing own profile
+
+      // Allow updating friends and blocked arrays (for friendship management)
+      allow update: if request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friends', 'blocked']);
     }
     
     // Username collection for availability checking
@@ -443,6 +448,31 @@ service cloud.firestore {
     // User campaigns tracking
     match /userCampaigns/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Friendships collection - friend requests and blocking
+    match /friendships/{friendshipId} {
+      // Helper function: Check if user is involved in the friendship
+      function isInvolved() {
+        return request.auth != null &&
+          (request.auth.uid == resource.data.userId1 ||
+           request.auth.uid == resource.data.userId2);
+      }
+
+      // Users can read friendships they're involved in
+      allow read: if request.auth != null && isInvolved();
+
+      // Users can create friend requests or blocks
+      allow create: if request.auth != null &&
+        (request.auth.uid == request.resource.data.userId1 ||
+         request.auth.uid == request.resource.data.userId2) &&
+        request.auth.uid == request.resource.data.initiatorId;
+
+      // Users can update friendships they're involved in (for accepting requests)
+      allow update: if request.auth != null && isInvolved();
+
+      // Users can delete friendships they're involved in (for declining/unfriending)
+      allow delete: if request.auth != null && isInvolved();
     }
 
     // Top-level characters collection (global character storage)

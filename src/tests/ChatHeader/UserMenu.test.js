@@ -3,6 +3,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import UserMenu from '../../components/ChatHeader/UserMenu';
 
 jest.mock('../../components/SignOut/SignOut', () => () => <div>SignOutButton</div>);
+jest.mock('../../components/FriendsListModal/FriendsListModal', () => () => <div>FriendsListModal</div>);
+jest.mock('../../services/cache', () => ({
+  useCachedUserProfile: () => ({ profile: null })
+}));
 
 describe('UserMenu', () => {
   const user = { displayName: 'Test User', email: 'user@example.com', photoURL: '' };
