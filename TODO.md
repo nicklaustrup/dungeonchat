@@ -229,6 +229,57 @@ Missing or insufficient permissions.
 
 ---
 
+### Voice Chat Bug 🐛
+**Status**: ⏳ Not Started
+**Priority**: 🔴 Critical (Core feature broken)
+**Date Found**: October 5, 2025
+**Files**: VoiceChatPanel.js, voiceRoomService.js, AgoraContext.js
+
+**Description**: Voice chat functionality is experiencing issues that need troubleshooting and fixing.
+
+**Known Issues**:
+- [ ] Identify specific voice chat problem
+- [ ] Document error messages/symptoms
+- [ ] Test connection establishment
+- [ ] Test audio transmission
+- [ ] Test participant joining/leaving
+- [ ] Check Agora token generation
+- [ ] Verify Firestore voice room data
+
+**Debugging Steps**:
+- [ ] Check browser console for errors
+- [ ] Verify Agora credentials/configuration
+- [ ] Test with multiple users
+- [ ] Check microphone permissions
+- [ ] Verify audio device selection
+- [ ] Test in different browsers
+- [ ] Check network connectivity issues
+- [ ] Review Agora SDK version compatibility
+
+**Potential Issues**:
+- [ ] Token generation failures
+- [ ] Microphone permission issues
+- [ ] Network/firewall blocking
+- [ ] Agora SDK initialization errors
+- [ ] State management issues
+- [ ] Real-time listener problems
+- [ ] Audio device conflicts
+
+**Tasks**:
+- [ ] Reproduce the bug consistently
+- [ ] Add detailed error logging
+- [ ] Check Agora service status/dashboard
+- [ ] Review recent code changes to voice system
+- [ ] Test with Agora debugging tools
+- [ ] Fix identified issues
+- [ ] Add error handling improvements
+- [ ] Test fix with multiple users
+- [ ] Document solution
+
+**Goal**: Restore full voice chat functionality with reliable connections and audio quality.
+
+---
+
 ## 🟠 High Priority
 
 ### Token, Player, and DM Inventory System 🎒
@@ -665,6 +716,604 @@ Missing or insufficient permissions.
 - [ ] Add settings migration for existing users
 
 **Goal**: Comprehensive player settings for privacy, notifications, and user experience customization.
+
+---
+
+### Encounter Builder - Complete Implementation 🎲
+**Status**: ⏳ Not Started
+**Priority**: 🟠 High (Core DM tool)
+**Date Started**: TBD
+**Files**: Encounters.js, EncounterBuilder.js, encounterService.js, MonsterLibrary.js
+
+**Description**: Flesh out and complete the encounter builder with comprehensive features for creating, managing, and running combat encounters.
+
+**Current Status**:
+- [x] Basic encounter template creation
+- [ ] Comprehensive monster library
+- [ ] Advanced encounter scaling
+- [ ] Initiative automation
+- [ ] HP tracking integration
+- [ ] Loot distribution
+- [ ] Encounter analytics
+
+**Monster Library**:
+- [ ] Import D&D 5e SRD monsters (complete bestiary)
+- [ ] Monster stat blocks with full details
+- [ ] Search and filter monsters (by CR, type, environment, etc.)
+- [ ] Custom monster creation
+- [ ] Monster templates (apply to existing monsters)
+- [ ] Monster groups/categories
+- [ ] Favorite monsters
+- [ ] Monster tags and notes
+- [ ] Import/export monster data
+- [ ] Monster images/tokens
+
+**Encounter Builder Interface**:
+- [ ] Drag-and-drop monster addition
+- [ ] Quantity adjustment per monster
+- [ ] Encounter difficulty calculator (easy, medium, hard, deadly)
+- [ ] XP budget tracker
+- [ ] Party size/level adjustment
+- [ ] Environmental hazards/traps
+- [ ] NPC allies
+- [ ] Terrain effects
+- [ ] Pre-set monster groups (e.g., "Goblin Raiding Party")
+
+**Encounter Scaling**:
+- [ ] Auto-scale encounter to party level
+- [ ] Adjust monster CR
+- [ ] Scale monster HP
+- [ ] Scale monster damage
+- [ ] Preview scaled stats
+- [ ] Save scaled versions
+
+**Encounter Templates**:
+- [ ] Save encounter as template
+- [ ] Template library (custom and community)
+- [ ] Duplicate encounters
+- [ ] Random encounter generation
+- [ ] Encounter by environment (dungeon, forest, etc.)
+- [ ] Encounter by theme (undead horde, dragon lair, etc.)
+
+**Running Encounters**:
+- [ ] Start encounter button (spawns monsters on map)
+- [ ] Auto-add to initiative tracker
+- [ ] Roll initiative for all monsters
+- [ ] Track monster HP individually
+- [ ] Apply conditions to monsters
+- [ ] Monster AI suggestions (behavior notes)
+- [ ] Round tracker
+- [ ] Encounter timer
+
+**Loot Management**:
+- [ ] Assign loot to encounters
+- [ ] Random loot generation by CR
+- [ ] Treasure tables (coins, items, magic items)
+- [ ] Distribute loot to party
+- [ ] Track looted encounters
+
+**Encounter Analytics**:
+- [ ] Track encounter outcomes (victory, defeat, fled)
+- [ ] Damage dealt statistics
+- [ ] Rounds to complete
+- [ ] Resources consumed
+- [ ] XP awarded
+- [ ] Encounter difficulty rating (post-battle)
+- [ ] Encounter history log
+
+**Integration**:
+- [ ] Spawn encounter monsters as tokens on map
+- [ ] Link tokens to monster stat blocks
+- [ ] Auto-populate initiative tracker
+- [ ] Sync HP between encounter and tokens
+- [ ] Award loot directly to inventories
+- [ ] Award XP to party
+
+**Data Model**:
+```
+/campaigns/{campaignId}/encounters/{encounterId}
+  - name: string
+  - description: string
+  - monsters: array of { monsterId, quantity, customName, customHP }
+  - environment: string
+  - difficulty: string (easy, medium, hard, deadly)
+  - xpTotal: number
+  - loot: object (coins, items)
+  - notes: string
+  - status: string (template, active, completed)
+  - createdAt: timestamp
+  - completedAt: timestamp | null
+  - outcome: string | null (victory, defeat, fled)
+  - analytics: object
+
+/campaigns/{campaignId}/monsters/{monsterId}
+  - name: string
+  - type: string (aberration, beast, etc.)
+  - size: string
+  - alignment: string
+  - cr: number
+  - hp: object (average, dice)
+  - ac: number
+  - speed: object
+  - stats: object (STR, DEX, CON, INT, WIS, CHA)
+  - saves: array
+  - skills: array
+  - resistances: array
+  - immunities: array
+  - senses: array
+  - languages: array
+  - abilities: array
+  - actions: array
+  - reactions: array
+  - legendaryActions: array
+  - description: string
+  - environment: array
+  - imageUrl: string
+  - tokenUrl: string
+  - source: string (SRD, custom)
+  - customData: object
+```
+
+**Tasks**:
+- [ ] Import complete D&D 5e SRD bestiary
+- [ ] Create MonsterLibrary.js component
+- [ ] Enhance EncounterBuilder.js with all features
+- [ ] Implement encounter difficulty calculator
+- [ ] Create monster stat block display component
+- [ ] Add custom monster creation form
+- [ ] Implement encounter scaling algorithms
+- [ ] Add loot generation system
+- [ ] Create encounter templates library
+- [ ] Implement random encounter generator
+- [ ] Add monster search and filtering
+- [ ] Create encounter running interface
+- [ ] Integrate with initiative tracker
+- [ ] Integrate with token system
+- [ ] Integrate with inventory system
+- [ ] Add encounter analytics tracking
+- [ ] Create encounter history view
+- [ ] Add Firestore security rules
+- [ ] Optimize for large encounters (50+ monsters)
+
+**Goal**: Complete, professional encounter builder comparable to D&D Beyond or Roll20 encounter tools.
+
+---
+
+### Map Builder Feature 🗺️
+**Status**: ⏳ Not Started
+**Priority**: 🟠 High (Core DM tool)
+**Date Started**: TBD
+**Files**: MapBuilder.js, MapEditor.js, mapBuilderService.js, TilesetLibrary.js
+
+**Description**: Create a comprehensive map builder tool allowing DMs to create custom maps from scratch using tiles, assets, and drawing tools.
+
+**Core Features**:
+
+**Canvas System**:
+- [ ] Multi-layer canvas (background, terrain, objects, lighting, fog)
+- [ ] Grid overlay (square, hex, gridless)
+- [ ] Configurable grid size
+- [ ] Snap to grid toggle
+- [ ] Zoom and pan controls
+- [ ] Undo/redo functionality
+- [ ] Layer visibility toggles
+- [ ] Layer locking
+
+**Tileset System**:
+- [ ] Tile library (floors, walls, doors, furniture, etc.)
+- [ ] Tile brush tool
+- [ ] Tile palette selection
+- [ ] Auto-tiling (intelligent tile placement)
+- [ ] Tile rotation and flipping
+- [ ] Tile categories (dungeon, forest, urban, etc.)
+- [ ] Import custom tilesets
+- [ ] Tileset manager
+
+**Drawing Tools**:
+- [ ] Freehand brush
+- [ ] Line tool
+- [ ] Rectangle tool
+- [ ] Circle/ellipse tool
+- [ ] Polygon tool
+- [ ] Fill tool (bucket fill)
+- [ ] Eraser tool
+- [ ] Selection tool (move, resize, delete)
+- [ ] Color picker
+- [ ] Brush size adjustment
+- [ ] Opacity control
+
+**Asset Placement**:
+- [ ] Asset library (props, furniture, nature, creatures)
+- [ ] Drag-and-drop placement
+- [ ] Asset rotation and scaling
+- [ ] Asset search and filtering
+- [ ] Custom asset upload
+- [ ] Asset categories and tags
+- [ ] Asset layering (z-index)
+
+**Walls & Obstacles**:
+- [ ] Wall drawing tool
+- [ ] Door placement (normal, secret, locked)
+- [ ] Window placement
+- [ ] One-way walls
+- [ ] Destructible walls
+- [ ] Wall height (for 3D).
+- [ ] Invisible walls (blocking movement only)
+
+**Lighting System**:
+- [ ] Light source placement
+- [ ] Light color and intensity
+- [ ] Light radius adjustment
+- [ ] Ambient lighting settings
+- [ ] Dynamic lighting (vision blocking)
+- [ ] Daylight simulation
+- [ ] Torch/candle animations
+
+**Map Properties**:
+- [ ] Map name and description
+- [ ] Map dimensions (width, height)
+- [ ] Grid settings (size, offset, color)
+- [ ] Background color/image
+- [ ] Ambient sound selection
+- [ ] Weather effects
+- [ ] Map notes and annotations
+
+**Templates & Rooms**:
+- [ ] Pre-made room templates
+- [ ] Corridor templates
+- [ ] Common room shapes
+- [ ] Save custom templates
+- [ ] Template library (community)
+- [ ] Drag-and-drop room placement
+
+**Export & Sharing**:
+- [ ] Save map to campaign library
+- [ ] Export as image (PNG, JPEG)
+- [ ] Export with/without grid
+- [ ] Export with/without lighting
+- [ ] Share map with other DMs
+- [ ] Publish to community library
+
+**UI Components**:
+- [ ] Toolbar with all tools
+- [ ] Layer panel
+- [ ] Asset browser panel
+- [ ] Properties panel
+- [ ] Quick access palette
+- [ ] Keyboard shortcuts
+- [ ] Tutorial/help system
+
+**Data Model**:
+```
+/campaigns/{campaignId}/customMaps/{mapId}
+  - name: string
+  - description: string
+  - width: number
+  - height: number
+  - gridSize: number
+  - gridType: string (square, hex, none)
+  - layers: array of layer objects
+    - id: string
+    - name: string
+    - type: string (background, terrain, objects, etc.)
+    - visible: boolean
+    - locked: boolean
+    - elements: array of drawn/placed elements
+  - walls: array of wall objects
+  - lights: array of light objects
+  - assets: array of placed asset objects
+  - properties: object (ambient, weather, etc.)
+  - thumbnail: string (URL)
+  - createdAt: timestamp
+  - lastModified: timestamp
+```
+
+**Tasks**:
+- [ ] Create MapBuilder.js main component
+- [ ] Implement canvas rendering system
+- [ ] Create drawing tools engine
+- [ ] Build tileset system
+- [ ] Create asset library
+- [ ] Implement layer management
+- [ ] Add wall/door placement system
+- [ ] Create lighting system
+- [ ] Build template system
+- [ ] Add save/load functionality
+- [ ] Implement export features
+- [ ] Create UI panels and toolbars
+- [ ] Add keyboard shortcuts
+- [ ] Integrate with existing map system
+- [ ] Add Firestore security rules
+- [ ] Optimize canvas performance
+- [ ] Add tutorial system
+
+**Goal**: Professional-grade map builder tool for creating custom battle maps from scratch.
+
+---
+
+### Procedural Map Generation 🤖
+**Status**: ⏳ Not Started
+**Priority**: 🟡 Medium (Advanced feature, depends on Map Builder)
+**Date Started**: TBD
+**Files**: MapGenerator.js, mapGenerationService.js, TerrainGenerator.js
+
+**Description**: AI/Algorithm-based system to procedurally generate maps based on uploaded maps, provided materials, or generation parameters.
+
+**Generation Methods**:
+
+**1. Template-Based Generation**:
+- [ ] Analyze uploaded map structure
+- [ ] Extract patterns (room sizes, corridor widths, etc.)
+- [ ] Generate similar maps using extracted patterns
+- [ ] Randomize while maintaining style
+- [ ] Preserve key features (entrance, boss room, etc.)
+
+**2. Algorithm-Based Generation**:
+- [ ] Dungeon generation algorithms:
+  - [ ] Binary Space Partitioning (BSP)
+  - [ ] Cellular automata
+  - [ ] Random walk
+  - [ ] Maze generation
+  - [ ] Voronoi diagrams
+- [ ] Biome-based generation (forest, desert, arctic, etc.)
+- [ ] Urban generation (streets, buildings)
+- [ ] Cave generation
+- [ ] Terrain generation (heightmaps)
+
+**3. Rule-Based Generation**:
+- [ ] Define generation rules (min/max rooms, corridor length, etc.)
+- [ ] Architectural style selection
+- [ ] Theme selection (crypt, castle, mine, temple, etc.)
+- [ ] Size selection (small, medium, large, massive)
+- [ ] Complexity selection (simple, moderate, complex)
+- [ ] Encounter density
+
+**4. Material-Based Generation**:
+- [ ] Provide tileset/assets
+- [ ] Generate map using only provided materials
+- [ ] Match style of provided materials
+- [ ] Intelligent asset placement
+- [ ] Texture variation
+
+**Generation Parameters**:
+- [ ] Map size (width × height)
+- [ ] Room count (min/max)
+- [ ] Room size variation
+- [ ] Corridor style (straight, winding, none)
+- [ ] Dead end frequency
+- [ ] Secret room chance
+- [ ] Door type distribution
+- [ ] Trap placement
+- [ ] Treasure room chance
+- [ ] Symmetry preference
+- [ ] Complexity slider
+
+**Post-Generation Editing**:
+- [ ] Review generated map
+- [ ] Manual touch-ups in Map Builder
+- [ ] Regenerate specific sections
+- [ ] Lock areas to preserve during regeneration
+- [ ] Add custom elements
+- [ ] Adjust lighting and ambiance
+
+**AI/ML Features** (Advanced):
+- [ ] Train on uploaded map collections
+- [ ] Learn DM's style preferences
+- [ ] Generate maps matching specific campaign aesthetic
+- [ ] Suggest encounter placements
+- [ ] Optimize for party size/level
+
+**Generation Types**:
+- [ ] **Dungeon**: Rooms, corridors, multiple levels
+- [ ] **Cave**: Organic, irregular shapes
+- [ ] **Forest**: Trees, clearings, paths
+- [ ] **City**: Streets, buildings, districts
+- [ ] **Castle**: Courtyards, towers, walls
+- [ ] **Ship**: Decks, cabins, cargo hold
+- [ ] **Wilderness**: Terrain features, points of interest
+- [ ] **Arena**: Combat-focused, symmetrical
+
+**Integration**:
+- [ ] Generate button in Map Builder
+- [ ] Generate from campaign creation
+- [ ] Batch generation (multiple maps at once)
+- [ ] Save generation seeds (reproduce same map)
+- [ ] Template library of generated maps
+
+**Data Model**:
+```
+/campaigns/{campaignId}/generatedMaps/{mapId}
+  - generationType: string (dungeon, cave, etc.)
+  - algorithm: string (BSP, cellular, etc.)
+  - parameters: object (all generation settings)
+  - seed: string (for reproducibility)
+  - baseMapId: string | null (if based on existing map)
+  - tilesetId: string | null
+  - generatedAt: timestamp
+  - edited: boolean
+  - mapData: object (same as custom maps)
+```
+
+**Tasks**:
+- [ ] Research procedural generation algorithms
+- [ ] Implement BSP dungeon generation
+- [ ] Implement cellular automata cave generation
+- [ ] Create generation parameter UI
+- [ ] Build template analysis system
+- [ ] Create material-based generation
+- [ ] Implement rule-based generation
+- [ ] Add post-generation editing
+- [ ] Create generation presets
+- [ ] Implement seed system
+- [ ] Add batch generation
+- [ ] Integrate with Map Builder
+- [ ] Optimize generation performance
+- [ ] Add preview system
+- [ ] Create tutorial/examples
+
+**Goal**: Powerful procedural generation system that saves DMs hours of map creation time while maintaining quality and style.
+
+---
+
+### Token Builder Feature 🎭
+**Status**: ⏳ Not Started
+**Priority**: 🟠 High (Important customization tool)
+**Date Started**: TBD
+**Files**: TokenBuilder.js, tokenBuilderService.js, TokenEditor.js
+
+**Description**: Comprehensive token builder allowing DMs and players to create custom tokens from images or built-in assets.
+
+**Core Features**:
+
+**Image Upload & Editing**:
+- [ ] Upload image (PNG, JPEG, SVG)
+- [ ] Drag-and-drop upload
+- [ ] URL import
+- [ ] Crop and resize
+- [ ] Auto-crop to circle/square
+- [ ] Background removal
+- [ ] Brightness/contrast adjustment
+- [ ] Color filters and effects
+- [ ] Image rotation
+- [ ] Flip horizontal/vertical
+
+**Token Shapes**:
+- [ ] Circle (standard player token)
+- [ ] Square
+- [ ] Rounded square
+- [ ] Hexagon
+- [ ] Custom polygon shapes
+- [ ] Size presets (1x1, 2x2, 3x3, etc.)
+
+**Borders & Frames**:
+- [ ] Border thickness adjustment
+- [ ] Border color picker
+- [ ] Gradient borders
+- [ ] Multiple border styles (solid, dashed, double)
+- [ ] Frame presets (ornate, simple, themed)
+- [ ] Custom frame upload
+- [ ] Status ring/arc (HP indicator)
+
+**Text & Labels**:
+- [ ] Add text overlay
+- [ ] Token name display
+- [ ] Initiative number
+- [ ] HP/AC display
+- [ ] Custom labels
+- [ ] Font selection
+- [ ] Text color and shadow
+- [ ] Text positioning
+
+**Icons & Badges**:
+- [ ] Status icons (poisoned, stunned, etc.)
+- [ ] Class icons
+- [ ] Level indicator
+- [ ] Custom badge upload
+- [ ] Icon library (conditions, effects, misc)
+- [ ] Icon positioning (corners, center)
+- [ ] Multiple icon support
+
+**Overlays & Effects**:
+- [ ] Aura/glow effects
+- [ ] Shadow effects
+- [ ] Particle effects (fire, ice, etc.)
+- [ ] Transparency/opacity
+- [ ] Tint color overlay
+- [ ] Animation frames (for animated tokens)
+
+**Templates & Presets**:
+- [ ] Character class templates (wizard, fighter, etc.)
+- [ ] Monster type templates (dragon, goblin, etc.)
+- [ ] NPC templates (merchant, guard, etc.)
+- [ ] Custom template saving
+- [ ] Template library (community)
+- [ ] Quick apply presets
+
+**Token Library**:
+- [ ] Built-in token assets (monsters, NPCs, players)
+- [ ] Search and filter tokens
+- [ ] Categorization (by type, CR, etc.)
+- [ ] Favorite tokens
+- [ ] Recently used tokens
+- [ ] Token collections/sets
+
+**Batch Creation**:
+- [ ] Create multiple variations
+- [ ] Number/letter series (Goblin 1, 2, 3)
+- [ ] Color variations (red dragon, blue dragon)
+- [ ] Apply template to multiple images
+- [ ] Export batch as zip
+
+**Export Options**:
+- [ ] Save to campaign token library
+- [ ] Export as PNG (various sizes)
+- [ ] Export with transparency
+- [ ] Export for VTT (standard sizes)
+- [ ] Export for Roll20, Foundry VTT
+- [ ] Download individual or batch
+
+**Integration**:
+- [ ] Use created tokens on map immediately
+- [ ] Assign to characters
+- [ ] Assign to monsters in encounters
+- [ ] Update existing token images
+- [ ] Share tokens with campaign members
+
+**Advanced Features**:
+- [ ] Multi-state tokens (different images per HP level)
+- [ ] Animated tokens (GIF support)
+- [ ] Token sets (facing directions)
+- [ ] Vehicle/mount tokens
+- [ ] Furniture/object tokens
+
+**UI Components**:
+- [ ] Canvas preview (real-time)
+- [ ] Tool palette (left sidebar)
+- [ ] Layer panel
+- [ ] Properties panel (right sidebar)
+- [ ] Asset browser
+- [ ] Quick actions toolbar
+- [ ] Zoom controls
+- [ ] History (undo/redo)
+
+**Data Model**:
+```
+/campaigns/{campaignId}/customTokens/{tokenId}
+  - name: string
+  - imageUrl: string (original)
+  - processedImageUrl: string (final token)
+  - shape: string
+  - size: number (grid units)
+  - borderStyle: object
+  - labels: array
+  - icons: array
+  - effects: object
+  - templateId: string | null
+  - createdBy: string (userId)
+  - createdAt: timestamp
+  - isPublic: boolean
+  - tags: array
+```
+
+**Tasks**:
+- [ ] Create TokenBuilder.js component
+- [ ] Implement image upload and processing
+- [ ] Build canvas-based editor
+- [ ] Create border/frame system
+- [ ] Add text overlay system
+- [ ] Implement icon/badge system
+- [ ] Create effects and filters
+- [ ] Build template system
+- [ ] Add token library
+- [ ] Implement batch creation
+- [ ] Create export functionality
+- [ ] Add preview system
+- [ ] Integrate with token system
+- [ ] Add Firestore security rules
+- [ ] Optimize image processing
+- [ ] Create tutorial/help
+
+**Goal**: Professional token builder allowing easy creation of custom, high-quality tokens for any character, monster, or object.
 
 ---
 
