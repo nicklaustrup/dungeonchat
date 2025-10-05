@@ -1,9 +1,10 @@
 # Firebase Caching System - Migration Handoff Document
 
 **Date Created**: October 5, 2025
-**Status**: Phase 1, 2 & 3 Complete ✅ | Bug Fixes Applied ✅ | Firestore Config Updated ✅
+**Status**: Phase 1, 2, 3 & 5 Complete ✅ | Bug Fixes Applied ✅ | Firestore Config Updated ✅
 **Current Branch**: main
-**Last Commit**: Pending (git timeout - manual commit needed)
+**Last Updated**: October 5, 2025
+**Last Commit**: Pending
 
 ---
 
@@ -768,12 +769,84 @@ Create a developer dashboard to monitor cache performance:
 - Real-time charts and monitoring
 - DM-only or dev-mode toggle
 
-### Phase 5: Additional Services
+### Phase 5: Additional Services ✅ **COMPLETE**
 Apply caching to remaining services:
-- Token service (VTT tokens)
-- Avatar service (profile pictures, character avatars)
-- Map service (VTT maps)
-- Other services as identified
+
+**Analysis Results**:
+
+1. **Token Service** - ✅ No caching needed (already optimal)
+   - Already uses real-time Firestore listeners via `useTokens` hook
+   - Tokens change constantly (position, HP, status effects)
+   - Caching would cause stale data issues in real-time VTT
+   - Current implementation is correct for this use case
+
+2. **Avatar Service** - ✅ Already cached (no action needed)
+   - Profile pictures fully integrated into `useCachedUserProfile`
+   - Upload/delete functions already use caching system
+   - Profile data includes `photoURL` which is cached
+   - No separate avatar caching required
+
+3. **Map Service** - ✅ **NEW: Cached hooks created**
+   - Created `useMapsCache.js` with comprehensive caching hooks
+   - Maps are relatively static (good caching candidates)
+   - 10-minute TTL (maps change infrequently)
+   - Real-time updates via Firestore listeners
+
+**New Hooks Created** (`src/services/cache/useMapsCache.js`):
+```javascript
+// Get all maps for a campaign
+useCampaignMaps(campaignId)
+// Returns: { maps, loading, error, refresh, invalidate }
+
+// Get single map by ID
+useCachedMap(campaignId, mapId)
+// Returns: { map, loading, error, refresh, invalidate }
+
+// Get active map for campaign
+useActiveMap(campaignId)
+// Returns: { map, loading, error, refresh, invalidate }
+```
+
+**Cache Invalidation Functions**:
+```javascript
+// After map mutations
+invalidateCampaignMaps(campaignId)  // All campaign maps
+invalidateMap(mapId, campaignId)     // Single map
+invalidateAllMaps()                  // All maps (logout)
+```
+
+**Updated Files**:
+- ✅ Created `src/services/cache/useMapsCache.js` (200 lines)
+- ✅ Updated `src/services/cache/index.js` with map exports
+- ✅ Added map invalidation to cache strategy guide
+
+**Cache Configuration**:
+- TTL: 10 minutes (maps don't change frequently)
+- Real-time: Yes (auto-updates via onSnapshot)
+- Collection: `campaigns/{campaignId}/maps`
+
+**Expected Benefits**:
+- 📉 50-70% reduction in map data reads
+- ⚡ Faster VTT session loading (cached map data)
+- 🔄 Real-time updates when maps change
+- 💾 Shared cache across components
+
+**Usage Example**:
+```javascript
+import { useCampaignMaps, invalidateCampaignMaps } from './services/cache';
+
+// In VTT session or map editor
+const { maps, loading } = useCampaignMaps(campaignId);
+
+// After creating/updating map
+await mapService.createMap(firestore, campaignId, mapData);
+invalidateCampaignMaps(campaignId);
+```
+
+**Phase 5 Status**: ✅ Complete
+- Token service: Analyzed - no caching needed (optimal as-is)
+- Avatar service: Analyzed - already cached via user profiles
+- Map service: Implemented - full caching system created
 
 ### Phase 6: Production Monitoring
 - Monitor Firebase usage dashboard

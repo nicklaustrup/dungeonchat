@@ -21,16 +21,16 @@ import firestoreCache from './FirestoreCache';
  * Get all campaigns the user has joined
  */
 export function useJoinedCampaigns() {
-  const { firestore, user } = useFirebase();
+  const { firestore, user, authLoading } = useFirebase();
 
   const queryFn = useCallback(() => {
     if (!user?.uid) return null;
-    
+
     const campaignsRef = collection(firestore, 'campaigns');
     return query(
       campaignsRef,
       where('members', 'array-contains', user.uid),
-      orderBy('lastActivityAt', 'desc')
+      orderBy('lastActivity', 'desc')
     );
   }, [firestore, user]);
 
@@ -47,9 +47,20 @@ export function useJoinedCampaigns() {
     }
   );
 
+  const finalLoading = authLoading || loading;
+
+  console.log('[CAMPAIGNS] Returning:', {
+    campaigns: data?.length || 0,
+    loading: finalLoading,
+    authLoading,
+    queryLoading: loading,
+    hasData: data?.length > 0
+  });
+
   return {
     campaigns: data,
-    loading,
+    // If auth is loading or query is loading, we're still loading
+    loading: finalLoading,
     error,
     refresh,
     invalidate
@@ -60,7 +71,7 @@ export function useJoinedCampaigns() {
  * Get campaigns created by the user
  */
 export function useCreatedCampaigns() {
-  const { firestore, user } = useFirebase();
+  const { firestore, user, authLoading } = useFirebase();
 
   const queryFn = useCallback(() => {
     if (!user?.uid) return null;
@@ -88,7 +99,8 @@ export function useCreatedCampaigns() {
 
   return {
     campaigns: data,
-    loading,
+    // If auth is loading or query is loading, we're still loading
+    loading: authLoading || loading,
     error,
     refresh,
     invalidate

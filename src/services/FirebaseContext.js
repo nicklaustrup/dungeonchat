@@ -22,7 +22,7 @@ import {
 export const FirebaseContext = createContext(null);
 
 export const FirebaseProvider = ({ children }) => {
-  const [user] = useAuthState(auth);
+  const [user, authLoading] = useAuthState(auth);
 
   const value = {
     auth,
@@ -31,6 +31,7 @@ export const FirebaseProvider = ({ children }) => {
     storage,
     functions,
     user,
+    authLoading,
     signInWithPopup,
     signOut,
     GoogleAuthProvider,

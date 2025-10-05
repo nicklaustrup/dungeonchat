@@ -11,9 +11,15 @@ import { ProfileSetupModal } from './components/ProfileSetupModal/ProfileSetupMo
 import { useViewportInfo } from './hooks/useViewportInfo';
 import { useVirtualKeyboard } from './hooks/useVirtualKeyboard';
 import { useInitTelemetry } from './hooks/useInitTelemetry';
-import { useCachedUserProfile } from './services/cache';
+import { useCachedUserProfile, firestoreCache, logCacheStats, getCacheStats } from './services/cache';
 import { useFirebase } from './services/FirebaseContext';
 
+// Expose cache utilities globally for debugging
+if (typeof window !== 'undefined') {
+  window.firestoreCache = firestoreCache;
+  window.logCacheStats = logCacheStats;
+  window.getCacheStats = getCacheStats;
+}
 
 function App() {
   // Apply viewport class logic once at app root

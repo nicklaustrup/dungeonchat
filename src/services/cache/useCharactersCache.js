@@ -25,7 +25,7 @@ export function useUserCharacters() {
 
   const queryFn = useCallback(() => {
     if (!user?.uid) return null;
-    
+
     const charactersRef = collection(firestore, 'characters');
     return query(
       charactersRef,
@@ -49,7 +49,8 @@ export function useUserCharacters() {
 
   return {
     characters: data,
-    loading,
+    // If user hasn't loaded yet, we're still loading
+    loading: !user?.uid || loading,
     error,
     refresh,
     invalidate

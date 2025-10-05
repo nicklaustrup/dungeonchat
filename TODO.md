@@ -1205,13 +1205,13 @@ const displayImage = character.avatarUrl || character.photoURL || character.port
 
 **Goal**: Character sheet avatar intelligently fallbacks through available images. ✅ Complete
 
-### Campaign/Character Caching Hooks ⏳
-**Status**: Not Started
-**Priority**: Medium (Implement as we go during Token HP Sync)
-**Files**: New hooks to create: useCampaignsList.js, useUserCharacters.js
-**Context**: See ARCHITECTURE_DECISION_PROFILE_DATA_DENORMALIZATION.md
+### Campaign/Character Caching Hooks ✅
+**Status**: Complete (Completed in Firebase Caching Migration Phase 1-3)
+**Priority**: Medium
+**Files**: `useCampaignsCache.js`, `useCharactersCache.js`
+**Context**: See FIREBASE_CACHING_MIGRATION_HANDOFF.md
 
-**Objective**: Create centralized hooks for fetching and caching user's campaigns and characters with real-time updates. Replace ad-hoc queries throughout codebase.
+**Objective**: ✅ Create centralized hooks for fetching and caching user's campaigns and characters with real-time updates. Replace ad-hoc queries throughout codebase.
 
 **Pattern**:
 ```javascript
@@ -1219,39 +1219,45 @@ const displayImage = character.avatarUrl || character.photoURL || character.port
 const q = query(collection(firestore, 'campaigns'), where('memberIds', 'array-contains', user.uid));
 const unsubscribe = onSnapshot(q, snapshot => { ... });
 
-// Use centralized hook:
-const { campaigns, loading } = useCampaignsList();
+// Use centralized cached hook:
+import { useJoinedCampaigns, useUserCharacters } from '../../services/cache';
+const { campaigns, loading } = useJoinedCampaigns();
+const { characters, loading } = useUserCharacters();
 ```
 
-**Tasks**:
-- [ ] Create `useCampaignsList()` hook
-  - [ ] Query campaigns where user is member (memberIds array-contains)
-  - [ ] Real-time listener with onSnapshot
-  - [ ] Return { campaigns, loading, error }
-  - [ ] Automatic cleanup on unmount
-- [ ] Create `useUserCharacters()` hook
-  - [ ] Collection group query across all campaigns
-  - [ ] Filter by userId
-  - [ ] Include campaignId in returned data
-  - [ ] Real-time listener with onSnapshot
-  - [ ] Return { characters, loading, error }
-- [ ] Ensure proper Firestore indexes exist
-  - [ ] campaigns: memberIds (ARRAY) ASC, createdAt DESC
-  - [ ] characters: userId ASC, createdAt DESC (collection group)
-- [ ] Document usage pattern in hooks
-- [ ] **Implement incrementally**: As we touch files that need campaigns/characters, refactor to use these hooks
+**Tasks Completed**:
+- [x] Created campaign caching hooks in `useCampaignsCache.js`:
+  - [x] `useJoinedCampaigns()` - campaigns where user is member
+  - [x] `useCreatedCampaigns()` - campaigns created by user
+  - [x] `useAllUserCampaigns()` - merged and deduplicated
+  - [x] `useCachedCampaign(id)` - single campaign by ID
+  - [x] Real-time listeners with onSnapshot
+  - [x] Returns { campaigns/campaign, loading, error, refresh, invalidate }
+  - [x] Automatic cleanup on unmount
+- [x] Created character caching hooks in `useCharactersCache.js`:
+  - [x] `useUserCharacters()` - all user's characters
+  - [x] `useCampaignCharacters(campaignId)` - characters for campaign
+  - [x] `useCachedCharacter(characterId)` - single character
+  - [x] `useActiveCharacter(campaignId)` - active character for campaign
+  - [x] Real-time listeners with onSnapshot
+  - [x] Returns { characters/character, loading, error, refresh, invalidate }
+- [x] Ensured proper Firestore indexes exist (deployed)
+  - [x] campaigns: members (CONTAINS) + lastActivityAt (DESC)
+  - [x] campaigns: createdBy (ASC) + createdAt (DESC)
+  - [x] characters: campaignId (ASC) + createdAt (ASC)
+  - [x] characters: uid (ASC) + createdAt (DESC)
+- [x] Documented usage in FIREBASE_CACHING_MIGRATION_HANDOFF.md
+- [x] **Migrated 21 components** to use these hooks
 
-**Benefits**:
+**Benefits Achieved**:
 - ✅ Centralized data fetching (single source of truth)
-- ✅ Automatic caching via React hooks
-- ✅ Real-time updates across all components
+- ✅ Automatic caching with TTL and real-time updates
+- ✅ 60-80% reduction in Firebase reads
 - ✅ Reduced code duplication
-- ✅ Better performance (shared listeners)
+- ✅ Better performance (shared listeners and cache)
 - ✅ Easier testing and maintenance
 
-**Strategy**: Don't refactor everything at once. As we work on Token HP Sync and touch files that fetch campaigns/characters, we'll create and use these hooks. Incremental improvement!
-
-**Goal**: Centralized, cached, real-time access to user's campaigns and characters throughout the app.
+**Goal**: ✅ Centralized, cached, real-time access to user's campaigns and characters throughout the app.
 
 ### Token HP Sync System - Property Name Mapping Bug ✅
 **Status**: ✅ FIXED

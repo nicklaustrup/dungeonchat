@@ -50,6 +50,14 @@ import {
   invalidateCharacter,
   invalidateAllCharacters
 } from './useCharactersCache';
+import {
+  useCampaignMaps,
+  useCachedMap,
+  useActiveMap,
+  invalidateCampaignMaps,
+  invalidateMap,
+  invalidateAllMaps
+} from './useMapsCache';
 
 // Re-export core services
 export { default as firestoreCache } from './FirestoreCache';
@@ -84,6 +92,17 @@ export {
   invalidateAllCharacters,
   default as charactersCache
 } from './useCharactersCache';
+
+// Map caching
+export {
+  useCampaignMaps,
+  useCachedMap,
+  useActiveMap,
+  invalidateCampaignMaps,
+  invalidateMap,
+  invalidateAllMaps,
+  default as mapsCache
+} from './useMapsCache';
 
 /**
  * Get current cache statistics
@@ -131,25 +150,28 @@ export function logCacheStats() {
 
 /**
  * Cache invalidation strategy guide
- * 
+ *
  * When to invalidate cache:
- * 
+ *
  * 1. After CREATE operations:
  *    - invalidateUserCharacters(userId) after creating character
  *    - invalidateUserCampaigns(userId) after creating/joining campaign
- * 
+ *    - invalidateCampaignMaps(campaignId) after creating map
+ *
  * 2. After UPDATE operations:
  *    - invalidateCharacter(characterId) after updating character
  *    - invalidateCampaign(campaignId) after updating campaign
+ *    - invalidateMap(mapId, campaignId) after updating map
  *    - Use field-level invalidation for specific changes
- * 
+ *
  * 3. After DELETE operations:
  *    - invalidateUserCharacters(userId) after deleting character
  *    - invalidateUserCampaigns(userId) after leaving campaign
- * 
+ *    - invalidateCampaignMaps(campaignId) after deleting map
+ *
  * 4. On user logout:
  *    - clearAllCache() to remove all cached data
- * 
+ *
  * 5. Real-time updates:
  *    - Most hooks have realtime: true by default
  *    - Cache auto-updates via Firestore listeners
@@ -172,6 +194,9 @@ const cacheExports = {
   useCachedCharacter,
   useCachedCharacters,
   useActiveCharacter,
+  useCampaignMaps,
+  useCachedMap,
+  useActiveMap,
   invalidateUserCampaigns,
   invalidateCampaign,
   invalidateAllCampaigns,
@@ -179,6 +204,9 @@ const cacheExports = {
   invalidateCampaignCharacters,
   invalidateCharacter,
   invalidateAllCharacters,
+  invalidateCampaignMaps,
+  invalidateMap,
+  invalidateAllMaps,
   getCacheStats,
   clearAllCache,
   logCacheStats

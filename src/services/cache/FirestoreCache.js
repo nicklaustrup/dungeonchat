@@ -20,12 +20,18 @@ class FirestoreCache {
       invalidations: 0,
       evictions: 0
     };
-    
+
     // Default TTL: 5 minutes
     this.defaultTTL = 5 * 60 * 1000;
-    
+
     // Start cleanup interval (every minute)
     this.startCleanupInterval();
+
+    console.log(
+      '%c[CACHE] 🚀 INITIALIZED',
+      'background: #8b5cf6; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+      `Default TTL: ${this.defaultTTL / 1000}s`
+    );
   }
 
   /**
@@ -47,21 +53,36 @@ class FirestoreCache {
    */
   get(key) {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       this.stats.misses++;
+      console.warn(
+        '%c[CACHE] ❌ MISS',
+        'background: #ef4444; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+        key
+      );
       return null;
     }
-    
+
     // Check if expired
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       this.stats.evictions++;
       this.stats.misses++;
+      console.warn(
+        '%c[CACHE] ⏰ EXPIRED',
+        'background: #f97316; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+        key
+      );
       return null;
     }
-    
+
     this.stats.hits++;
+    console.log(
+      '%c[CACHE] 🎯 HIT',
+      'background: #22c55e; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+      key
+    );
     return entry.data;
   }
 
@@ -77,6 +98,11 @@ class FirestoreCache {
       expiresAt: Date.now() + ttl,
       createdAt: Date.now()
     });
+    console.log(
+      '%c[CACHE] 💾 SET',
+      'background: #3b82f6; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+      `${key} (TTL: ${ttl / 1000}s)`
+    );
   }
 
   /**
@@ -86,27 +112,46 @@ class FirestoreCache {
   invalidate(key) {
     // If key contains wildcard, invalidate matching keys
     if (key.includes('*')) {
-      const pattern = new RegExp(key.replace('*', '.*'));
+      const pattern = new RegExp(key.replace(/\*/g, '.*'));
       let count = 0;
-      
+
       for (const cacheKey of this.cache.keys()) {
         if (pattern.test(cacheKey)) {
           this.cache.delete(cacheKey);
           count++;
         }
       }
-      
+
       this.stats.invalidations += count;
+      console.warn(
+        '%c[CACHE] 🗑️ INVALIDATE PATTERN',
+        'background: #f59e0b; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+        `${key} (${count} entries)`
+      );
       return count;
     }
-    
+
     // Single key invalidation
     if (this.cache.delete(key)) {
       this.stats.invalidations++;
+      console.warn(
+        '%c[CACHE] 🗑️ INVALIDATE',
+        'background: #f59e0b; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+        key
+      );
       return 1;
     }
-    
+
     return 0;
+  }
+
+  /**
+   * Invalidate cache entries matching a pattern
+   * Alias for invalidate() for better readability
+   * @param {string} pattern - Pattern to match (supports wildcards)
+   */
+  invalidatePattern(pattern) {
+    return this.invalidate(pattern);
   }
 
   /**
@@ -144,6 +189,11 @@ class FirestoreCache {
    */
   registerListener(key, unsubscribe) {
     this.listeners.set(key, unsubscribe);
+    console.log(
+      '%c[CACHE] 👂 LISTENER REGISTERED',
+      'background: #06b6d4; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+      key
+    );
   }
 
   /**
@@ -155,6 +205,11 @@ class FirestoreCache {
     if (unsubscribe) {
       unsubscribe();
       this.listeners.delete(key);
+      console.log(
+        '%c[CACHE] 🔇 LISTENER UNREGISTERED',
+        'background: #64748b; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+        key
+      );
     }
   }
 
