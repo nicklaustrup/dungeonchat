@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/nicklaustrup/dungeonchat/compare/v1.6.0...v1.6.1) (2025-10-05)
+
+
+### Bug Fixes
+
+* **lint:** add useCallback wrappers, fix hook dependencies, name default export ([7c51c16](https://github.com/nicklaustrup/dungeonchat/commit/7c51c16a0a7dffd3cce6c721916f64eb692afcc5))
+
 ## [1.6.0](https://github.com/nicklaustrup/dungeonchat/compare/v1.5.0...v1.6.0) (2025-10-05)
 
 
