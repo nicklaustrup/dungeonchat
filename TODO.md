@@ -150,10 +150,10 @@ Instead of embedding the SessionSettings modal component, integrated the session
 - [x] Campaign title now on first row, badges on second row with space-between layout
 - [x] Campaign badge aligned left, system badge aligned right
 
-**New Issues - Need Fixes**:
-- [ ] Campaign header ::before overlay is black - should match card background color
-- [ ] Swap badge positions: DM/Player badge on right, System badge on left
-- [ ] Make DM/Player badge more striking with gold background color
+**Issues Fixed** ✅:
+- [x] Campaign header overlay now matches card background color (--bg-secondary)
+- [x] Swapped badge positions: System badge on left, DM/Player badge on right
+- [x] DM/Player badge now gold gradient with shadow for visual prominence
 
 **Optional Future Enhancements**:
 - [ ] Add image resize/optimization (max 1920x400px, compress to <500KB)
