@@ -22,11 +22,39 @@ export default function TokenContextMenu({
   const [statusName, setStatusName] = useState('');
   const [statusIcon, setStatusIcon] = useState('');
   const [showIconPicker, setShowIconPicker] = useState(false);
+  
+  // HP Buffering: store pending HP changes locally
+  const [pendingHP, setPendingHP] = useState(null); // null means no pending changes
+  const [bufferedHP, setBufferedHP] = useState(token?.hp ?? 0);
 
   // Common monochrome-friendly icons (black/white glyphs & simple emojis)
   const COMMON_ICONS = [
     '⚔️','🛡️','💀','☠️','🔥','❄️','💧','🌪️','🌫️','⛓️','🕸️','💤','🩸','🌀','✨','⚡','🎯','👁️','🚫','❗','❌','🔒','🩹','🏹','🛑','⏳','🕯️','🔮','🥶','🧪','☄️','📿','🖤','🤍'
   ];
+
+  // Initialize buffered HP when token changes
+  useEffect(() => {
+    if (token) {
+      setBufferedHP(token.hp ?? 0);
+      setPendingHP(null); // Reset pending changes when token changes
+    }
+  }, [token]);
+
+  // Handle quick HP adjustment (buffer locally)
+  const handleQuickHPAdjust = (delta) => {
+    const currentHP = pendingHP !== null ? pendingHP : (token.hp ?? 0);
+    const newHP = Math.max(0, Math.min(token.maxHp ?? 999, currentHP + delta));
+    setPendingHP(newHP);
+    setBufferedHP(newHP);
+  };
+
+  // Apply buffered HP changes to Firebase
+  const handleApplyHP = () => {
+    if (pendingHP !== null) {
+      onAdjustHP?.(pendingHP, true); // isAbsolute = true
+      setPendingHP(null);
+    }
+  };
 
   useEffect(() => {
     const handler = (e) => {
@@ -49,47 +77,91 @@ export default function TokenContextMenu({
       <div className="tcm-section">
         <div className="tcm-row">
           <span className="tcm-label">HP:</span>
-          <span className="tcm-value">{token.hp != null && token.maxHp != null ? `${token.hp}/${token.maxHp}` : '—'}</span>
+          <span className={`tcm-value ${pendingHP !== null ? 'pending' : ''}`}>
+            {token.hp != null && token.maxHp != null 
+              ? `${pendingHP !== null ? bufferedHP : token.hp}/${token.maxHp}` 
+              : '—'}
+            {pendingHP !== null && <span className="pending-indicator"> *</span>}
+          </span>
           {isDM && token.maxHp != null && (
             <div className="hp-quick-adjust">
               <button
                 className="hp-btn hp-decrease"
-                onClick={() => onAdjustHP?.(-1, false)}
+                onClick={() => handleQuickHPAdjust(-1)}
                 title="Decrease HP by 1"
               >▼</button>
               <button
                 className="hp-btn hp-increase"
-                onClick={() => onAdjustHP?.(1, false)}
+                onClick={() => handleQuickHPAdjust(1)}
                 title="Increase HP by 1"
               >▲</button>
             </div>
           )}
         </div>
         {isDM && token.maxHp != null && (
-          <div className="tcm-row hp-adjust">
-            <input
-              type="text"
-              placeholder="+5 or -3 or 12"
-              value={hpValue}
-              onChange={(e) => setHpValue(e.target.value)}
-            />
-            <button
-              onClick={() => {
-                if (!hpValue.trim()) return;
-                const raw = hpValue.trim();
-                let isAbsolute = false;
-                let num = 0;
-                if (/^[+-]/.test(raw)) {
-                  num = parseInt(raw, 10) || 0;
-                } else {
-                  isAbsolute = true;
-                  num = parseInt(raw, 10) || 0;
-                }
-                onAdjustHP?.(num, isAbsolute);
-                setHpValue('');
-              }}
-            >Apply</button>
-          </div>
+          <>
+            <div className="tcm-row hp-adjust">
+              <input
+                type="text"
+                placeholder="+5 or -3 or 12"
+                value={hpValue}
+                onChange={(e) => setHpValue(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    if (!hpValue.trim()) return;
+                    const raw = hpValue.trim();
+                    let isAbsolute = false;
+                    let num = 0;
+                    if (/^[+-]/.test(raw)) {
+                      num = parseInt(raw, 10) || 0;
+                    } else {
+                      isAbsolute = true;
+                      num = parseInt(raw, 10) || 0;
+                    }
+                    onAdjustHP?.(num, isAbsolute);
+                    setHpValue('');
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (!hpValue.trim()) return;
+                  const raw = hpValue.trim();
+                  let isAbsolute = false;
+                  let num = 0;
+                  if (/^[+-]/.test(raw)) {
+                    num = parseInt(raw, 10) || 0;
+                  } else {
+                    isAbsolute = true;
+                    num = parseInt(raw, 10) || 0;
+                  }
+                  onAdjustHP?.(num, isAbsolute);
+                  setHpValue('');
+                }}
+              >Set</button>
+            </div>
+            {pendingHP !== null && (
+              <div className="tcm-row hp-apply-row">
+                <button
+                  className="apply-hp-btn"
+                  onClick={handleApplyHP}
+                  title="Apply pending HP changes to Firebase"
+                >
+                  ✓ Apply HP Changes
+                </button>
+                <button
+                  className="cancel-hp-btn"
+                  onClick={() => {
+                    setPendingHP(null);
+                    setBufferedHP(token.hp ?? 0);
+                  }}
+                  title="Cancel pending changes"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
       <div className="tcm-section">

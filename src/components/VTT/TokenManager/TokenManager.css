@@ -272,6 +272,17 @@
   flex-shrink: 0;
 }
 
+.token-image-preview {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #000;
+  flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .token-info {
   flex: 1;
   display: flex;

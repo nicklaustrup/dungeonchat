@@ -175,10 +175,8 @@ export function createDefaultCharacterSheet(name, characterClass = 'fighter', ra
     // Calculated Values
     proficiencyBonus,
     armorClass: 10,
-    hitPointMaximum: CHARACTER_CLASSES[characterClass]?.hitDie === 'd12' ? 12 : 
-                    CHARACTER_CLASSES[characterClass]?.hitDie === 'd10' ? 10 :
-                    CHARACTER_CLASSES[characterClass]?.hitDie === 'd8' ? 8 : 6,
-    currentHitPoints: null, // Will be set to max on creation
+    maxHp: 10, // Default starting HP
+    hp: 10, // Default starting HP
     temporaryHitPoints: 0,
     speed: CHARACTER_RACES[race]?.speed || 30,
     

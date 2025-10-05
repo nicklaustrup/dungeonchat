@@ -30,7 +30,7 @@ const ActiveTokenItem = ({ token, onFocus, onEdit }) => {
         ) : (
           <div
             className="item-color-indicator"
-            style={{ backgroundColor: token.color || '#4a90e2' }}
+            style={{ backgroundColor: token.color || 'var(--player-token-default)' }}
           >
             <span className="item-icon">{icon}</span>
           </div>

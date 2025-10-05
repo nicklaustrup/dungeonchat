@@ -50,13 +50,19 @@ export async function createPlayerStagedToken(firestore, campaignId, userId, cha
       }
     }
     
-    // Check if player already has a token for this character
+    // Check if player already has a STAGED token for this character on this map
+    // Note: We allow multiple tokens per character, but avoid duplicate staged tokens
     const tokensRef = collection(firestore, 'campaigns', campaignId, 'vtt', targetMapId, 'tokens');
-    const q = query(tokensRef, where('characterId', '==', userId), where('type', '==', 'pc'));
+    const q = query(
+      tokensRef, 
+      where('characterId', '==', userId), 
+      where('type', '==', 'pc'),
+      where('staged', '==', true)  // Only check for staged tokens
+    );
     const existingTokens = await getDocs(q);
     
     if (!existingTokens.empty) {
-      console.log('Player token already exists, skipping creation');
+      console.log('Staged token for this character already exists on this map, skipping creation');
       return;
     }
     
@@ -83,11 +89,12 @@ export async function createPlayerStagedToken(firestore, campaignId, userId, cha
       rotation: 0,
       color: '#4a9eff',
       characterId: userId,
+      userId: userId, // Required for HP sync with character sheet
       ownerId: userId,
       isHidden: false,
       staged: true, // Start in staging area
-      hp: character.currentHitPoints || character.hitPointMaximum,
-      maxHp: character.hitPointMaximum,
+      hp: character.hp || character.maxHp,
+      maxHp: character.maxHp,
       statusEffects: [],
       createdBy: userId
     };
@@ -130,8 +137,8 @@ export async function createCharacterSheet(firestore, campaignId, userId, charac
     };
     
     // Set current hit points to maximum if not specified
-    if (!finalCharacterSheet.currentHitPoints) {
-      finalCharacterSheet.currentHitPoints = finalCharacterSheet.hitPointMaximum;
+    if (!finalCharacterSheet.hp) {
+      finalCharacterSheet.hp = finalCharacterSheet.maxHp;
     }
     
     await setDoc(characterRef, finalCharacterSheet);
@@ -222,19 +229,42 @@ export async function updateCharacterSheet(firestore, campaignId, userId, update
 }
 
 /**
- * Delete character sheet
+ * Delete character sheet and all associated tokens
  * @param {Object} firestore - Firestore instance
  * @param {string} campaignId - Campaign ID
- * @param {string} userId - User ID
+ * @param {string} characterUserId - The userId of the character owner (used as document ID)
  * @returns {Promise<void>}
  */
-export async function deleteCharacterSheet(firestore, campaignId, userId) {
+export async function deleteCharacterSheet(firestore, campaignId, characterUserId) {
   try {
-    const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
+    // Delete the character sheet document
+    const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', characterUserId);
     await deleteDoc(characterRef);
     
+    // Delete all tokens associated with this character across all maps
+    const vttRef = collection(firestore, 'campaigns', campaignId, 'vtt');
+    const mapsSnapshot = await getDocs(vttRef);
+    
+    let tokensDeleted = 0;
+    for (const mapDoc of mapsSnapshot.docs) {
+      const mapId = mapDoc.id;
+      const tokensRef = collection(firestore, 'campaigns', campaignId, 'vtt', mapId, 'tokens');
+      const tokensQuery = query(tokensRef, where('characterId', '==', characterUserId));
+      const tokensSnapshot = await getDocs(tokensQuery);
+      
+      // Delete each token linked to this character
+      for (const tokenDoc of tokensSnapshot.docs) {
+        await deleteDoc(doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'tokens', tokenDoc.id));
+        tokensDeleted++;
+      }
+    }
+    
+    if (tokensDeleted > 0) {
+      console.log(`Deleted ${tokensDeleted} token(s) associated with character ${characterUserId}`);
+    }
+    
     // Update campaign member to remove character reference
-    const memberRef = doc(firestore, 'campaigns', campaignId, 'members', userId);
+    const memberRef = doc(firestore, 'campaigns', campaignId, 'members', characterUserId);
     await updateDoc(memberRef, {
       hasCharacterSheet: false,
       characterName: null,
@@ -346,7 +376,7 @@ export async function addExperience(firestore, campaignId, userId, experienceGai
  */
 export async function updateHitPoints(firestore, campaignId, userId, newCurrentHP, tempHP = null) {
   try {
-    const updates = { currentHitPoints: Math.max(0, newCurrentHP) };
+    const updates = { hp: Math.max(0, newCurrentHP) };
     
     if (tempHP !== null) {
       updates.temporaryHitPoints = Math.max(0, tempHP);

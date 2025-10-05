@@ -12,6 +12,7 @@ import {
   calculatePartyWealth,
   updateCharacterHP
 } from '../../services/partyService';
+import { CharacterSheet } from '../CharacterSheet';
 import './PartyManagement.css';
 
 /**
@@ -28,32 +29,37 @@ import './PartyManagement.css';
  * - DM-controlled mass operations
  * - Member-view read-only statistics
  */
-function PartyManagement({ campaignId }) {
-  const { firestore } = useFirebase();
-  const { isUserDM } = useCampaign(campaignId);
-  
+function PartyManagement({ campaignId, onOpenCharacterSheet }) {
+  const { firestore, user, storage } = useFirebase();
+  const { campaign, isUserDM } = useCampaign(campaignId);
+
   // State management
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [partyStats, setPartyStats] = useState(null);
   const [composition, setComposition] = useState(null);
   const [wealth, setWealth] = useState(null);
-  
+
+  // Character sheet modal state (deprecated - use onOpenCharacterSheet callback instead)
+  const [showCharacterSheet, setShowCharacterSheet] = useState(false);
+  const [selectedCharacterUserId, setSelectedCharacterUserId] = useState(null);
+
   // XP distribution state
   const [showXPModal, setShowXPModal] = useState(false);
   const [xpAmount, setXpAmount] = useState('');
   const [selectedCharacters, setSelectedCharacters] = useState([]);
-  
+
   // Healing state
   const [showHealModal, setShowHealModal] = useState(false);
   const [healAmount, setHealAmount] = useState('');
-  
+
   // Short rest state
   const [showShortRestModal, setShowShortRestModal] = useState(false);
   const [shortRestCharacter, setShortRestCharacter] = useState(null);
   const [hitDiceToUse, setHitDiceToUse] = useState(1);
 
   // UI enhancement state
+  // eslint-disable-next-line no-unused-vars
   const [minimized, setMinimized] = useState(false);
   const [detailsCollapsed, setDetailsCollapsed] = useState(false);
   const [highlightedId, setHighlightedId] = useState(null);
@@ -84,17 +90,17 @@ function PartyManagement({ campaignId }) {
       campaignId,
       (updatedCharacters) => {
         setCharacters(updatedCharacters);
-        
+
         // Calculate derived statistics
         const stats = calculatePartyStats(updatedCharacters);
         setPartyStats(stats);
-        
+
         const comp = analyzePartyComposition(updatedCharacters);
         setComposition(comp);
-        
+
         const w = calculatePartyWealth(updatedCharacters);
         setWealth(w);
-        
+
         setLoading(false);
       }
     );
@@ -238,6 +244,7 @@ function PartyManagement({ campaignId }) {
     return 'hp-critical';
   }, []);
 
+  // eslint-disable-next-line no-unused-vars
   const getRoleIcon = useCallback((role) => {
     const icons = {
       tank: '🛡️',
@@ -263,10 +270,45 @@ function PartyManagement({ campaignId }) {
     return 10 + wisMod + (proficient ? proficiency : 0);
   }, []);
 
+  const getAbilityModifier = useCallback((score) => {
+    return Math.floor((score - 10) / 2);
+  }, []);
+
+  const formatModifier = useCallback((mod) => {
+    return mod >= 0 ? `+${mod}` : `${mod}`;
+  }, []);
+
+  const getCharacterInitials = useCallback((name) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  }, []);
+
+  // Detect if element is in top half of its parent container
+  const setTooltipPosition = useCallback((el) => {
+    if (!el) return;
+    const parent = el.closest('.party-management, .sidebar-content');
+    if (!parent) return;
+
+    const parentRect = parent.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const parentMidpoint = parentRect.top + (parentRect.height / 2);
+
+    // If button is in top half, show tooltip below
+    if (elRect.top < parentMidpoint) {
+      el.setAttribute('data-tooltip-position', 'bottom');
+    } else {
+      el.setAttribute('data-tooltip-position', 'top');
+    }
+  }, []);
+
   const buildChipTooltip = useCallback((ch) => {
     const subclass = ch.subclass || ch.subClass || ch.subClassName || '';
     const passive = getPassivePerception(ch);
-    return `Lv ${ch.level} ${ch.class}${subclass ? ' ('+subclass+')' : ''} | PP ${passive}`;
+    return `Lv ${ch.level} ${ch.class}${subclass ? ' (' + subclass + ')' : ''} | PP ${passive}`;
   }, [getPassivePerception]);
 
   const handleChipClick = useCallback((ch) => {
@@ -284,7 +326,8 @@ function PartyManagement({ campaignId }) {
   const startInlineHPEdit = useCallback((ch) => {
     if (!isUserDM) return;
     setEditingHPCharacterId(ch.id);
-    setEditingHPValue(String(ch.currentHP ?? ch.maxHP ?? ch.hitPoints ?? 0));
+    const currentHP = ch.hp !== undefined ? ch.hp : (ch.maxHp || 0);
+    setEditingHPValue(String(currentHP));
   }, [isUserDM]);
 
   const commitInlineHPEdit = useCallback(async () => {
@@ -292,8 +335,9 @@ function PartyManagement({ campaignId }) {
     const character = characters.find(c => c.id === editingHPCharacterId);
     if (!character) return;
     let val = parseInt(editingHPValue, 10);
-    if (isNaN(val)) val = character.currentHP || 0;
-    const maxHP = character.maxHP || character.hitPoints || 0;
+    const currentHP = character.hp !== undefined ? character.hp : 0;
+    if (isNaN(val)) val = currentHP;
+    const maxHP = character.maxHp || 0;
     val = Math.max(0, Math.min(val, maxHP));
     try {
       await updateCharacterHP(firestore, campaignId, editingHPCharacterId, val);
@@ -325,8 +369,8 @@ function PartyManagement({ campaignId }) {
       if (!input) return;
       const healVal = parseInt(input, 10);
       if (isNaN(healVal) || healVal <= 0) return;
-      const maxHP = ch.maxHP || ch.hitPoints || 0;
-      const current = ch.currentHP ?? maxHP;
+      const maxHP = ch.maxHp || 0;
+      const current = ch.hp !== undefined ? ch.hp : maxHP;
       const newHP = Math.min(current + healVal, maxHP);
       try {
         await updateCharacterHP(firestore, campaignId, ch.id, newHP);
@@ -338,7 +382,6 @@ function PartyManagement({ campaignId }) {
     setChipMenu(null);
   }, [chipMenu, openShortRestModal, firestore, campaignId]);
 
-  const toggleMinimized = useCallback(() => setMinimized(m => !m), []);
   const toggleDetailsCollapsed = useCallback(() => setDetailsCollapsed(c => !c), []);
 
   if (loading) {
@@ -357,174 +400,257 @@ function PartyManagement({ campaignId }) {
     <div className={`party-management ${minimized ? 'minimized' : ''}`}>
       <div className="party-compact-header">
         <div className="pch-row">
-          <h2 className="pch-title">Party</h2>
+          <div className="pch-title-wrapper">
+            <h2 className="pch-title">Party</h2>
+            {!minimized && composition && composition.warnings && composition.warnings.length > 0 && (
+              <div
+                className="warning-icon-wrapper"
+                data-tooltip={composition.warnings.join(' · ')}
+                ref={setTooltipPosition}
+              >
+                <span className="warning-icon">⚠️</span>
+              </div>
+            )}
+          </div>
           <div className="pch-row-right">
             <button
               className="pm-btn pm-btn-toggle"
               onClick={toggleDetailsCollapsed}
-              title={detailsCollapsed ? 'Expand details' : 'Collapse details'}
+              data-tooltip={detailsCollapsed ? 'Expand details' : 'Collapse details'}
+              ref={setTooltipPosition}
             >{detailsCollapsed ? '▸ Details' : '▾ Details'}</button>
-            <button
-              className="pm-btn pm-btn-toggle"
-              onClick={toggleMinimized}
-              title={minimized ? 'Expand panel' : 'Minimize panel'}
-            >{minimized ? '⬜' : '🗕'}</button>
           </div>
           {isUserDM && (
             <div className="pch-actions">
-              <button className="pm-btn pm-btn-xp" onClick={openXPModal}>⭐ XP</button>
-              <button className="pm-btn pm-btn-heal" onClick={openHealModal}>❤️ Heal</button>
-              <button className="pm-btn pm-btn-rest" onClick={handleLongRest}>🌙 Long Rest</button>
+              {campaign?.progressionSystem !== 'milestone' && (
+                <button className="pm-btn pm-btn-xp" onClick={openXPModal} data-tooltip="Award experience points" ref={setTooltipPosition}>⭐ XP</button>
+              )}
+              <button className="pm-btn pm-btn-heal" onClick={openHealModal} data-tooltip="Heal entire party" ref={setTooltipPosition}>❤️ Heal</button>
+              <button className="pm-btn pm-btn-rest" onClick={handleLongRest} data-tooltip="Long rest for all characters" ref={setTooltipPosition}>🌙 Long Rest</button>
             </div>
           )}
         </div>
         <div className="member-strip">
           {characters.map(ch => {
-            const pct = getHPPercentage(ch.currentHP, ch.maxHP);
+            const pct = getHPPercentage(ch.hp, ch.maxHp);
             const hpClass = getHPColorClass(pct);
             return (
               <div
                 key={ch.id}
                 className={`member-chip ${hpClass} ${highlightedId === ch.id ? 'highlight' : ''}`}
-                title={buildChipTooltip(ch)}
+                data-tooltip={buildChipTooltip(ch)}
+                ref={setTooltipPosition}
                 onClick={() => handleChipClick(ch)}
                 onContextMenu={(e) => isUserDM && handleChipContextMenu(e, ch)}
               >
-                <div className="mc-top"><span className="mc-name">{ch.name}</span><span className="mc-level">L{ch.level}</span></div>
-                <div className="mc-meta"><span className="mc-class">{ch.class}</span><span className="mc-ac">AC {ch.armorClass || 10}</span></div>
-                <div className="mc-hp-bar">
-                  <div className="mc-hp-fill" style={{width: `${pct}%`}} />
-                  {editingHPCharacterId === ch.id ? (
-                    <input
-                      className="mc-hp-input"
-                      type="number"
-                      value={editingHPValue}
-                      min={0}
-                      max={ch.maxHP || ch.hitPoints || 0}
-                      onChange={(e)=>setEditingHPValue(e.target.value)}
-                      onBlur={commitInlineHPEdit}
-                      onKeyDown={(e)=>{
-                        if(e.key==='Enter') commitInlineHPEdit();
-                        else if(e.key==='Escape') cancelInlineHPEdit();
-                      }}
-                      autoFocus
-                    />
-                  ) : (
-                    <span
-                      className="mc-hp-text editable"
-                      onClick={(e)=>{e.stopPropagation(); startInlineHPEdit(ch);}}
-                      title={isUserDM ? 'Click to edit HP' : 'HP'}
-                    >{ch.currentHP}/{ch.maxHP}</span>
-                  )}
+
+                <div className="mc-portrait">
+                  {ch.avatarUrl || ch.portraitUrl || ch.photoURL ? (
+                    <img src={ch.avatarUrl || ch.portraitUrl || ch.photoURL} alt={ch.name} onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }} />
+                  ) : null}
+                  <div className="mc-portrait-fallback" style={{ display: ch.avatarUrl || ch.portraitUrl || ch.photoURL ? 'none' : 'flex' }}>{getCharacterInitials(ch.name)}</div>
+
+                </div>
+                <div className="mc-info">
+                  <div className="mc-top"><span className="mc-name">{ch.name}</span><span className="mc-level">L{ch.level}</span></div>
+                  <div className="mc-meta"><span className="mc-class">{ch.class}</span><span className="mc-ac">AC {ch.armorClass || 10}</span></div>
+                  <div className="mc-hp-bar">
+                    <div className="mc-hp-fill" style={{ width: `${pct}%` }} />
+                    {editingHPCharacterId === ch.id ? (
+                      <input
+                        className="mc-hp-input"
+                        type="number"
+                        value={editingHPValue}
+                        min={0}
+                        max={ch.maxHp || 0}
+                        onChange={(e) => setEditingHPValue(e.target.value)}
+                        onBlur={commitInlineHPEdit}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') commitInlineHPEdit();
+                          else if (e.key === 'Escape') cancelInlineHPEdit();
+                        }}
+                        autoFocus
+                      />
+                    ) : (
+                      <span
+                        className="mc-hp-text editable"
+                        onClick={(e) => { e.stopPropagation(); startInlineHPEdit(ch); }}
+                        data-tooltip={isUserDM ? 'Click to edit HP' : 'HP'}
+                        ref={setTooltipPosition}
+                      >{ch.hp}/{ch.maxHp}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
-      {!minimized && partyStats && (
+
+      {!minimized && partyStats && isUserDM && (
         <div className="party-overview-compact">
           <div className="po-metrics">
             <div className="po-metric"><span className="po-label">Avg Lvl</span><span className="po-value">{partyStats.averageLevel}</span></div>
             <div className="po-metric"><span className="po-label">HP</span><span className="po-value">{partyStats.currentHP}/{partyStats.totalHP} ({partyStats.hpPercentage}%)</span></div>
             <div className="po-metric"><span className="po-label">Avg AC</span><span className="po-value">{partyStats.averageAC}</span></div>
-            {wealth && <div className="po-metric"><span className="po-label">Wealth</span><span className="po-value">{formatGold(wealth.totalGoldEquivalent)} gp ({formatGold(wealth.averagePerMember)} ea)</span></div>}
-            <div className="po-metric classes"><span className="po-label">Classes</span><span className="po-value">{Object.entries(partyStats.classes).map(([c,n])=>`${c.slice(0,3)}×${n}`).join(' · ')}</span></div>
+            {wealth && (isUserDM || campaign?.canViewGold) && <div className="po-metric"><span className="po-label">Wealth</span><span className="po-value">{formatGold(wealth.totalGoldEquivalent)} gp ({formatGold(wealth.averagePerMember)} ea)</span></div>}
+            <div className="po-metric classes"><span className="po-label">Classes</span><span className="po-value">{Object.entries(partyStats.classes).map(([c, n]) => `${c.slice(0, 3)}×${n}`).join(' · ')}</span></div>
           </div>
         </div>
       )}
-      {!minimized && composition && composition.roles && (
+      {/* {!minimized && composition && composition.roles && (
         <div className="party-composition compact">
           <div className="composition-inline-roles">
             {Object.entries(composition.roles).filter(([,c])=>c>0).map(([roleName,count]) => (
               <span key={roleName} className="role-pill" title={roleName}>{getRoleIcon(roleName)} {roleName.slice(0,3)}:{count}</span>
             ))}
           </div>
-          {(composition.warnings.length>0 || composition.recommendations.length>0) && (
+          {composition.recommendations.length>0 && (
             <div className="composition-flags">
-              {composition.warnings.slice(0,2).map((w,i)=>(<span key={i} className="flag warn" title={w}>⚠ {w}</span>))}
               {composition.recommendations.slice(0,2).map((r,i)=>(<span key={i} className="flag rec" title={r}>💡 {r}</span>))}
             </div>
           )}
         </div>
-      )}
+      )} */}
       {!minimized && !detailsCollapsed && (
-      <div className="party-characters condensed">
-        <div className="characters-grid">
-          {characters.map(character => {
-            const hpPercentage = getHPPercentage(character.currentHP, character.maxHP);
-            const hpColorClass = getHPColorClass(hpPercentage);
+        <div className="party-characters condensed">
+          <div className="characters-grid">
+            {characters.map(character => {
+              const hpPercentage = getHPPercentage(character.hp, character.maxHp);
+              const hpColorClass = getHPColorClass(hpPercentage);
 
-            return (
-              <div key={character.id} ref={(el)=>registerCardRef(character.id, el)} className={`character-card ${highlightedId===character.id ? 'highlight' : ''}`}>
-                <div className="character-header">
-                  <div className="character-info">
-                    <h4>{character.name}</h4>
-                    <p className="character-class">
-                      Level {character.level} {character.class}
-                    </p>
-                  </div>
-                  {character.lastXPGain && (
-                    <div className="xp-badge">
-                      +{character.lastXPGain} XP
+              const abilityScores = character.abilityScores || {};
+              const str = abilityScores.strength || 10;
+              const dex = abilityScores.dexterity || 10;
+              const con = abilityScores.constitution || 10;
+              const int = abilityScores.intelligence || 10;
+              const wis = abilityScores.wisdom || 10;
+              const cha = abilityScores.charisma || 10;
+
+              return (
+                <div key={character.id} ref={(el) => registerCardRef(character.id, el)} className={`character-card ${highlightedId === character.id ? 'highlight' : ''}`}>
+                  <div className="character-header">
+                    <div className="character-portrait">
+                      {character.avatarUrl || character.portraitUrl || character.photoURL ? (
+                        <img src={character.avatarUrl || character.portraitUrl || character.photoURL} alt={character.name} onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }} />
+                      ) : null}
+                      <div className="character-portrait-fallback" style={{ display: character.avatarUrl || character.portraitUrl || character.photoURL ? 'none' : 'flex' }}>{getCharacterInitials(character.name)}</div>
                     </div>
-                  )}
-                </div>
-
-                {/* HP Bar */}
-                <div className="character-hp">
-                  <div className="hp-header">
-                    <span className="hp-label">Hit Points</span>
-                    <span className="hp-values">
-                      {character.currentHP} / {character.maxHP}
-                    </span>
+                    <div className="character-info">
+                      <div className="character-name-row">
+                        <h4>{character.name}</h4>
+                      </div>
+                      <p className="character-class">
+                        Level {character.level} {character.race || ''} {character.class}
+                      </p>
+                    </div>
+                    <div className="character-badges">
+                      {(isUserDM || character.userId === user?.uid || campaign?.canViewCharacterSheet) && (
+                        <button
+                          className="pm-btn pm-btn-sheet-link"
+                          onClick={() => {
+                            if (onOpenCharacterSheet) {
+                              // Use VTT panel (preferred)
+                              onOpenCharacterSheet(character.userId);
+                            } else {
+                              // Fallback to modal
+                              setSelectedCharacterUserId(character.userId);
+                              setShowCharacterSheet(true);
+                            }
+                          }}
+                          data-tooltip="Open character sheet"
+                          ref={setTooltipPosition}
+                        >
+                          📋
+                        </button>
+                      )}
+                      {character.lastXPGain && campaign?.progressionSystem !== 'milestone' && (
+                        <div className="xp-badge">
+                          +{character.lastXPGain} XP
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="hp-bar-container">
-                    <div
-                      className={`hp-bar ${hpColorClass}`}
-                      style={{ width: `${hpPercentage}%` }}
-                    >
-                      <span className="hp-percentage">{hpPercentage}%</span>
+
+                  {/* HP Bar */}
+                  <div className="character-hp">
+                    <div className="hp-header">
+                      <span className="hp-label">Hit Points</span>
+                      <span className="hp-values">
+                        {character.hp} / {character.maxHp}
+                      </span>
+                    </div>
+                    <div className="hp-bar-container">
+                      <div
+                        className={`hp-bar ${hpColorClass}`}
+                        style={{ width: `${hpPercentage}%` }}
+                      >
+                        <span className="hp-percentage">{hpPercentage}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Character stats */}
+                  <div className="character-stats">
+                    <div className="stat-item">
+                      <span className="stat-label">AC</span>
+                      <span className="stat-value">{character.armorClass || 10}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">XP</span>
+                      <span className="stat-value">{(character.experience || 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Ability Scores */}
+                  <div className="character-abilities">
+                    <div className="ability-item">
+                      <div className="ability-name">STR</div>
+                      <div className="ability-score">{str}</div>
+                      <div className="ability-mod">{formatModifier(getAbilityModifier(str))}</div>
+                    </div>
+                    <div className="ability-item">
+                      <div className="ability-name">DEX</div>
+                      <div className="ability-score">{dex}</div>
+                      <div className="ability-mod">{formatModifier(getAbilityModifier(dex))}</div>
+                    </div>
+                    <div className="ability-item">
+                      <div className="ability-name">CON</div>
+                      <div className="ability-score">{con}</div>
+                      <div className="ability-mod">{formatModifier(getAbilityModifier(con))}</div>
+                    </div>
+                    <div className="ability-item">
+                      <div className="ability-name">INT</div>
+                      <div className="ability-score">{int}</div>
+                      <div className="ability-mod">{formatModifier(getAbilityModifier(int))}</div>
+                    </div>
+                    <div className="ability-item">
+                      <div className="ability-name">WIS</div>
+                      <div className="ability-score">{wis}</div>
+                      <div className="ability-mod">{formatModifier(getAbilityModifier(wis))}</div>
+                    </div>
+                    <div className="ability-item">
+                      <div className="ability-name">CHA</div>
+                      <div className="ability-score">{cha}</div>
+                      <div className="ability-mod">{formatModifier(getAbilityModifier(cha))}</div>
                     </div>
                   </div>
                 </div>
-
-                {/* Character stats */}
-                <div className="character-stats">
-                  <div className="stat-item">
-                    <span className="stat-label">AC</span>
-                    <span className="stat-value">{character.armorClass || 10}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">XP</span>
-                    <span className="stat-value">{(character.experience || 0).toLocaleString()}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Gold</span>
-                    <span className="stat-value">{(character.gold || 0).toLocaleString()}</span>
-                  </div>
-                </div>
-
-                {/* Character actions (DM only) */}
-                {isUserDM && (
-                  <div className="character-actions inline">
-                    <button
-                      className="btn-tiny"
-                      onClick={() => openShortRestModal(character)}
-                      title="Short Rest"
-                    >☀️ Rest</button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>) }
+              );
+            })}
+          </div>
+        </div>)}
 
       {chipMenu && isUserDM && (
         <div className="chip-context-menu" style={{ top: chipMenu.y, left: chipMenu.x }}>
-          <button onClick={()=>handleChipMenuAction('short-rest')}>☀️ Short Rest</button>
-          <button onClick={()=>handleChipMenuAction('heal')}>❤️ Heal...</button>
+          <button onClick={() => handleChipMenuAction('short-rest')}>☀️ Short Rest</button>
+          <button onClick={() => handleChipMenuAction('heal')}>❤️ Heal...</button>
         </div>
       )}
 
@@ -653,7 +779,7 @@ function PartyManagement({ campaignId }) {
                 <p>
                   <strong>{shortRestCharacter.name}</strong> ({shortRestCharacter.class})
                 </p>
-                <p>Current HP: {shortRestCharacter.currentHP} / {shortRestCharacter.maxHP}</p>
+                <p>Current HP: {shortRestCharacter.hp} / {shortRestCharacter.maxHp}</p>
               </div>
 
               <div className="form-group">
@@ -679,6 +805,28 @@ function PartyManagement({ campaignId }) {
                 Take Short Rest
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Character Sheet Modal */}
+      {showCharacterSheet && selectedCharacterUserId && (
+        <div className="modal-overlay" onClick={() => {
+          setShowCharacterSheet(false);
+          setSelectedCharacterUserId(null);
+        }}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <CharacterSheet
+              firestore={firestore}
+              storage={storage}
+              campaignId={campaignId}
+              userId={selectedCharacterUserId}
+              isModal={true}
+              onClose={() => {
+                setShowCharacterSheet(false);
+                setSelectedCharacterUserId(null);
+              }}
+            />
           </div>
         </div>
       )}

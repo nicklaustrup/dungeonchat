@@ -65,8 +65,8 @@ export function calculatePartyStats(characters) {
 
   characters.forEach(character => {
     const level = character.level || 1;
-    const maxHP = character.maxHP || character.hitPoints || 10;
-    const currentHP = character.currentHP !== undefined ? character.currentHP : maxHP;
+    const maxHP = character.maxHp || 10;
+    const currentHP = character.hp !== undefined ? character.hp : maxHP;
     const ac = character.armorClass || character.AC || 10;
     const charClass = character.class || 'Unknown';
 
@@ -142,7 +142,7 @@ export async function updateCharacterHP(firestore, campaignId, characterId, curr
 
   const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', characterId);
   await updateDoc(characterRef, {
-    currentHP,
+    hp: currentHP,
     lastHPUpdate: Timestamp.now()
   });
 }
@@ -169,14 +169,14 @@ export async function healParty(firestore, campaignId, healAmount, characterIds 
     
     if (!charData) continue;
 
-    const maxHP = charData.maxHP || charData.hitPoints || 10;
-    const currentHP = charData.currentHP !== undefined ? charData.currentHP : maxHP;
+    const maxHP = charData.maxHp || 10;
+    const currentHP = charData.hp !== undefined ? charData.hp : maxHP;
     const newHP = Math.min(currentHP + healAmount, maxHP);
 
     const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', charId);
     updates.push(
       updateDoc(characterRef, {
-        currentHP: newHP,
+        hp: newHP,
         lastHPUpdate: Timestamp.now()
       })
     );
@@ -208,7 +208,7 @@ export async function longRest(firestore, campaignId, characterIds = null) {
     
     if (!charData) continue;
 
-    const maxHP = charData.maxHP || charData.hitPoints || 10;
+    const maxHP = charData.maxHp || 10;
     const level = charData.level || 1;
     
     // Calculate hit dice restoration (half of total, minimum 1)
@@ -218,7 +218,7 @@ export async function longRest(firestore, campaignId, characterIds = null) {
     const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', charId);
     updates.push(
       updateDoc(characterRef, {
-        currentHP: maxHP,
+        hp: maxHP,
         hitDiceUsed: Math.max(0, (charData.hitDiceUsed || 0) - restoredHitDice),
         spellSlotsUsed: {}, // Reset spell slots
         lastRestDate: Timestamp.now(),
@@ -257,14 +257,12 @@ export async function shortRest(firestore, campaignId, characterId, hitDiceUsed 
   const averageRoll = Math.ceil(dieSize / 2) + 1;
   const hpRestored = (averageRoll + conMod) * hitDiceUsed;
 
-  const currentHP = charData.currentHP !== undefined 
-    ? charData.currentHP 
-    : charData.maxHP || charData.hitPoints || 10;
-  const maxHP = charData.maxHP || charData.hitPoints || 10;
+  const currentHP = charData.hp !== undefined ? charData.hp : (charData.maxHp || 10);
+  const maxHP = charData.maxHp || 10;
   const newHP = Math.min(currentHP + hpRestored, maxHP);
 
   await updateDoc(characterRef, {
-    currentHP: newHP,
+    hp: newHP,
     hitDiceUsed: (charData.hitDiceUsed || 0) + hitDiceUsed,
     lastRestDate: Timestamp.now(),
     restType: 'short'

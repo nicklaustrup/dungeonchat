@@ -205,7 +205,7 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate }) => {
   return (
     <div className="campaign-settings">
       <div className="settings-header">
-        <h2>Campaign Settings</h2>
+        <h2>General Settings</h2>
         <button 
           className="btn btn-secondary"
           onClick={() => navigate(`/campaigns/${campaignId}`)}
@@ -213,6 +213,11 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate }) => {
           Back to Campaign
         </button>
       </div>
+      
+      <p className="settings-description">
+        Configure basic campaign information, privacy settings, and scheduling. 
+        Session-specific settings (progression system, party visibility) are accessible during VTT sessions.
+      </p>
 
       {error && (
         <div className="error-message">

@@ -31,6 +31,7 @@ import { drawingService } from '../../../services/vtt/drawingService';
 import { shapeService } from '../../../services/vtt/shapeService';
 import { shapePreviewService } from '../../../services/vtt/shapePreviewService';
 import { FirebaseContext } from '../../../services/FirebaseContext';
+import { useUserProfile } from '../../../hooks/useUserProfile';
 import { generateLightName } from '../../../utils/lightNameGenerator';
 import './MapCanvas.css';
 
@@ -158,6 +159,7 @@ function MapCanvas({
   children
 }) {
   const { firestore, user } = useContext(FirebaseContext);
+  const { profile: userProfile } = useUserProfile(); // Get profile with username
   const stageRef = useRef(null);
   const [mapImage] = useImage(map?.imageUrl || '', 'anonymous');
 
@@ -953,7 +955,7 @@ function MapCanvas({
             x: mapX,
             y: mapY,
             userId: user.uid,
-            userName: user.displayName || 'Unknown',
+            userName: userProfile?.username || 'Unknown',
             color: pingColor // Use custom ping color
           });
         } catch (err) {
@@ -1435,13 +1437,13 @@ function MapCanvas({
         setShapePreview(preview);
 
         // Broadcast preview to other users
-        if (user?.uid && user?.displayName && firestore && campaignId && gMap?.id) {
+        if (user?.uid && userProfile?.username && firestore && campaignId && gMap?.id) {
           shapePreviewService.updateShapePreview(
             firestore,
             campaignId,
             gMap.id,
             user.uid,
-            user.displayName,
+            userProfile.username,
             preview
           ).catch(err => console.debug('Error updating shape preview:', err));
         }
@@ -1877,7 +1879,7 @@ function MapCanvas({
           position: 'absolute',
           top: 20,
           left: 220,
-          zIndex: 999999,
+          zIndex: 10,
           display: 'flex',
           gap: '8px',
           alignItems: 'center'
@@ -3228,8 +3230,8 @@ function MapCanvas({
                   id: `token_${token.id}`,
                   name: token.name || 'Token',
                   initiative: typeof token.initiative === 'number' ? token.initiative : 0,
-                  maxHP: token.maxHp || null,
-                  currentHP: token.hp || token.maxHp || null,
+                  maxHp: token.maxHp || null,
+                  hp: token.hp || token.maxHp || null,
                   type: token.type === 'pc' ? 'character' : (token.type || 'enemy'),
                   isPlayer: token.type === 'pc',
                   tokenId: token.id,

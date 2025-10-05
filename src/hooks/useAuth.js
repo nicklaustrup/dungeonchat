@@ -7,7 +7,7 @@ import { useFirebase } from '../services/FirebaseContext';
  */
 export function useAuth() {
   const { 
-    auth, 
+    auth,
     signInWithPopup, 
     signOut, 
     GoogleAuthProvider,

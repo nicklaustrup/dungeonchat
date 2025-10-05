@@ -42,6 +42,15 @@
   font-weight: 600;
 }
 
+.settings-description {
+  margin: 0;
+  padding: 1rem 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  border-bottom: 1px solid var(--border-color);
+}
+
 .settings-form {
   display: flex;
   flex-direction: column;
@@ -413,4 +422,26 @@
   .form-actions {
     padding: 1rem;
   }
+}
+
+/* Party Management Section Styles */
+.section-description {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+}
+
+.settings-subsection-label {
+  font-weight: 600 !important;
+  font-size: 0.9375rem !important;
+  color: var(--text-color) !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.field-description {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  margin: 0.375rem 0 0 1.75rem;
+  line-height: 1.4;
 }

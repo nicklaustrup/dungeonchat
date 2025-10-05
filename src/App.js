@@ -24,18 +24,25 @@ function App() {
   useInitTelemetry();
   
   const { user } = useFirebase();
-  const { needsOnboarding, isProfileComplete } = useUserProfile();
+  const { needsOnboarding, isProfileComplete, loading: profileLoading } = useUserProfile();
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [forceProfileSetup, setForceProfileSetup] = useState(false);
   
   // Show profile setup for authenticated users who need onboarding
+  // Wait for profile to load to prevent flash
   React.useEffect(() => {
+    // Don't show modal until profile data is loaded
+    if (profileLoading) {
+      setShowProfileSetup(false);
+      return;
+    }
+    
     if (user && ((needsOnboarding && !isProfileComplete) || forceProfileSetup)) {
       setShowProfileSetup(true);
     } else {
       setShowProfileSetup(false);
     }
-  }, [user, needsOnboarding, isProfileComplete, forceProfileSetup]);
+  }, [user, needsOnboarding, isProfileComplete, forceProfileSetup, profileLoading]);
   
   // Initialize away seconds from localStorage (moved to ChatStateProvider)
   const [awayAfterSeconds] = React.useState(() => {

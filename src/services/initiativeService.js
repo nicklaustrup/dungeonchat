@@ -137,7 +137,7 @@ export const initiativeService = {
         const data = snap.data();
         const updated = (data.combatants || []).map(c => c.id === combatantId ? ({
           ...c,
-          currentHP: Math.max(0, Math.min(newHP, c.maxHP || newHP))
+          hp: Math.max(0, Math.min(newHP, c.maxHp || newHP))
         }) : c);
         tx.update(initiativeRef, { combatants: updated, lastModified: serverTimestamp() });
       });
@@ -472,8 +472,8 @@ export const initiativeService = {
             id: `character_${userId}_${Date.now()}`,
             name: character?.name || character?.characterName || 'Player',
             initiative: rollTotal,
-            maxHP: character?.hitPoints?.current || character?.hitPoints?.max || null,
-            currentHP: character?.hitPoints?.current || character?.hitPoints?.max || null,
+            maxHp: character?.maxHp || character?.hp || null,
+            hp: character?.hp || character?.maxHp || null,
             type: 'character',
             conditions: [],
             isPlayer: true,
@@ -518,8 +518,8 @@ export const initiativeService = {
         id: `character_${userId}_${Date.now()}`,
         name: character.name || character.characterName || 'Unknown Character',
         initiative,
-        maxHP: character.hitPoints?.current || character.hitPoints?.max || null,
-        currentHP: character.hitPoints?.current || character.hitPoints?.max || null,
+        maxHp: character.maxHp || character.hp || null,
+        hp: character.hp || character.maxHp || null,
         type: 'character',
         conditions: [],
         isPlayer: true,
@@ -593,8 +593,8 @@ export const initiativeService = {
                 id: baseId,
                 name: qty > 1 ? `${p.name || 'Creature'} #${i + 1}` : (p.name || 'Creature'),
                 initiative: p.initiative || 0,
-                maxHP: p.maxHp || p.hp || null,
-                currentHP: p.hp || p.maxHp || null,
+                maxHp: p.maxHp || p.hp || null,
+                hp: p.hp || p.maxHp || null,
                 type: p.type || 'enemy',
                 sourceEncounterId: encounter.id || encounter.encounterId,
                 participantId: p.id,

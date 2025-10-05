@@ -3,13 +3,15 @@
  * Full D&D 5e character sheet with all stats and interactive elements
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { 
   calculateAbilityModifier, 
   calculateSkillModifier,
   CHARACTER_SKILLS 
 } from '../models/CharacterSheet';
+import { createPlayerStagedToken } from '../services/characterSheetService';
+import { useCharacterCache } from '../hooks/useCharacterCache';
 import './CharacterSheet.css';
 
 export function CharacterSheet({ 
@@ -20,57 +22,88 @@ export function CharacterSheet({
   onClose,
   isModal = false 
 }) {
-  const [character, setCharacter] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Use cached character data
+  const { character, loading, error, updateCharacter, invalidateCache } = useCharacterCache(
+    firestore,
+    campaignId,
+    userId
+  );
+
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [generatingToken, setGeneratingToken] = useState(false);
   const fileInputRef = useRef(null);
+  
+  // HP Buffering state
+  const [pendingHP, setPendingHP] = useState(null); // null = no pending changes
+  const [bufferedHP, setBufferedHP] = useState(0);
 
-  // Load character data
+  // Initialize buffered HP when character loads
   useEffect(() => {
-    if (!firestore || !campaignId || !userId) return;
+    if (character) {
+      setBufferedHP(character.hp || 0);
+      setPendingHP(null);
+    }
+  }, [character]);
 
-    const loadCharacter = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  // HP adjustment handlers
+  const handleHPIncrement = () => {
+    const currentHP = pendingHP !== null ? pendingHP : (character?.hp || 0);
+    const newHP = Math.min((character?.maxHp || 999), currentHP + 1);
+    setPendingHP(newHP);
+    setBufferedHP(newHP);
+  };
 
-        const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
-        const docSnap = await getDoc(characterRef);
-        
-        if (docSnap.exists()) {
-          setCharacter(docSnap.data());
-        } else {
-          setError('Character not found');
-        }
-      } catch (err) {
-        console.error('Error loading character:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleHPDecrement = () => {
+    const currentHP = pendingHP !== null ? pendingHP : (character?.hp || 0);
+    const newHP = Math.max(0, currentHP - 1);
+    setPendingHP(newHP);
+    setBufferedHP(newHP);
+  };
 
-    loadCharacter();
-  }, [firestore, campaignId, userId]);
+  const handleHPInputChange = (value) => {
+    const newHP = Math.max(0, Math.min((character?.maxHp || 999), value));
+    setPendingHP(newHP);
+    setBufferedHP(newHP);
+  };
+
+  const handleApplyHP = async () => {
+    if (pendingHP !== null) {
+      await handleHitPointChange(pendingHP);
+      setPendingHP(null);
+    }
+  };
+
+  const handleCancelHP = () => {
+    setPendingHP(null);
+    setBufferedHP(character?.hp || 0);
+  };
 
   const handleHitPointChange = async (newHP) => {
     if (!character || !firestore) return;
 
-    try {
-      const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
+    console.log('🟢 CharacterSheet.handleHitPointChange called:', {
+      userId,
+      characterName: character.name,
+      oldHP: character.hp,
+      newHP,
+      maxHP: character.maxHp
+    });
 
+    try {
+      // Optimistic update in cache
+      updateCharacter({ hp: newHP });
+
+      const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
       await updateDoc(characterRef, {
-        currentHitPoints: newHP,
+        hp: newHP,
         updatedAt: new Date()
       });
 
-      setCharacter(prev => ({
-        ...prev,
-        currentHitPoints: newHP
-      }));
+      console.log('✅ CharacterSheet.handleHitPointChange: Character HP updated in Firestore');
     } catch (err) {
-      console.error('Error updating hit points:', err);
+      console.error('❌ CharacterSheet.handleHitPointChange: Error updating hit points:', err);
+      // Revert optimistic update on error
+      invalidateCache();
     }
   };
 
@@ -106,11 +139,8 @@ export function CharacterSheet({
         updatedAt: new Date()
       });
 
-      // Update local state
-      setCharacter(prev => ({
-        ...prev,
-        avatarUrl
-      }));
+      // Invalidate cache to force fresh data with new avatar
+      invalidateCache();
 
       console.log('Avatar uploaded successfully:', avatarUrl);
     } catch (err) {
@@ -118,6 +148,22 @@ export function CharacterSheet({
       alert('Failed to upload avatar: ' + err.message);
     } finally {
       setUploadingAvatar(false);
+    }
+  };
+
+  // Handle creating a staged token for this character
+  const handleCreateToken = async () => {
+    if (!character || generatingToken) return;
+    
+    setGeneratingToken(true);
+    try {
+      await createPlayerStagedToken(firestore, campaignId, userId, character);
+      alert(`Token created successfully for ${character.name}! Check the Token Manager to place it on the map.`);
+    } catch (err) {
+      console.error('Error creating token:', err);
+      alert(`Failed to create token: ${err.message}`);
+    } finally {
+      setGeneratingToken(false);
     }
   };
 
@@ -134,16 +180,30 @@ export function CharacterSheet({
     return tooltips[ability] || ability;
   };
 
-  const renderCharacterHeader = () => (
+  const renderCharacterHeader = () => {
+    // Priority: 1. Custom avatar, 2. Profile photo, 3. Token portrait
+    const displayImage = character.avatarUrl || character.photoURL || character.portraitUrl;
+
+    return (
     <div className="character-header">
       <div className="character-avatar-section">
         <div className="character-avatar" onClick={() => fileInputRef.current?.click()} style={{ cursor: 'pointer' }} title="Click to upload character portrait">
           {uploadingAvatar ? (
             <div className="avatar-uploading">⏳</div>
-          ) : character.avatarUrl ? (
-            <img src={character.avatarUrl} alt={character.name} />
-          ) : (
-            <div className="avatar-placeholder">
+          ) : displayImage ? (
+            <img 
+              src={displayImage} 
+              alt={character.name}
+              onError={(e) => {
+                // Fallback on image load error
+                e.target.style.display = 'none';
+                const placeholder = e.target.parentElement.querySelector('.avatar-placeholder');
+                if (placeholder) placeholder.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          {!uploadingAvatar && (
+            <div className="avatar-placeholder" style={{ display: displayImage ? 'none' : 'flex' }}>
               <span>{character.name?.charAt(0) || '?'}</span>
             </div>
           )}
@@ -164,7 +224,8 @@ export function CharacterSheet({
                 try {
                   const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
                   await updateDoc(characterRef, { avatarUrl: null, updatedAt: new Date() });
-                  setCharacter(prev => ({ ...prev, avatarUrl: null }));
+                  // Invalidate cache to reflect removal
+                  invalidateCache();
                 } catch (err) {
                   console.error('Error removing avatar:', err);
                 }
@@ -181,6 +242,14 @@ export function CharacterSheet({
         <div className="character-subtitle" title="Character level, race, and class combination">
           Level {character.level} {character.race} {character.class}
         </div>
+        <button
+          className="create-token-btn"
+          onClick={handleCreateToken}
+          disabled={generatingToken}
+          title="Create a map token for this character in the Token Manager"
+        >
+          {generatingToken ? '⏳ Creating...' : '🎭 Create Token'}
+        </button>
       </div>
       
       <div className="character-details">
@@ -198,7 +267,8 @@ export function CharacterSheet({
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderAbilityScores = () => (
     <div className="ability-scores-section">
@@ -241,20 +311,36 @@ export function CharacterSheet({
         <h4 title="The amount of damage your character can take before falling unconscious">Hit Points</h4>
         <div className="hit-points-display">
           <div className="hp-current" title="Current hit points - decreases when you take damage">
-            <label>Current HP</label>
-            <input
-              type="number"
-              value={character.currentHitPoints || 0}
-              onChange={(e) => handleHitPointChange(parseInt(e.target.value) || 0)}
-              min="0"
-              max={character.hitPointMaximum || 0}
-              className="hp-input"
-            />
+            <label>Current HP {pendingHP !== null && <span className="hp-pending">*</span>}</label>
+            <div className="hp-input-wrapper">
+              <button 
+                className="hp-caret hp-caret-down" 
+                onClick={handleHPDecrement}
+                title="Decrease HP by 1"
+              >
+                ▼
+              </button>
+              <input
+                type="number"
+                value={pendingHP !== null ? bufferedHP : (character.hp || 0)}
+                onChange={(e) => handleHPInputChange(parseInt(e.target.value) || 0)}
+                min="0"
+                max={character.maxHp || 0}
+                className={`hp-input ${pendingHP !== null ? 'pending' : ''}`}
+              />
+              <button 
+                className="hp-caret hp-caret-up" 
+                onClick={handleHPIncrement}
+                title="Increase HP by 1"
+              >
+                ▲
+              </button>
+            </div>
           </div>
           <div className="hp-separator">/</div>
           <div className="hp-maximum" title="Maximum hit points - your character's full health">
             <label>Max HP</label>
-            <div className="hp-value">{character.hitPointMaximum || 0}</div>
+            <div className="hp-value">{character.maxHp || 0}</div>
           </div>
           {(character.temporaryHitPoints || 0) > 0 && (
             <div className="hp-temp" title="Temporary hit points - extra protection that's lost first">
@@ -263,6 +349,24 @@ export function CharacterSheet({
             </div>
           )}
         </div>
+        {pendingHP !== null && (
+          <div className="hp-actions">
+            <button 
+              className="hp-apply-btn" 
+              onClick={handleApplyHP}
+              title="Apply HP changes to character sheet"
+            >
+              ✓ Apply
+            </button>
+            <button 
+              className="hp-cancel-btn" 
+              onClick={handleCancelHP}
+              title="Cancel pending changes"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -189,25 +189,24 @@ export function useCharacterCreation(firestore, campaignId, userId) {
 /** Hook for deleting a character sheet
  * @param {Object} firestore - Firestore instance
   * @param {string} campaignId - Campaign ID
-  * @param {string} userId - User ID
   * @returns {Function} deleteCharacter function
   */
-export function useDeleteCharacterSheet(firestore, campaignId, userId) {
+export function useDeleteCharacterSheet(firestore, campaignId) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(null);
 
-  const deleteCharacter = useCallback(async (characterId) => {
+  const deleteCharacter = useCallback(async (characterUserId) => {
     try {
       setDeleting(true);
       setError(null);
-      await deleteCharacterSheet(firestore, campaignId, userId, characterId);
+      await deleteCharacterSheet(firestore, campaignId, characterUserId);
     } catch (err) {
       setError(err.message);
       throw err;
     } finally {
       setDeleting(false);
     }
-  }, [firestore, campaignId, userId]);
+  }, [firestore, campaignId]);
 
   return {
     deleting,

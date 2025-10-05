@@ -46,7 +46,7 @@ function CampaignDashboard() {
   // Character sheet hooks
   const { hasCharacter } = useCharacterSheet(firestore, campaignId, user?.uid);
   const { characters: campaignCharacters, refreshCharacters } = useCampaignCharacters(firestore, campaignId);
-  const { deleteCharacter, deleting: deletingCharacter } = useDeleteCharacterSheet(firestore, campaignId, user?.uid);
+  const { deleteCharacter, deleting: deletingCharacter } = useDeleteCharacterSheet(firestore, campaignId);
 
   useEffect(() => {
     if (!campaignId || !firestore || !user) return;
@@ -424,7 +424,7 @@ function CampaignDashboard() {
                               {isOwnCharacter && <span className="own-badge">Your Character</span>}
                             </div>
                             {/* RIGHT ELEMENT: Token Preview (Moved out of title div) */}
-                            <div className="character-token" style={{ backgroundColor: character.tokenColor || '#4a90e2' }}>
+                            <div className="character-token" style={{ backgroundColor: character.tokenColor || 'var(--player-token-default)' }}>
                               {character.avatarUrl ? (
                                 <img src={character.avatarUrl} alt={character.name} />
                               ) : character.imageUrl ? (
@@ -448,7 +448,7 @@ function CampaignDashboard() {
                           <div className="character-card-stats">
                             <div className="stat-item" title="Hit Points - The amount of damage your character can take before falling unconscious">
                               <span>HP:</span>
-                              <span>{character.currentHitPoints || character.hitPointMaximum || 0}/{character.hitPointMaximum || 0}</span>
+                              <span>{character.hp || character.maxHp || 0}/{character.maxHp || 0}</span>
                             </div>
                             <div className="stat-item" title="Armor Class - How difficult your character is to hit in combat">
                               <span>AC:</span>
@@ -476,7 +476,8 @@ function CampaignDashboard() {
                                   onClick={async () => {
                                     if (window.confirm(`Are you sure you want to delete ${character.name || 'this character'}?`)) {
                                       try {
-                                        await deleteCharacter(character.id);
+                                        // Use character.userId (the owner's ID) which is the Firestore document ID
+                                        await deleteCharacter(character.userId);
                                         await refreshCharacters();
                                       } catch (err) {
                                         console.error('Error deleting character:', err);

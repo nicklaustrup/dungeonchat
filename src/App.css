@@ -135,13 +135,33 @@
   --text-primary: #ffffff;
   --text-color: #ffffff;
   --text-secondary: rgba(255,255,255,0.55);
+  --text-tertiary: rgba(255,255,255,0.35); /* Most subtle text */
+  --text-muted: rgba(255,255,255,0.45); /* Even more subtle text */
   --message-sent: #0b93f6;
   --message-received: #0b93f6; /* no difference now but retained for future */
   --message-received-text: #ffffff;
   --primary-color: #0b93f6;
   --primary-dark: #0a82e0;
+  --accent-color: #0b93f6; /* Accent for highlights, badges, etc. */
   --secondary-color: #888;
   --border-color: rgba(255,255,255,0.18);
+  
+  /* Panel & Modal backgrounds */
+  --sidebar-bg: #242628; /* matches --bg-secondary */
+  --header-bg: #1a1b1d; /* matches --bg-header */
+  --panel-bg: #2d3033; /* matches --bg-light */
+  --background-secondary: #242628; /* matches --bg-secondary */
+  --hover-bg: rgba(255,255,255,0.08); /* Hover state background */
+  
+  /* Token colors */
+  --player-token-default: #4a90e2; /* Player Character - blue */
+  --npc-token-default: #27ae60; /* NPC - green */
+  --monster-token-default: #e74c3c; /* Monster - red */
+  --enemy-token-default: #c0392b; /* Enemy - dark red */
+  --ally-token-default: #16a085; /* Ally - teal */
+  --object-token-default: #95a5a6; /* Object - gray */
+  --hazard-token-default: #f39c12; /* Hazard - orange */
+  --marker-token-default: #9b59b6; /* Marker - purple */
 }
 
 .light-theme {
@@ -161,6 +181,14 @@
   --primary-dark: #0a82e0;
   --secondary-color: #666;
   --border-color: rgba(0,0,0,0.15);
+  --player-token-default: #4a90e2; /* Player Character - blue */
+  --npc-token-default: #27ae60; /* NPC - green */
+  --monster-token-default: #e74c3c; /* Monster - red */
+  --enemy-token-default: #c0392b; /* Enemy - dark red */
+  --ally-token-default: #16a085; /* Ally - teal */
+  --object-token-default: #95a5a6; /* Object - gray */
+  --hazard-token-default: #f39c12; /* Hazard - orange */
+  --marker-token-default: #9b59b6; /* Marker - purple */
 }
 
 body {
@@ -458,7 +486,6 @@ ul, li {
 p {
   margin: 0;
   line-height: 24px;
-  padding: 10px 15px;
   border-radius: 18px;
   position: relative;
   color: white;

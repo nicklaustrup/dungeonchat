@@ -10,12 +10,19 @@ import { CharacterSheet } from '../../CharacterSheet';
 import { createPlayerStagedToken } from '../../../services/characterSheetService';
 import './CharacterSheetPanel.css';
 
-function CharacterSheetPanel({ campaignId, isUserDM }) {
+function CharacterSheetPanel({ campaignId, isUserDM, initialCharacterId = null }) {
   const { user, firestore, storage } = useContext(FirebaseContext);
   const [characters, setCharacters] = useState([]);
-  const [selectedCharacterId, setSelectedCharacterId] = useState(null);
+  const [selectedCharacterId, setSelectedCharacterId] = useState(initialCharacterId);
   const [loading, setLoading] = useState(true);
   const [generatingTokenFor, setGeneratingTokenFor] = useState(null);
+
+  // Update selection when initialCharacterId changes
+  useEffect(() => {
+    if (initialCharacterId) {
+      setSelectedCharacterId(initialCharacterId);
+    }
+  }, [initialCharacterId]);
 
   // Load characters
   useEffect(() => {

@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
 import { 
   CHARACTER_RACES, 
   CHARACTER_CLASSES, 
@@ -48,15 +49,31 @@ export function CharacterCreationModal({
 
   // Reset modal state when opened
   React.useEffect(() => {
-    if (isOpen) {
+    if (isOpen && user && firestore) {
       setCurrentStep(CREATION_STEPS.BASIC_INFO);
       const defaultSheet = createDefaultCharacterSheet();
-      // Pre-fill player name from authenticated user
-      defaultSheet.playerName = user?.displayName || user?.email || 'Unknown Player';
-      setCharacterData(defaultSheet);
+      
+      // Fetch username from userProfiles (profile username only, no email or auth name)
+      const fetchUsername = async () => {
+        try {
+          const profileDoc = await getDoc(doc(firestore, 'userProfiles', user.uid));
+          if (profileDoc.exists()) {
+            const profileData = profileDoc.data();
+            defaultSheet.playerName = profileData.username || 'Unknown Player';
+          } else {
+            defaultSheet.playerName = 'Unknown Player';
+          }
+        } catch (error) {
+          console.error('Error fetching username:', error);
+          defaultSheet.playerName = 'Unknown Player';
+        }
+        setCharacterData(defaultSheet);
+      };
+      
+      fetchUsername();
       setBackgroundTooltip({ show: false, background: null, position: { x: 0, y: 0 } });
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, firestore]);
 
   if (!isOpen) return null;
 

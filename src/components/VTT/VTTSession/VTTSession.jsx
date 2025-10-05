@@ -10,7 +10,6 @@ import TokenManager from '../TokenManager/TokenManager';
 import DeleteTokenModal from '../Canvas/DeleteTokenModal';
 import ChatPage from '../../../pages/ChatPage';
 import ChatPanel from './ChatPanel';
-import PartyPanel from './PartyPanel';
 import CampaignRules from '../../Campaign/CampaignRules';
 import PartyManagement from '../../Session/PartyManagement';
 import InitiativeTracker from '../../Session/InitiativeTracker';
@@ -32,9 +31,12 @@ import {
   FiX,
   FiLogOut,
   FiTarget,
-  FiUser
+  FiUser,
+  FiSettings
 } from 'react-icons/fi';
+import { SquareMenu, ArrowLeftToLine } from 'lucide-react';
 import { FaHeadphones } from 'react-icons/fa';
+import SessionSettings from './SessionSettings';
 import './VTTSession.css';
 import '../../Campaign/CampaignChatHeader.css'; // For voice panel styles
 
@@ -84,6 +86,12 @@ function VTTSession() {
     characters: false
   });
 
+  // Character sheet panel state
+  const [selectedCharacterUserId, setSelectedCharacterUserId] = useState(null);
+
+  // Session Settings state
+  const [showSessionSettings, setShowSessionSettings] = useState(false);
+
   // Fog of War state
   const [fogOfWarEnabled, setFogOfWarEnabled] = useState(false);
   const [showFogPanel, setShowFogPanel] = useState(false);
@@ -116,6 +124,10 @@ function VTTSession() {
   const voiceDragStartRef = useRef({ x: 0, y: 0 });
   const notificationContainerRef = useRef(null);
 
+  // Migration button state
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationComplete, setMigrationComplete] = useState(false);
+
   // Camera center ref - used by MapCanvas to expose camera centering function
   const centerCameraRef = useRef(null);
 
@@ -124,6 +136,24 @@ function VTTSession() {
 
   // Help tooltip state
   // Help tooltip state removed: tooltip behavior controlled elsewhere; state was unused and caused lint warnings
+
+  // Handle HP sync migration
+  const handleFixHPSync = async () => {
+    if (!campaignId || !firestore) return;
+    
+    setIsMigrating(true);
+    try {
+      const { fixTokenUserIds } = await import('../../../utils/fixTokenUserIds');
+      const fixedCount = await fixTokenUserIds(firestore, campaignId);
+      setMigrationComplete(true);
+      alert(`✅ Fixed ${fixedCount} token(s)! HP sync is now working. Refresh the page to see changes.`);
+    } catch (error) {
+      console.error('Migration error:', error);
+      alert('❌ Migration failed: ' + error.message);
+    } finally {
+      setIsMigrating(false);
+    }
+  };
 
   // Hide app navigation on mount, restore on unmount
   useEffect(() => {
@@ -260,8 +290,9 @@ function VTTSession() {
         const tokenImageUrl = character.avatarUrl || profile.photoURL || user.photoURL || '';
 
         // Create staged player token
+        // Priority for name: character name > username (never displayName)
         const playerToken = {
-          name: character.name || profile.displayName || user.displayName || 'Player',
+          name: character.name || profile.username || 'Player',
           type: 'pc', // Use 'pc' to match TokenPalette
           imageUrl: tokenImageUrl,
           position: { x: 100, y: 100 },
@@ -382,6 +413,15 @@ function VTTSession() {
     setFloatingPanels(prev => ({
       ...prev,
       [panelName]: false
+    }));
+  };
+
+  // Open character sheet panel to specific character
+  const openCharacterSheet = (characterUserId) => {
+    setSelectedCharacterUserId(characterUserId);
+    setFloatingPanels(prev => ({
+      ...prev,
+      characters: true
     }));
   };
 
@@ -630,9 +670,9 @@ function VTTSession() {
             aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
             aria-pressed={isSidebarOpen}
           >
-            {isSidebarOpen ? <FiX /> : <FiMenu />}
+            {isSidebarOpen ? <ArrowLeftToLine size={25} /> : <SquareMenu size={25} />}
           </button>
-          <h1 className="session-title">{campaign.name} - Live Session</h1>
+          <h1 className="session-title">{campaign.name}</h1>
           <span className="user-role-badge">
             {isUserDM ? '👑 Dungeon Master' : '🎭 Player'}
           </span>
@@ -686,37 +726,14 @@ function VTTSession() {
           </button>
 
           <button
-            className={`toolbar-button ${activePanel === 'party' || floatingPanels.party ? 'active' : ''}`}
-            onClick={() => {
-              if (floatingPanels.party) {
-                // Close floating panel
-                setFloatingPanels(prev => ({ ...prev, party: false }));
-              } else if (activePanel === 'party') {
-                // Pop out from sidebar
-                setFloatingPanels(prev => ({ ...prev, party: true }));
-                setActivePanel(null);
-                setIsSidebarOpen(false);
-              } else {
-                // Open in sidebar
-                setActivePanel('party');
-                setIsSidebarOpen(true);
-              }
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              if (!floatingPanels.party) {
-                // Pop out directly
-                setFloatingPanels(prev => ({ ...prev, party: true }));
-                setActivePanel(null);
-                setIsSidebarOpen(false);
-              }
-            }}
-            title="Party Management (Click to toggle, Right-click to pop out)"
+            className={`toolbar-button ${activePanel === 'party' ? 'active' : ''}`}
+            onClick={() => togglePanel('party')}
+            title="Party Management"
             aria-label="Party Management"
-            aria-pressed={activePanel === 'party' || floatingPanels.party}
+            aria-pressed={activePanel === 'party'}
           >
             <FiUsers />
-            <span>Party {floatingPanels.party && '⬜'}</span>
+            <span>Party</span>
           </button>
 
           <button
@@ -756,6 +773,29 @@ function VTTSession() {
         </div>
 
         <div className="toolbar-right">
+          {/* HP Sync Migration Button - DM only, hide after completion */}
+          {isUserDM && !migrationComplete && (
+            <button
+              className="toolbar-button"
+              onClick={handleFixHPSync}
+              disabled={isMigrating}
+              title="Fix HP sync for existing tokens (run once)"
+              aria-label="Fix HP sync"
+              style={{ backgroundColor: '#8b5cf6', color: 'white' }}
+            >
+              {isMigrating ? '⏳' : '🔧'}
+              <span>{isMigrating ? 'Fixing...' : 'Fix HP Sync'}</span>
+            </button>
+          )}
+          <button
+            className="toolbar-button"
+            onClick={() => setShowSessionSettings(true)}
+            title="Session Settings"
+            aria-label="Open session settings"
+          >
+            <FiSettings />
+            <span>Settings</span>
+          </button>
           <button
             className="toolbar-button exit-button"
             onClick={() => navigate(`/campaign/${campaignId}`)}
@@ -813,6 +853,7 @@ function VTTSession() {
               {activePanel === 'party' && !floatingPanels.party && (
                 <PartyManagement
                   campaignId={campaignId}
+                  onOpenCharacterSheet={openCharacterSheet}
                 />
               )}
 
@@ -996,13 +1037,20 @@ function VTTSession() {
       {floatingPanels.characters && (
         <ResizablePanel
           title="Character Sheets"
-          onClose={() => closeFloatingPanel('characters')}
+          onClose={() => {
+            closeFloatingPanel('characters');
+            setSelectedCharacterUserId(null); // Clear selection when closing
+          }}
           defaultWidth={600}
           defaultHeight={700}
           defaultPosition={{ x: 250, y: 80 }}
           zIndex={1005}
         >
-          <CharacterSheetPanel campaignId={campaignId} isUserDM={isUserDM} />
+          <CharacterSheetPanel 
+            campaignId={campaignId} 
+            isUserDM={isUserDM} 
+            initialCharacterId={selectedCharacterUserId}
+          />
         </ResizablePanel>
       )}
 
@@ -1030,19 +1078,7 @@ function VTTSession() {
         />
       )}
 
-      {floatingPanels.party && (
-        <PartyPanel
-          key="floating-party-panel"
-          campaignId={campaignId}
-          isFloating={true}
-          onClose={() => closeFloatingPanel('party')}
-          onDock={() => {
-            closeFloatingPanel('party');
-            setActivePanel('party');
-            setIsSidebarOpen(true);
-          }}
-        />
-      )}
+      {/* Party panel popout removed - sidebar only */}
 
       {/* Lighting Control Panel */}
       {isUserDM && showLightingPanel && activeMap && (
@@ -1111,6 +1147,15 @@ function VTTSession() {
             />
           )}
         </div>
+      )}
+
+      {/* Session Settings Modal */}
+      {showSessionSettings && (
+        <SessionSettings
+          campaignId={campaignId}
+          isDM={isUserDM}
+          onClose={() => setShowSessionSettings(false)}
+        />
       )}
     </div>
   );

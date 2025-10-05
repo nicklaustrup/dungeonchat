@@ -494,7 +494,7 @@ const TokenManager = ({
                       dragImage.style.width = '30px';
                       dragImage.style.height = '30px';
                       dragImage.style.borderRadius = '50%';
-                      dragImage.style.backgroundColor = token.color || '#4a90e2';
+                      dragImage.style.backgroundColor = token.color || getComputedStyle(document.documentElement).getPropertyValue('--player-token-default').trim() || '#4a90e2';
                       dragImage.style.border = '3px solid white';
                       dragImage.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
                       dragImage.style.display = 'flex';
@@ -516,7 +516,7 @@ const TokenManager = ({
                       e.dataTransfer.setDragImage(dragImage, 20, 20);
                       e.dataTransfer.setData('application/json', JSON.stringify(token));
                       e.dataTransfer.effectAllowed = 'copy';
-                      
+
                       // Clean up drag image after a short delay to ensure it's used
                       setTimeout(() => {
                         document.body.removeChild(dragImage);
@@ -525,10 +525,17 @@ const TokenManager = ({
                       console.log('Started dragging staged token:', token);
                     }}
                   >
-                    <div
-                      className="token-color-preview"
-                      style={{ backgroundColor: token.color }}
-                    />
+                    {token.imageUrl ? (
+                      <div
+                        className="token-image-preview"
+                        style={{ backgroundImage: `url(${token.imageUrl})` }}
+                      />
+                    ) : (
+                      <div
+                        className="token-color-preview"
+                        style={{ backgroundColor: token.color || '#4a90e2' }}
+                      />
+                    )}
                     <div className="token-info">
                       <span className="token-name">{token.name}</span>
                       <span className="token-type">{token.type}</span>

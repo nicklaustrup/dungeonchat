@@ -9,7 +9,7 @@ import './TokenPalette.css';
  */
 const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, onUploadArt, onRemoveArt, isCreating, isUploading }) => {
   const [selectedType, setSelectedType] = useState('pc');
-  const [selectedColor, setSelectedColor] = useState('#4a90e2');
+  const [selectedColor, setSelectedColor] = useState(getComputedStyle(document.documentElement).getPropertyValue('--player-token-default').trim() || '#4a90e2');
   const [tokenName, setTokenName] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [size, setSize] = useState(1); // Grid squares (1 = Medium, 2 = Large, etc.)
@@ -22,7 +22,7 @@ const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, onUploadArt
     if (selectedToken) {
       setTokenName(selectedToken.name || '');
       setSelectedType(selectedToken.type || 'pc');
-      setSelectedColor(selectedToken.color || '#4a90e2');
+      setSelectedColor(selectedToken.color || getComputedStyle(document.documentElement).getPropertyValue('--player-token-default').trim() || '#4a90e2');
       setSize(selectedToken.size?.width ? selectedToken.size.width / 50 : 1);
       setHasChanges(false);
     }
@@ -93,7 +93,7 @@ const TokenPalette = ({ selectedToken, onCreateToken, onUpdateToken, onUploadArt
       // Reset form
       setTokenName('');
       setSelectedType('pc');
-      setSelectedColor('#4a90e2');
+      setSelectedColor(getComputedStyle(document.documentElement).getPropertyValue('--player-token-default').trim() || '#4a90e2');
       setSize(1);
     }
   };

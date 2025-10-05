@@ -282,7 +282,7 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
                 {profile?.username && (
                   <div className="profile-field-group">
                     <div className="display-field">
-                      <h3 className="username">@{fieldValues.username || profile.username}</h3>
+                      <h3 className="username">{fieldValues.username || profile.username}</h3>
                     </div>
                   </div>
                 )}

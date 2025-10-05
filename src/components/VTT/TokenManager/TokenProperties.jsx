@@ -8,7 +8,7 @@ import './TokenProperties.css';
  */
 const TokenProperties = ({ token, onUpdate, onDelete }) => {
   const [name, setName] = useState(token.name || '');
-  const [color, setColor] = useState(token.color || '#4a90e2');
+  const [color, setColor] = useState(token.color || getComputedStyle(document.documentElement).getPropertyValue('--player-token-default').trim() || '#4a90e2');
   const [size, setSize] = useState(token.size?.width ? token.size.width / 50 : 1);
   const [hidden, setHidden] = useState(token.hidden || false);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -17,7 +17,7 @@ const TokenProperties = ({ token, onUpdate, onDelete }) => {
   // Update form when token changes
   useEffect(() => {
     setName(token.name || '');
-    setColor(token.color || '#4a90e2');
+    setColor(token.color || getComputedStyle(document.documentElement).getPropertyValue('--player-token-default').trim() || '#4a90e2');
     setSize(token.size?.width ? token.size.width / 50 : 1);
     setHidden(token.hidden || false);
     setHasChanges(false);
@@ -71,7 +71,7 @@ const TokenProperties = ({ token, onUpdate, onDelete }) => {
 
   const handleReset = () => {
     setName(token.name || '');
-    setColor(token.color || '#4a90e2');
+    setColor(token.color || getComputedStyle(document.documentElement).getPropertyValue('--player-token-default').trim() || '#4a90e2');
     setSize(token.size?.width ? token.size.width / 50 : 1);
     setHidden(token.hidden || false);
     setHasChanges(false);

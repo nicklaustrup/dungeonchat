@@ -1,6 +1,10 @@
 import React, { useState, useRef } from 'react';
+import { CircleCheck, Hourglass } from 'lucide-react';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import './ProfileEditor.css';
+
+// Cache TTL in milliseconds (5 minutes)
+const CACHE_TTL = 5 * 60 * 1000;
 
 /**
  * ProfileEditor - Comprehensive profile editing interface
@@ -30,15 +34,31 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
     username: { valid: true, message: '', checking: false }
   });
   
+  // Cache for validated usernames: { username: { valid: boolean, timestamp: number } }
+  const [usernameCache, setUsernameCache] = useState({});
+  
   const [saving, setSaving] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Handle form field changes
-  const handleChange = async (field, value) => {
+  // Check if username is in cache and still valid
+  const isCachedAndValid = (username) => {
+    if (!username) return false;
+    
+    const cached = usernameCache[username];
+    if (!cached) return false;
+    
+    const now = Date.now();
+    const isExpired = (now - cached.timestamp) > CACHE_TTL;
+    
+    return !isExpired && cached.valid;
+  };
+
+  // Handle form field changes (no auto-validation for username)
+  const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Real-time username validation
+    // Reset username validation when typing (but don't auto-validate)
     if (field === 'username') {
       if (!value.trim()) {
         setValidationState(prev => ({
@@ -56,27 +76,82 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
         return;
       }
       
+      // Check cache for previously validated username
+      if (isCachedAndValid(value)) {
+        setValidationState(prev => ({
+          ...prev,
+          username: { valid: true, message: '✓ Username available!', checking: false }
+        }));
+        return;
+      }
+      
+      // Reset validation state but don't check yet
       setValidationState(prev => ({
         ...prev,
-        username: { valid: false, message: 'Checking availability...', checking: true }
+        username: { valid: false, message: 'Click "Check Availability" to validate', checking: false }
+      }));
+    }
+  };
+
+  // Manual username validation
+  const handleCheckUsername = async () => {
+    const username = formData.username;
+    
+    if (!username || !username.trim()) {
+      setValidationState(prev => ({
+        ...prev,
+        username: { valid: false, message: 'Username is required', checking: false }
+      }));
+      return;
+    }
+    
+    if (username === profile?.username) {
+      setValidationState(prev => ({
+        ...prev,
+        username: { valid: true, message: '', checking: false }
+      }));
+      return;
+    }
+    
+    // Check cache first
+    if (isCachedAndValid(username)) {
+      setValidationState(prev => ({
+        ...prev,
+        username: { valid: true, message: '✓ Username available!', checking: false }
+      }));
+      return;
+    }
+    
+    setValidationState(prev => ({
+      ...prev,
+      username: { valid: false, message: 'Checking availability...', checking: true }
+    }));
+    
+    try {
+      const result = await checkUsernameAvailability(username);
+      
+      // Cache the result
+      setUsernameCache(prev => ({
+        ...prev,
+        [username]: {
+          valid: result.available,
+          timestamp: Date.now()
+        }
       }));
       
-      try {
-        const result = await checkUsernameAvailability(value);
-        setValidationState(prev => ({
-          ...prev,
-          username: {
-            valid: result.available,
-            message: result.error || (result.available ? 'Username available!' : ''),
-            checking: false
-          }
-        }));
-      } catch (err) {
-        setValidationState(prev => ({
-          ...prev,
-          username: { valid: false, message: 'Error checking username', checking: false }
-        }));
-      }
+      setValidationState(prev => ({
+        ...prev,
+        username: {
+          valid: result.available,
+          message: result.error || (result.available ? '✓ Username available!' : ''),
+          checking: false
+        }
+      }));
+    } catch (err) {
+      setValidationState(prev => ({
+        ...prev,
+        username: { valid: false, message: 'Error checking username', checking: false }
+      }));
     }
   };
 
@@ -136,6 +211,41 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
     
     try {
       setSaving(true);
+      
+      // Re-validate username if cache is expired
+      const username = formData.username;
+      if (username !== profile?.username && !isCachedAndValid(username)) {
+        setValidationState(prev => ({
+          ...prev,
+          username: { ...prev.username, checking: true, message: 'Validating username...' }
+        }));
+        
+        const result = await checkUsernameAvailability(username);
+        
+        if (!result.available) {
+          setValidationState(prev => ({
+            ...prev,
+            username: { valid: false, message: result.error || 'Username no longer available', checking: false }
+          }));
+          setSaving(false);
+          alert('Username validation failed. Please check availability again.');
+          return;
+        }
+        
+        // Update cache
+        setUsernameCache(prev => ({
+          ...prev,
+          [username]: {
+            valid: true,
+            timestamp: Date.now()
+          }
+        }));
+        
+        setValidationState(prev => ({
+          ...prev,
+          username: { valid: true, message: '✓ Username available!', checking: false }
+        }));
+      }
       
       // Update profile data
       await updateProfile({
@@ -223,17 +333,29 @@ export function ProfileEditor({ onSave, onCancel, compact = false }) {
           
           <div className="form-group">
             <label htmlFor="username">Username *</label>
-            <input
-              id="username"
-              type="text"
-              value={formData.username}
-              onChange={(e) => handleChange('username', e.target.value)}
-              placeholder="Enter a unique username (e.g., dragonslayer92)"
-              className={`form-input ${!validationState.username.valid ? 'invalid' : ''}`}
-              disabled={saving}
-            />
+            <div className="username-input-container">
+              <input
+                id="username"
+                type="text"
+                value={formData.username}
+                onChange={(e) => handleChange('username', e.target.value)}
+                placeholder="Enter a unique username (e.g., dragonslayer92)"
+                className={`form-input ${!validationState.username.valid ? 'invalid' : ''}`}
+                disabled={saving}
+                minLength={3}
+                maxLength={30}
+                pattern="[a-zA-Z0-9_]{3,30}"
+              />
+              <button
+                type="button"
+                className="check-availability-btn"
+                onClick={handleCheckUsername}
+                disabled={saving || validationState.username.checking || !formData.username || formData.username === profile?.username || isCachedAndValid(formData.username)}
+              >
+                {validationState.username.checking ? <Hourglass /> : <CircleCheck />}</button>
+            </div>
             <small className="field-help">
-              Your username will be displayed in your profile chip and used to identify you across the platform.
+              3-30 characters: letters, numbers, and underscores only. Click "Check" to validate.
             </small>
             <div className={`validation-message ${validationState.username.valid ? 'valid' : 'invalid'}`}>
               {validationState.username.checking && <span className="spinner-small"></span>}
