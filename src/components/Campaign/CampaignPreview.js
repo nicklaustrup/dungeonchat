@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useFirebase } from '../../services/FirebaseContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { joinCampaign } from '../../services/campaign/campaignService';
+import UserProfileModal from '../UserProfileModal/UserProfileModal';
 import './CampaignPreview.css';
 
 function CampaignPreview() {
@@ -16,6 +17,7 @@ function CampaignPreview() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joining, setJoining] = useState(false);
   const [requestMessage, setRequestMessage] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   const loadCampaign = async () => {
     try {
@@ -156,7 +158,12 @@ function CampaignPreview() {
               <div className="preview-detail-row">
                 <div className="preview-detail-item">
                   <strong>Dungeon Master:</strong>
-                  <span>{campaign.dmName || 'Unknown'}</span>
+                  <span
+                    className="clickable-username"
+                    onClick={() => setSelectedUserId(campaign.dmId)}
+                  >
+                    {campaign.dmName || 'Unknown'}
+                  </span>
                 </div>
                 <div className="preview-detail-item">
                   <strong>Players:</strong>
@@ -272,6 +279,15 @@ function CampaignPreview() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* User Profile Modal */}
+      {selectedUserId && (
+        <UserProfileModal
+          userId={selectedUserId}
+          isOpen={!!selectedUserId}
+          onClose={() => setSelectedUserId(null)}
+        />
       )}
     </div>
   );
