@@ -226,7 +226,7 @@ export default function FriendsListModal({ isOpen, onClose }) {
                                 />
                                 <span className={`status-indicator ${status}`}></span>
                               </div>
-                              <span className="user-name">{friend.username}</span>
+                              <span className="user-name clickable-username">{friend.username}</span>
                             </div>
                             <button
                               className="unfriend-btn"
@@ -258,7 +258,7 @@ export default function FriendsListModal({ isOpen, onClose }) {
                                     alt={request.from.username}
                                     className="user-avatar"
                                   />
-                                  <span className="user-name">{request.from.username}</span>
+                                  <span className="user-name clickable-username">{request.from.username}</span>
                                 </div>
                                 <div className="request-actions">
                                   <button
@@ -290,7 +290,7 @@ export default function FriendsListModal({ isOpen, onClose }) {
                                     alt={request.to.username}
                                     className="user-avatar"
                                   />
-                                  <span className="user-name">{request.to.username}</span>
+                                  <span className="user-name clickable-username">{request.to.username}</span>
                                 </div>
                                 <span className="pending-label">Pending...</span>
                               </div>
@@ -309,13 +309,13 @@ export default function FriendsListModal({ isOpen, onClose }) {
                     ) : (
                       blockedUsers.map(blocked => (
                         <div key={blocked.id} className="user-item">
-                          <div className="user-info">
+                          <div className="user-info" onClick={() => handleViewProfile(blocked.id)}>
                             <img
                               src={blocked.profilePictureURL || '/logo192.png'}
                               alt={blocked.username}
                               className="user-avatar"
                             />
-                            <span className="user-name">{blocked.username}</span>
+                            <span className="user-name clickable-username">{blocked.username}</span>
                           </div>
                           <button
                             className="unblock-btn"

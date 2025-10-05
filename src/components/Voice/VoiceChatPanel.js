@@ -11,6 +11,7 @@ import { FaMicrophone, FaMicrophoneSlash, FaPhone, FaPhoneSlash, FaSpinner, FaVo
 import VoiceDMControls from './VoiceDMControls';
 import PTTIndicator from './PTTIndicator';
 import VoiceSettings from './VoiceSettings';
+import UserProfileModal from '../UserProfileModal/UserProfileModal';
 import * as voiceRoomService from '../../services/voice/voiceRoomService';
 import './VoiceChatPanel.css';
 
@@ -19,6 +20,7 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
   const [volume, setVolume] = useState(100);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
   const [voiceSettings, setVoiceSettings] = useState({
     audioQuality: 'medium',
     echoCancellation: true,
@@ -295,7 +297,12 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
                       )}
                     </div>
                     <div className="participant-info">
-                      <span className="participant-name">{displayName}</span>
+                      <span
+                        className="participant-name clickable-username"
+                        onClick={() => setSelectedUserId(participant.userId)}
+                      >
+                        {displayName}
+                      </span>
                       <div className="audio-level-container">
                         <div 
                           className="audio-level-bar"
@@ -415,6 +422,15 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
         settings={voiceSettings}
         onSave={handleSaveSettings}
       />
+
+      {/* User Profile Modal */}
+      {selectedUserId && (
+        <UserProfileModal
+          userId={selectedUserId}
+          isOpen={!!selectedUserId}
+          onClose={() => setSelectedUserId(null)}
+        />
+      )}
     </div>
   );
 }

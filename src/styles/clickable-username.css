@@ -1,14 +1,14 @@
 /* Global clickable username styles */
 .clickable-username {
   cursor: pointer;
-  color: var(--primary-color, #4CAF50);
+  color: #1976d2;
   text-decoration: none;
   transition: all 0.2s ease;
   font-weight: 500;
 }
 
 .clickable-username:hover {
-  color: var(--primary-hover, #45a049);
+  color: #0d47a1;
   text-decoration: underline;
 }
 
@@ -18,9 +18,9 @@
 
 /* Dark theme support */
 .dark-theme .clickable-username {
-  color: var(--primary-light, #66BB6A);
+  color: #64b5f6;
 }
 
 .dark-theme .clickable-username:hover {
-  color: var(--primary-color, #4CAF50);
+  color: #42a5f5;
 }
