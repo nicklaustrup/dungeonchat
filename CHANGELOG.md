@@ -1,3 +1,16 @@
+## [1.6.0](https://github.com/nicklaustrup/dungeonchat/compare/v1.5.0...v1.6.0) (2025-10-05)
+
+
+### Features
+
+* Fix HP sync system, add character caching, and optimize performance ([c910341](https://github.com/nicklaustrup/dungeonchat/commit/c910341f9aa3e56e531df686df7989fe1f297208))
+
+
+### Bug Fixes
+
+* Also reset boundaryMode when opening Settings panel ([6efca01](https://github.com/nicklaustrup/dungeonchat/commit/6efca01c6813fb06fe4e5644e151b2c04470b7c6))
+* Reset boundaryMode when clicking Fog, Boundary, or Grid buttons ([0c0cb14](https://github.com/nicklaustrup/dungeonchat/commit/0c0cb140d19180bbf684c5d683d8b5a5979965ac))
+
 ## [1.5.0](https://github.com/nicklaustrup/dungeonchat/compare/v1.4.1...v1.5.0) (2025-10-03)
 
 
