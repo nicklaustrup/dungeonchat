@@ -81,6 +81,34 @@ Last Updated: October 5, 2025
 
 ---
 
+### Campaign Browser Badge & Tag Refinements 🎨
+**Status**: ⏳ Not Started
+**Priority**: 🟡 Medium (Minor visual polish for consistency)
+**Date Found**: October 5, 2025
+**Files**: CampaignBrowser.css
+
+**Problem**: Campaign system badges and tags need additional constraints for perfect visual consistency across all cards.
+
+**Refinements Needed**:
+1. Campaign system badge currently has `min-width: 100px` but no max-width
+   - Very long system names (e.g., "Dungeons & Dragons 5th Edition") can cause badge to be too wide
+   - Should add `max-width` with text ellipsis overflow
+2. Campaign tags container currently has `max-height: 48px` but no min-height
+   - Cards with 0-1 tags have smaller container, creating inconsistent card heights
+   - Should add `min-height: 48px` to maintain consistent spacing even with few tags
+
+**Tasks**:
+- [ ] Add `max-width` to `.campaign-system` badge (e.g., 150px)
+- [ ] Add `text-overflow: ellipsis`, `white-space: nowrap`, `overflow: hidden` to system badge
+- [ ] Add `min-height: 48px` to `.campaign-tags` container
+- [ ] Test with various system names (short, medium, very long)
+- [ ] Test with 0 tags, 1 tag, 2 rows of tags
+- [ ] Verify all cards maintain consistent height
+
+**Goal**: Perfect visual consistency for campaign cards regardless of content length.
+
+---
+
 ### Players Cannot Access Settings Tab ✅
 **Status**: ✅ Complete
 **Priority**: 🔴 Critical (Blocking feature - players can't leave campaigns)
