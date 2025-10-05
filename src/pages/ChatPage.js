@@ -19,7 +19,7 @@ const UserProfileModal = React.lazy(() => import('../components/UserProfileModal
 function ChatPage({ campaignContext = false, showHeader = true }) {
   const { campaignId, channelId } = useParams();
   const { user, rtdb, firestore } = useFirebase();
-  const { profile, getDisplayInfo } = useCachedUserProfile();
+  const { profile, getDisplayInfo = () => null } = useCachedUserProfile();
   const { currentChannel } = useCampaign();
   const { state, actions } = useChatState();
   
