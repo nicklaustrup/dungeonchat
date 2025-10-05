@@ -113,6 +113,32 @@ function UserProfileModal({ user, userId, isOpen, onClose }) {
             <div className="user-profile-modal" onClick={(e) => e.stopPropagation()}>
                 <button className="modal-close" onClick={onClose}>✕</button>
 
+                {/* Add Friend button in top right (below close button) */}
+                {!loading && !isOwnProfile && (
+                    <div className="profile-top-right-actions">
+                        {friendshipStatus === 'none' && (
+                            <button className="profile-action-btn add-friend-top" onClick={handleAddFriend}>
+                                Add Friend
+                            </button>
+                        )}
+                        {friendshipStatus === 'pending_sent' && (
+                            <button className="profile-action-btn pending-top" disabled>
+                                Request Pending
+                            </button>
+                        )}
+                        {friendshipStatus === 'pending_received' && (
+                            <span className="profile-action-note-top">
+                                Request received
+                            </span>
+                        )}
+                        {friendshipStatus === 'friends' && (
+                            <span className="profile-action-note-top friends-badge">
+                                ✓ Friends
+                            </span>
+                        )}
+                    </div>
+                )}
+
                 {loading ? (
                     <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>
                 ) : (
@@ -137,40 +163,6 @@ function UserProfileModal({ user, userId, isOpen, onClose }) {
                             </div>
                         </div>
 
-                        {!isOwnProfile && (
-                            <div className="profile-actions">
-                                {friendshipStatus === 'none' && (
-                                    <button className="profile-action-btn add-friend" onClick={handleAddFriend}>
-                                        Add Friend
-                                    </button>
-                                )}
-                                {friendshipStatus === 'pending_sent' && (
-                                    <button className="profile-action-btn pending" disabled>
-                                        Request Pending
-                                    </button>
-                                )}
-                                {friendshipStatus === 'pending_received' && (
-                                    <span className="profile-action-note">
-                                        Has sent you a friend request (check Friends List)
-                                    </span>
-                                )}
-                                {friendshipStatus === 'friends' && (
-                                    <span className="profile-action-note friends-badge">
-                                        ✓ Friends
-                                    </span>
-                                )}
-                                {friendshipStatus === 'blocked' ? (
-                                    <button className="profile-action-btn unblock" onClick={handleUnblock}>
-                                        Unblock
-                                    </button>
-                                ) : (
-                                    <button className="profile-action-btn block" onClick={handleBlock}>
-                                        Block
-                                    </button>
-                                )}
-                            </div>
-                        )}
-
                         {error && <div className="profile-error">{error}</div>}
 
                         <div className="profile-body">
@@ -178,6 +170,21 @@ function UserProfileModal({ user, userId, isOpen, onClose }) {
                             <p><strong>Last Active:</strong> {formatLastActive(presence.lastSeen)}</p>
                             <p style={{fontSize:'12px', opacity:0.7}}>Away after {Math.round(awayAfterSeconds/60)} min of inactivity.</p>
                         </div>
+
+                        {/* Block button at the bottom */}
+                        {!isOwnProfile && (
+                            <div className="profile-bottom-actions">
+                                {friendshipStatus === 'blocked' ? (
+                                    <button className="profile-action-btn unblock-bottom" onClick={handleUnblock}>
+                                        Unblock
+                                    </button>
+                                ) : (
+                                    <button className="profile-action-btn block-bottom" onClick={handleBlock}>
+                                        Block User
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </>
                 )}
             </div>

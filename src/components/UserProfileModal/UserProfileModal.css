@@ -153,74 +153,90 @@
     font-style: italic;
 }
 
-/* Profile actions */
-.profile-actions {
+/* Top right actions (Add Friend, etc.) */
+.profile-top-right-actions {
+    position: absolute;
+    top: 60px;
+    right: 20px;
     display: flex;
-    gap: 10px;
-    padding: 1rem 0;
-    border-top: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
     align-items: center;
-    justify-content: center;
+    gap: 10px;
 }
 
 .profile-action-btn {
-    padding: 10px 20px;
+    padding: 8px 16px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     transition: all 0.2s;
 }
 
-.profile-action-btn.add-friend {
+.profile-action-btn.add-friend-top {
     background: var(--primary-color, #4CAF50);
     color: white;
 }
 
-.profile-action-btn.add-friend:hover {
+.profile-action-btn.add-friend-top:hover {
     background: var(--primary-hover, #45a049);
     transform: translateY(-1px);
 }
 
-.profile-action-btn.pending {
+.profile-action-btn.pending-top {
     background: var(--secondary-color, #757575);
     color: white;
     cursor: not-allowed;
     opacity: 0.7;
 }
 
-.profile-action-btn.block {
-    background: var(--danger-color, #f44336);
-    color: white;
+.profile-action-note-top {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 4px 8px;
 }
 
-.profile-action-btn.block:hover {
+.profile-action-note-top.friends-badge {
+    color: var(--primary-color, #4CAF50);
+    font-weight: 600;
+    font-style: normal;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 4px;
+    padding: 4px 10px;
+}
+
+/* Bottom actions (Block button) */
+.profile-bottom-actions {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+}
+
+.profile-action-btn.block-bottom {
+    background: var(--danger-color, #f44336);
+    color: white;
+    padding: 10px 20px;
+    font-size: 14px;
+}
+
+.profile-action-btn.block-bottom:hover {
     background: #d32f2f;
     transform: translateY(-1px);
 }
 
-.profile-action-btn.unblock {
+.profile-action-btn.unblock-bottom {
     background: var(--primary-color, #4CAF50);
     color: white;
+    padding: 10px 20px;
+    font-size: 14px;
 }
 
-.profile-action-btn.unblock:hover {
+.profile-action-btn.unblock-bottom:hover {
     background: var(--primary-hover, #45a049);
     transform: translateY(-1px);
-}
-
-.profile-action-note {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-style: italic;
-}
-
-.profile-action-note.friends-badge {
-    color: var(--primary-color, #4CAF50);
-    font-weight: 600;
-    font-style: normal;
 }
 
 .profile-error {
