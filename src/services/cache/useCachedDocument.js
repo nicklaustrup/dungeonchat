@@ -44,11 +44,13 @@ export function useCachedDocument(firestore, collection, docId, options = {}) {
       // Check cache first
       const cached = firestoreCache.get(cacheKey);
       if (cached !== null) {
+        console.log(`[CACHE] 🎯 HIT: ${cacheKey}`);
         setData(cached);
         setLoading(false);
         return;
       }
 
+      console.log(`[CACHE] ❌ MISS: ${cacheKey}`);
       // Cache miss - fetch from Firestore
       const docRef = doc(firestore, collection, docId);
       const docSnap = await getDoc(docRef);
@@ -170,11 +172,13 @@ export function useCachedQuery(firestore, queryFn, cacheKey, options = {}) {
       // Check cache first
       const cached = firestoreCache.get(cacheKey);
       if (cached !== null) {
+        console.log(`[CACHE] 🎯 HIT: ${cacheKey}`);
         setData(cached);
         setLoading(false);
         return;
       }
 
+      console.log(`[CACHE] ❌ MISS: ${cacheKey}`);
       // Cache miss - fetch from Firestore
       const q = queryFn();
       const snapshot = await q.get();

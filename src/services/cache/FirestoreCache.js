@@ -217,7 +217,7 @@ class FirestoreCache {
       
       if (evicted > 0) {
         this.stats.evictions += evicted;
-        console.log(`[FirestoreCache] Evicted ${evicted} expired entries`);
+        console.log(`[CACHE] 🗑️ Evicted ${evicted} expired entries`);
       }
     }, 60000); // Run every minute
   }

@@ -258,6 +258,49 @@ export function useCachedUserProfile() {
   const isProfileComplete = !!(profile?.username && profile?.username.trim());
   const needsOnboarding = !profile?.username || !profile?.username.trim();
 
+  /**
+   * Update privacy settings
+   */
+  const updatePrivacySettings = useCallback(async (settings) => {
+    const allowedSettings = ['profileVisibility', 'showEmail', 'showLastActive'];
+    const filteredSettings = Object.keys(settings)
+      .filter(key => allowedSettings.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = settings[key];
+        return obj;
+      }, {});
+    
+    await updateProfile(filteredSettings);
+  }, [updateProfile]);
+
+  /**
+   * Toggle profanity filter
+   */
+  const toggleProfanityFilter = useCallback(async () => {
+    if (!profile) return false;
+    
+    const newValue = !profile.profanityFilterEnabled;
+    await updateProfile({ profanityFilterEnabled: newValue });
+    return newValue;
+  }, [profile, updateProfile]);
+
+  /**
+   * Get display info for current user
+   */
+  const getDisplayInfo = useCallback(() => {
+    if (!profile) return null;
+    
+    return {
+      displayName: profile.username || profile.displayName || 'Anonymous',
+      username: profile.username,
+      originalDisplayName: profile.displayName,
+      profilePicture: profile.profilePictureURL,
+      bio: profile.bio,
+      statusMessage: profile.statusMessage,
+      isComplete: !!(profile.username && profile.username.trim())
+    };
+  }, [profile]);
+
   return {
     profile,
     loading,
@@ -270,6 +313,11 @@ export function useCachedUserProfile() {
     createProfile,
     refresh,
     invalidate,
+    updatePrivacySettings,
+    toggleProfanityFilter,
+    getDisplayInfo,
+    // Convenience accessors
+    profanityFilterEnabled: profile?.profanityFilterEnabled ?? true,
     // Onboarding status
     isProfileComplete,
     needsOnboarding
