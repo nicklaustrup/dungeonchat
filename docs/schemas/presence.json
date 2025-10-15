@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Presence (RTDB)",
+  "description": "Real-time user presence tracking in Realtime Database",
+  "type": "object",
+  "required": ["online"],
+  "properties": {
+    "online": {
+      "type": "boolean",
+      "description": "User online status"
+    },
+    "lastSeen": {
+      "type": "number",
+      "description": "Unix timestamp of last seen"
+    },
+    "displayName": {
+      "type": "string",
+      "description": "User display name"
+    },
+    "photoURL": {
+      "type": "string",
+      "format": "uri",
+      "description": "User photo URL"
+    }
+  },
+  "rtdbPath": "/presence/{userId}",
+  "securityNotes": [
+    "Users can read all presence data",
+    "Users can only write their own presence",
+    "Must use onDisconnect() to set online: false on disconnect",
+    "Ephemeral data - do not use for durable state"
+  ],
+  "usagePattern": {
+    "description": "Use Firebase Realtime Database onDisconnect for automatic cleanup",
+    "example": "await set(presenceRef, { online: true }); await onDisconnect(presenceRef).set({ online: false, lastSeen: serverTimestamp() });"
+  }
+}

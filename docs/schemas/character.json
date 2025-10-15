@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Character",
+  "description": "D&D 5e character sheet",
+  "type": "object",
+  "required": ["id", "name", "userId", "campaignId", "class", "level", "createdAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Character ID"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Character name"
+    },
+    "userId": {
+      "type": "string",
+      "description": "User ID of character owner (also accepts 'uid' field)"
+    },
+    "campaignId": {
+      "type": ["string", "null"],
+      "description": "Campaign ID (null for unassigned characters)"
+    },
+    "class": {
+      "type": "string",
+      "enum": ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard"],
+      "description": "Character class"
+    },
+    "level": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 20,
+      "description": "Character level"
+    },
+    "race": {
+      "type": "string",
+      "description": "Character race (e.g., Human, Elf, Dwarf)"
+    },
+    "background": {
+      "type": "string",
+      "description": "Character background"
+    },
+    "alignment": {
+      "type": "string",
+      "enum": ["LG", "NG", "CG", "LN", "N", "CN", "LE", "NE", "CE"],
+      "description": "Character alignment"
+    },
+    "abilityScores": {
+      "type": "object",
+      "properties": {
+        "strength": { "type": "number", "minimum": 1, "maximum": 30 },
+        "dexterity": { "type": "number", "minimum": 1, "maximum": 30 },
+        "constitution": { "type": "number", "minimum": 1, "maximum": 30 },
+        "intelligence": { "type": "number", "minimum": 1, "maximum": 30 },
+        "wisdom": { "type": "number", "minimum": 1, "maximum": 30 },
+        "charisma": { "type": "number", "minimum": 1, "maximum": 30 }
+      },
+      "required": ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]
+    },
+    "hitPoints": {
+      "type": "object",
+      "properties": {
+        "current": { "type": "number", "minimum": 0 },
+        "max": { "type": "number", "minimum": 1 },
+        "temp": { "type": "number", "minimum": 0, "default": 0 }
+      },
+      "required": ["current", "max"]
+    },
+    "armorClass": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Armor class"
+    },
+    "speed": {
+      "type": "number",
+      "default": 30,
+      "description": "Movement speed in feet"
+    },
+    "proficiencyBonus": {
+      "type": "number",
+      "minimum": 2,
+      "description": "Proficiency bonus (calculated from level)"
+    },
+    "skills": {
+      "type": "object",
+      "description": "Skill proficiencies and expertise"
+    },
+    "savingThrows": {
+      "type": "object",
+      "description": "Saving throw proficiencies"
+    },
+    "equipment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "quantity": { "type": "number", "minimum": 0 },
+          "weight": { "type": "number" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "spells": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "level": { "type": "number", "minimum": 0, "maximum": 9 },
+          "school": { "type": "string" },
+          "castingTime": { "type": "string" },
+          "range": { "type": "string" },
+          "components": { "type": "string" },
+          "duration": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "spellSlots": {
+      "type": "object",
+      "description": "Available and used spell slots by level"
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "source": { "type": "string", "description": "Class, race, or feat source" }
+        }
+      }
+    },
+    "bio": {
+      "type": "string",
+      "maxLength": 5000,
+      "description": "Character backstory and description"
+    },
+    "avatarURL": {
+      "type": "string",
+      "format": "uri",
+      "description": "Character portrait URL"
+    },
+    "createdAt": {
+      "type": "object",
+      "description": "Firestore server timestamp"
+    },
+    "updatedAt": {
+      "type": "object",
+      "description": "Firestore server timestamp"
+    }
+  },
+  "firestorePath": "/characters/{characterId} OR /campaigns/{campaignId}/characters/{userId}",
+  "securityNotes": [
+    "Users can only create/update their own characters",
+    "DM can update any character in their campaign",
+    "Campaign members can read all characters in campaign",
+    "Characters can exist at top-level or as campaign subcollection"
+  ],
+  "indexing": {
+    "required": [
+      { "fields": ["campaignId", "level"], "order": ["ASC", "ASC"] },
+      { "fields": ["campaignId", "userId"], "order": ["ASC", "ASC"] },
+      { "fields": ["uid", "createdAt"], "order": ["ASC", "DESC"] }
+    ]
+  }
+}

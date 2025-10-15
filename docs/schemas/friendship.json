@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Friendship",
+  "description": "Friendship or block relationship between users",
+  "type": "object",
+  "required": ["id", "userId1", "userId2", "status", "initiatorId", "createdAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Friendship ID"
+    },
+    "userId1": {
+      "type": "string",
+      "description": "First user ID (alphabetically sorted)"
+    },
+    "userId2": {
+      "type": "string",
+      "description": "Second user ID (alphabetically sorted)"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "accepted", "blocked"],
+      "description": "Friendship status"
+    },
+    "initiatorId": {
+      "type": "string",
+      "description": "User ID who initiated the request/block"
+    },
+    "createdAt": {
+      "type": "object",
+      "description": "Firestore server timestamp"
+    },
+    "acceptedAt": {
+      "type": "object",
+      "description": "Firestore server timestamp when accepted"
+    }
+  },
+  "firestorePath": "/friendships/{friendshipId}",
+  "securityNotes": [
+    "Users can create friend requests or blocks where they are initiator",
+    "Users can update friendships they're involved in (for accepting)",
+    "Users can delete friendships they're involved in (unfriend/unblock)",
+    "Users can only read friendships they're involved in"
+  ],
+  "indexing": {
+    "required": []
+  }
+}

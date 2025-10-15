@@ -1,6 +1,6 @@
-# Cloud Functions - Superchat
+# Cloud Functions - DungeonChat
 
-This directory contains Firebase Cloud Functions for the Superchat application.
+This directory contains Firebase Cloud Functions for the DungeonChat application.
 
 ## Available Functions
 
@@ -155,11 +155,12 @@ firebase functions:log --only deleteUser
 ## Performance
 
 ### Optimization Tips
-1. Use async/await properly
-2. Batch Firestore operations
-3. Minimize cold starts with global variables
-4. Use appropriate memory allocation
-5. Implement timeouts for long operations
+1. Use caching when it makes sense to
+2. Use async/await properly
+3. Batch Firestore operations
+4. Minimize cold starts with global variables
+5. Use appropriate memory allocation
+6. Implement timeouts for long operations
 
 ### Limits
 - Max execution time: 540 seconds (9 minutes)
@@ -195,28 +196,6 @@ describe('deleteUser', () => {
   });
 });
 ```
-
-### Integration Tests
-Test with Firebase emulators:
-```bash
-firebase emulators:start
-npm test
-```
-
-## Versioning
-
-Functions use Firebase Functions v2 SDK:
-- Better performance
-- More features
-- Improved error handling
-
-## Migrations
-
-When updating existing functions:
-1. Test thoroughly in development
-2. Deploy to staging first
-3. Monitor for errors
-4. Rollback if issues occur
 
 ## Contributing
 

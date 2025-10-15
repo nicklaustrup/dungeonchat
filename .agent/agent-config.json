@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "project": {
+    "name": "DungeonChat",
+    "type": "react-firebase",
+    "description": "Firebase-powered real-time D&D Virtual Tabletop with chat, voice, and campaign management"
+  },
+  "devCommands": {
+    "install": "npm install",
+    "start": "npm start",
+    "test": "npm test",
+    "testWatch": "npm test -- --watch",
+    "testCi": "npm run test:ci",
+    "testFast": "npm run test:fast",
+    "testChanged": "npm run test:changed",
+    "build": "npm run build",
+    "lint": "npm run lint",
+    "deployHosting": "firebase deploy --only hosting",
+    "deployRules": "firebase deploy --only firestore:rules,database,storage",
+    "deployFunctions": "firebase deploy --only functions"
+  },
+  "entryPoints": {
+    "app": "src/App.js",
+    "firebaseInit": "src/services/firebase.js",
+    "router": "src/components/AppRouter.js",
+    "chatRoom": "src/components/ChatRoom/ChatRoom.js",
+    "vtt": "src/components/VTT/VTTCanvas.js",
+    "campaignDashboard": "src/components/Campaign/CampaignDashboard.js"
+  },
+  "criticalPaths": {
+    "hooks": {
+      "autoScroll": "src/hooks/useAutoScrollV2.js",
+      "auth": "src/hooks/useAuth.js",
+      "campaign": "src/hooks/useCampaign.js"
+    },
+    "services": {
+      "firebase": "src/services/firebase.js",
+      "campaign": "src/services/campaign/",
+      "vtt": "src/services/vtt/",
+      "cache": "src/services/cache/"
+    },
+    "contexts": {
+      "campaign": "src/contexts/CampaignContext.js",
+      "chatState": "src/contexts/ChatStateContext.js",
+      "profanityFilter": "src/contexts/ProfanityFilterContext.js"
+    },
+    "security": {
+      "firestoreRules": "firestore.rules",
+      "rtdbRules": "database.rules.json",
+      "storageRules": "storage.rules"
+    },
+    "functions": "functions/",
+    "docs": {
+      "scrollSpec": "docs/scroll-behavior-spec.md",
+      "todo": "TODO.md"
+    }
+  },
+  "schemas": {
+    "firestore": [
+      "docs/schemas/campaign.json",
+      "docs/schemas/userProfile.json",
+      "docs/schemas/message.json",
+      "docs/schemas/character.json",
+      "docs/schemas/token.json",
+      "docs/schemas/map.json",
+      "docs/schemas/friendship.json",
+      "docs/schemas/campaignRequest.json",
+      "docs/schemas/voiceRoom.json"
+    ],
+    "rtdb": [
+      "docs/schemas/presence.json",
+      "docs/schemas/typing.json"
+    ],
+    "overview": "docs/schemas/DATA_ARCHITECTURE.md"
+  },
+  "testStrategies": {
+    "onHookChange": "npm test -- src/hooks/__tests__",
+    "onChatChange": "npm test -- src/components/ChatRoom/__tests__",
+    "onVttChange": "npm test -- src/components/VTT/__tests__",
+    "beforeCommit": "npm run test:fast",
+    "ci": "npm run test:ci"
+  },
+  "conventions": {
+    "branchNaming": "feat:name or fix:name",
+    "commitFormat": "<type>: short description (type ∈ {feat|fix|docs|refactor|perf|test|chore})",
+    "fileNaming": {
+      "components": "PascalCase.js",
+      "hooks": "useCamelCase.js",
+      "services": "camelCase.js",
+      "utils": "camelCase.js"
+    },
+    "importOrder": [
+      "React and external libs",
+      "Firebase imports",
+      "Local components",
+      "Hooks",
+      "Utils",
+      "Styles"
+    ]
+  },
+  "patterns": {
+    "stateManagement": "Context providers for global state, custom hooks for Firebase subscriptions, local state for UI",
+    "firebaseWrites": "Always use transactions for concurrent updates, server timestamps, batch writes",
+    "dataFetching": "Use caching hooks when available, pagination for lists",
+    "testing": "Mock Firebase in unit tests, use emulators for integration tests"
+  },
+  "environmentVariables": {
+    "required": [
+      "REACT_APP_FIREBASE_API_KEY",
+      "REACT_APP_FIREBASE_AUTH_DOMAIN",
+      "REACT_APP_FIREBASE_PROJECT_ID",
+      "REACT_APP_FIREBASE_STORAGE_BUCKET",
+      "REACT_APP_FIREBASE_MESSAGING_SENDER_ID",
+      "REACT_APP_FIREBASE_APP_ID"
+    ],
+    "location": ".env"
+  },
+  "commonSearchQueries": {
+    "messages": "rg \"messages\" src/ -n",
+    "presence": "rg \"presence|typing\" src/ -i -n",
+    "firestoreWrites": "rg \"setDoc|updateDoc|addDoc|deleteDoc\" src/ -n",
+    "hooks": "ls src/hooks/use*.js",
+    "securityRules": "rg \"collection.*campaigns\" firestore.rules -A 5"
+  },
+  "safetyChecklist": [
+    "Security rules updated for any new Firestore/RTDB writes",
+    "Tests added/updated for new functionality",
+    "No hardcoded secrets (use environment variables)",
+    "Firebase operations use transactions for concurrent updates",
+    "Error handling and loading states implemented",
+    "Cleanup functions in useEffect hooks"
+  ]
+}

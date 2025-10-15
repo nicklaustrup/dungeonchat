@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Dependency Map",
+  "description": "Map of key file dependencies to help AI agents understand impact of changes",
+  "coreInfrastructure": {
+    "src/services/firebase.js": {
+      "description": "Firebase initialization - imported by almost everything",
+      "exportedBy": [
+        "auth",
+        "firestore", 
+        "storage",
+        "database",
+        "analytics"
+      ],
+      "importedBy": [
+        "src/hooks/*.js (most hooks)",
+        "src/services/**/*.js (all services)",
+        "src/components/**/*.js (many components)"
+      ],
+      "impactLevel": "CRITICAL",
+      "changeRisk": "HIGH - affects entire app"
+    },
+    "firestore.rules": {
+      "description": "Firestore security rules",
+      "affects": [
+        "All Firestore read/write operations",
+        "src/services/campaign/*",
+        "src/components/ChatRoom/*",
+        "src/components/Campaign/*"
+      ],
+      "impactLevel": "CRITICAL",
+      "changeRisk": "HIGH - can block legitimate users",
+      "testWith": "firebase emulators:start"
+    }
+  },
+  "scrollSystem": {
+    "src/hooks/useAutoScrollV2.js": {
+      "description": "Primary scroll behavior hook",
+      "usedBy": [
+        "src/components/ChatRoom/ChatRoom.js"
+      ],
+      "dependencies": [
+        "React (useRef, useEffect, useCallback)",
+        "IntersectionObserver API"
+      ],
+      "impactLevel": "HIGH",
+      "testPath": "src/hooks/__tests__/useAutoScrollV2.test.js",
+      "relatedDocs": "docs/scroll-behavior-spec.md"
+    },
+    "src/hooks/useInfiniteScrollTop.js": {
+      "description": "Pagination hook for loading older messages",
+      "usedBy": [
+        "src/components/ChatRoom/ChatRoom.js"
+      ],
+      "dependencies": [
+        "src/services/firebase.js",
+        "firestore (query, limit, orderBy, startAfter)"
+      ],
+      "impactLevel": "HIGH",
+      "testPath": "src/hooks/__tests__/useInfiniteScrollTop.test.js"
+    }
+  },
+  "chatSystem": {
+    "src/components/ChatRoom/ChatRoom.js": {
+      "description": "Main chat UI component",
+      "usedBy": [
+        "src/components/Campaign/CampaignDashboard.js"
+      ],
+      "dependencies": [
+        "src/hooks/useAutoScrollV2.js",
+        "src/hooks/useInfiniteScrollTop.js",
+        "src/hooks/useTypingIndicator.js",
+        "src/components/ChatRoom/Message.js",
+        "src/components/ChatInput/ChatInput.js",
+        "src/components/TypingBubble/TypingBubble.js"
+      ],
+      "impactLevel": "CRITICAL",
+      "testPath": "src/components/ChatRoom/__tests__/",
+      "changeRisk": "MEDIUM - well-tested but complex scroll behavior"
+    },
+    "src/components/ChatRoom/Message.js": {
+      "description": "Individual message component",
+      "usedBy": [
+        "src/components/ChatRoom/ChatRoom.js"
+      ],
+      "dependencies": [
+        "src/hooks/useReactions.js",
+        "docs/schemas/message.json (data shape)"
+      ],
+      "impactLevel": "MEDIUM"
+    },
+    "src/components/ChatInput/ChatInput.js": {
+      "description": "Message input with image upload",
+      "usedBy": [
+        "src/components/ChatRoom/ChatRoom.js"
+      ],
+      "dependencies": [
+        "src/hooks/useAuth.js",
+        "src/hooks/useTypingIndicator.js",
+        "src/services/firebase.js (firestore, storage)"
+      ],
+      "impactLevel": "MEDIUM"
+    }
+  },
+  "vttSystem": {
+    "src/components/VTT/VTTCanvas.js": {
+      "description": "Main VTT canvas component",
+      "usedBy": [
+        "src/components/Campaign/CampaignDashboard.js"
+      ],
+      "dependencies": [
+        "src/hooks/useVTTCanvas.js",
+        "src/hooks/useTokens.js",
+        "src/hooks/useMaps.js",
+        "src/hooks/useFogOfWar.js",
+        "src/hooks/useLighting.js",
+        "src/components/VTT/TokenLayer.js",
+        "src/components/VTT/FogOfWarLayer.js",
+        "src/components/VTT/LightingLayer.js"
+      ],
+      "impactLevel": "CRITICAL",
+      "testPath": "src/components/VTT/__tests__/",
+      "changeRisk": "MEDIUM - complex multiplayer sync"
+    },
+    "src/services/vtt/": {
+      "description": "VTT service layer",
+      "exports": [
+        "mapService.js",
+        "tokenService.js",
+        "fogService.js",
+        "lightingService.js"
+      ],
+      "usedBy": [
+        "src/hooks/useVTTCanvas.js",
+        "src/hooks/useTokens.js",
+        "src/hooks/useMaps.js",
+        "src/hooks/useFogOfWar.js",
+        "src/hooks/useLighting.js"
+      ],
+      "impactLevel": "HIGH"
+    }
+  },
+  "campaignSystem": {
+    "src/components/Campaign/CampaignDashboard.js": {
+      "description": "Main campaign view orchestrator",
+      "usedBy": [
+        "src/components/AppRouter.js"
+      ],
+      "dependencies": [
+        "src/hooks/useCampaign.js",
+        "src/hooks/useCampaignMembers.js",
+        "src/hooks/useAuth.js",
+        "src/components/ChatRoom/ChatRoom.js",
+        "src/components/VTT/VTTCanvas.js",
+        "src/components/CharacterSheet/CharacterSheet.js"
+      ],
+      "impactLevel": "CRITICAL",
+      "changeRisk": "LOW - mostly orchestration"
+    },
+    "src/services/campaign/": {
+      "description": "Campaign service layer",
+      "usedBy": [
+        "src/hooks/useCampaign.js",
+        "src/hooks/useCampaignMembers.js",
+        "src/components/Campaign/*"
+      ],
+      "dependencies": [
+        "src/services/firebase.js",
+        "docs/schemas/campaign.json"
+      ],
+      "impactLevel": "HIGH"
+    }
+  },
+  "authSystem": {
+    "src/hooks/useAuth.js": {
+      "description": "Authentication state hook",
+      "usedBy": [
+        "src/App.js",
+        "src/components/**/* (many components need auth)"
+      ],
+      "dependencies": [
+        "src/services/firebase.js (auth)"
+      ],
+      "impactLevel": "CRITICAL",
+      "changeRisk": "HIGH - affects entire app"
+    },
+    "src/components/SignIn/SignIn.js": {
+      "description": "Sign-in component",
+      "usedBy": [
+        "src/pages/Landing.js"
+      ],
+      "dependencies": [
+        "src/hooks/useAuth.js"
+      ],
+      "impactLevel": "HIGH"
+    }
+  },
+  "changeImpactMatrix": {
+    "firebase.js": {
+      "affects": "Entire application",
+      "requiresTests": ["All integration tests", "Emulator tests"],
+      "requiresReview": true
+    },
+    "firestore.rules": {
+      "affects": "All Firestore operations",
+      "requiresTests": ["Emulator tests", "Integration tests"],
+      "deployCommand": "firebase deploy --only firestore:rules",
+      "requiresReview": true
+    },
+    "useAutoScrollV2.js": {
+      "affects": "Chat scroll behavior",
+      "requiresTests": ["src/hooks/__tests__/useAutoScrollV2.test.js"],
+      "affectedComponents": ["ChatRoom.js"],
+      "requiresReview": false
+    },
+    "ChatRoom.js": {
+      "affects": "Main chat UI",
+      "requiresTests": ["src/components/ChatRoom/__tests__/"],
+      "affectedComponents": ["CampaignDashboard.js"],
+      "requiresReview": false
+    },
+    "VTTCanvas.js": {
+      "affects": "VTT rendering and interaction",
+      "requiresTests": ["src/components/VTT/__tests__/"],
+      "affectedComponents": ["CampaignDashboard.js"],
+      "requiresReview": false
+    },
+    "message.json schema": {
+      "affects": "Message data model",
+      "requiresChanges": [
+        "firestore.rules",
+        "Message.js",
+        "ChatInput.js",
+        "Possibly functions/"
+      ],
+      "requiresTests": ["Message component tests"],
+      "requiresReview": true
+    }
+  },
+  "testCoverage": {
+    "critical": [
+      "src/hooks/useAutoScrollV2.js",
+      "src/hooks/useInfiniteScrollTop.js",
+      "src/components/ChatRoom/ChatRoom.js",
+      "src/components/VTT/VTTCanvas.js",
+      "src/hooks/useAuth.js"
+    ],
+    "high": [
+      "src/components/Campaign/CampaignDashboard.js",
+      "src/components/ChatRoom/Message.js",
+      "src/components/ChatInput/ChatInput.js",
+      "src/services/campaign/",
+      "src/services/vtt/"
+    ],
+    "medium": [
+      "src/components/CharacterSheet/CharacterSheet.js",
+      "src/components/DiceRoller/DiceRoller.js",
+      "src/hooks/useTypingIndicator.js",
+      "src/hooks/useReactions.js"
+    ]
+  }
+}

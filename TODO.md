@@ -2,7 +2,7 @@
 
 ## Implementation Date
 Started: October 2024
-Last Updated: October 5, 2025
+Last Updated: October 7, 2025
 
 ## Workflow Guidelines
 - After each fix or feature implementation, commit changes with brief summary
@@ -13,6 +13,35 @@ Last Updated: October 5, 2025
 ---
 
 ## 🔴 Critical Priority
+
+### Signup & Email Login Flow 📧
+**Status**: ❌ Broken / Urgent
+**Priority**: 🔴 Critical
+**Date Found**: October 7, 2025
+**Files**: authService.js, SignupForm.jsx, EmailLogin.jsx, firebaseAuthConfig.js, useAuth.js
+
+**Problem**: Signup flow and email/password login are failing for new users — new accounts aren't being created or cannot log in immediately after signup.
+
+**Symptoms**:
+- New users see an error on signup or are redirected but cannot access protected pages.
+- Email login fails for newly created accounts (user not found / invalid credentials immediately after signup).
+- Sometimes account appears in Firebase console but auth state doesn't persist.
+- Errors observed in browser console and/or server logs: (collect exact errors while debugging)
+
+**Immediate Impact**: Blocks new user onboarding — critical for public availability.
+
+**Tasks**:
+- [ ] Reproduce the failure locally and collect exact error messages (console/network/auth emulator)
+- [ ] Check Firebase Auth configuration (email/password provider enabled, API keys, auth domain)
+- [ ] Inspect `authService.js` signup/signin flows for missing await, token exchange, or error handling
+- [ ] Ensure profile creation in Firestore is atomic or resilient if separate from auth createUser
+- [ ] Verify email verification flow / redirects aren't preventing login
+- [ ] Add detailed logging around signup and login
+- [ ] Add retry/backoff if race between auth and Firestore profile write
+- [ ] Add unit/integration tests for signup/login happy path + edge cases
+- [ ] Hotfix / patch and deploy to staging, then production
+
+**Notes**: Prioritize reproducing with Firebase Auth emulator and add reproduction steps to this doc.
 
 ### Friends List & Social Features 🎮
 **Status**: ✅ Complete
@@ -366,6 +395,63 @@ Missing or insufficient permissions.
 - [ ] Add Firestore security rules for items
 
 **Goal**: Complete inventory management system for all tokens, players, and DM oversight.
+
+---
+
+### Admin Dashboard & Quick Admin Tools 🛠️
+**Status**: ⏳ Not Started
+**Priority**: 🔴 High (Admin tools & debugging)
+**Date Started**: TBD
+**Files**: AdminOverlay.js, AdminDashboardModal.js, adminService.js, AdminContext.js, App.jsx, firestore.rules
+
+**Description**: Add an admin button overlay that appears for admin users and opens a dashboard modal. The dashboard allows admins to inspect the database models that have been loaded for the current page, edit those models and commit changes back to Firestore. It includes a tabbed interface with an "Analytics" tab (contains a section for Firestore cache analytics — most analytics are "coming soon"). Also add a Quick Actions section that contains a toggle to switch the current user's role between DM, Player, and Spectator for campaigns they are a member of. The admin dashboard must not add or rely on any caching layer.
+
+**Implementation notes / suggested approach**:
+- Add an `isAdmin` boolean to the user object/profile (server-authenticated field).
+- At the app root wrap with `isAdmin && <AdminContext.Provider>` check, and render a persistent `AdminOverlay` button when `isAdmin` is true.
+- Keep the admin dashboard UI separate from production flows; it should use service-layer functions (`adminService.js`) to perform read/write operations and respect Firestore security rules.
+- Do NOT add caching to admin dashboard operations (always read/write directly to Firestore to reflect live state).
+
+**Admin Dashboard UI**:
+- Overlay button (floating) visible only to admins
+- Modal with tabs:
+  - Models: shows currently loaded models for the page (component -> model mapping), JSON view + edit form, Save/Commit button
+  - Analytics: sections for Firestore cache analytics ("coming soon" for most metrics), quick summary counters currently available
+  - Quick Actions: role toggle (DM / Player / Spectator) for campaigns the admin is a member of, and other one-click utilities
+  - Audit / Activity (optional placeholder for an audit log)
+
+**Data & Permissions**:
+- The admin UI should only surface data the admin is allowed to see; use server-verified `isAdmin` and Firestore rules to guard any admin-only writes.
+- All writes must go through `adminService.js` which enforces validation and records admin actions if an audit log is enabled.
+
+**Tasks**:
+- [ ] Create `AdminOverlay.js` floating button component
+- [ ] Create `AdminDashboardModal.js` with tabs: Models, Analytics, Quick Actions, Audit
+- [ ] Create `adminService.js` for privileged read/write operations and commit helpers
+- [ ] Add `AdminContext.js` to expose helpers and the set of loaded models for the page
+- [ ] Wire `isAdmin` flag into the user profile and App root (`isAdmin && AdminContext`)
+- [ ] Implement model inspector/editor for page-loaded models (JSON editor + validation)
+- [ ] Implement commit flow (optimistic UI optional) and error handling
+- [ ] Implement Quick Actions role toggle for campaigns (DM / Player / Spectator)
+- [ ] Add Firestore security rules notes & required rule entries to `firestore.rules`
+- [ ] Add unit tests for `adminService` (happy path + permission rejection)
+- [ ] Add small e2e smoke test for AdminOverlay visibility & basic model commit
+
+**Do NOT implement yet / Explicit constraints**:
+- No caching in admin dashboard (always read/write directly to Firestore)
+
+**Suggested helpful additional features**:
+- Audit log / action history (who changed what and when) — important for tracing admin edits
+- Undo/preview before commit (schema diff and rollback support)
+- Role-based permission editor (manage campaign membership roles from the dashboard)
+- Schema inspector and validation rules preview (show required fields, types)
+- Import/export (JSON) for model snapshots and bulk edits
+- Query/Console inspector to run read-only Firestore queries for debugging
+- Rate-limited or gated destructive actions (require confirmation and 2-step commit for destructive changes)
+- Backup & restore hooks for safe rollbacks
+- Activity notifications for other admins when major changes happen
+
+**Goal**: Provide admins powerful, safe tools to inspect and modify live data, toggle roles quickly for testing, and access (coming soon) analytics — without introducing client-side caching or altering normal production data flows.
 
 ---
 

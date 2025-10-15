@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Map",
+  "description": "VTT map document",
+  "type": "object",
+  "required": ["id", "name", "createdAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Map ID"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Map name"
+    },
+    "imageURL": {
+      "type": "string",
+      "format": "uri",
+      "description": "Map image URL from Storage"
+    },
+    "thumbnailURL": {
+      "type": "string",
+      "format": "uri",
+      "description": "Thumbnail image URL"
+    },
+    "width": {
+      "type": "number",
+      "description": "Map width in pixels"
+    },
+    "height": {
+      "type": "number",
+      "description": "Map height in pixels"
+    },
+    "gridSize": {
+      "type": "number",
+      "default": 50,
+      "description": "Grid square size in pixels"
+    },
+    "gridType": {
+      "type": "string",
+      "enum": ["square", "hex", "none"],
+      "default": "square",
+      "description": "Grid type"
+    },
+    "gridColor": {
+      "type": "string",
+      "default": "#000000",
+      "description": "Grid line color (hex)"
+    },
+    "gridOpacity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.3,
+      "description": "Grid line opacity"
+    },
+    "active": {
+      "type": "boolean",
+      "default": false,
+      "description": "Currently active map for the campaign"
+    },
+    "fogOfWarEnabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Fog of war enabled"
+    },
+    "dynamicLightingEnabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Dynamic lighting enabled"
+    },
+    "ambientLight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 1,
+      "description": "Ambient light level (0 = pitch black, 1 = full light)"
+    },
+    "backgroundColor": {
+      "type": "string",
+      "default": "#000000",
+      "description": "Background color when no map image (hex)"
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 5000,
+      "description": "DM notes for this map"
+    },
+    "createdAt": {
+      "type": "object",
+      "description": "Firestore server timestamp"
+    },
+    "updatedAt": {
+      "type": "object",
+      "description": "Firestore server timestamp"
+    }
+  },
+  "firestorePath": "/campaigns/{campaignId}/maps/{mapId}",
+  "subcollections": [
+    {
+      "name": "shapes",
+      "description": "Drawn shapes (circles, rectangles, cones, lines)",
+      "schema": "shape.json"
+    },
+    {
+      "name": "lights",
+      "description": "Dynamic light sources",
+      "schema": "light.json"
+    },
+    {
+      "name": "boundaries",
+      "description": "Movement restrictions (walls, doors)",
+      "schema": "boundary.json"
+    },
+    {
+      "name": "shapePreviews",
+      "description": "Real-time shape preview for collaborative drawing"
+    }
+  ],
+  "securityNotes": [
+    "Only DM can create, update, delete maps",
+    "All campaign members can read maps",
+    "DM notes visible to DM only (client-enforced)"
+  ],
+  "indexing": {
+    "required": []
+  }
+}

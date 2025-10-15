@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Campaign",
+  "description": "D&D campaign document",
+  "type": "object",
+  "required": ["id", "name", "dmId", "members", "createdAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Campaign ID"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Campaign name"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Campaign description"
+    },
+    "dmId": {
+      "type": "string",
+      "description": "User ID of Dungeon Master"
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of member user IDs (includes DM)"
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "isPublic": {
+          "type": "boolean",
+          "description": "Whether campaign is publicly visible",
+          "default": false
+        },
+        "allowJoinRequests": {
+          "type": "boolean",
+          "description": "Whether users can request to join",
+          "default": true
+        },
+        "maxMembers": {
+          "type": "number",
+          "minimum": 2,
+          "maximum": 20,
+          "description": "Maximum number of members"
+        }
+      }
+    },
+    "createdAt": {
+      "type": "object",
+      "description": "Firestore server timestamp"
+    },
+    "updatedAt": {
+      "type": "object",
+      "description": "Firestore server timestamp of last update"
+    }
+  },
+  "firestorePath": "/campaigns/{campaignId}",
+  "subcollections": [
+    {
+      "name": "messages",
+      "schema": "message.json"
+    },
+    {
+      "name": "characters",
+      "schema": "character.json"
+    },
+    {
+      "name": "tokens",
+      "schema": "token.json"
+    },
+    {
+      "name": "maps",
+      "schema": "map.json"
+    }
+  ],
+  "securityNotes": [
+    "Only DM can update campaign settings",
+    "Members can read campaign data",
+    "DM can add/remove members",
+    "Members array updated via transactions"
+  ],
+  "indexing": {
+    "required": [
+      { "field": "createdAt", "order": "desc" },
+      { "field": "members", "arrayContains": true }
+    ]
+  }
+}

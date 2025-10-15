@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Voice Room",
+  "description": "Voice chat room within a campaign",
+  "type": "object",
+  "required": ["id", "name", "campaignId", "createdBy", "createdAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Voice room ID"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Room name"
+    },
+    "campaignId": {
+      "type": "string",
+      "description": "Parent campaign ID"
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "User ID of room creator"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Room is active"
+    },
+    "maxParticipants": {
+      "type": "number",
+      "default": 10,
+      "description": "Maximum participants"
+    },
+    "createdAt": {
+      "type": "object",
+      "description": "Firestore server timestamp"
+    }
+  },
+  "firestorePath": "/campaigns/{campaignId}/voiceRooms/{roomId}",
+  "subcollections": [
+    {
+      "name": "participants",
+      "description": "Active voice participants",
+      "path": "/campaigns/{campaignId}/voiceRooms/{roomId}/participants/{userId}"
+    },
+    {
+      "name": "recordings",
+      "description": "Session recordings (DM only)"
+    }
+  ],
+  "rtdbSignaling": {
+    "path": "/voiceSignaling/{campaignId}/{roomId}/{userId}",
+    "description": "WebRTC signaling data (offers, answers, ICE candidates)",
+    "structure": {
+      "offers": { "{fromUserId}": "SDP offer" },
+      "answers": { "{fromUserId}": "SDP answer" },
+      "iceCandidates": { "{fromUserId}": ["ICE candidate"] },
+      "presence": { "connected": true }
+    }
+  },
+  "securityNotes": [
+    "Campaign members can read voice rooms",
+    "Campaign members can create rooms",
+    "Campaign members can update rooms (join/leave)",
+    "DM and creator can delete rooms",
+    "WebRTC signaling uses RTDB for real-time exchange"
+  ],
+  "indexing": {
+    "required": []
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Message",
+  "description": "A chat message in a campaign",
+  "type": "object",
+  "required": ["id", "createdAt", "uid", "displayName"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique message ID"
+    },
+    "text": {
+      "type": "string",
+      "description": "Message text content (required if imageURL is not present)"
+    },
+    "imageURL": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to uploaded image (required if text is not present)"
+    },
+    "createdAt": {
+      "type": "object",
+      "description": "Firestore server timestamp"
+    },
+    "uid": {
+      "type": "string",
+      "description": "User ID of message author"
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Display name of message author"
+    },
+    "photoURL": {
+      "type": "string",
+      "format": "uri",
+      "description": "Profile photo URL of message author"
+    },
+    "reactions": {
+      "type": "object",
+      "description": "Map of emoji reactions to arrays of user IDs",
+      "patternProperties": {
+        "^.+$": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "example": {
+        "👍": ["uid1", "uid2"],
+        "❤️": ["uid3"]
+      }
+    },
+    "replyTo": {
+      "type": "object",
+      "description": "Reference to message being replied to",
+      "required": ["id", "uid", "displayName"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID of original message"
+        },
+        "text": {
+          "type": "string",
+          "description": "Text of original message"
+        },
+        "imageURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "Image URL of original message"
+        },
+        "uid": {
+          "type": "string",
+          "description": "User ID of original author"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of original author"
+        }
+      }
+    }
+  },
+  "oneOf": [
+    { "required": ["text"] },
+    { "required": ["imageURL"] }
+  ],
+  "firestorePath": "/campaigns/{campaignId}/messages/{messageId}",
+  "securityNotes": [
+    "Users can only create messages with their own uid",
+    "Only message author can delete their own messages",
+    "Reactions updated via transactions to prevent race conditions",
+    "createdAt must be serverTimestamp()"
+  ],
+  "indexing": {
+    "required": [
+      { "field": "createdAt", "order": "desc" }
+    ]
+  }
+}

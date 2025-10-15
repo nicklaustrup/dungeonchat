@@ -1,0 +1,87 @@
+# ----------------------------------------------------------------------
+# 1. SOURCES Section: Defines the connection to your Firestore Database
+# ----------------------------------------------------------------------
+sources:
+  firebase-toolbox:
+    kind: firestore
+    project: ${FIREBASE_PROJECT_ID}
+    database: "(default)"
+# ----------------------------------------------------------------------
+# 2. TOOLS Section: Defines the specific actions (queries) the AI can run
+# ----------------------------------------------------------------------
+tools:
+  # Tool 1: Get all documents from a specific collection (Unchanged)
+  list_all_users:
+    kind: firestore-query
+    source: firebase-toolbox # Must match the source name above
+    description: Retrieves all user profiles from the 'users' collection.
+    collectionPath: users
+    # Query is simple: select all documents in the 'users' collection
+
+  # Tool 2: Find a document based on its unique Document ID
+  get_order_by_id:
+    kind: firestore-query
+    source: firebase-toolbox
+    description: Finds a specific customer order using its unique document ID.
+    collectionPath: orders
+
+    # Define the inputs the AI agent needs to provide
+    parameters:
+      - name: order_document_id # Renamed parameter for clarity
+        type: string
+        description: The unique document ID (name) for the customer order.
+
+    # Define the Firestore query using the input parameter
+    # Use "__name__" for the Document ID/Name
+    filters: |
+      {
+        "field": "__name__", # *** CHANGE IS HERE: Use "__name__" ***
+        "op": "==",
+        "value": {"stringValue": "{{.order_document_id}}"}
+      }
+
+  # Tool 3: Get Firestore Index Definitions
+  # This typically requires an administrative API call, which we model here as firestore-metadata
+  get_firestore_indexes:
+    kind: firestore-metadata # **CONCEPTUAL KIND: Check tool docs for the exact name**
+    source: firebase-toolbox
+    description: Retrieves a list of all custom and composite indexes defined for the Firestore database.
+    # This tool usually needs no parameters as it operates on the whole database.
+
+  # Tool 4: List all Cloud Functions
+  # Cloud Functions management is often a separate API service.
+  list_deployed_functions:
+    kind: cloud-functions-admin # **CONCEPTUAL KIND: Check tool docs for the exact name**
+    source: firebase-toolbox
+    description: Lists all deployed Cloud Functions, showing their region and trigger type (e.g., HTTP, Firestore, Pub/Sub).
+    parameters:
+      - name: region
+        type: string
+        optional: true
+        description: The Google Cloud region to check (e.g., 'us-central1').
+
+  # Tool 5: Get Collection Structure/Schema
+  # This infers schema by reading the first few documents in a given collection.
+  get_collection_schema:
+    kind: firestore-query
+    source: firebase-toolbox
+    description: Inspects the first few documents of a collection to infer and display its field structure and data types.
+    parameters:
+      - name: target_collection
+        type: string
+        description: The collection to inspect (e.g., 'products' or 'customers').
+    
+    # You would typically run a limited query here to get data to infer schema from
+    collectionPath: "{{.target_collection}}"
+    limit: 5 # Limit to 5 documents to save on reads and infer schema
+
+# ----------------------------------------------------------------------
+# 3. TOOLSETS Section: Groups tools for easy loading (Unchanged)
+# ----------------------------------------------------------------------
+toolsets:
+  firebase-tools:
+    - list_all_users
+    - get_order_by_id
+    - get_firestore_indexes
+    - list_deployed_functions
+    - get_collection_schema

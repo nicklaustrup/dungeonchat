@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "components": {
+    "Campaign": {
+      "CampaignBrowser": {
+        "path": "src/components/Campaign/CampaignBrowser.js",
+        "purpose": "Browse and search available campaigns",
+        "props": ["user", "onSelectCampaign"],
+        "hooks": ["useCampaigns", "useAuth"],
+        "state": "Campaign list, search query, filters"
+      },
+      "CampaignCreationModal": {
+        "path": "src/components/Campaign/CampaignCreationModal.js",
+        "purpose": "Modal for creating new campaigns",
+        "props": ["isOpen", "onClose", "onCampaignCreated"],
+        "hooks": ["useAuth"],
+        "services": ["campaign/createCampaign"]
+      },
+      "CampaignDashboard": {
+        "path": "src/components/Campaign/CampaignDashboard.js",
+        "purpose": "Main campaign view with VTT, chat, and character sheets",
+        "props": ["campaignId"],
+        "hooks": ["useCampaign", "useCampaignMembers", "useAuth"],
+        "children": ["ChatRoom", "VTTCanvas", "CharacterSheet"]
+      }
+    },
+    "ChatRoom": {
+      "ChatRoom": {
+        "path": "src/components/ChatRoom/ChatRoom.js",
+        "purpose": "Main chat interface with messages and input",
+        "props": ["campaignId"],
+        "hooks": ["useAutoScrollV2", "useInfiniteScrollTop", "useTypingIndicator"],
+        "children": ["Message", "ChatInput", "TypingBubble"],
+        "critical": true
+      },
+      "Message": {
+        "path": "src/components/ChatRoom/Message.js",
+        "purpose": "Individual message display with reactions",
+        "props": ["message", "onReply", "onReact"],
+        "hooks": ["useReactions"],
+        "features": ["reactions", "replies", "images"]
+      },
+      "ChatInput": {
+        "path": "src/components/ChatInput/ChatInput.js",
+        "purpose": "Message input with image upload",
+        "props": ["campaignId", "replyingTo", "onSend"],
+        "hooks": ["useTypingIndicator", "useAuth"],
+        "features": ["text input", "image upload", "reply context"]
+      }
+    },
+    "VTT": {
+      "VTTCanvas": {
+        "path": "src/components/VTT/VTTCanvas.js",
+        "purpose": "Main virtual tabletop canvas",
+        "props": ["campaignId"],
+        "hooks": ["useVTTCanvas", "useTokens", "useMaps", "useFogOfWar", "useLighting"],
+        "features": ["map display", "token movement", "fog of war", "dynamic lighting"],
+        "critical": true
+      },
+      "TokenLayer": {
+        "path": "src/components/VTT/TokenLayer.js",
+        "purpose": "Renders and manages tokens on the map",
+        "props": ["tokens", "onTokenMove", "selectedToken"],
+        "hooks": ["useTokens"]
+      },
+      "FogOfWarLayer": {
+        "path": "src/components/VTT/FogOfWarLayer.js",
+        "purpose": "Manages fog of war visualization",
+        "props": ["fogData", "revealedAreas"],
+        "hooks": ["useFogOfWar"]
+      },
+      "LightingLayer": {
+        "path": "src/components/VTT/LightingLayer.js",
+        "purpose": "Dynamic lighting calculations and rendering",
+        "props": ["lightSources", "tokens"],
+        "hooks": ["useLighting"]
+      }
+    },
+    "CharacterSheet": {
+      "CharacterSheet": {
+        "path": "src/components/CharacterSheet/CharacterSheet.js",
+        "purpose": "D&D 5e character sheet",
+        "props": ["characterId", "campaignId", "editable"],
+        "hooks": ["useCharacter"],
+        "features": ["stats", "skills", "equipment", "spells"]
+      },
+      "CharacterCreationModal": {
+        "path": "src/components/CharacterCreationModal.js",
+        "purpose": "Modal for creating new characters",
+        "props": ["isOpen", "onClose", "campaignId"],
+        "services": ["campaign/createCharacter"]
+      }
+    },
+    "DiceRoller": {
+      "DiceRoller": {
+        "path": "src/components/DiceRoller/DiceRoller.js",
+        "purpose": "Dice rolling interface",
+        "props": ["onRoll", "campaignId"],
+        "hooks": ["useDiceRoller"],
+        "features": ["multiple dice types", "modifiers", "roll history"]
+      },
+      "DiceRoll": {
+        "path": "src/components/DiceRoll/DiceRoll.js",
+        "purpose": "Display individual dice roll results",
+        "props": ["roll", "campaignId"]
+      }
+    },
+    "Auth": {
+      "SignIn": {
+        "path": "src/components/SignIn/SignIn.js",
+        "purpose": "User authentication (Google OAuth)",
+        "hooks": ["useAuth"],
+        "features": ["Google sign-in"]
+      },
+      "SignOut": {
+        "path": "src/components/SignOut/SignOut.js",
+        "purpose": "Sign out button",
+        "hooks": ["useAuth"]
+      },
+      "ProfileSetupModal": {
+        "path": "src/components/ProfileSetupModal/ProfileSetupModal.js",
+        "purpose": "Initial profile setup after sign-in",
+        "props": ["isOpen", "user"],
+        "services": ["profiles/createUserProfile"]
+      }
+    },
+    "Voice": {
+      "VoiceChat": {
+        "path": "src/components/Voice/VoiceChat.js",
+        "purpose": "Voice chat interface for campaign",
+        "props": ["campaignId"],
+        "hooks": ["useVoiceChat"],
+        "features": ["WebRTC", "mute/unmute", "push-to-talk"]
+      }
+    },
+    "Navigation": {
+      "Navigation": {
+        "path": "src/components/Navigation/Navigation.js",
+        "purpose": "Main navigation bar",
+        "props": ["user"],
+        "features": ["campaign navigation", "profile menu", "settings"]
+      }
+    },
+    "Settings": {
+      "SettingsModal": {
+        "path": "src/components/SettingsModal/SettingsModal.js",
+        "purpose": "User settings and preferences",
+        "props": ["isOpen", "onClose", "user"],
+        "features": ["profile editing", "preferences", "privacy"]
+      }
+    }
+  },
+  "componentPatterns": {
+    "modal": [
+      "CampaignCreationModal",
+      "CharacterCreationModal",
+      "ProfileSetupModal",
+      "SettingsModal",
+      "UserProfileModal"
+    ],
+    "realtime": [
+      "ChatRoom",
+      "VTTCanvas",
+      "TokenLayer",
+      "VoiceChat",
+      "TypingBubble"
+    ],
+    "dataDisplay": [
+      "CharacterSheet",
+      "Message",
+      "CampaignBrowser",
+      "DiceRoll"
+    ],
+    "input": [
+      "ChatInput",
+      "DiceRoller",
+      "CharacterCreationModal"
+    ]
+  },
+  "criticalComponents": [
+    {
+      "name": "ChatRoom",
+      "reason": "Core chat functionality with complex scroll behavior",
+      "testPath": "src/components/ChatRoom/__tests__/"
+    },
+    {
+      "name": "VTTCanvas",
+      "reason": "Main VTT interface with real-time multiplayer sync",
+      "testPath": "src/components/VTT/__tests__/"
+    },
+    {
+      "name": "CampaignDashboard",
+      "reason": "Orchestrates all campaign features",
+      "testPath": "src/components/Campaign/__tests__/"
+    }
+  ]
+}

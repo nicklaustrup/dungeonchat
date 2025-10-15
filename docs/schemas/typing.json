@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Typing Indicator (RTDB)",
+  "description": "Real-time typing indicator in Realtime Database",
+  "type": "object",
+  "required": ["typing"],
+  "properties": {
+    "typing": {
+      "type": "boolean",
+      "description": "User is typing"
+    },
+    "displayName": {
+      "type": "string",
+      "description": "User display name"
+    },
+    "timestamp": {
+      "type": "number",
+      "description": "Unix timestamp when typing started"
+    },
+    "campaignId": {
+      "type": "string",
+      "description": "Campaign ID (optional, for campaign-specific typing)"
+    }
+  },
+  "rtdbPath": "/typing/{uid}",
+  "securityNotes": [
+    "Users can read all typing indicators",
+    "Users can only write their own typing indicator",
+    "Should be debounced (300-500ms) to reduce writes",
+    "Ephemeral data - cleared when user stops typing or disconnects"
+  ],
+  "usagePattern": {
+    "description": "Debounce typing events and auto-clear after inactivity",
+    "example": "Debounce input, set typing: true, clear after 3s of no input"
+  }
+}
