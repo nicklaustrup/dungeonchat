@@ -975,12 +975,14 @@ function MapCanvas({
 
     revealAroundPlayerTokens();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     firestore,
     campaignId,
     gMap?.id,
     fogOfWarEnabled,
     fogData?.enabled,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(
       playerTokens.map((t) => ({ x: t.position?.x, y: t.position?.y }))
     ),
@@ -1032,12 +1034,14 @@ function MapCanvas({
 
     revealAroundLights();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     firestore,
     campaignId,
     gMap?.id,
     fogOfWarEnabled,
     fogData?.enabled,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(
       lights.map((l) => ({ x: l.position?.x, y: l.position?.y, r: l.radius }))
     ),

@@ -80,6 +80,7 @@ export function useCachedUserProfile() {
   /**
    * Update profile with optimistic update and cache invalidation
    */
+  const currentUsername = profile?.username;
   const updateProfile = useCallback(
     async (updates) => {
       if (!user?.uid || !firestore) {
@@ -102,7 +103,7 @@ export function useCachedUserProfile() {
 
       try {
         // Handle username update specifically if it's in the updates
-        if (updates.username && updates.username !== profile?.username) {
+        if (updates.username && updates.username !== currentUsername) {
           const newUsernameRef = doc(
             firestore,
             "usernames",
@@ -115,11 +116,11 @@ export function useCachedUserProfile() {
           });
 
           // Remove old username from index if it exists
-          if (profile?.username) {
+          if (currentUsername) {
             const oldUsernameRef = doc(
               firestore,
               "usernames",
-              profile.username.toLowerCase()
+              currentUsername.toLowerCase()
             );
             await deleteDoc(oldUsernameRef);
           }
@@ -158,7 +159,7 @@ export function useCachedUserProfile() {
         throw err;
       }
     },
-    [user, firestore]
+    [user, firestore, currentUsername]
   );
 
   /**
@@ -184,11 +185,15 @@ export function useCachedUserProfile() {
       const profileRef = doc(firestore, "userProfiles", user.uid);
 
       try {
-        // Update profile
-        await updateDoc(profileRef, {
-          username: newUsername,
-          lastUpdated: new Date(),
-        });
+        // Update profile (using setDoc with merge to handle new profiles)
+        await setDoc(
+          profileRef,
+          {
+            username: newUsername,
+            lastUpdated: new Date(),
+          },
+          { merge: true }
+        );
 
         // Update usernames index
         const newUsernameRef = doc(
