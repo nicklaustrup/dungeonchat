@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import './TokenContextMenu.css';
+import React, { useEffect, useRef, useState } from "react";
+import "./TokenContextMenu.css";
 
 /**
  * TokenContextMenu
@@ -15,21 +15,54 @@ export default function TokenContextMenu({
   onRemoveStatus,
   onToggleHidden,
   onDelete,
-  onAddToInitiative
+  onAddToInitiative,
 }) {
   const ref = useRef(null);
-  const [hpValue, setHpValue] = useState('');
-  const [statusName, setStatusName] = useState('');
-  const [statusIcon, setStatusIcon] = useState('');
+  const [hpValue, setHpValue] = useState("");
+  const [statusName, setStatusName] = useState("");
+  const [statusIcon, setStatusIcon] = useState("");
   const [showIconPicker, setShowIconPicker] = useState(false);
-  
+
   // HP Buffering: store pending HP changes locally
   const [pendingHP, setPendingHP] = useState(null); // null means no pending changes
   const [bufferedHP, setBufferedHP] = useState(token?.hp ?? 0);
 
   // Common monochrome-friendly icons (black/white glyphs & simple emojis)
   const COMMON_ICONS = [
-    '⚔️','🛡️','💀','☠️','🔥','❄️','💧','🌪️','🌫️','⛓️','🕸️','💤','🩸','🌀','✨','⚡','🎯','👁️','🚫','❗','❌','🔒','🩹','🏹','🛑','⏳','🕯️','🔮','🥶','🧪','☄️','📿','🖤','🤍'
+    "⚔️",
+    "🛡️",
+    "💀",
+    "☠️",
+    "🔥",
+    "❄️",
+    "💧",
+    "🌪️",
+    "🌫️",
+    "⛓️",
+    "🕸️",
+    "💤",
+    "🩸",
+    "🌀",
+    "✨",
+    "⚡",
+    "🎯",
+    "👁️",
+    "🚫",
+    "❗",
+    "❌",
+    "🔒",
+    "🩹",
+    "🏹",
+    "🛑",
+    "⏳",
+    "🕯️",
+    "🔮",
+    "🥶",
+    "🧪",
+    "☄️",
+    "📿",
+    "🖤",
+    "🤍",
   ];
 
   // Initialize buffered HP when token changes
@@ -62,26 +95,32 @@ export default function TokenContextMenu({
         onClose?.();
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
 
   if (!token) return null;
 
   return (
-    <div ref={ref} className="token-context-menu" style={{ left: position.x, top: position.y }}>
+    <div
+      ref={ref}
+      className="token-context-menu"
+      style={{ left: position.x, top: position.y }}
+    >
       <div className="tcm-header">
-        <strong>{token.name || 'Token'}</strong>
+        <strong>{token.name || "Token"}</strong>
         <button onClick={onClose}>×</button>
       </div>
       <div className="tcm-section">
         <div className="tcm-row">
           <span className="tcm-label">HP:</span>
-          <span className={`tcm-value ${pendingHP !== null ? 'pending' : ''}`}>
-            {token.hp != null && token.maxHp != null 
-              ? `${pendingHP !== null ? bufferedHP : token.hp}/${token.maxHp}` 
-              : '—'}
-            {pendingHP !== null && <span className="pending-indicator"> *</span>}
+          <span className={`tcm-value ${pendingHP !== null ? "pending" : ""}`}>
+            {token.hp != null && token.maxHp != null
+              ? `${pendingHP !== null ? bufferedHP : token.hp}/${token.maxHp}`
+              : "—"}
+            {pendingHP !== null && (
+              <span className="pending-indicator"> *</span>
+            )}
           </span>
           {isDM && token.maxHp != null && (
             <div className="hp-quick-adjust">
@@ -89,12 +128,16 @@ export default function TokenContextMenu({
                 className="hp-btn hp-decrease"
                 onClick={() => handleQuickHPAdjust(-1)}
                 title="Decrease HP by 1"
-              >▼</button>
+              >
+                ▼
+              </button>
               <button
                 className="hp-btn hp-increase"
                 onClick={() => handleQuickHPAdjust(1)}
                 title="Increase HP by 1"
-              >▲</button>
+              >
+                ▲
+              </button>
             </div>
           )}
         </div>
@@ -107,7 +150,7 @@ export default function TokenContextMenu({
                 value={hpValue}
                 onChange={(e) => setHpValue(e.target.value)}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     if (!hpValue.trim()) return;
                     const raw = hpValue.trim();
                     let isAbsolute = false;
@@ -119,7 +162,7 @@ export default function TokenContextMenu({
                       num = parseInt(raw, 10) || 0;
                     }
                     onAdjustHP?.(num, isAbsolute);
-                    setHpValue('');
+                    setHpValue("");
                   }
                 }}
               />
@@ -136,9 +179,11 @@ export default function TokenContextMenu({
                     num = parseInt(raw, 10) || 0;
                   }
                   onAdjustHP?.(num, isAbsolute);
-                  setHpValue('');
+                  setHpValue("");
                 }}
-              >Set</button>
+              >
+                Set
+              </button>
             </div>
             {pendingHP !== null && (
               <div className="tcm-row hp-apply-row">
@@ -167,11 +212,17 @@ export default function TokenContextMenu({
       <div className="tcm-section">
         <div className="tcm-subheader">Status Effects</div>
         <div className="tcm-status-list">
-          {Array.isArray(token.statusEffects) && token.statusEffects.length > 0 ? (
-            token.statusEffects.map(se => (
+          {Array.isArray(token.statusEffects) &&
+          token.statusEffects.length > 0 ? (
+            token.statusEffects.map((se) => (
               <div key={se.id || se.name} className="tcm-status-item">
                 <span>{se.icon || se.name}</span>
-                <button onClick={() => onRemoveStatus?.(se.id || se.name)} title="Remove">×</button>
+                <button
+                  onClick={() => onRemoveStatus?.(se.id || se.name)}
+                  title="Remove"
+                >
+                  ×
+                </button>
               </div>
             ))
           ) : (
@@ -189,21 +240,36 @@ export default function TokenContextMenu({
             <button
               type="button"
               className="icon-picker-trigger"
-              onClick={() => setShowIconPicker(v => !v)}
+              onClick={() => setShowIconPicker((v) => !v)}
               title="Select Icon"
-            >{statusIcon || '◇'}</button>
+            >
+              {statusIcon || "◇"}
+            </button>
             {showIconPicker && (
               <div className="icon-picker-pop">
-                {COMMON_ICONS.map(ic => (
+                {COMMON_ICONS.map((ic) => (
                   <button
                     key={ic}
                     type="button"
-                    className={`icon-choice ${ic === statusIcon ? 'active' : ''}`}
-                    onClick={() => { setStatusIcon(ic); setShowIconPicker(false); }}
-                  >{ic}</button>
+                    className={`icon-choice ${ic === statusIcon ? "active" : ""}`}
+                    onClick={() => {
+                      setStatusIcon(ic);
+                      setShowIconPicker(false);
+                    }}
+                  >
+                    {ic}
+                  </button>
                 ))}
                 <div className="icon-picker-actions">
-                  <button type="button" onClick={() => { setStatusIcon(''); setShowIconPicker(false); }}>Clear</button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusIcon("");
+                      setShowIconPicker(false);
+                    }}
+                  >
+                    Clear
+                  </button>
                 </div>
               </div>
             )}
@@ -211,20 +277,38 @@ export default function TokenContextMenu({
           <button
             onClick={() => {
               if (!statusName.trim()) return;
-              onAddStatus?.({ name: statusName.trim(), icon: statusIcon.trim() || undefined });
-              setStatusName('');
-              setStatusIcon('');
+              onAddStatus?.({
+                name: statusName.trim(),
+                icon: statusIcon.trim() || undefined,
+              });
+              setStatusName("");
+              setStatusIcon("");
               setShowIconPicker(false);
             }}
-          >Add</button>
+          >
+            Add
+          </button>
         </div>
       </div>
       <div className="tcm-section actions">
         {isDM && (
-          <button onClick={() => { onAddToInitiative?.(); onClose?.(); }}>Add to Initiative</button>
+          <button
+            onClick={() => {
+              onAddToInitiative?.();
+              onClose?.();
+            }}
+          >
+            Add to Initiative
+          </button>
         )}
-        <button onClick={() => onToggleHidden?.()}>{token.hidden ? 'Unhide' : 'Hide'}</button>
-        {isDM && <button className="danger" onClick={() => onDelete?.()}>Delete</button>}
+        <button onClick={() => onToggleHidden?.()}>
+          {token.hidden ? "Unhide" : "Hide"}
+        </button>
+        {isDM && (
+          <button className="danger" onClick={() => onDelete?.()}>
+            Delete
+          </button>
+        )}
       </div>
     </div>
   );

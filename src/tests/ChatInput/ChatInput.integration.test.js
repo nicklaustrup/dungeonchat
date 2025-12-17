@@ -1,61 +1,69 @@
-import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import ChatInput from '../../components/ChatInput/ChatInput';
-import { ChatStateProvider } from '../../contexts/ChatStateContext';
+import React from "react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
+import ChatInput from "../../components/ChatInput/ChatInput";
+import { ChatStateProvider } from "../../contexts/ChatStateContext";
 // Instead of using context directly (not exported), mock useFirebase hook
-jest.mock('../../services/FirebaseContext', () => ({
+jest.mock("../../services/FirebaseContext", () => ({
   useFirebase: () => ({
-    auth: { currentUser: { uid: 'user1', displayName: 'Alice' } },
+    auth: { currentUser: { uid: "user1", displayName: "Alice" } },
     firestore: {},
     rtdb: {},
-    storage: {}
-  })
+    storage: {},
+  }),
 }));
 // Avoid real RTDB ref usage in presence hooks
-jest.mock('../../services/presenceService', () => ({
+jest.mock("../../services/presenceService", () => ({
   setTyping: jest.fn(),
-  refreshPresence: jest.fn()
+  refreshPresence: jest.fn(),
 }));
 
-jest.mock('../../services/messageService', () => ({
+jest.mock("../../services/messageService", () => ({
   createTextMessage: jest.fn(async () => {}),
-  createImageMessage: jest.fn(async () => {})
+  createImageMessage: jest.fn(async () => {}),
 }));
 
-import { createTextMessage } from '../../services/messageService';
+import { createTextMessage } from "../../services/messageService";
 
-describe('ChatInput integration', () => {
-  test('sends text message on submit', async () => {
+describe("ChatInput integration", () => {
+  test("sends text message on submit", async () => {
     render(
       <ChatStateProvider>
-        <ChatInput 
-          getDisplayName={() => 'Alice'} 
-          soundEnabled={false} 
-          forceScrollBottom={() => {}} 
+        <ChatInput
+          getDisplayName={() => "Alice"}
+          soundEnabled={false}
+          forceScrollBottom={() => {}}
         />
       </ChatStateProvider>
     );
     const textarea = screen.getByLabelText(/message text/i);
-    fireEvent.change(textarea, { target: { value: 'Hello there' } });
-    const sendBtn = screen.getByRole('button', { name: /send message/i });
-    await act(async () => { fireEvent.click(sendBtn); });
+    fireEvent.change(textarea, { target: { value: "Hello there" } });
+    const sendBtn = screen.getByRole("button", { name: /send message/i });
+    await act(async () => {
+      fireEvent.click(sendBtn);
+    });
     expect(createTextMessage).toHaveBeenCalled();
-    expect(textarea.value).toBe('');
+    expect(textarea.value).toBe("");
   });
 
-  test('enter key without shift triggers send', async () => {
+  test("enter key without shift triggers send", async () => {
     render(
       <ChatStateProvider>
-        <ChatInput 
-          getDisplayName={() => 'Alice'} 
-          soundEnabled={false} 
-          forceScrollBottom={() => {}} 
+        <ChatInput
+          getDisplayName={() => "Alice"}
+          soundEnabled={false}
+          forceScrollBottom={() => {}}
         />
       </ChatStateProvider>
     );
     const textarea = screen.getByLabelText(/message text/i);
-    fireEvent.change(textarea, { target: { value: 'Line 1' } });
-    await act(async () => { fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false, preventDefault: () => {} }); });
+    fireEvent.change(textarea, { target: { value: "Line 1" } });
+    await act(async () => {
+      fireEvent.keyDown(textarea, {
+        key: "Enter",
+        shiftKey: false,
+        preventDefault: () => {},
+      });
+    });
     expect(createTextMessage).toHaveBeenCalled();
   });
 });

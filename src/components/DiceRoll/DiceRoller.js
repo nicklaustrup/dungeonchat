@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { parseDiceNotation, rollDice } from '../../services/diceService';
-import './DiceRoller.css';
+import React, { useState } from "react";
+import { parseDiceNotation, rollDice } from "../../services/diceService";
+import "./DiceRoller.css";
 
 function DiceRoller({ onRoll, isInline = false, campaignId = null }) {
-  const [diceInput, setDiceInput] = useState('');
+  const [diceInput, setDiceInput] = useState("");
   const [isRolling, setIsRolling] = useState(false);
 
   const handleRoll = async () => {
@@ -13,10 +13,10 @@ function DiceRoller({ onRoll, isInline = false, campaignId = null }) {
       setIsRolling(true);
       const rollData = parseDiceNotation(diceInput.trim());
       const result = rollDice(rollData);
-      
+
       // Create roll message data with all required fields
       const rollMessage = {
-        type: 'dice-roll',
+        type: "dice-roll",
         notation: diceInput.trim(),
         total: result.total,
         rollSum: result.rollSum,
@@ -24,7 +24,7 @@ function DiceRoller({ onRoll, isInline = false, campaignId = null }) {
         breakdown: result.breakdown,
         individual: result.individual,
         timestamp: Date.now(),
-        campaignId: campaignId || null
+        campaignId: campaignId || null,
       };
 
       if (onRoll) {
@@ -32,9 +32,9 @@ function DiceRoller({ onRoll, isInline = false, campaignId = null }) {
       }
 
       // Clear input after successful roll
-      setDiceInput('');
+      setDiceInput("");
     } catch (error) {
-      console.error('Error rolling dice:', error);
+      console.error("Error rolling dice:", error);
       // Could add error state here
     } finally {
       setIsRolling(false);
@@ -42,22 +42,22 @@ function DiceRoller({ onRoll, isInline = false, campaignId = null }) {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleRoll();
     }
   };
 
   const quickRolls = [
-    { label: 'd20', notation: '1d20' },
-    { label: 'd12', notation: '1d12' },
-    { label: 'd10', notation: '1d10' },
-    { label: 'd8', notation: '1d8' },
-    { label: 'd6', notation: '1d6' },
-    { label: 'd4', notation: '1d4' },
-    { label: '2d6', notation: '2d6' },
-    { label: '3d6', notation: '3d6' },
-    { label: 'd20+5', notation: '1d20+5' }
+    { label: "d20", notation: "1d20" },
+    { label: "d12", notation: "1d12" },
+    { label: "d10", notation: "1d10" },
+    { label: "d8", notation: "1d8" },
+    { label: "d6", notation: "1d6" },
+    { label: "d4", notation: "1d4" },
+    { label: "2d6", notation: "2d6" },
+    { label: "3d6", notation: "3d6" },
+    { label: "d20+5", notation: "1d20+5" },
   ];
 
   if (isInline) {
@@ -72,7 +72,7 @@ function DiceRoller({ onRoll, isInline = false, campaignId = null }) {
           className="dice-input-inline"
           disabled={isRolling}
         />
-        <button 
+        <button
           onClick={handleRoll}
           disabled={!diceInput.trim() || isRolling}
           className="roll-button-inline"
@@ -95,12 +95,12 @@ function DiceRoller({ onRoll, isInline = false, campaignId = null }) {
           className="dice-input"
           disabled={isRolling}
         />
-        <button 
+        <button
           onClick={handleRoll}
           disabled={!diceInput.trim() || isRolling}
           className="roll-button"
         >
-          {isRolling ? '🎲...' : '🎲 Roll'}
+          {isRolling ? "🎲..." : "🎲 Roll"}
         </button>
       </div>
 
@@ -122,13 +122,25 @@ function DiceRoller({ onRoll, isInline = false, campaignId = null }) {
         <details>
           <summary>Dice Notation Help</summary>
           <div className="help-content">
-            <p><strong>Format:</strong> [number]d[sides][+/-modifier]</p>
+            <p>
+              <strong>Format:</strong> [number]d[sides][+/-modifier]
+            </p>
             <ul>
-              <li><code>1d20</code> - Roll one 20-sided die</li>
-              <li><code>3d6</code> - Roll three 6-sided dice</li>
-              <li><code>1d20+5</code> - Roll d20 and add 5</li>
-              <li><code>2d8+2</code> - Roll two d8 and add 2</li>
-              <li><code>1d100</code> - Roll percentile dice</li>
+              <li>
+                <code>1d20</code> - Roll one 20-sided die
+              </li>
+              <li>
+                <code>3d6</code> - Roll three 6-sided dice
+              </li>
+              <li>
+                <code>1d20+5</code> - Roll d20 and add 5
+              </li>
+              <li>
+                <code>2d8+2</code> - Roll two d8 and add 2
+              </li>
+              <li>
+                <code>1d100</code> - Roll percentile dice
+              </li>
             </ul>
           </div>
         </details>

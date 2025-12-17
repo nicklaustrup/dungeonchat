@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { ref as databaseRef, onValue } from 'firebase/database';
-import { useFirebase } from '../services/FirebaseContext';
+import { useEffect, useState } from "react";
+import { ref as databaseRef, onValue } from "firebase/database";
+import { useFirebase } from "../services/FirebaseContext";
 
 // Internal registries to ensure only one RTDB subscription per uid
 const subscribers = new Map(); // uid -> Set<setOnlineFn>
@@ -12,7 +12,7 @@ export default function useUserPresence(uid) {
   const [online, setOnline] = useState(false);
 
   useEffect(() => {
-    if (!uid || !rtdb) return;    
+    if (!uid || !rtdb) return;
     let setFns = subscribers.get(uid);
     if (!setFns) {
       setFns = new Set();
@@ -28,7 +28,7 @@ export default function useUserPresence(uid) {
         lastStatusMap.set(uid, isOnline);
         const currentSubs = subscribers.get(uid);
         if (currentSubs) {
-          currentSubs.forEach(fn => fn(isOnline));
+          currentSubs.forEach((fn) => fn(isOnline));
         }
       });
       unsubscribeMap.set(uid, unsubscribe);
@@ -45,7 +45,7 @@ export default function useUserPresence(uid) {
         currentSet.delete(setOnline);
         if (currentSet.size === 0) {
           const unsubscribe = unsubscribeMap.get(uid);
-            if (unsubscribe) unsubscribe();
+          if (unsubscribe) unsubscribe();
           unsubscribeMap.delete(uid);
           subscribers.delete(uid);
           lastStatusMap.delete(uid);

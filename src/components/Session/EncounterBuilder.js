@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useFirebase } from '../../services/FirebaseContext';
-import { useCampaign } from '../../hooks/useCampaign';
+import React, { useState, useEffect } from "react";
+import { useFirebase } from "../../services/FirebaseContext";
+import { useCampaign } from "../../hooks/useCampaign";
 import {
   createEncounter,
   updateEncounter,
   calculateEncounterDifficulty,
-  applyEncounterMultiplier
-} from '../../services/encounterService';
-import './EncounterBuilder.css';
+  applyEncounterMultiplier,
+} from "../../services/encounterService";
+import "./EncounterBuilder.css";
 
 /**
  * EncounterBuilder Component
@@ -17,15 +17,15 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
   const { firestore, user } = useFirebase();
   const { isUserDM } = useCampaign(campaignId);
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [environment, setEnvironment] = useState('');
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [environment, setEnvironment] = useState("");
   const [suggestedLevel, setSuggestedLevel] = useState(1);
   const [tags, setTags] = useState([]);
-  const [tagInput, setTagInput] = useState('');
+  const [tagInput, setTagInput] = useState("");
   const [participants, setParticipants] = useState([]);
   const [environmentalEffects, setEnvironmentalEffects] = useState([]);
-  
+
   const [showParticipantForm, setShowParticipantForm] = useState(false);
   const [showEffectForm, setShowEffectForm] = useState(false);
 
@@ -35,9 +35,9 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
   // Load encounter data if editing
   useEffect(() => {
     if (encounter) {
-      setName(encounter.name || '');
-      setDescription(encounter.description || '');
-      setEnvironment(encounter.environment || '');
+      setName(encounter.name || "");
+      setDescription(encounter.description || "");
+      setEnvironment(encounter.environment || "");
       setSuggestedLevel(encounter.suggestedLevel || 1);
       setTags(encounter.tags || []);
       setParticipants(encounter.participants || []);
@@ -46,22 +46,28 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
   }, [encounter]);
 
   // Calculate encounter stats
-  const totalXP = participants.reduce((sum, p) => sum + (p.xp * p.quantity), 0);
+  const totalXP = participants.reduce((sum, p) => sum + p.xp * p.quantity, 0);
   const monsterCount = participants.reduce((sum, p) => sum + p.quantity, 0);
-  const adjustedXP = Math.round(totalXP * applyEncounterMultiplier(monsterCount));
-  
+  const adjustedXP = Math.round(
+    totalXP * applyEncounterMultiplier(monsterCount)
+  );
+
   // Assume party of 4 for difficulty calculation
   const partySize = 4;
-  const difficulty = calculateEncounterDifficulty(adjustedXP, suggestedLevel, partySize);
+  const difficulty = calculateEncounterDifficulty(
+    adjustedXP,
+    suggestedLevel,
+    partySize
+  );
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError('Encounter name is required');
+      setError("Encounter name is required");
       return;
     }
 
     if (!isUserDM) {
-      setError('Only the DM can create encounters');
+      setError("Only the DM can create encounters");
       return;
     }
 
@@ -80,17 +86,26 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
         xpTotal: totalXP,
         difficulty,
         isTemplate: true,
-        createdBy: user?.uid || null
+        createdBy: user?.uid || null,
       };
 
       let savedEncounter;
       if (encounter?.id) {
         // Update existing encounter
-        await updateEncounter(firestore, campaignId, encounter.id, encounterData);
+        await updateEncounter(
+          firestore,
+          campaignId,
+          encounter.id,
+          encounterData
+        );
         savedEncounter = { ...encounter, ...encounterData };
       } else {
         // Create new encounter
-        savedEncounter = await createEncounter(firestore, campaignId, encounterData);
+        savedEncounter = await createEncounter(
+          firestore,
+          campaignId,
+          encounterData
+        );
       }
 
       if (onSave) {
@@ -100,7 +115,7 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
         onClose();
       }
     } catch (err) {
-      setError('Failed to save encounter: ' + err.message);
+      setError("Failed to save encounter: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -110,19 +125,19 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
     const tag = tagInput.trim().toLowerCase();
     if (tag && !tags.includes(tag)) {
       setTags([...tags, tag]);
-      setTagInput('');
+      setTagInput("");
     }
   };
 
   const handleRemoveTag = (tagToRemove) => {
-    setTags(tags.filter(t => t !== tagToRemove));
+    setTags(tags.filter((t) => t !== tagToRemove));
   };
 
   const handleAddParticipant = (participantData) => {
     const newParticipant = {
       id: `participant-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-      name: participantData.name || 'Unknown Creature',
-      type: participantData.type || 'monster',
+      name: participantData.name || "Unknown Creature",
+      type: participantData.type || "monster",
       cr: parseFloat(participantData.cr) || 0,
       xp: parseInt(participantData.xp) || 0,
       hp: parseInt(participantData.hp) || 1,
@@ -130,8 +145,8 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
       ac: parseInt(participantData.ac) || 10,
       initiative: 0,
       conditions: [],
-      notes: participantData.notes || '',
-      quantity: parseInt(participantData.quantity) || 1
+      notes: participantData.notes || "",
+      quantity: parseInt(participantData.quantity) || 1,
     };
 
     setParticipants([...participants, newParticipant]);
@@ -139,26 +154,28 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
   };
 
   const handleUpdateParticipant = (participantId, updates) => {
-    setParticipants(participants.map(p => 
-      p.id === participantId ? { ...p, ...updates } : p
-    ));
+    setParticipants(
+      participants.map((p) =>
+        p.id === participantId ? { ...p, ...updates } : p
+      )
+    );
   };
 
   const handleRemoveParticipant = (participantId) => {
-    setParticipants(participants.filter(p => p.id !== participantId));
+    setParticipants(participants.filter((p) => p.id !== participantId));
   };
 
   const handleAddEffect = (effectData) => {
     const newEffect = {
       id: `effect-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-      name: effectData.name || 'Unknown Effect',
-      description: effectData.description || '',
-      type: effectData.type || 'hazard',
-      damage: effectData.damage || '',
+      name: effectData.name || "Unknown Effect",
+      description: effectData.description || "",
+      type: effectData.type || "hazard",
+      damage: effectData.damage || "",
       saveDC: effectData.saveDC ? parseInt(effectData.saveDC) : null,
       saveAbility: effectData.saveAbility || null,
-      duration: effectData.duration || 'permanent',
-      areaOfEffect: effectData.areaOfEffect || ''
+      duration: effectData.duration || "permanent",
+      areaOfEffect: effectData.areaOfEffect || "",
     };
 
     setEnvironmentalEffects([...environmentalEffects, newEffect]);
@@ -166,17 +183,25 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
   };
 
   const handleRemoveEffect = (effectId) => {
-    setEnvironmentalEffects(environmentalEffects.filter(e => e.id !== effectId));
+    setEnvironmentalEffects(
+      environmentalEffects.filter((e) => e.id !== effectId)
+    );
   };
 
   const getDifficultyColor = (diff) => {
     switch (diff) {
-      case 'trivial': return '#10b981';
-      case 'easy': return '#3b82f6';
-      case 'medium': return '#f59e0b';
-      case 'hard': return '#ef4444';
-      case 'deadly': return '#7c3aed';
-      default: return '#6b7280';
+      case "trivial":
+        return "#10b981";
+      case "easy":
+        return "#3b82f6";
+      case "medium":
+        return "#f59e0b";
+      case "hard":
+        return "#ef4444";
+      case "deadly":
+        return "#7c3aed";
+      default:
+        return "#6b7280";
     }
   };
 
@@ -184,8 +209,10 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
     <div className="encounter-builder-overlay">
       <div className="encounter-builder-modal">
         <div className="encounter-builder-header">
-          <h2>{encounter ? 'Edit Encounter' : 'Create Encounter'}</h2>
-          <button className="btn-close" onClick={onClose}>✕</button>
+          <h2>{encounter ? "Edit Encounter" : "Create Encounter"}</h2>
+          <button className="btn-close" onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         {error && (
@@ -199,7 +226,7 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
           {/* Basic Info Section */}
           <section className="builder-section">
             <h3>Basic Information</h3>
-            
+
             <div className="form-group">
               <label htmlFor="encounter-name">Name *</label>
               <input
@@ -245,7 +272,9 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
                   min="1"
                   max="20"
                   value={suggestedLevel}
-                  onChange={(e) => setSuggestedLevel(parseInt(e.target.value) || 1)}
+                  onChange={(e) =>
+                    setSuggestedLevel(parseInt(e.target.value) || 1)
+                  }
                   className="form-input"
                 />
               </div>
@@ -258,11 +287,13 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
                   type="text"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" && (e.preventDefault(), handleAddTag())
+                  }
                   placeholder="Add tags (press Enter)..."
                   className="form-input"
                 />
-                <button 
+                <button
                   type="button"
                   onClick={handleAddTag}
                   className="btn-add-tag"
@@ -272,7 +303,7 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
               </div>
               {tags.length > 0 && (
                 <div className="tags-list">
-                  {tags.map(tag => (
+                  {tags.map((tag) => (
                     <span key={tag} className="tag">
                       {tag}
                       <button onClick={() => handleRemoveTag(tag)}>✕</button>
@@ -301,7 +332,7 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
               </div>
               <div className="stat-box">
                 <span className="stat-label">Difficulty</span>
-                <span 
+                <span
                   className="stat-value difficulty-badge"
                   style={{ backgroundColor: getDifficultyColor(difficulty) }}
                 >
@@ -310,7 +341,8 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
               </div>
             </div>
             <p className="stats-note">
-              Difficulty calculated for party of {partySize} at level {suggestedLevel}
+              Difficulty calculated for party of {partySize} at level{" "}
+              {suggestedLevel}
             </p>
           </section>
 
@@ -318,7 +350,7 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
           <section className="builder-section">
             <div className="section-header">
               <h3>Participants ({participants.length})</h3>
-              <button 
+              <button
                 className="btn-add"
                 onClick={() => setShowParticipantForm(true)}
               >
@@ -334,11 +366,13 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
             )}
 
             <div className="participants-list">
-              {participants.map(participant => (
+              {participants.map((participant) => (
                 <ParticipantCard
                   key={participant.id}
                   participant={participant}
-                  onUpdate={(updates) => handleUpdateParticipant(participant.id, updates)}
+                  onUpdate={(updates) =>
+                    handleUpdateParticipant(participant.id, updates)
+                  }
                   onRemove={() => handleRemoveParticipant(participant.id)}
                 />
               ))}
@@ -349,7 +383,7 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
           <section className="builder-section">
             <div className="section-header">
               <h3>Environmental Effects ({environmentalEffects.length})</h3>
-              <button 
+              <button
                 className="btn-add"
                 onClick={() => setShowEffectForm(true)}
               >
@@ -365,7 +399,7 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
             )}
 
             <div className="effects-list">
-              {environmentalEffects.map(effect => (
+              {environmentalEffects.map((effect) => (
                 <EffectCard
                   key={effect.id}
                   effect={effect}
@@ -377,19 +411,19 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
         </div>
 
         <div className="encounter-builder-footer">
-          <button 
-            className="btn-cancel"
-            onClick={onClose}
-            disabled={saving}
-          >
+          <button className="btn-cancel" onClick={onClose} disabled={saving}>
             Cancel
           </button>
-          <button 
+          <button
             className="btn-save"
             onClick={handleSave}
             disabled={saving || !name.trim()}
           >
-            {saving ? 'Saving...' : (encounter ? 'Update Encounter' : 'Create Encounter')}
+            {saving
+              ? "Saving..."
+              : encounter
+                ? "Update Encounter"
+                : "Create Encounter"}
           </button>
         </div>
       </div>
@@ -403,32 +437,55 @@ function EncounterBuilder({ campaignId, encounter, onClose, onSave }) {
  */
 function ParticipantForm({ onAdd, onCancel }) {
   const [formData, setFormData] = useState({
-    name: '',
-    type: 'monster',
-    cr: '1',
-    xp: '200',
-    hp: '10',
-    maxHp: '10',
-    ac: '12',
-    quantity: '1',
-    notes: ''
+    name: "",
+    type: "monster",
+    cr: "1",
+    xp: "200",
+    hp: "10",
+    maxHp: "10",
+    ac: "12",
+    quantity: "1",
+    notes: "",
   });
 
   // CR to XP mapping (simplified)
   const crToXP = {
-    '0': 10, '0.125': 25, '0.25': 50, '0.5': 100,
-    '1': 200, '2': 450, '3': 700, '4': 1100, '5': 1800,
-    '6': 2300, '7': 2900, '8': 3900, '9': 5000, '10': 5900,
-    '11': 7200, '12': 8400, '13': 10000, '14': 11500, '15': 13000,
-    '16': 15000, '17': 18000, '18': 20000, '19': 22000, '20': 25000,
-    '21': 33000, '22': 41000, '23': 50000, '24': 62000, '30': 155000
+    0: 10,
+    0.125: 25,
+    0.25: 50,
+    0.5: 100,
+    1: 200,
+    2: 450,
+    3: 700,
+    4: 1100,
+    5: 1800,
+    6: 2300,
+    7: 2900,
+    8: 3900,
+    9: 5000,
+    10: 5900,
+    11: 7200,
+    12: 8400,
+    13: 10000,
+    14: 11500,
+    15: 13000,
+    16: 15000,
+    17: 18000,
+    18: 20000,
+    19: 22000,
+    20: 25000,
+    21: 33000,
+    22: 41000,
+    23: 50000,
+    24: 62000,
+    30: 155000,
   };
 
   const handleCRChange = (cr) => {
     setFormData({
       ...formData,
       cr,
-      xp: String(crToXP[cr] || 0)
+      xp: String(crToXP[cr] || 0),
     });
   };
 
@@ -473,8 +530,10 @@ function ParticipantForm({ onAdd, onCancel }) {
             onChange={(e) => handleCRChange(e.target.value)}
             className="form-select"
           >
-            {Object.keys(crToXP).map(cr => (
-              <option key={cr} value={cr}>CR {cr}</option>
+            {Object.keys(crToXP).map((cr) => (
+              <option key={cr} value={cr}>
+                CR {cr}
+              </option>
             ))}
           </select>
         </div>
@@ -493,7 +552,9 @@ function ParticipantForm({ onAdd, onCancel }) {
           <input
             type="number"
             value={formData.quantity}
-            onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, quantity: e.target.value })
+            }
             className="form-input"
             min="1"
           />
@@ -506,7 +567,13 @@ function ParticipantForm({ onAdd, onCancel }) {
           <input
             type="number"
             value={formData.hp}
-            onChange={(e) => setFormData({ ...formData, hp: e.target.value, maxHp: e.target.value })}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                hp: e.target.value,
+                maxHp: e.target.value,
+              })
+            }
             className="form-input"
             min="1"
           />
@@ -558,7 +625,9 @@ function ParticipantCard({ participant, onUpdate, onRemove }) {
           <h4>{participant.name}</h4>
           <span className="participant-type">{participant.type}</span>
         </div>
-        <button className="btn-remove" onClick={onRemove}>✕</button>
+        <button className="btn-remove" onClick={onRemove}>
+          ✕
+        </button>
       </div>
       <div className="participant-stats">
         <span>CR {participant.cr}</span>
@@ -584,14 +653,14 @@ function ParticipantCard({ participant, onUpdate, onRemove }) {
  */
 function EffectForm({ onAdd, onCancel }) {
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    type: 'hazard',
-    damage: '',
-    saveDC: '',
-    saveAbility: '',
-    duration: 'permanent',
-    areaOfEffect: ''
+    name: "",
+    description: "",
+    type: "hazard",
+    damage: "",
+    saveDC: "",
+    saveAbility: "",
+    duration: "permanent",
+    areaOfEffect: "",
   });
 
   const handleSubmit = (e) => {
@@ -632,7 +701,9 @@ function EffectForm({ onAdd, onCancel }) {
         <label>Description</label>
         <textarea
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
           className="form-textarea"
           rows="2"
           placeholder="Describe the effect..."
@@ -645,7 +716,9 @@ function EffectForm({ onAdd, onCancel }) {
           <input
             type="text"
             value={formData.damage}
-            onChange={(e) => setFormData({ ...formData, damage: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, damage: e.target.value })
+            }
             className="form-input"
             placeholder="2d6 piercing"
           />
@@ -655,7 +728,9 @@ function EffectForm({ onAdd, onCancel }) {
           <input
             type="number"
             value={formData.saveDC}
-            onChange={(e) => setFormData({ ...formData, saveDC: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, saveDC: e.target.value })
+            }
             className="form-input"
             placeholder="15"
           />
@@ -664,7 +739,9 @@ function EffectForm({ onAdd, onCancel }) {
           <label>Save Ability</label>
           <select
             value={formData.saveAbility}
-            onChange={(e) => setFormData({ ...formData, saveAbility: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, saveAbility: e.target.value })
+            }
             className="form-select"
           >
             <option value="">None</option>
@@ -702,14 +779,20 @@ function EffectCard({ effect, onRemove }) {
           <h4>{effect.name}</h4>
           <span className="effect-type">{effect.type}</span>
         </div>
-        <button className="btn-remove" onClick={onRemove}>✕</button>
+        <button className="btn-remove" onClick={onRemove}>
+          ✕
+        </button>
       </div>
       {effect.description && (
         <p className="effect-description">{effect.description}</p>
       )}
       <div className="effect-details">
         {effect.damage && <span>Damage: {effect.damage}</span>}
-        {effect.saveDC && <span>Save DC: {effect.saveDC} {effect.saveAbility}</span>}
+        {effect.saveDC && (
+          <span>
+            Save DC: {effect.saveDC} {effect.saveAbility}
+          </span>
+        )}
         {effect.areaOfEffect && <span>Area: {effect.areaOfEffect}</span>}
       </div>
     </div>

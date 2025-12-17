@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { FiX, FiMinus, FiMaximize2 } from 'react-icons/fi';
-import PartyManagement from '../../Session/PartyManagement';
-import './PartyPanel.css';
+import React, { useState, useRef, useEffect } from "react";
+import { FiX, FiMinus, FiMaximize2 } from "react-icons/fi";
+import PartyManagement from "../../Session/PartyManagement";
+import "./PartyPanel.css";
 
 /**
  * PartyPanel - Floating, resizable, draggable party management window
@@ -12,29 +12,32 @@ import './PartyPanel.css';
  * - Minimizable
  * - Can stay open alongside other panels
  */
-function PartyPanel({ 
-  campaignId, 
-  isFloating = false, 
-  onClose,
-  onDock 
-}) {
+function PartyPanel({ campaignId, isFloating = false, onClose, onDock }) {
   const [isMinimized, setIsMinimized] = useState(false);
-  const [position, setPosition] = useState({ x: window.innerWidth - 500, y: 150 });
+  const [position, setPosition] = useState({
+    x: window.innerWidth - 500,
+    y: 150,
+  });
   const [size, setSize] = useState({ width: 450, height: 650 });
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [resizeStart, setResizeStart] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
   const panelRef = useRef(null);
 
   // Handle dragging
   const handleMouseDown = (e) => {
-    if (e.target.closest('.party-panel-controls')) return;
-    
+    if (e.target.closest(".party-panel-controls")) return;
+
     setIsDragging(true);
     setDragOffset({
       x: e.clientX - position.x,
-      y: e.clientY - position.y
+      y: e.clientY - position.y,
     });
   };
 
@@ -46,7 +49,7 @@ function PartyPanel({
       x: e.clientX,
       y: e.clientY,
       width: size.width,
-      height: size.height
+      height: size.height,
     });
   };
 
@@ -63,26 +66,32 @@ function PartyPanel({
         if (isDragging) {
           const newX = e.clientX - dragOffset.x;
           const newY = e.clientY - dragOffset.y;
-          
+
           // Get panel dimensions
           const panelWidth = panelRef.current?.offsetWidth || size.width;
           const panelHeight = panelRef.current?.offsetHeight || size.height;
-          
+
           // Keep within viewport
           const maxX = window.innerWidth - panelWidth;
           const maxY = window.innerHeight - panelHeight;
-          
+
           setPosition({
             x: Math.max(0, Math.min(newX, maxX)),
-            y: Math.max(0, Math.min(newY, maxY))
+            y: Math.max(0, Math.min(newY, maxY)),
           });
         } else if (isResizing) {
           const deltaX = e.clientX - resizeStart.x;
           const deltaY = e.clientY - resizeStart.y;
-          
-          const newWidth = Math.max(350, Math.min(900, resizeStart.width + deltaX));
-          const newHeight = Math.max(400, Math.min(900, resizeStart.height + deltaY));
-          
+
+          const newWidth = Math.max(
+            350,
+            Math.min(900, resizeStart.width + deltaX)
+          );
+          const newHeight = Math.max(
+            400,
+            Math.min(900, resizeStart.height + deltaY)
+          );
+
           setSize({ width: newWidth, height: newHeight });
         }
       });
@@ -97,16 +106,16 @@ function PartyPanel({
     };
 
     if (isDragging || isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
     }
 
     return () => {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging, isResizing, dragOffset, resizeStart, position, size]);
 
@@ -123,12 +132,12 @@ function PartyPanel({
   return (
     <div
       ref={panelRef}
-      className={`party-panel-floating ${isMinimized ? 'minimized' : ''} ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''}`}
+      className={`party-panel-floating ${isMinimized ? "minimized" : ""} ${isDragging ? "dragging" : ""} ${isResizing ? "resizing" : ""}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
-        width: isMinimized ? 'auto' : `${size.width}px`,
-        height: isMinimized ? 'auto' : `${size.height}px`
+        width: isMinimized ? "auto" : `${size.width}px`,
+        height: isMinimized ? "auto" : `${size.height}px`,
       }}
     >
       <div className="party-panel-header" onMouseDown={handleMouseDown}>
@@ -137,7 +146,7 @@ function PartyPanel({
           <button
             className="party-control-btn"
             onClick={() => setIsMinimized(!isMinimized)}
-            title={isMinimized ? 'Expand' : 'Minimize'}
+            title={isMinimized ? "Expand" : "Minimize"}
           >
             {isMinimized ? <FiMaximize2 /> : <FiMinus />}
           </button>

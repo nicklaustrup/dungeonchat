@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 /**
  * useReplyState
@@ -12,30 +12,48 @@ import React from 'react';
  * @param {Function} [params.setExternalReply] - setter for external reply object
  * @returns {{ replyingTo: Object|null, setReplyTarget: (message: Object) => void, clearReply: () => void }}
  */
-export function useReplyState({ getDisplayName, externalReply, setExternalReply } = {}) {
+export function useReplyState({
+  getDisplayName,
+  externalReply,
+  setExternalReply,
+} = {}) {
   const [internalReply, setInternalReply] = React.useState(null);
 
-  const replyState = externalReply !== undefined ? externalReply : internalReply;
+  const replyState =
+    externalReply !== undefined ? externalReply : internalReply;
   const setReplyState = setExternalReply || setInternalReply;
 
-  const setReplyTarget = React.useCallback((message) => {
-    if (!message) return;
-    const messageId = message.id || message.documentId || `temp_${Date.now()}`;
-    if (!messageId) return;
-    const type = message.type || (message.imageURL ? 'image' : (message.text ? 'text' : 'meta'));
-    const normalized = {
-      id: messageId,
-      text: message.text ?? null,
-      imageURL: message.imageURL ?? null,
-      type,
-      uid: message.uid,
-      displayName: getDisplayName ? getDisplayName(message.uid, message.displayName) : (message.displayName || 'Anonymous')
-    };
-    const sanitized = Object.fromEntries(Object.entries(normalized).filter(([_, v]) => v !== undefined));
-    setReplyState(sanitized);
-  }, [getDisplayName, setReplyState]);
+  const setReplyTarget = React.useCallback(
+    (message) => {
+      if (!message) return;
+      const messageId =
+        message.id || message.documentId || `temp_${Date.now()}`;
+      if (!messageId) return;
+      const type =
+        message.type ||
+        (message.imageURL ? "image" : message.text ? "text" : "meta");
+      const normalized = {
+        id: messageId,
+        text: message.text ?? null,
+        imageURL: message.imageURL ?? null,
+        type,
+        uid: message.uid,
+        displayName: getDisplayName
+          ? getDisplayName(message.uid, message.displayName)
+          : message.displayName || "Anonymous",
+      };
+      const sanitized = Object.fromEntries(
+        Object.entries(normalized).filter(([_, v]) => v !== undefined)
+      );
+      setReplyState(sanitized);
+    },
+    [getDisplayName, setReplyState]
+  );
 
-  const clearReply = React.useCallback(() => setReplyState(null), [setReplyState]);
+  const clearReply = React.useCallback(
+    () => setReplyState(null),
+    [setReplyState]
+  );
 
   return { replyingTo: replyState, setReplyTarget, clearReply };
 }

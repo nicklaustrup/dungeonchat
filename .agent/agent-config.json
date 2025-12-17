@@ -67,10 +67,7 @@
       "docs/schemas/campaignRequest.json",
       "docs/schemas/voiceRoom.json"
     ],
-    "rtdb": [
-      "docs/schemas/presence.json",
-      "docs/schemas/typing.json"
-    ],
+    "rtdb": ["docs/schemas/presence.json", "docs/schemas/typing.json"],
     "overview": "docs/schemas/DATA_ARCHITECTURE.md"
   },
   "testStrategies": {

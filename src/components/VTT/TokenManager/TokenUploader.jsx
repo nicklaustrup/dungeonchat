@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
-import './TokenUploader.css';
+import React, { useState, useEffect } from "react";
+import { useDropzone } from "react-dropzone";
+import "./TokenUploader.css";
 
 /**
  * TokenUploader - Upload custom token images
@@ -9,13 +9,13 @@ import './TokenUploader.css';
 const TokenUploader = ({ onUpload, isUploading }) => {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [tokenName, setTokenName] = useState('');
-  const [tokenType, setTokenType] = useState('pc');
+  const [tokenName, setTokenName] = useState("");
+  const [tokenType, setTokenType] = useState("pc");
   const [error, setError] = useState(null);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+      "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
     },
     maxSize: 5 * 1024 * 1024, // 5MB
     multiple: false,
@@ -24,12 +24,14 @@ const TokenUploader = ({ onUpload, isUploading }) => {
 
       if (rejectedFiles.length > 0) {
         const rejection = rejectedFiles[0];
-        if (rejection.errors[0]?.code === 'file-too-large') {
-          setError('File is too large. Maximum size is 5MB.');
-        } else if (rejection.errors[0]?.code === 'file-invalid-type') {
-          setError('Invalid file type. Please upload an image (PNG, JPG, GIF, or WebP).');
+        if (rejection.errors[0]?.code === "file-too-large") {
+          setError("File is too large. Maximum size is 5MB.");
+        } else if (rejection.errors[0]?.code === "file-invalid-type") {
+          setError(
+            "Invalid file type. Please upload an image (PNG, JPG, GIF, or WebP)."
+          );
         } else {
-          setError('Failed to upload file. Please try again.');
+          setError("Failed to upload file. Please try again.");
         }
         return;
       }
@@ -47,30 +49,30 @@ const TokenUploader = ({ onUpload, isUploading }) => {
 
         // Auto-populate name from filename (remove extension)
         if (!tokenName) {
-          const name = selectedFile.name.replace(/\.[^/.]+$/, '');
+          const name = selectedFile.name.replace(/\.[^/.]+$/, "");
           setTokenName(name);
         }
       }
-    }
+    },
   });
 
   const tokenTypes = [
-    { id: 'pc', label: 'Player Character', icon: '🧙' },
-    { id: 'npc', label: 'NPC', icon: '👤' },
-    { id: 'monster', label: 'Monster', icon: '👹' },
-    { id: 'enemy', label: 'Enemy', icon: '⚔️' },
-    { id: 'ally', label: 'Ally', icon: '🤝' },
-    { id: 'object', label: 'Object', icon: '📦' },
+    { id: "pc", label: "Player Character", icon: "🧙" },
+    { id: "npc", label: "NPC", icon: "👤" },
+    { id: "monster", label: "Monster", icon: "👹" },
+    { id: "enemy", label: "Enemy", icon: "⚔️" },
+    { id: "ally", label: "Ally", icon: "🤝" },
+    { id: "object", label: "Object", icon: "📦" },
   ];
 
   const handleUpload = () => {
     if (!file) {
-      setError('Please select a file to upload');
+      setError("Please select a file to upload");
       return;
     }
 
     if (!tokenName.trim()) {
-      setError('Please enter a token name');
+      setError("Please enter a token name");
       return;
     }
 
@@ -87,8 +89,8 @@ const TokenUploader = ({ onUpload, isUploading }) => {
   const handleClear = () => {
     setFile(null);
     setPreview(null);
-    setTokenName('');
-    setTokenType('pc');
+    setTokenName("");
+    setTokenType("pc");
     setError(null);
   };
 
@@ -106,13 +108,15 @@ const TokenUploader = ({ onUpload, isUploading }) => {
       {!file ? (
         <div
           {...getRootProps()}
-          className={`dropzone ${isDragActive ? 'active' : ''}`}
+          className={`dropzone ${isDragActive ? "active" : ""}`}
         >
           <input {...getInputProps()} />
           <div className="dropzone-content">
             <div className="dropzone-icon">📤</div>
             <p className="dropzone-title">
-              {isDragActive ? 'Drop your token image here' : 'Drag & drop a token image'}
+              {isDragActive
+                ? "Drop your token image here"
+                : "Drag & drop a token image"}
             </p>
             <p className="dropzone-subtitle">or click to browse</p>
             <p className="dropzone-hint">PNG, JPG, GIF, or WebP • Max 5MB</p>
@@ -143,7 +147,7 @@ const TokenUploader = ({ onUpload, isUploading }) => {
                 {tokenTypes.map((type) => (
                   <button
                     key={type.id}
-                    className={`type-button ${tokenType === type.id ? 'selected' : ''}`}
+                    className={`type-button ${tokenType === type.id ? "selected" : ""}`}
                     onClick={() => setTokenType(type.id)}
                     disabled={isUploading}
                   >
@@ -154,11 +158,7 @@ const TokenUploader = ({ onUpload, isUploading }) => {
               </div>
             </div>
 
-            {error && (
-              <div className="upload-error">
-                ⚠️ {error}
-              </div>
-            )}
+            {error && <div className="upload-error">⚠️ {error}</div>}
 
             <div className="upload-actions">
               <button
@@ -166,7 +166,7 @@ const TokenUploader = ({ onUpload, isUploading }) => {
                 onClick={handleUpload}
                 disabled={isUploading || !tokenName.trim()}
               >
-                {isUploading ? '⏳ Uploading...' : '✨ Upload Token'}
+                {isUploading ? "⏳ Uploading..." : "✨ Upload Token"}
               </button>
               <button
                 className="upload-button secondary"

@@ -3,19 +3,19 @@
  * Handles CRUD operations for character sheets in Firebase
  */
 
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
+import {
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
   deleteDoc,
   serverTimestamp,
   collection,
   getDocs,
   query,
-  where
-} from 'firebase/firestore';
-import { createDefaultCharacterSheet } from '../models/CharacterSheet';
+  where,
+} from "firebase/firestore";
+import { createDefaultCharacterSheet } from "../models/CharacterSheet";
 
 /**
  * Create a staged token for a new player character
@@ -24,70 +24,84 @@ import { createDefaultCharacterSheet } from '../models/CharacterSheet';
  * @param {string} userId - User ID
  * @param {Object} character - Character sheet data
  */
-export async function createPlayerStagedToken(firestore, campaignId, userId, character) {
+export async function createPlayerStagedToken(
+  firestore,
+  campaignId,
+  userId,
+  character
+) {
   try {
     // Get campaign to find active map (or any map to stage the token)
-    const campaignRef = doc(firestore, 'campaigns', campaignId);
+    const campaignRef = doc(firestore, "campaigns", campaignId);
     const campaignSnap = await getDoc(campaignRef);
-    
+
     if (!campaignSnap.exists()) {
-      console.warn('Campaign not found, cannot create staged token');
+      console.warn("Campaign not found, cannot create staged token");
       return;
     }
-    
+
     const campaignData = campaignSnap.data();
     let targetMapId = campaignData.activeMapId;
-    
+
     // If no active map, find the first available map
     if (!targetMapId) {
-      const mapsRef = collection(firestore, 'campaigns', campaignId, 'vtt');
+      const mapsRef = collection(firestore, "campaigns", campaignId, "vtt");
       const mapsSnap = await getDocs(mapsRef);
       if (!mapsSnap.empty) {
         targetMapId = mapsSnap.docs[0].id;
       } else {
-        console.warn('No maps found in campaign, cannot create staged token');
+        console.warn("No maps found in campaign, cannot create staged token");
         return;
       }
     }
-    
+
     // Check if player already has a STAGED token for this character on this map
     // Note: We allow multiple tokens per character, but avoid duplicate staged tokens
-    const tokensRef = collection(firestore, 'campaigns', campaignId, 'vtt', targetMapId, 'tokens');
+    const tokensRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "vtt",
+      targetMapId,
+      "tokens"
+    );
     const q = query(
-      tokensRef, 
-      where('characterId', '==', userId), 
-      where('type', '==', 'pc'),
-      where('staged', '==', true)  // Only check for staged tokens
+      tokensRef,
+      where("characterId", "==", userId),
+      where("type", "==", "pc"),
+      where("staged", "==", true) // Only check for staged tokens
     );
     const existingTokens = await getDocs(q);
-    
+
     if (!existingTokens.empty) {
-      console.log('Staged token for this character already exists on this map, skipping creation');
+      console.log(
+        "Staged token for this character already exists on this map, skipping creation"
+      );
       return;
     }
-    
+
     // Get user profile for photo
-    const profileRef = doc(firestore, 'userProfiles', userId);
+    const profileRef = doc(firestore, "userProfiles", userId);
     const profileSnap = await getDoc(profileRef);
     const profile = profileSnap.exists() ? profileSnap.data() : {};
-    
+
     // Priority system for token image:
     // 1. Character avatar from character sheet (highest priority)
     // 2. User profile photo (backup)
     // 3. Empty string (will use default blue color in TokenSprite)
-    const tokenImageUrl = character.avatarUrl || profile.photoURL || '';
-    
+    const tokenImageUrl = character.avatarUrl || profile.photoURL || "";
+
     // Create staged player token using tokenService
-    const { tokenService } = await import('./vtt/tokenService');
-    
+    const { tokenService } = await import("./vtt/tokenService");
+
     const playerToken = {
       name: character.name,
-      type: 'pc',
+      type: "pc",
       imageUrl: tokenImageUrl,
       position: { x: 100, y: 100 },
       size: { width: 25, height: 25 }, // Start small (0.5x0.5)
       rotation: 0,
-      color: '#4a9eff',
+      color: "#4a9eff",
       characterId: userId,
       userId: userId, // Required for HP sync with character sheet
       ownerId: userId,
@@ -96,13 +110,18 @@ export async function createPlayerStagedToken(firestore, campaignId, userId, cha
       hp: character.hp || character.maxHp,
       maxHp: character.maxHp,
       statusEffects: [],
-      createdBy: userId
+      createdBy: userId,
     };
-    
-    await tokenService.createToken(firestore, campaignId, targetMapId, playerToken);
+
+    await tokenService.createToken(
+      firestore,
+      campaignId,
+      targetMapId,
+      playerToken
+    );
     console.log(`Created staged token for player character: ${character.name}`);
   } catch (error) {
-    console.error('Error creating staged token for character:', error);
+    console.error("Error creating staged token for character:", error);
     // Don't throw - token creation failure shouldn't block character creation
   }
 }
@@ -115,17 +134,28 @@ export async function createPlayerStagedToken(firestore, campaignId, userId, cha
  * @param {Object} characterData - Character sheet data
  * @returns {Promise<Object>} Created character sheet
  */
-export async function createCharacterSheet(firestore, campaignId, userId, characterData) {
+export async function createCharacterSheet(
+  firestore,
+  campaignId,
+  userId,
+  characterData
+) {
   try {
-    const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
-    
+    const characterRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "characters",
+      userId
+    );
+
     // Create default character sheet with provided data
     const characterSheet = createDefaultCharacterSheet(
       characterData.name,
       characterData.class,
       characterData.race
     );
-    
+
     // Override with any provided data
     const finalCharacterSheet = {
       ...characterSheet,
@@ -133,32 +163,43 @@ export async function createCharacterSheet(firestore, campaignId, userId, charac
       userId,
       campaignId,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     };
-    
+
     // Set current hit points to maximum if not specified
     if (!finalCharacterSheet.hp) {
       finalCharacterSheet.hp = finalCharacterSheet.maxHp;
     }
-    
+
     await setDoc(characterRef, finalCharacterSheet);
-    
+
     // Also update the campaign member with character reference
-    const memberRef = doc(firestore, 'campaigns', campaignId, 'members', userId);
+    const memberRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "members",
+      userId
+    );
     await updateDoc(memberRef, {
       hasCharacterSheet: true,
       characterName: characterData.name,
       characterClass: characterData.class,
       characterLevel: finalCharacterSheet.level,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     });
-    
+
     // Auto-create a staged token for the player
-    await createPlayerStagedToken(firestore, campaignId, userId, finalCharacterSheet);
-    
+    await createPlayerStagedToken(
+      firestore,
+      campaignId,
+      userId,
+      finalCharacterSheet
+    );
+
     return { id: userId, ...finalCharacterSheet };
   } catch (error) {
-    console.error('Error creating character sheet:', error);
+    console.error("Error creating character sheet:", error);
     throw error;
   }
 }
@@ -172,16 +213,22 @@ export async function createCharacterSheet(firestore, campaignId, userId, charac
  */
 export async function getCharacterSheet(firestore, campaignId, userId) {
   try {
-    const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
+    const characterRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "characters",
+      userId
+    );
     const characterDoc = await getDoc(characterRef);
-    
+
     if (characterDoc.exists()) {
       return { id: characterDoc.id, ...characterDoc.data() };
     }
-    
+
     return null;
   } catch (error) {
-    console.error('Error fetching character sheet:', error);
+    console.error("Error fetching character sheet:", error);
     throw error;
   }
 }
@@ -194,36 +241,53 @@ export async function getCharacterSheet(firestore, campaignId, userId) {
  * @param {Object} updates - Character sheet updates
  * @returns {Promise<Object>} Updated character sheet
  */
-export async function updateCharacterSheet(firestore, campaignId, userId, updates) {
+export async function updateCharacterSheet(
+  firestore,
+  campaignId,
+  userId,
+  updates
+) {
   try {
-    const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
-    
+    const characterRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "characters",
+      userId
+    );
+
     const updateData = {
       ...updates,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     };
-    
+
     await updateDoc(characterRef, updateData);
-    
+
     // Update campaign member info if basic character data changed
     if (updates.name || updates.class || updates.level) {
-      const memberRef = doc(firestore, 'campaigns', campaignId, 'members', userId);
+      const memberRef = doc(
+        firestore,
+        "campaigns",
+        campaignId,
+        "members",
+        userId
+      );
       const memberUpdates = {};
-      
+
       if (updates.name) memberUpdates.characterName = updates.name;
       if (updates.class) memberUpdates.characterClass = updates.class;
       if (updates.level) memberUpdates.characterLevel = updates.level;
-      
+
       if (Object.keys(memberUpdates).length > 0) {
         memberUpdates.updatedAt = serverTimestamp();
         await updateDoc(memberRef, memberUpdates);
       }
     }
-    
+
     // Return updated character sheet
     return await getCharacterSheet(firestore, campaignId, userId);
   } catch (error) {
-    console.error('Error updating character sheet:', error);
+    console.error("Error updating character sheet:", error);
     throw error;
   }
 }
@@ -235,45 +299,83 @@ export async function updateCharacterSheet(firestore, campaignId, userId, update
  * @param {string} characterUserId - The userId of the character owner (used as document ID)
  * @returns {Promise<void>}
  */
-export async function deleteCharacterSheet(firestore, campaignId, characterUserId) {
+export async function deleteCharacterSheet(
+  firestore,
+  campaignId,
+  characterUserId
+) {
   try {
     // Delete the character sheet document
-    const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', characterUserId);
+    const characterRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "characters",
+      characterUserId
+    );
     await deleteDoc(characterRef);
-    
+
     // Delete all tokens associated with this character across all maps
-    const vttRef = collection(firestore, 'campaigns', campaignId, 'vtt');
+    const vttRef = collection(firestore, "campaigns", campaignId, "vtt");
     const mapsSnapshot = await getDocs(vttRef);
-    
+
     let tokensDeleted = 0;
     for (const mapDoc of mapsSnapshot.docs) {
       const mapId = mapDoc.id;
-      const tokensRef = collection(firestore, 'campaigns', campaignId, 'vtt', mapId, 'tokens');
-      const tokensQuery = query(tokensRef, where('characterId', '==', characterUserId));
+      const tokensRef = collection(
+        firestore,
+        "campaigns",
+        campaignId,
+        "vtt",
+        mapId,
+        "tokens"
+      );
+      const tokensQuery = query(
+        tokensRef,
+        where("characterId", "==", characterUserId)
+      );
       const tokensSnapshot = await getDocs(tokensQuery);
-      
+
       // Delete each token linked to this character
       for (const tokenDoc of tokensSnapshot.docs) {
-        await deleteDoc(doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'tokens', tokenDoc.id));
+        await deleteDoc(
+          doc(
+            firestore,
+            "campaigns",
+            campaignId,
+            "vtt",
+            mapId,
+            "tokens",
+            tokenDoc.id
+          )
+        );
         tokensDeleted++;
       }
     }
-    
+
     if (tokensDeleted > 0) {
-      console.log(`Deleted ${tokensDeleted} token(s) associated with character ${characterUserId}`);
+      console.log(
+        `Deleted ${tokensDeleted} token(s) associated with character ${characterUserId}`
+      );
     }
-    
+
     // Update campaign member to remove character reference
-    const memberRef = doc(firestore, 'campaigns', campaignId, 'members', characterUserId);
+    const memberRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "members",
+      characterUserId
+    );
     await updateDoc(memberRef, {
       hasCharacterSheet: false,
       characterName: null,
       characterClass: null,
       characterLevel: null,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error('Error deleting character sheet:', error);
+    console.error("Error deleting character sheet:", error);
     throw error;
   }
 }
@@ -286,15 +388,20 @@ export async function deleteCharacterSheet(firestore, campaignId, characterUserI
  */
 export async function getCampaignCharacters(firestore, campaignId) {
   try {
-    const charactersRef = collection(firestore, 'campaigns', campaignId, 'characters');
+    const charactersRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "characters"
+    );
     const snapshot = await getDocs(charactersRef);
-    
-    return snapshot.docs.map(doc => ({
+
+    return snapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
   } catch (error) {
-    console.error('Error fetching campaign characters:', error);
+    console.error("Error fetching campaign characters:", error);
     throw error;
   }
 }
@@ -307,23 +414,28 @@ export async function getCampaignCharacters(firestore, campaignId) {
  * @param {number} experienceGained - XP to add
  * @returns {Promise<Object>} Updated character with level changes
  */
-export async function addExperience(firestore, campaignId, userId, experienceGained) {
+export async function addExperience(
+  firestore,
+  campaignId,
+  userId,
+  experienceGained
+) {
   try {
     const character = await getCharacterSheet(firestore, campaignId, userId);
     if (!character) {
-      throw new Error('Character sheet not found');
+      throw new Error("Character sheet not found");
     }
-    
+
     const newExperience = character.experience + experienceGained;
     const updates = { experience: newExperience };
-    
+
     // Check for level up based on D&D 5e XP table
     const xpThresholds = [
-      0,     // Level 1
-      300,   // Level 2
-      900,   // Level 3
-      2700,  // Level 4
-      6500,  // Level 5
+      0, // Level 1
+      300, // Level 2
+      900, // Level 3
+      2700, // Level 4
+      6500, // Level 5
       14000, // Level 6
       23000, // Level 7
       34000, // Level 8
@@ -338,9 +450,9 @@ export async function addExperience(firestore, campaignId, userId, experienceGai
       225000, // Level 17
       265000, // Level 18
       305000, // Level 19
-      355000  // Level 20
+      355000, // Level 20
     ];
-    
+
     let newLevel = character.level;
     for (let level = character.level + 1; level <= 20; level++) {
       if (newExperience >= xpThresholds[level - 1]) {
@@ -349,18 +461,18 @@ export async function addExperience(firestore, campaignId, userId, experienceGai
         break;
       }
     }
-    
+
     if (newLevel > character.level) {
       updates.level = newLevel;
       // Recalculate proficiency bonus
       updates.proficiencyBonus = Math.ceil(newLevel / 4) + 1;
-      
+
       // TODO: Add level-up benefits (HP increase, new features, etc.)
     }
-    
+
     return await updateCharacterSheet(firestore, campaignId, userId, updates);
   } catch (error) {
-    console.error('Error adding experience:', error);
+    console.error("Error adding experience:", error);
     throw error;
   }
 }
@@ -374,17 +486,23 @@ export async function addExperience(firestore, campaignId, userId, experienceGai
  * @param {number} tempHP - Temporary hit points (optional)
  * @returns {Promise<Object>} Updated character
  */
-export async function updateHitPoints(firestore, campaignId, userId, newCurrentHP, tempHP = null) {
+export async function updateHitPoints(
+  firestore,
+  campaignId,
+  userId,
+  newCurrentHP,
+  tempHP = null
+) {
   try {
     const updates = { hp: Math.max(0, newCurrentHP) };
-    
+
     if (tempHP !== null) {
       updates.temporaryHitPoints = Math.max(0, tempHP);
     }
-    
+
     return await updateCharacterSheet(firestore, campaignId, userId, updates);
   } catch (error) {
-    console.error('Error updating hit points:', error);
+    console.error("Error updating hit points:", error);
     throw error;
   }
 }

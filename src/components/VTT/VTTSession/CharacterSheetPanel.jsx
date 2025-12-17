@@ -3,17 +3,22 @@
  * Character sheet viewer for VTT
  * DMs can see all character sheets, players see only their own
  */
-import React, { useState, useEffect, useContext } from 'react';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { FirebaseContext } from '../../../services/FirebaseContext';
-import { CharacterSheet } from '../../CharacterSheet';
-import { createPlayerStagedToken } from '../../../services/characterSheetService';
-import './CharacterSheetPanel.css';
+import React, { useState, useEffect, useContext } from "react";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { FirebaseContext } from "../../../services/FirebaseContext";
+import { CharacterSheet } from "../../CharacterSheet";
+import { createPlayerStagedToken } from "../../../services/characterSheetService";
+import "./CharacterSheetPanel.css";
 
-function CharacterSheetPanel({ campaignId, isUserDM, initialCharacterId = null }) {
+function CharacterSheetPanel({
+  campaignId,
+  isUserDM,
+  initialCharacterId = null,
+}) {
   const { user, firestore, storage } = useContext(FirebaseContext);
   const [characters, setCharacters] = useState([]);
-  const [selectedCharacterId, setSelectedCharacterId] = useState(initialCharacterId);
+  const [selectedCharacterId, setSelectedCharacterId] =
+    useState(initialCharacterId);
   const [loading, setLoading] = useState(true);
   const [generatingTokenFor, setGeneratingTokenFor] = useState(null);
 
@@ -28,28 +33,33 @@ function CharacterSheetPanel({ campaignId, isUserDM, initialCharacterId = null }
   useEffect(() => {
     if (!firestore || !campaignId) return;
 
-    const charactersRef = collection(firestore, 'campaigns', campaignId, 'characters');
-    
+    const charactersRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "characters"
+    );
+
     // DM sees all characters, players see only their own
-    const q = isUserDM 
+    const q = isUserDM
       ? query(charactersRef)
-      : query(charactersRef, where('userId', '==', user?.uid));
+      : query(charactersRef, where("userId", "==", user?.uid));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const chars = [];
       snapshot.forEach((doc) => {
         chars.push({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         });
       });
       setCharacters(chars);
-      
+
       // Auto-select first character if none selected
       if (chars.length > 0 && !selectedCharacterId) {
         setSelectedCharacterId(chars[0].id);
       }
-      
+
       setLoading(false);
     });
 
@@ -59,13 +69,18 @@ function CharacterSheetPanel({ campaignId, isUserDM, initialCharacterId = null }
   // Handle manual token generation for a character
   const handleGenerateToken = async (character) => {
     if (!isUserDM || generatingTokenFor) return;
-    
+
     setGeneratingTokenFor(character.id);
     try {
-      await createPlayerStagedToken(firestore, campaignId, character.id, character);
+      await createPlayerStagedToken(
+        firestore,
+        campaignId,
+        character.id,
+        character
+      );
       console.log(`Successfully generated token for ${character.name}`);
     } catch (error) {
-      console.error('Failed to generate token:', error);
+      console.error("Failed to generate token:", error);
       alert(`Failed to generate token for ${character.name}: ${error.message}`);
     } finally {
       setGeneratingTokenFor(null);
@@ -89,9 +104,9 @@ function CharacterSheetPanel({ campaignId, isUserDM, initialCharacterId = null }
         <div className="empty-state">
           <h3>No Characters Found</h3>
           <p>
-            {isUserDM 
-              ? 'No player characters have been created yet.'
-              : 'You don\'t have a character in this campaign yet.'}
+            {isUserDM
+              ? "No player characters have been created yet."
+              : "You don't have a character in this campaign yet."}
           </p>
         </div>
       </div>
@@ -106,19 +121,21 @@ function CharacterSheetPanel({ campaignId, isUserDM, initialCharacterId = null }
           {characters.map((char) => (
             <div
               key={char.id}
-              className={`character-tab ${selectedCharacterId === char.id ? 'active' : ''}`}
+              className={`character-tab ${selectedCharacterId === char.id ? "active" : ""}`}
               onClick={() => setSelectedCharacterId(char.id)}
               role="button"
               tabIndex={0}
               onKeyPress={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   setSelectedCharacterId(char.id);
                 }
               }}
             >
-              <span className="character-name">{char.name || 'Unnamed Character'}</span>
+              <span className="character-name">
+                {char.name || "Unnamed Character"}
+              </span>
               <span className="character-class">
-                {char.class || 'Unknown'} {char.level || 1}
+                {char.class || "Unknown"} {char.level || 1}
               </span>
               {isUserDM && (
                 <button
@@ -130,7 +147,7 @@ function CharacterSheetPanel({ campaignId, isUserDM, initialCharacterId = null }
                   disabled={generatingTokenFor === char.id}
                   title="Generate map token for this character"
                 >
-                  {generatingTokenFor === char.id ? '⏳' : '🎭'}
+                  {generatingTokenFor === char.id ? "⏳" : "🎭"}
                 </button>
               )}
             </div>

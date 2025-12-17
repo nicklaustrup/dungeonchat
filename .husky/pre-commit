@@ -3,64 +3,76 @@
 # Lightweight Husky v9+ style hook (no helper sourcing, future-proof for v10)
 
 if [ "$HUSKY_SKIP_TESTS" = "1" ]; then
-  echo "[husky] Skipping tests due to HUSKY_SKIP_TESTS=1"
+  echo "[husky] Skipping pre-commit hooks due to HUSKY_SKIP_TESTS=1"
   exit 0
 fi
 
-echo "[husky] Pre-commit: running ESLint + related Jest tests"
-
-# Ensure dependencies installed (first-clone scenarios). Fast check for react-scripts.
+# Ensure dependencies installed (first-clone scenarios)
 if ! command -v npx >/dev/null 2>&1 || [ ! -d node_modules ]; then
   echo "[husky] Installing dependencies (bootstrap)"
   npm ci || { echo "[husky] npm ci failed"; exit 1; }
 fi
 
-# Collect staged JS/TS files (Added, Copied, Modified, Renamed, Type changed, Updated, etc.)
-# NOTE: Previous pattern used `\\.` inside single quotes which resulted in matching a literal backslash + dot
-# and therefore failed to detect files. We also strip potential CR characters (Windows) before grep so `$` anchor works.
-STAGED_JS="$(git diff --cached --name-only --diff-filter=ACMRTUXB | tr -d '\r' | grep -E '\.(js|jsx|ts|tsx)$' || true)"
+echo "[husky] Pre-commit: running Prettier, ESLint, and Jest tests via lint-staged"
+npx lint-staged
 
-if [ -z "$STAGED_JS" ]; then
-  echo "[husky] No JS/TS changes – skipping related test run."
-  exit 0
-fi
 
-echo "[husky] Staged JS/TS files:" | sed 's/^/ /'
-for f in $STAGED_JS; do
-  echo "  - $f"
-done
+# Moving to lint-staged in package.json for better maintainability
+# Preserving old code commented out below for reference.
+# ------------------------------------------------------------
 
-echo "[husky] Running ESLint on staged files"
+# # Ensure dependencies installed (first-clone scenarios). Fast check for react-scripts.
+# if ! command -v npx >/dev/null 2>&1 || [ ! -d node_modules ]; then
+#   echo "[husky] Installing dependencies (bootstrap)"
+#   npm ci || { echo "[husky] npm ci failed"; exit 1; }
+# fi
 
-eslintCmd="npx eslint"
-if ! command -v npx >/dev/null 2>&1; then
-  echo "[husky] npx not found; skipping eslint"
-else
-  echo "[husky] Attempting auto-fix (eslint --fix) on staged files"
-  printf '%s\n' $STAGED_JS | xargs $eslintCmd --fix --quiet || fixStatus=$?
-  # Re-stage any files modified by --fix (ignore errors if a file was removed mid-process)
-  echo "[husky] Re-staging potentially fixed files"
-  printf '%s\n' $STAGED_JS | xargs git add -- 2>/dev/null || true
-  if [ "${fixStatus:-0}" -ne 0 ]; then
-    echo "[husky] Auto-fix encountered issues (exit $fixStatus); continuing to strict check"
-  fi
-  echo "[husky] Running strict lint (no warnings allowed)"
-  printf '%s\n' $STAGED_JS | xargs $eslintCmd --max-warnings=0 -- || status=$?
-  if [ "${status:-0}" -ne 0 ]; then
-    echo "[husky] ESLint failed after auto-fix (exit $status). Aborting commit."
-    echo "[husky] Tip: run 'npx eslint . --ext .js,.jsx --fix' to apply broader fixes."
-    exit $status
-  fi
-fi
+# # Collect staged JS/TS files (Added, Copied, Modified, Renamed, Type changed, Updated, etc.)
+# # NOTE: Previous pattern used `\\.` inside single quotes which resulted in matching a literal backslash + dot
+# # and therefore failed to detect files. We also strip potential CR characters (Windows) before grep so `$` anchor works.
+# STAGED_JS="$(git diff --cached --name-only --diff-filter=ACMRTUXB | tr -d '\r' | grep -E '\.(js|jsx|ts|tsx)$' || true)"
 
-echo "[husky] ESLint passed; running related Jest tests (will pass if no matching tests)"
+# if [ -z "$STAGED_JS" ]; then
+#   echo "[husky] No JS/TS changes – skipping related test run."
+#   exit 0
+# fi
 
-# Run related tests; if Jest returns 1 (fail) abort; other codes (e.g., no tests) allowed via --passWithNoTests
-printf '%s\n' $STAGED_JS | xargs npm run test:changed -- || status=$?
+# echo "[husky] Staged JS/TS files:" | sed 's/^/ /'
+# for f in $STAGED_JS; do
+#   echo "  - $f"
+# done
 
-if [ "${status:-0}" -ne 0 ]; then
-  echo "[husky] Related tests failed (exit $status). Aborting commit."
-  exit $status
-fi
+# echo "[husky] Running ESLint on staged files"
 
-echo "[husky] Pre-commit tests passed"
+# eslintCmd="npx eslint"
+# if ! command -v npx >/dev/null 2>&1; then
+#   echo "[husky] npx not found; skipping eslint"
+# else
+#   echo "[husky] Attempting auto-fix (eslint --fix) on staged files"
+#   printf '%s\n' $STAGED_JS | xargs $eslintCmd --fix --quiet || fixStatus=$?
+#   # Re-stage any files modified by --fix (ignore errors if a file was removed mid-process)
+#   echo "[husky] Re-staging potentially fixed files"
+#   printf '%s\n' $STAGED_JS | xargs git add -- 2>/dev/null || true
+#   if [ "${fixStatus:-0}" -ne 0 ]; then
+#     echo "[husky] Auto-fix encountered issues (exit $fixStatus); continuing to strict check"
+#   fi
+#   echo "[husky] Running strict lint (no warnings allowed)"
+#   printf '%s\n' $STAGED_JS | xargs $eslintCmd --max-warnings=0 -- || status=$?
+#   if [ "${status:-0}" -ne 0 ]; then
+#     echo "[husky] ESLint failed after auto-fix (exit $status). Aborting commit."
+#     echo "[husky] Tip: run 'npx eslint . --ext .js,.jsx --fix' to apply broader fixes."
+#     exit $status
+#   fi
+# fi
+
+# echo "[husky] ESLint passed; running related Jest tests (will pass if no matching tests)"
+
+# # Run related tests; if Jest returns 1 (fail) abort; other codes (e.g., no tests) allowed via --passWithNoTests
+# printf '%s\n' $STAGED_JS | xargs npm run test:changed -- || status=$?
+
+# if [ "${status:-0}" -ne 0 ]; then
+#   echo "[husky] Related tests failed (exit $status). Aborting commit."
+#   exit $status
+# fi
+
+# echo "[husky] Pre-commit tests passed"

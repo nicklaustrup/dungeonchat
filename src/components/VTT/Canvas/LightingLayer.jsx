@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Layer, Circle, Rect } from 'react-konva';
+import React, { useState, useEffect } from "react";
+import { Layer, Circle, Rect } from "react-konva";
 
 /**
  * LightingLayer Component
  * Renders dynamic lighting effects on the canvas
  */
-const LightingLayer = ({ 
-  lights = [], 
-  globalLighting = {}, 
-  mapWidth, 
+const LightingLayer = ({
+  lights = [],
+  globalLighting = {},
+  mapWidth,
   mapHeight,
   visible = true,
   selectedLightId = null,
   onLightClick = null,
-  isDM = false
+  isDM = false,
 }) => {
   // Animation state - continuously updates to drive flicker/pulse effects
   const [animationTime, setAnimationTime] = useState(Date.now());
@@ -21,7 +21,9 @@ const LightingLayer = ({
   // Animate lights continuously using requestAnimationFrame
   useEffect(() => {
     // Only animate if there are lights with flicker or animated effects
-    const hasAnimatedLights = lights.some(light => light.flicker || light.animated);
+    const hasAnimatedLights = lights.some(
+      (light) => light.flicker || light.animated
+    );
     if (!hasAnimatedLights || !visible || !globalLighting.enabled) {
       return;
     }
@@ -32,7 +34,7 @@ const LightingLayer = ({
       frameId = requestAnimationFrame(animate);
     };
     frameId = requestAnimationFrame(animate);
-    
+
     return () => cancelAnimationFrame(frameId);
   }, [lights, visible, globalLighting.enabled]);
 
@@ -43,7 +45,7 @@ const LightingLayer = ({
   // Calculate effective ambient light by blending time of day influence with manual ambient setting
   const timeOfDay = globalLighting.timeOfDay ?? 12.0;
   const manualAmbient = globalLighting.ambientLight ?? 0.5;
-  
+
   // Time of Day provides a base lighting level (outdoors context)
   let timeBasedLight = 0.5; // Default neutral
   if (timeOfDay >= 8 && timeOfDay <= 18) {
@@ -59,18 +61,20 @@ const LightingLayer = ({
     // Night time (8pm - 6am): very dark with moonlight
     timeBasedLight = 0.15; // Moonlight level
   }
-  
+
   // Determine time of day categories first (needed for calculations below)
   const isNight = timeOfDay < 6 || timeOfDay > 20;
-  const isDusk = (timeOfDay >= 18 && timeOfDay <= 20) || (timeOfDay >= 6 && timeOfDay < 8);
-  
+  const isDusk =
+    (timeOfDay >= 18 && timeOfDay <= 20) || (timeOfDay >= 6 && timeOfDay < 8);
+
   // Blend time-based and manual ambient: manual ambient acts as a multiplier/override
   // At 100% manual: use mostly manual (indoor override: bright even at night)
   // At 0% manual: very dark (indoor without lights)
   // Middle values: blend outdoor time with indoor adjustment
   const blendWeight = Math.abs(manualAmbient - 0.5) * 2; // How far from neutral (0.5)
-  let effectiveAmbient = manualAmbient * blendWeight + timeBasedLight * (1 - blendWeight);
-  
+  let effectiveAmbient =
+    manualAmbient * blendWeight + timeBasedLight * (1 - blendWeight);
+
   // IMPORTANT: During night time (when time-based light is low), reduce effective ambient
   // so player lights remain visible up to 70% ambient instead of cutting off at 40%
   // This ensures torches/lanterns stay useful during nighttime even with higher ambient
@@ -78,26 +82,27 @@ const LightingLayer = ({
     // Scale down the effective ambient during night to preserve light visibility
     // At night with 70% manual ambient, this brings effective down to ~40% (lights still visible)
     const nightReduction = 0.6; // Reduce by 40% during deep night
-    effectiveAmbient = effectiveAmbient * (1 - (1 - timeBasedLight / 0.3) * nightReduction);
+    effectiveAmbient =
+      effectiveAmbient * (1 - (1 - timeBasedLight / 0.3) * nightReduction);
   }
-  
+
   // CRITICAL: Cap minimum effective ambient at 2% to prevent complete darkness from disabling lights
   // At 0% ambient slider, this ensures player lights still cut through (darkness at 98% not 100%)
   effectiveAmbient = Math.max(effectiveAmbient, 0.02);
-  
+
   // Calculate darkness with slight curve for natural perception
   const darknessOpacity = Math.pow(1 - effectiveAmbient, 1.15);
-  
+
   // Fog color based on time of day and light level
   // Night = blue-black, Day = light gray, transitions smooth
   let fogColor;
-  
+
   if (effectiveAmbient < 0.2) {
     // Very dark: pitch black or deep blue-black for night
-    fogColor = isNight ? '#050510' : '#000000';
+    fogColor = isNight ? "#050510" : "#000000";
   } else if (effectiveAmbient < 0.35) {
     // Dark: blue-black night or dark gray
-    fogColor = isNight ? '#0a0a18' : '#1a1a1a';
+    fogColor = isNight ? "#0a0a18" : "#1a1a1a";
   } else if (effectiveAmbient < 0.55) {
     // Medium-low: transition zone
     const progress = (effectiveAmbient - 0.35) / 0.2;
@@ -133,7 +138,7 @@ const LightingLayer = ({
     }
   } else {
     // Very bright: light gray
-    fogColor = isDusk ? '#c8b8a8' : '#b0b0b0';
+    fogColor = isDusk ? "#c8b8a8" : "#b0b0b0";
   }
 
   return (
@@ -157,21 +162,23 @@ const LightingLayer = ({
         // Calculate flicker effect (subtle, realistic fire)
         let radiusMultiplier = 1.0;
         let intensityMultiplier = 1.0;
-        
+
         if (light.flicker) {
           // Flicker intensity: 0.0 = no flicker, 1.0 = maximum flicker
           const flickerIntensity = light.flickerIntensity ?? 0.5; // Default to medium
           const flickerSpeed = 0.005; // Medium speed
-          
+
           // Combine two sine waves for more organic flicker
-          const flicker1 = Math.sin(animationTime * flickerSpeed + index * 10) * 0.04;
-          const flicker2 = Math.sin(animationTime * flickerSpeed * 1.7 + index * 5) * 0.03;
+          const flicker1 =
+            Math.sin(animationTime * flickerSpeed + index * 10) * 0.04;
+          const flicker2 =
+            Math.sin(animationTime * flickerSpeed * 1.7 + index * 5) * 0.03;
           const baseFlicker = flicker1 + flicker2; // Range: -0.07 to +0.07
-          
+
           // Scale by intensity: 0.0 = no effect, 1.0 = full effect
           const scaledFlicker = baseFlicker * flickerIntensity;
-          const flicker = scaledFlicker + (1 - (flickerIntensity * 0.07)); // Adjust center point
-          
+          const flicker = scaledFlicker + (1 - flickerIntensity * 0.07); // Adjust center point
+
           radiusMultiplier = flicker;
           intensityMultiplier = flicker;
         }
@@ -181,20 +188,21 @@ const LightingLayer = ({
           // Pulse intensity: 0.0 = no pulse, 1.0 = maximum pulse
           const pulseIntensity = light.pulseIntensity ?? 0.5; // Default to medium
           const pulseSpeed = 0.001; // Very slow, 1 full cycle every ~6 seconds
-          
+
           // Base pulse wave: -1.0 to +1.0
           const basePulse = Math.sin(animationTime * pulseSpeed + index);
-          
+
           // Scale by intensity: 0.0 = no effect (stays at 1.0), 1.0 = 0.5 to 1.0 range
           const pulseAmplitude = 0.25 * pulseIntensity; // Max amplitude = 0.25
           const pulse = basePulse * pulseAmplitude + (1 - pulseAmplitude);
-          
+
           radiusMultiplier *= pulse;
           intensityMultiplier *= pulse;
         }
 
         const effectiveRadius = light.radius * radiusMultiplier;
-        const effectiveIntensity = (light.intensity || 0.8) * intensityMultiplier;
+        const effectiveIntensity =
+          (light.intensity || 0.8) * intensityMultiplier;
         const isSelected = selectedLightId === light.id;
 
         return (
@@ -211,13 +219,13 @@ const LightingLayer = ({
               fillRadialGradientEndRadius={effectiveRadius}
               fillRadialGradientColorStops={[
                 0,
-                'rgba(255, 255, 255, 1)',
+                "rgba(255, 255, 255, 1)",
                 0.5,
-                'rgba(255, 255, 255, 0.9)',
+                "rgba(255, 255, 255, 0.9)",
                 0.8,
-                'rgba(255, 255, 255, 0.6)',
+                "rgba(255, 255, 255, 0.6)",
                 1,
-                'rgba(255, 255, 255, 0)'
+                "rgba(255, 255, 255, 0)",
               ]}
               listening={false}
               globalCompositeOperation="destination-out"
@@ -234,11 +242,11 @@ const LightingLayer = ({
               fillRadialGradientEndRadius={effectiveRadius}
               fillRadialGradientColorStops={[
                 0,
-                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.3),
+                hexToRgba(light.color || "#FFFFFF", effectiveIntensity * 0.3),
                 0.5,
-                hexToRgba(light.color || '#FFFFFF', effectiveIntensity * 0.15),
+                hexToRgba(light.color || "#FFFFFF", effectiveIntensity * 0.15),
                 1,
-                'rgba(0, 0, 0, 0)'
+                "rgba(0, 0, 0, 0)",
               ]}
               listening={false}
               globalCompositeOperation="source-over"
@@ -259,13 +267,13 @@ const LightingLayer = ({
                     listening={false}
                   />
                 )}
-                
+
                 {/* Clickable center marker */}
                 <Circle
                   x={light.position.x}
                   y={light.position.y}
                   radius={8}
-                  fill={light.color || '#FFFFFF'}
+                  fill={light.color || "#FFFFFF"}
                   stroke="#ffffff"
                   strokeWidth={1.5}
                   opacity={isSelected ? 0.9 : 0.6}
@@ -282,13 +290,13 @@ const LightingLayer = ({
                     }
                   }}
                   onMouseEnter={(e) => {
-                    e.target.getStage().container().style.cursor = 'pointer';
+                    e.target.getStage().container().style.cursor = "pointer";
                   }}
                   onMouseLeave={(e) => {
-                    e.target.getStage().container().style.cursor = 'default';
+                    e.target.getStage().container().style.cursor = "default";
                   }}
                 />
-                
+
                 {/* Light icon */}
                 <Circle
                   x={light.position.x}
@@ -313,7 +321,7 @@ const LightingLayer = ({
 const hexToRgba = (hex, alpha = 1) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return `rgba(255, 255, 255, ${alpha})`;
-  
+
   return `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${alpha})`;
 };
 

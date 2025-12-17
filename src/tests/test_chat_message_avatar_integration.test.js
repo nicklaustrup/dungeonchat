@@ -1,43 +1,45 @@
-import React from 'react';
-import { screen } from '@testing-library/react';
-import { render } from './test-utils';
-import ChatMessage from '../components/ChatRoom/ChatMessage';
+import React from "react";
+import { screen } from "@testing-library/react";
+import { render } from "./test-utils";
+import ChatMessage from "../components/ChatRoom/ChatMessage";
 
 // Mock EmojiMenu to avoid side-effects
-jest.mock('../components/ChatInput/EmojiMenu', () => ({
+jest.mock("../components/ChatInput/EmojiMenu", () => ({
   __esModule: true,
-  default: { open: jest.fn() }
+  default: { open: jest.fn() },
 }));
 
 // Mock presence hook
-jest.mock('../services/PresenceContext', () => ({
-  usePresence: () => ({ state: 'online', lastSeen: Date.now() })
+jest.mock("../services/PresenceContext", () => ({
+  usePresence: () => ({ state: "online", lastSeen: Date.now() }),
 }));
 
 // Mock Firebase context
-jest.mock('../services/FirebaseContext', () => ({
+jest.mock("../services/FirebaseContext", () => ({
   useFirebase: () => ({
-    auth: { currentUser: { uid: 'u1', email: 'u1@example.com' } },
+    auth: { currentUser: { uid: "u1", email: "u1@example.com" } },
     firestore: {},
-    rtdb: null
-  })
+    rtdb: null,
+  }),
 }));
 
 // Mock avatar util to avoid randomness
-jest.mock('../utils/avatar', () => ({
-  getFallbackAvatar: jest.fn().mockReturnValue('data:image/png;base64,fallback2')
+jest.mock("../utils/avatar", () => ({
+  getFallbackAvatar: jest
+    .fn()
+    .mockReturnValue("data:image/png;base64,fallback2"),
 }));
 
-describe('ChatMessage integration (avatar extraction)', () => {
-  test('renders avatar component when showMeta is true', () => {
+describe("ChatMessage integration (avatar extraction)", () => {
+  test("renders avatar component when showMeta is true", () => {
     const message = {
-      id: 'm1',
-      uid: 'u1',
-      text: 'Hello world',
+      id: "m1",
+      uid: "u1",
+      text: "Hello world",
       createdAt: new Date(),
-      displayName: 'User One'
+      displayName: "User One",
     };
     render(<ChatMessage message={message} showMeta={true} />);
-    expect(screen.getByTestId('avatar-with-presence')).toBeInTheDocument();
+    expect(screen.getByTestId("avatar-with-presence")).toBeInTheDocument();
   });
 });

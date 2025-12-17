@@ -3,46 +3,144 @@
  * Reaction bar (hover buttons), reaction chips list & reply/menu trigger button styling.
  * Excludes tooltip visuals which are centralized in ChatMessage.tooltips.css for reuse.
  */
-.reaction-buttons { display:flex; gap:4px; position:absolute; top:-10px; right:12px; background:rgba(0,0,0,0.62); padding:4px 6px; border-radius:8px; opacity:0; transition:opacity .18s ease; backdrop-filter:blur(6px) saturate(150%); border:1px solid rgba(255,255,255,0.12); }
-.reaction-buttons.force-visible { opacity:1 !important; pointer-events:auto; }
-.reaction-btn, .reply-btn, .message-menu-trigger { background:none; border:none; font-size:16px; cursor:pointer; padding:4px; border-radius:8px; transition: background .18s ease, color .18s ease; display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; line-height:1; }
-.reaction-btn:hover, .reply-btn:hover, .message-menu-trigger:hover { background: rgba(255,255,255,0.08); }
-.light-theme .reaction-btn:hover { background: rgba(0,0,0,0.08); }
-.light-theme .reply-btn:hover, .light-theme .message-menu-trigger:hover { background: rgba(0,0,0,0.08); }
-.reaction-btn:active { background: rgba(255,255,255,0.15); }
-.reply-btn:active, .message-menu-trigger:active { background: rgba(255,255,255,0.15); }
-.message-reactions { display:flex; flex-wrap:wrap; gap:4px; margin:2px 0 0 0; position:relative; z-index:1; }
+.reaction-buttons {
+  display: flex;
+  gap: 4px;
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.62);
+  padding: 4px 6px;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  backdrop-filter: blur(6px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.reaction-buttons.force-visible {
+  opacity: 1 !important;
+  pointer-events: auto;
+}
+.reaction-btn,
+.reply-btn,
+.message-menu-trigger {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  line-height: 1;
+}
+.reaction-btn:hover,
+.reply-btn:hover,
+.message-menu-trigger:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.light-theme .reaction-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+.light-theme .reply-btn:hover,
+.light-theme .message-menu-trigger:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+.reaction-btn:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+.reply-btn:active,
+.message-menu-trigger:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+.message-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 2px 0 0 0;
+  position: relative;
+  z-index: 1;
+}
 /* Default gray style for others' reactions */
-.reaction { background-color: rgba(200,200,200,0.2); border:1px solid rgba(200,200,200,0.3); border-radius:8px; padding:0 6px; font-size:12px; cursor:pointer; transition: background-color .18s ease, border-color .18s ease; min-height:24px; display:inline-flex; align-items:center; }
-.reaction:hover { background-color: rgba(255,255,255,0.18); }
+.reaction {
+  background-color: rgba(200, 200, 200, 0.2);
+  border: 1px solid rgba(200, 200, 200, 0.3);
+  border-radius: 8px;
+  padding: 0 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+.reaction:hover {
+  background-color: rgba(255, 255, 255, 0.18);
+}
 /* Blue highlight style when the current user has reacted */
-.reaction.reacted { background-color: rgba(11,148,246,0.144); border-color:#0b93f6; color:#fff; font-weight:600; }
-.reaction.reacted:hover { background-color: rgba(11,147,246,0.34); border-color:#31a4ff; }
-body:not(.chat-menu-open) .message:hover .reaction-buttons { opacity:1; }
-body.chat-menu-open .reaction-buttons:not(.force-visible) { opacity:0 !important; }
+.reaction.reacted {
+  background-color: rgba(11, 148, 246, 0.144);
+  border-color: #0b93f6;
+  color: #fff;
+  font-weight: 600;
+}
+.reaction.reacted:hover {
+  background-color: rgba(11, 147, 246, 0.34);
+  border-color: #31a4ff;
+}
+body:not(.chat-menu-open) .message:hover .reaction-buttons {
+  opacity: 1;
+}
+body.chat-menu-open .reaction-buttons:not(.force-visible) {
+  opacity: 0 !important;
+}
 
 /* Desktop-only override: ensure reaction bar appears on hover even if JS applied hidden class.
 	 This leaves mobile (touch) behavior unchanged because the media query requires a hover-capable pointer. */
 @media (hover: hover) and (pointer: fine) {
-	body:not(.chat-menu-open) .message:hover .reaction-buttons.hidden-collapsed {
-		opacity: 1 !important;
-		pointer-events: auto;
-	}
+  body:not(.chat-menu-open) .message:hover .reaction-buttons.hidden-collapsed {
+    opacity: 1 !important;
+    pointer-events: auto;
+  }
 }
 
 /* Phase 1: coarse pointer (touch) - make reactions inline and always visible */
 @media (hover: none) and (pointer: coarse) {
-	.reaction-buttons {
-		position: static;
-		top: auto; right: auto;
-		background: transparent;
-		padding: 2px 0 0;
-		backdrop-filter: none;
-		border: none;
-		/* hidden by default; shown by JS adding .force-visible */
-	}
-	.reaction-buttons.force-visible, .message[data-selected="true"] .reaction-buttons { opacity:1 !important; }
-	.message:not([data-selected="true"]) .reaction-buttons { opacity:0; }
-	.reaction-btn, .reply-btn, .message-menu-trigger { background: var(--bg-light); border-radius: 8px; }
-	.reaction-btn:hover, .reply-btn:hover, .message-menu-trigger:hover { background: var(--primary-color); color:#fff; }
+  .reaction-buttons {
+    position: static;
+    top: auto;
+    right: auto;
+    background: transparent;
+    padding: 2px 0 0;
+    backdrop-filter: none;
+    border: none;
+    /* hidden by default; shown by JS adding .force-visible */
+  }
+  .reaction-buttons.force-visible,
+  .message[data-selected='true'] .reaction-buttons {
+    opacity: 1 !important;
+  }
+  .message:not([data-selected='true']) .reaction-buttons {
+    opacity: 0;
+  }
+  .reaction-btn,
+  .reply-btn,
+  .message-menu-trigger {
+    background: var(--bg-light);
+    border-radius: 8px;
+  }
+  .reaction-btn:hover,
+  .reply-btn:hover,
+  .message-menu-trigger:hover {
+    background: var(--primary-color);
+    color: #fff;
+  }
 }

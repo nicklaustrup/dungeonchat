@@ -1,15 +1,15 @@
-import { useCallback } from 'react';
-import { collection, query, where, orderBy } from 'firebase/firestore';
-import { useFirebase } from '../FirebaseContext';
-import { useCachedQuery, useCachedDocument } from './useCachedDocument';
-import firestoreCache from './FirestoreCache';
+import { useCallback } from "react";
+import { collection, query, where, orderBy } from "firebase/firestore";
+import { useFirebase } from "../FirebaseContext";
+import { useCachedQuery, useCachedDocument } from "./useCachedDocument";
+import firestoreCache from "./FirestoreCache";
 
 /**
  * Cached Characters Hook
- * 
+ *
  * Provides cached access to user's characters with real-time updates
  * Automatically handles cache invalidation on character changes
- * 
+ *
  * Features:
  * - Automatic caching of character lists
  * - Real-time updates via Firestore listeners
@@ -26,11 +26,11 @@ export function useUserCharacters() {
   const queryFn = useCallback(() => {
     if (!user?.uid) return null;
 
-    const charactersRef = collection(firestore, 'characters');
+    const charactersRef = collection(firestore, "characters");
     return query(
       charactersRef,
-      where('uid', '==', user.uid),
-      orderBy('createdAt', 'desc')
+      where("uid", "==", user.uid),
+      orderBy("createdAt", "desc")
     );
   }, [firestore, user]);
 
@@ -43,7 +43,7 @@ export function useUserCharacters() {
     {
       ttl: 5 * 60 * 1000, // 5 minutes
       realtime: true,
-      disabled: !user?.uid
+      disabled: !user?.uid,
     }
   );
 
@@ -53,7 +53,7 @@ export function useUserCharacters() {
     loading: !user?.uid || loading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 
@@ -65,12 +65,12 @@ export function useCampaignCharacters(campaignId) {
 
   const queryFn = useCallback(() => {
     if (!campaignId) return null;
-    
-    const charactersRef = collection(firestore, 'characters');
+
+    const charactersRef = collection(firestore, "characters");
     return query(
       charactersRef,
-      where('campaignId', '==', campaignId),
-      orderBy('createdAt', 'asc')
+      where("campaignId", "==", campaignId),
+      orderBy("createdAt", "asc")
     );
   }, [firestore, campaignId]);
 
@@ -83,7 +83,7 @@ export function useCampaignCharacters(campaignId) {
     {
       ttl: 5 * 60 * 1000, // 5 minutes
       realtime: true,
-      disabled: !campaignId
+      disabled: !campaignId,
     }
   );
 
@@ -92,7 +92,7 @@ export function useCampaignCharacters(campaignId) {
     loading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 
@@ -104,12 +104,12 @@ export function useCachedCharacter(characterId) {
 
   const { data, loading, error, refresh, invalidate } = useCachedDocument(
     firestore,
-    'characters',
+    "characters",
     characterId,
     {
       ttl: 5 * 60 * 1000, // 5 minutes
       realtime: true,
-      disabled: !characterId
+      disabled: !characterId,
     }
   );
 
@@ -118,7 +118,7 @@ export function useCachedCharacter(characterId) {
     loading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 
@@ -131,18 +131,15 @@ export function useCachedCharacters(characterIds) {
 
   const queryFn = useCallback(() => {
     if (!characterIds || characterIds.length === 0) return null;
-    
-    const charactersRef = collection(firestore, 'characters');
+
+    const charactersRef = collection(firestore, "characters");
     // Firestore 'in' queries are limited to 10 items
     const limitedIds = characterIds.slice(0, 10);
-    
-    return query(
-      charactersRef,
-      where('__name__', 'in', limitedIds)
-    );
+
+    return query(charactersRef, where("__name__", "in", limitedIds));
   }, [firestore, characterIds]);
 
-  const cacheKey = `characters/batch/${characterIds?.sort().join(',')}`;
+  const cacheKey = `characters/batch/${characterIds?.sort().join(",")}`;
 
   const { data, loading, error, refresh, invalidate } = useCachedQuery(
     firestore,
@@ -151,7 +148,7 @@ export function useCachedCharacters(characterIds) {
     {
       ttl: 5 * 60 * 1000, // 5 minutes
       realtime: true,
-      disabled: !characterIds || characterIds.length === 0
+      disabled: !characterIds || characterIds.length === 0,
     }
   );
 
@@ -160,7 +157,7 @@ export function useCachedCharacters(characterIds) {
     loading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 
@@ -173,13 +170,13 @@ export function useActiveCharacter(campaignId) {
 
   const queryFn = useCallback(() => {
     if (!user?.uid || !campaignId) return null;
-    
-    const charactersRef = collection(firestore, 'characters');
+
+    const charactersRef = collection(firestore, "characters");
     return query(
       charactersRef,
-      where('uid', '==', user.uid),
-      where('campaignId', '==', campaignId),
-      where('isActive', '==', true)
+      where("uid", "==", user.uid),
+      where("campaignId", "==", campaignId),
+      where("isActive", "==", true)
     );
   }, [firestore, user, campaignId]);
 
@@ -192,7 +189,7 @@ export function useActiveCharacter(campaignId) {
     {
       ttl: 5 * 60 * 1000, // 5 minutes
       realtime: true,
-      disabled: !user?.uid || !campaignId
+      disabled: !user?.uid || !campaignId,
     }
   );
 
@@ -201,7 +198,7 @@ export function useActiveCharacter(campaignId) {
     loading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 
@@ -228,7 +225,7 @@ export function invalidateCampaignCharacters(campaignId) {
  * Call this after updating character details
  */
 export function invalidateCharacter(characterId) {
-  firestoreCache.invalidateDocument('characters', characterId);
+  firestoreCache.invalidateDocument("characters", characterId);
 }
 
 /**
@@ -236,7 +233,7 @@ export function invalidateCharacter(characterId) {
  * Use sparingly - only for major character-related changes
  */
 export function invalidateAllCharacters() {
-  firestoreCache.invalidateCollection('characters');
+  firestoreCache.invalidateCollection("characters");
 }
 
 // Default export with all character cache utilities
@@ -249,7 +246,7 @@ const charactersCache = {
   invalidateUserCharacters,
   invalidateCampaignCharacters,
   invalidateCharacter,
-  invalidateAllCharacters
+  invalidateAllCharacters,
 };
 
 export default charactersCache;

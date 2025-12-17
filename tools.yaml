@@ -5,7 +5,7 @@ sources:
   firebase-toolbox:
     kind: firestore
     project: ${FIREBASE_PROJECT_ID}
-    database: "(default)"
+    database: '(default)'
 # ----------------------------------------------------------------------
 # 2. TOOLS Section: Defines the specific actions (queries) the AI can run
 # ----------------------------------------------------------------------
@@ -70,9 +70,9 @@ tools:
       - name: target_collection
         type: string
         description: The collection to inspect (e.g., 'products' or 'customers').
-    
+
     # You would typically run a limited query here to get data to infer schema from
-    collectionPath: "{{.target_collection}}"
+    collectionPath: '{{.target_collection}}'
     limit: 5 # Limit to 5 documents to save on reads and infer schema
 
 # ----------------------------------------------------------------------

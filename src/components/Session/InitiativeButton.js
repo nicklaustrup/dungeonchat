@@ -1,50 +1,52 @@
-import React, { useState, useEffect } from 'react';
-import { useFirebase } from '../../services/FirebaseContext';
-import { initiativeService } from '../../services/initiativeService';
-import './InitiativeButton.css';
+import React, { useState, useEffect } from "react";
+import { useFirebase } from "../../services/FirebaseContext";
+import { initiativeService } from "../../services/initiativeService";
+import "./InitiativeButton.css";
 
-const InitiativeButton = ({ campaignId, size = 'medium' }) => {
+const InitiativeButton = ({ campaignId, size = "medium" }) => {
   const { firestore } = useFirebase();
   const [combatSummary, setCombatSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-
-
 
   // Load combat summary
   useEffect(() => {
     if (!campaignId || !firestore) return;
 
     try {
-      const unsubscribe = initiativeService.subscribeToInitiative(firestore, campaignId, (data, error) => {
-        if (error) {
-          console.error('Error subscribing to initiative:', error);
+      const unsubscribe = initiativeService.subscribeToInitiative(
+        firestore,
+        campaignId,
+        (data, error) => {
+          if (error) {
+            console.error("Error subscribing to initiative:", error);
+            setLoading(false);
+            return;
+          }
+
+          if (data) {
+            setCombatSummary({
+              isActive: data.isActive,
+              round: data.round,
+              combatantsCount: data.combatants?.length || 0,
+              currentTurn: data.currentTurn,
+              currentCombatant: data.combatants?.[data.currentTurn] || null,
+            });
+          } else {
+            setCombatSummary({
+              isActive: false,
+              round: 1,
+              combatantsCount: 0,
+              currentTurn: 0,
+              currentCombatant: null,
+            });
+          }
           setLoading(false);
-          return;
         }
-        
-        if (data) {
-          setCombatSummary({
-            isActive: data.isActive,
-            round: data.round,
-            combatantsCount: data.combatants?.length || 0,
-            currentTurn: data.currentTurn,
-            currentCombatant: data.combatants?.[data.currentTurn] || null
-          });
-        } else {
-          setCombatSummary({
-            isActive: false,
-            round: 1,
-            combatantsCount: 0,
-            currentTurn: 0,
-            currentCombatant: null
-          });
-        }
-        setLoading(false);
-      });
+      );
 
       return unsubscribe;
     } catch (error) {
-      console.error('Error setting up initiative subscription:', error);
+      console.error("Error setting up initiative subscription:", error);
       setLoading(false);
     }
   }, [campaignId, firestore]);
@@ -70,26 +72,26 @@ const InitiativeButton = ({ campaignId, size = 'medium' }) => {
   const getButtonStatus = () => {
     if (combatSummary.isActive) {
       return {
-        status: 'active',
+        status: "active",
         text: `Round ${combatSummary.round}`,
-        subtitle: combatSummary.currentCombatant ? 
-          `${combatSummary.currentCombatant.name}'s Turn` : 
-          `${combatSummary.combatantsCount} Combatants`,
-        icon: '⚔️'
+        subtitle: combatSummary.currentCombatant
+          ? `${combatSummary.currentCombatant.name}'s Turn`
+          : `${combatSummary.combatantsCount} Combatants`,
+        icon: "⚔️",
       };
     } else if (combatSummary.combatantsCount > 0) {
       return {
-        status: 'ready',
-        text: 'Ready to Start',
+        status: "ready",
+        text: "Ready to Start",
         subtitle: `${combatSummary.combatantsCount} Combatants`,
-        icon: '🎲'
+        icon: "🎲",
       };
     } else {
       return {
-        status: 'inactive',
-        text: 'Initiative',
-        subtitle: 'No Combatants',
-        icon: '⚔️'
+        status: "inactive",
+        text: "Initiative",
+        subtitle: "No Combatants",
+        icon: "⚔️",
       };
     }
   };
@@ -97,20 +99,18 @@ const InitiativeButton = ({ campaignId, size = 'medium' }) => {
   const buttonStatus = getButtonStatus();
 
   return (
-    <button 
+    <button
       className={`initiative-button ${size} ${buttonStatus.status}`}
       title={`Initiative Tracker - ${buttonStatus.text}`}
     >
       <span className="button-icon">{buttonStatus.icon}</span>
       <div className="button-content">
         <span className="button-text">{buttonStatus.text}</span>
-        {size !== 'small' && (
+        {size !== "small" && (
           <span className="button-subtitle">{buttonStatus.subtitle}</span>
         )}
       </div>
-      {combatSummary.isActive && (
-        <div className="active-indicator" />
-      )}
+      {combatSummary.isActive && <div className="active-indicator" />}
     </button>
   );
 };

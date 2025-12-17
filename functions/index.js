@@ -1,4 +1,3 @@
-
 /**
  * Import function triggers from their respective submodules:
  *
@@ -8,10 +7,10 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-const {setGlobalOptions} = require("firebase-functions");
-const {onDocumentCreated} = require("firebase-functions/v2/firestore");
-const filter = require("leo-profanity");
-const admin = require("firebase-admin");
+const { setGlobalOptions } = require('firebase-functions');
+const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const filter = require('leo-profanity');
+const admin = require('firebase-admin');
 
 // Initialize Firebase Admin once for all functions
 if (!admin.apps.length) {
@@ -80,7 +79,7 @@ exports.deleteUser = deleteUser;
 //     },
 // );
 
-setGlobalOptions({maxInstances: 10});
+setGlobalOptions({ maxInstances: 10 });
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started

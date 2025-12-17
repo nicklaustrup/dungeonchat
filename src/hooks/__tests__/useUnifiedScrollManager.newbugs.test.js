@@ -1,55 +1,67 @@
 /**
  * Regression tests for new reported bugs in useUnifiedScrollManager
- * 
+ *
  * Bug 1: Receiving and sending a message while viewing the bottom / at the newest message does not auto scroll to the newest received message.
  * Bug 2: Receiving a message while scrolled up (Scroll to Bottom button is visible) does not transform the button into a "X new messages" button.
  */
 
-import { renderHook, act } from '@testing-library/react';
-import { useUnifiedScrollManager } from '../useUnifiedScrollManager';
+import { renderHook, act } from "@testing-library/react";
+import { useUnifiedScrollManager } from "../useUnifiedScrollManager";
 
 // Set test timeout to 10 seconds
 jest.setTimeout(10000);
 
 // Mock the message diff classifier
-jest.mock('../../utils/classifyMessageDiff', () => ({
-  classifyMessageDiff: jest.fn()
+jest.mock("../../utils/classifyMessageDiff", () => ({
+  classifyMessageDiff: jest.fn(),
 }));
 
-const { classifyMessageDiff } = require('../../utils/classifyMessageDiff');
+const { classifyMessageDiff } = require("../../utils/classifyMessageDiff");
 
-describe('useUnifiedScrollManager - New Bug Fixes', () => {
+describe("useUnifiedScrollManager - New Bug Fixes", () => {
   let containerRef, anchorRef, mockContainer, mockAnchor;
 
   beforeEach(() => {
     jest.useFakeTimers();
-    
 
-    
     // Mock DOM elements
     let currentScrollTop = 0;
     mockContainer = {
-      get scrollTop() { return currentScrollTop; },
-      set scrollTop(value) { currentScrollTop = value; },
+      get scrollTop() {
+        return currentScrollTop;
+      },
+      set scrollTop(value) {
+        currentScrollTop = value;
+      },
       scrollHeight: 1000,
       clientHeight: 400,
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
       scrollIntoView: jest.fn(),
       querySelector: jest.fn(() => null),
-      getBoundingClientRect: () => ({ top: 0, left: 0, bottom: 400, right: 800 })
+      getBoundingClientRect: () => ({
+        top: 0,
+        left: 0,
+        bottom: 400,
+        right: 800,
+      }),
     };
 
     mockAnchor = {
       scrollIntoView: jest.fn(),
-      getBoundingClientRect: () => ({ top: 600, left: 0, bottom: 620, right: 800 })
+      getBoundingClientRect: () => ({
+        top: 600,
+        left: 0,
+        bottom: 620,
+        right: 800,
+      }),
     };
 
     containerRef = { current: mockContainer };
     anchorRef = { current: mockAnchor };
 
     // Mock requestAnimationFrame
-    global.requestAnimationFrame = jest.fn(cb => setTimeout(cb, 16));
+    global.requestAnimationFrame = jest.fn((cb) => setTimeout(cb, 16));
     global.cancelAnimationFrame = jest.fn();
 
     // Reset mocks
@@ -64,25 +76,26 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
     jest.clearAllMocks();
   });
 
-  describe('Bug 1: Auto-scroll when at bottom receiving new message', () => {
-    test('should auto-scroll when user is at bottom and receives new message', async () => {
+  describe("Bug 1: Auto-scroll when at bottom receiving new message", () => {
+    test("should auto-scroll when user is at bottom and receives new message", async () => {
       // Start with user at bottom (scrollTop = scrollHeight - clientHeight)
       mockContainer.scrollTop = 600; // 1000 - 400 = 600 (perfect bottom)
       mockContainer.scrollHeight = 1000;
       mockContainer.clientHeight = 400;
 
       const initialMessages = [
-        { id: 'm1', text: 'Message 1' },
-        { id: 'm2', text: 'Message 2' }
+        { id: "m1", text: "Message 1" },
+        { id: "m2", text: "Message 2" },
       ];
 
       const { result, rerender } = renderHook(
-        ({ messages }) => useUnifiedScrollManager({
-          containerRef,
-          anchorRef,
-          messages,
-          threshold: 10
-        }),
+        ({ messages }) =>
+          useUnifiedScrollManager({
+            containerRef,
+            anchorRef,
+            messages,
+            threshold: 10,
+          }),
         { initialProps: { messages: initialMessages } }
       );
 
@@ -99,16 +112,16 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       classifyMessageDiff.mockReturnValue({
         didAppend: true,
         appendedCount: 1,
-        newMessages: [{ id: 'm3', text: 'New message from someone else' }],
+        newMessages: [{ id: "m3", text: "New message from someone else" }],
         didPrepend: false,
         prependedCount: 0,
-        reset: false
+        reset: false,
       });
 
       // Simulate receiving a new message
       const messagesWithNew = [
         ...initialMessages,
-        { id: 'm3', text: 'New message from someone else' }
+        { id: "m3", text: "New message from someone else" },
       ];
 
       await act(async () => {
@@ -120,13 +133,11 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
         jest.runAllTimers();
       });
 
-
-
       // Should trigger auto-scroll (scrollToBottom should be called)
       expect(mockAnchor.scrollIntoView).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'end',
-        inline: 'nearest'
+        behavior: "smooth",
+        block: "end",
+        inline: "nearest",
       });
 
       // Should remain at bottom with no unread count
@@ -134,24 +145,25 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       expect(result.current.newMessagesCount).toBe(0);
     });
 
-    test('should auto-scroll when user sends a message while at bottom', async () => {
+    test("should auto-scroll when user sends a message while at bottom", async () => {
       // User at bottom
       mockContainer.scrollTop = 600;
       mockContainer.scrollHeight = 1000;
       mockContainer.clientHeight = 400;
 
       const initialMessages = [
-        { id: 'm1', text: 'Message 1' },
-        { id: 'm2', text: 'Message 2' }
+        { id: "m1", text: "Message 1" },
+        { id: "m2", text: "Message 2" },
       ];
 
       const { result, rerender } = renderHook(
-        ({ messages }) => useUnifiedScrollManager({
-          containerRef,
-          anchorRef,
-          messages,
-          threshold: 10
-        }),
+        ({ messages }) =>
+          useUnifiedScrollManager({
+            containerRef,
+            anchorRef,
+            messages,
+            threshold: 10,
+          }),
         { initialProps: { messages: initialMessages } }
       );
 
@@ -165,16 +177,18 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       classifyMessageDiff.mockReturnValue({
         didAppend: true,
         appendedCount: 1,
-        newMessages: [{ id: 'm3', text: 'Message I sent', uid: 'current-user' }],
+        newMessages: [
+          { id: "m3", text: "Message I sent", uid: "current-user" },
+        ],
         didPrepend: false,
         prependedCount: 0,
-        reset: false
+        reset: false,
       });
 
       // User sends a message (message appears at bottom)
       const messagesWithSent = [
         ...initialMessages,
-        { id: 'm3', text: 'Message I sent', uid: 'current-user' }
+        { id: "m3", text: "Message I sent", uid: "current-user" },
       ];
 
       await act(async () => {
@@ -193,22 +207,30 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
     });
   });
 
-  describe('Bug 2: Unread count when scrolled up receiving new message', () => {
-    test('should increment unread count when user is scrolled up and receives new message', async () => {
+  describe("Bug 2: Unread count when scrolled up receiving new message", () => {
+    test("should increment unread count when user is scrolled up and receives new message", async () => {
       // Start with user scrolled UP (not at bottom)
       mockContainer.scrollTop = 100; // Well above bottom
       mockContainer.scrollHeight = 1000;
       mockContainer.clientHeight = 400;
 
       const initialMessages = [
-        { id: 'm1', text: 'Message 1' },
-        { id: 'm2', text: 'Message 2' }
+        { id: "m1", text: "Message 1" },
+        { id: "m2", text: "Message 2" },
       ];
 
       const { result, rerender } = renderHook(
         ({ messages }) => {
-          console.log('Test: hook called with messages length:', messages.length);
-          return useUnifiedScrollManager({ containerRef, anchorRef, messages, threshold: 10 });
+          console.log(
+            "Test: hook called with messages length:",
+            messages.length
+          );
+          return useUnifiedScrollManager({
+            containerRef,
+            anchorRef,
+            messages,
+            threshold: 10,
+          });
         },
         { initialProps: { messages: initialMessages } }
       );
@@ -221,14 +243,25 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       // Now simulate user scrolling up
       mockContainer.scrollTop = 100; // Manually set scroll position
       await act(async () => {
-        const scrollHandler = mockContainer.addEventListener.mock.calls.find(call => call[0] === 'scroll')[1];
+        const scrollHandler = mockContainer.addEventListener.mock.calls.find(
+          (call) => call[0] === "scroll"
+        )[1];
         scrollHandler(); // Trigger scroll event
         jest.advanceTimersByTime(100);
       });
 
       // Debug: check the computed distance
-      const distance = mockContainer.scrollHeight - (mockContainer.scrollTop + mockContainer.clientHeight);
-      console.log('Debug distance:', distance, 'threshold:', 10, 'isAtBottom:', result.current.isAtBottom);
+      const distance =
+        mockContainer.scrollHeight -
+        (mockContainer.scrollTop + mockContainer.clientHeight);
+      console.log(
+        "Debug distance:",
+        distance,
+        "threshold:",
+        10,
+        "isAtBottom:",
+        result.current.isAtBottom
+      );
 
       // Should recognize user is NOT at bottom
       expect(result.current.isAtBottom).toBe(false);
@@ -238,16 +271,16 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       classifyMessageDiff.mockReturnValue({
         didAppend: true,
         appendedCount: 1,
-        newMessages: [{ id: 'm3', text: 'New message from someone else' }],
+        newMessages: [{ id: "m3", text: "New message from someone else" }],
         didPrepend: false,
         prependedCount: 0,
-        reset: false
+        reset: false,
       });
 
       // Receive a new message
       const messagesWithNew = [
         ...initialMessages,
-        { id: 'm3', text: 'New message from someone else' }
+        { id: "m3", text: "New message from someone else" },
       ];
 
       await act(async () => {
@@ -259,7 +292,12 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
         jest.runAllTimers();
       });
 
-      console.log('After new message - isAtBottom:', result.current.isAtBottom, 'unreadCount:', result.current.newMessagesCount);
+      console.log(
+        "After new message - isAtBottom:",
+        result.current.isAtBottom,
+        "unreadCount:",
+        result.current.newMessagesCount
+      );
 
       // Should NOT auto-scroll (user is scrolled up)
       expect(mockAnchor.scrollIntoView).not.toHaveBeenCalled();
@@ -270,23 +308,22 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       expect(result.current.hasNewMessages).toBe(true);
     });
 
-    test('should increment unread count for multiple messages when scrolled up', async () => {
+    test("should increment unread count for multiple messages when scrolled up", async () => {
       // User scrolled up
       mockContainer.scrollTop = 200;
       mockContainer.scrollHeight = 1000;
       mockContainer.clientHeight = 400;
 
-      const initialMessages = [
-        { id: 'm1', text: 'Message 1' }
-      ];
+      const initialMessages = [{ id: "m1", text: "Message 1" }];
 
       const { result, rerender } = renderHook(
-        ({ messages }) => useUnifiedScrollManager({
-          containerRef,
-          anchorRef,
-          messages,
-          threshold: 10
-        }),
+        ({ messages }) =>
+          useUnifiedScrollManager({
+            containerRef,
+            anchorRef,
+            messages,
+            threshold: 10,
+          }),
         { initialProps: { messages: initialMessages } }
       );
 
@@ -298,7 +335,9 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       // Now simulate user scrolling up
       mockContainer.scrollTop = 100; // Not at bottom
       await act(async () => {
-        const scrollHandler = mockContainer.addEventListener.mock.calls.find(call => call[0] === 'scroll')[1];
+        const scrollHandler = mockContainer.addEventListener.mock.calls.find(
+          (call) => call[0] === "scroll"
+        )[1];
         scrollHandler();
         jest.advanceTimersByTime(100);
       });
@@ -310,19 +349,19 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
         didAppend: true,
         appendedCount: 2,
         newMessages: [
-          { id: 'm2', text: 'New message 1' },
-          { id: 'm3', text: 'New message 2' }
+          { id: "m2", text: "New message 1" },
+          { id: "m3", text: "New message 2" },
         ],
         didPrepend: false,
         prependedCount: 0,
-        reset: false
+        reset: false,
       });
 
       // Receive 2 new messages at once
       const messagesWithMultiple = [
         ...initialMessages,
-        { id: 'm2', text: 'New message 1' },
-        { id: 'm3', text: 'New message 2' }
+        { id: "m2", text: "New message 1" },
+        { id: "m3", text: "New message 2" },
       ];
 
       await act(async () => {
@@ -338,41 +377,41 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       expect(result.current.hasNewMessages).toBe(true);
     });
 
-    test('should clear unread count when user manually scrolls back to bottom', async () => {
+    test("should clear unread count when user manually scrolls back to bottom", async () => {
       // Start with unread messages
       mockContainer.scrollTop = 200;
       mockContainer.scrollHeight = 1000;
       mockContainer.clientHeight = 400;
 
       const messages = [
-        { id: 'm1', text: 'Message 1' },
-        { id: 'm2', text: 'Message 2' }
+        { id: "m1", text: "Message 1" },
+        { id: "m2", text: "Message 2" },
       ];
 
-      const { result } = renderHook(() => useUnifiedScrollManager({
-        containerRef,
-        anchorRef,
-        messages,
-        threshold: 10
-      }));
+      const { result } = renderHook(() =>
+        useUnifiedScrollManager({
+          containerRef,
+          anchorRef,
+          messages,
+          threshold: 10,
+        })
+      );
 
       await act(async () => {
         jest.advanceTimersByTime(500);
       });
 
       // Add new messages to create unread count
-      const messagesWithNew = [
-        ...messages,
-        { id: 'm3', text: 'New message' }
-      ];
+      const messagesWithNew = [...messages, { id: "m3", text: "New message" }];
 
       const { rerender } = renderHook(
-        ({ messages }) => useUnifiedScrollManager({
-          containerRef,
-          anchorRef,
-          messages,
-          threshold: 10
-        }),
+        ({ messages }) =>
+          useUnifiedScrollManager({
+            containerRef,
+            anchorRef,
+            messages,
+            threshold: 10,
+          }),
         { initialProps: { messages: messagesWithNew } }
       );
 
@@ -381,8 +420,11 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       });
 
       // Debug: Check actual unread count
-      console.log('Before scroll back - unreadCount:', result.current.newMessagesCount);
-      
+      console.log(
+        "Before scroll back - unreadCount:",
+        result.current.newMessagesCount
+      );
+
       // Should have unread count - adjust expectation based on actual behavior
       expect(result.current.newMessagesCount).toBeGreaterThanOrEqual(0);
 
@@ -391,7 +433,7 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
 
       // Trigger scroll event
       const scrollHandler = mockContainer.addEventListener.mock.calls.find(
-        call => call[0] === 'scroll'
+        (call) => call[0] === "scroll"
       )[1];
 
       await act(async () => {
@@ -405,21 +447,22 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
     });
   });
 
-  describe('Edge Cases', () => {
-    test('should handle rapid message succession when at bottom', async () => {
+  describe("Edge Cases", () => {
+    test("should handle rapid message succession when at bottom", async () => {
       mockContainer.scrollTop = 600;
       mockContainer.scrollHeight = 1000;
       mockContainer.clientHeight = 400;
 
-      const initialMessages = [{ id: 'm1', text: 'Message 1' }];
+      const initialMessages = [{ id: "m1", text: "Message 1" }];
 
       const { result, rerender } = renderHook(
-        ({ messages }) => useUnifiedScrollManager({
-          containerRef,
-          anchorRef,
-          messages,
-          threshold: 10
-        }),
+        ({ messages }) =>
+          useUnifiedScrollManager({
+            containerRef,
+            anchorRef,
+            messages,
+            threshold: 10,
+          }),
         { initialProps: { messages: initialMessages } }
       );
 
@@ -428,9 +471,9 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       });
 
       // Rapidly add multiple messages
-      const messages2 = [...initialMessages, { id: 'm2', text: 'Message 2' }];
-      const messages3 = [...messages2, { id: 'm3', text: 'Message 3' }];
-      const messages4 = [...messages3, { id: 'm4', text: 'Message 4' }];
+      const messages2 = [...initialMessages, { id: "m2", text: "Message 2" }];
+      const messages3 = [...messages2, { id: "m3", text: "Message 3" }];
+      const messages4 = [...messages3, { id: "m4", text: "Message 4" }];
 
       await act(async () => {
         rerender({ messages: messages2 });
@@ -439,25 +482,26 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       });
 
       // Should maintain bottom position and no unread count
-      expect(result.current.isAtBottom).toBe(true);  
+      expect(result.current.isAtBottom).toBe(true);
       expect(result.current.newMessagesCount).toBe(0);
     });
 
-    test('should handle precision edge case near bottom threshold', async () => {
+    test("should handle precision edge case near bottom threshold", async () => {
       // Position user just within threshold (9px from bottom)
       mockContainer.scrollTop = 591; // 1000 - 400 - 9 = 591
       mockContainer.scrollHeight = 1000;
       mockContainer.clientHeight = 400;
 
-      const messages = [{ id: 'm1', text: 'Message 1' }];
+      const messages = [{ id: "m1", text: "Message 1" }];
 
       const { result, rerender } = renderHook(
-        ({ messages }) => useUnifiedScrollManager({
-          containerRef,
-          anchorRef,
-          messages,
-          threshold: 10
-        }),
+        ({ messages }) =>
+          useUnifiedScrollManager({
+            containerRef,
+            anchorRef,
+            messages,
+            threshold: 10,
+          }),
         { initialProps: { messages } }
       );
 
@@ -469,7 +513,7 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       expect(result.current.isAtBottom).toBe(true);
 
       // Add new message
-      const newMessages = [...messages, { id: 'm2', text: 'New message' }];
+      const newMessages = [...messages, { id: "m2", text: "New message" }];
 
       await act(async () => {
         rerender({ messages: newMessages });
@@ -481,39 +525,50 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
     });
   });
 
-  describe('Mobile-specific scroll behavior', () => {
-    test('scroll-to-bottom button should blur after successful scroll on mobile', async () => {
+  describe("Mobile-specific scroll behavior", () => {
+    test("scroll-to-bottom button should blur after successful scroll on mobile", async () => {
       // Mock mobile environment
       const originalUserAgent = navigator.userAgent;
-      Object.defineProperty(navigator, 'userAgent', {
-        value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-        configurable: true
+      Object.defineProperty(navigator, "userAgent", {
+        value:
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+        configurable: true,
       });
 
       let currentScrollTop = 100; // Start scrolled up
       const mockContainer = {
-        get scrollTop() { return currentScrollTop; },
-        set scrollTop(value) { currentScrollTop = value; },
+        get scrollTop() {
+          return currentScrollTop;
+        },
+        set scrollTop(value) {
+          currentScrollTop = value;
+        },
         scrollHeight: 1000,
         clientHeight: 400,
         addEventListener: jest.fn(),
-        removeEventListener: jest.fn()
+        removeEventListener: jest.fn(),
       };
 
       const mockAnchor = {
         scrollIntoView: jest.fn(),
-        getBoundingClientRect: () => ({ top: 100 }) // Not visible initially
+        getBoundingClientRect: () => ({ top: 100 }), // Not visible initially
       };
       const containerRef = { current: mockContainer };
       const anchorRef = { current: mockAnchor };
 
       const initialMessages = [
-        { id: '1', text: 'Message 1', timestamp: Date.now() - 2000 },
-        { id: '2', text: 'Message 2', timestamp: Date.now() - 1000 }
+        { id: "1", text: "Message 1", timestamp: Date.now() - 2000 },
+        { id: "2", text: "Message 2", timestamp: Date.now() - 1000 },
       ];
 
       const { result, rerender } = renderHook(
-        ({ messages }) => useUnifiedScrollManager({ containerRef, anchorRef, messages, threshold: 10 }),
+        ({ messages }) =>
+          useUnifiedScrollManager({
+            containerRef,
+            anchorRef,
+            messages,
+            threshold: 10,
+          }),
         { initialProps: { messages: initialMessages } }
       );
 
@@ -525,7 +580,9 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       // User scrolls up
       mockContainer.scrollTop = 100; // Not at bottom
       await act(async () => {
-        const scrollHandler = mockContainer.addEventListener.mock.calls.find(call => call[0] === 'scroll')[1];
+        const scrollHandler = mockContainer.addEventListener.mock.calls.find(
+          (call) => call[0] === "scroll"
+        )[1];
         scrollHandler();
         jest.advanceTimersByTime(100);
       });
@@ -534,16 +591,16 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       classifyMessageDiff.mockReturnValue({
         didAppend: true,
         appendedCount: 1,
-        newMessages: [{ id: '3', text: 'New message', timestamp: Date.now() }],
+        newMessages: [{ id: "3", text: "New message", timestamp: Date.now() }],
         didPrepend: false,
         prependedCount: 0,
-        reset: false
+        reset: false,
       });
 
       // Add new messages to trigger unread count
       const messagesWithNew = [
         ...initialMessages,
-        { id: '3', text: 'New message', timestamp: Date.now() }
+        { id: "3", text: "New message", timestamp: Date.now() },
       ];
 
       await act(async () => {
@@ -564,7 +621,9 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
         result.current.scrollToBottom();
         // Simulate successful scroll to bottom
         mockContainer.scrollTop = 600; // At bottom
-        const scrollHandler = mockContainer.addEventListener.mock.calls.find(call => call[0] === 'scroll')[1];
+        const scrollHandler = mockContainer.addEventListener.mock.calls.find(
+          (call) => call[0] === "scroll"
+        )[1];
         scrollHandler();
         jest.advanceTimersByTime(300); // Allow for scroll completion
       });
@@ -575,9 +634,9 @@ describe('useUnifiedScrollManager - New Bug Fixes', () => {
       // hasNewMessages behavior depends on mock timing - skip assertion
 
       // Restore original user agent
-      Object.defineProperty(navigator, 'userAgent', {
+      Object.defineProperty(navigator, "userAgent", {
         value: originalUserAgent,
-        configurable: true
+        configurable: true,
       });
     });
   });

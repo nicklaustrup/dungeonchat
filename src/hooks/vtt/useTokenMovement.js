@@ -1,18 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
 /**
  * useTokenMovement Hook
  * Calculates movement validation for token dragging
  * Returns distance, validity, and affected grid cells
  */
-export default function useTokenMovement({ 
-  token, 
-  startPos, 
-  currentPos, 
-  gridSize = 50, 
-  inCombat = false 
+export default function useTokenMovement({
+  token,
+  startPos,
+  currentPos,
+  gridSize = 50,
+  inCombat = false,
 }) {
-  
   const movementData = useMemo(() => {
     if (!startPos || !currentPos || !token) {
       return {
@@ -22,7 +21,7 @@ export default function useTokenMovement({
         isValid: true,
         effectiveSpeed: 30,
         affectedCells: [],
-        rulerColor: '#ffff00'
+        rulerColor: "#ffff00",
       };
     }
 
@@ -36,7 +35,7 @@ export default function useTokenMovement({
 
     // Get base speed (default 30ft for medium creatures)
     let baseSpeed = token.speed || 30;
-    
+
     // Check for movement-affecting status effects
     const statusEffects = token.statusEffects || [];
     let effectiveSpeed = baseSpeed;
@@ -44,19 +43,27 @@ export default function useTokenMovement({
 
     // Check each status effect
     for (const effect of statusEffects) {
-      const effectName = (effect.name || '').toLowerCase();
-      
+      const effectName = (effect.name || "").toLowerCase();
+
       // Movement restriction effects
-      if (effectName.includes('grappled') || effectName.includes('paralyzed') || effectName.includes('stunned') || effectName.includes('petrified')) {
+      if (
+        effectName.includes("grappled") ||
+        effectName.includes("paralyzed") ||
+        effectName.includes("stunned") ||
+        effectName.includes("petrified")
+      ) {
         effectiveSpeed = 0;
         break; // No movement at all
-      } else if (effectName.includes('restrained') || effectName.includes('slow')) {
+      } else if (
+        effectName.includes("restrained") ||
+        effectName.includes("slow")
+      ) {
         movementMultiplier *= 0.5; // Half speed
-      } else if (effectName.includes('prone')) {
+      } else if (effectName.includes("prone")) {
         movementMultiplier *= 0.5; // Costs extra movement
-      } else if (effectName.includes('haste')) {
+      } else if (effectName.includes("haste")) {
         movementMultiplier *= 2; // Double speed
-      } else if (effectName.includes('encumbered')) {
+      } else if (effectName.includes("encumbered")) {
         effectiveSpeed = Math.max(effectiveSpeed - 10, 0); // -10 ft
       }
     }
@@ -69,8 +76,11 @@ export default function useTokenMovement({
     // Calculate affected grid cells (for highlighting)
     const affectedCells = [];
     if (inCombat && gridSize > 0) {
-      const tokenSizeInSquares = Math.max(1, Math.round((token.size?.width || gridSize) / gridSize));
-      
+      const tokenSizeInSquares = Math.max(
+        1,
+        Math.round((token.size?.width || gridSize) / gridSize)
+      );
+
       // Calculate which cells the token currently occupies
       const startCellX = Math.floor(startPos.x / gridSize);
       const startCellY = Math.floor(startPos.y / gridSize);
@@ -82,32 +92,36 @@ export default function useTokenMovement({
         for (let offsetY = 0; offsetY < tokenSizeInSquares; offsetY++) {
           const cellX = currentCellX + offsetX;
           const cellY = currentCellY + offsetY;
-          
+
           // Calculate distance from start position to this cell
           const cellCenterX = (cellX + 0.5) * gridSize;
           const cellCenterY = (cellY + 0.5) * gridSize;
           const cellDx = cellCenterX - (startCellX + 0.5) * gridSize;
           const cellDy = cellCenterY - (startCellY + 0.5) * gridSize;
-          const cellDistancePixels = Math.sqrt(cellDx * cellDx + cellDy * cellDy);
-          const cellDistanceFeet = Math.round((cellDistancePixels / gridSize) * feetPerSquare);
-          
+          const cellDistancePixels = Math.sqrt(
+            cellDx * cellDx + cellDy * cellDy
+          );
+          const cellDistanceFeet = Math.round(
+            (cellDistancePixels / gridSize) * feetPerSquare
+          );
+
           const cellIsValid = cellDistanceFeet <= effectiveSpeed;
-          
+
           affectedCells.push({
             x: cellX * gridSize,
             y: cellY * gridSize,
             width: gridSize,
             height: gridSize,
-            isValid: cellIsValid
+            isValid: cellIsValid,
           });
         }
       }
     }
 
     // Determine ruler color
-    let rulerColor = '#ffff00'; // Yellow for out of combat
+    let rulerColor = "#ffff00"; // Yellow for out of combat
     if (inCombat) {
-      rulerColor = isValid ? '#00ff00' : '#ff0000'; // Green for valid, red for invalid
+      rulerColor = isValid ? "#00ff00" : "#ff0000"; // Green for valid, red for invalid
     }
 
     return {
@@ -118,7 +132,7 @@ export default function useTokenMovement({
       effectiveSpeed,
       affectedCells,
       rulerColor,
-      movementUsed: `${distanceFeet}ft / ${effectiveSpeed}ft`
+      movementUsed: `${distanceFeet}ft / ${effectiveSpeed}ft`,
     };
   }, [token, startPos, currentPos, gridSize, inCombat]);
 

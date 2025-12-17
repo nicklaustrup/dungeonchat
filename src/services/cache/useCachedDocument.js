@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { doc, getDoc, getDocs, onSnapshot } from 'firebase/firestore';
-import firestoreCache from './FirestoreCache';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { doc, getDoc, getDocs, onSnapshot } from "firebase/firestore";
+import firestoreCache from "./FirestoreCache";
 
 /**
  * Cached Firestore Document Hook
  *
  * Provides automatic caching for Firestore document reads with real-time updates
  * Now with synchronous cache checking for better performance
- * 
+ *
  * @param {object} firestore - Firestore instance
  * @param {string} collection - Collection name
  * @param {string} docId - Document ID
@@ -15,7 +15,7 @@ import firestoreCache from './FirestoreCache';
  * @param {number} options.ttl - Time to live in milliseconds (default: 5 minutes)
  * @param {boolean} options.realtime - Enable real-time updates (default: false)
  * @param {boolean} options.disabled - Disable fetching (default: false)
- * 
+ *
  * @returns {object} { data, loading, error, refresh, invalidate }
  */
 export function useCachedDocument(firestore, collection, docId, options = {}) {
@@ -23,13 +23,13 @@ export function useCachedDocument(firestore, collection, docId, options = {}) {
     ttl = 5 * 60 * 1000, // 5 minutes default
     realtime = false,
     disabled = false,
-    collectionPath = null // Support for subcollections
+    collectionPath = null, // Support for subcollections
   } = options;
 
   // Use collectionPath if provided (for subcollections), otherwise use collection
   const actualCollection = collectionPath || collection;
   const cacheKey = useMemo(
-    () => `${actualCollection}/${docId}`.replace(/\//g, ':'),
+    () => `${actualCollection}/${docId}`.replace(/\//g, ":"),
     [actualCollection, docId]
   );
 
@@ -51,8 +51,11 @@ export function useCachedDocument(firestore, collection, docId, options = {}) {
     }
 
     // Use actualCollection instead of collection parameter
-    const actualCollection = typeof collection === 'string' ? collection : collection?.id || collection?.path;
-    
+    const actualCollection =
+      typeof collection === "string"
+        ? collection
+        : collection?.id || collection?.path;
+
     if (!actualCollection) {
       setLoading(false);
       return;
@@ -66,8 +69,8 @@ export function useCachedDocument(firestore, collection, docId, options = {}) {
       const cachedData = firestoreCache.get(cacheKey);
       if (cachedData !== undefined) {
         console.log(
-          '%c[CACHE] ✅ HIT',
-          'background: #10b981; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+          "%c[CACHE] ✅ HIT",
+          "background: #10b981; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold",
           cacheKey
         );
         setData(cachedData);
@@ -76,8 +79,8 @@ export function useCachedDocument(firestore, collection, docId, options = {}) {
       }
 
       console.log(
-        '%c[CACHE] ❌ MISS',
-        'background: #ef4444; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+        "%c[CACHE] ❌ MISS",
+        "background: #ef4444; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold",
         cacheKey
       );
 
@@ -107,14 +110,17 @@ export function useCachedDocument(firestore, collection, docId, options = {}) {
       return;
     }
 
-    const actualCollection = typeof collection === 'string' ? collection : collection?.id || collection?.path;
-    
+    const actualCollection =
+      typeof collection === "string"
+        ? collection
+        : collection?.id || collection?.path;
+
     if (!actualCollection) {
       return;
     }
 
     const docRef = doc(firestore, actualCollection, docId);
-    
+
     const unsubscribe = onSnapshot(
       docRef,
       (docSnap) => {
@@ -123,8 +129,8 @@ export function useCachedDocument(firestore, collection, docId, options = {}) {
 
           // Update cache with real-time data
           console.log(
-            '%c[CACHE] 🔄 REALTIME UPDATE',
-            'background: #06b6d4; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+            "%c[CACHE] 🔄 REALTIME UPDATE",
+            "background: #06b6d4; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold",
             cacheKey
           );
           firestoreCache.set(cacheKey, docData, ttl);
@@ -137,7 +143,10 @@ export function useCachedDocument(firestore, collection, docId, options = {}) {
         setError(null);
       },
       (err) => {
-        console.error(`Error in real-time listener for ${actualCollection}/${docId}:`, err);
+        console.error(
+          `Error in real-time listener for ${actualCollection}/${docId}:`,
+          err
+        );
         setError(err);
         setLoading(false);
       }
@@ -167,35 +176,31 @@ export function useCachedDocument(firestore, collection, docId, options = {}) {
     loading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 
 /**
  * Cached Firestore Query Hook
- * 
+ *
  * Provides automatic caching for Firestore queries with real-time updates
- * 
+ *
  * @param {object} firestore - Firestore instance
  * @param {function} queryFn - Function that returns a Firestore query
  * @param {string} cacheKey - Unique cache key for this query
  * @param {object} options - Configuration options
- * 
+ *
  * @returns {object} { data, loading, error, refresh, invalidate }
  */
 export function useCachedQuery(firestore, queryFn, cacheKey, options = {}) {
-  const {
-    ttl = 5 * 60 * 1000,
-    realtime = false,
-    disabled = false
-  } = options;
+  const { ttl = 5 * 60 * 1000, realtime = false, disabled = false } = options;
 
   // Check cache immediately on mount (synchronously before any effects run)
   const initialData = useMemo(() => {
     if (disabled) {
       console.log(
-        '%c[CACHE] ⏸️ QUERY DISABLED',
-        'background: #64748b; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+        "%c[CACHE] ⏸️ QUERY DISABLED",
+        "background: #64748b; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold",
         cacheKey
       );
       return [];
@@ -203,9 +208,9 @@ export function useCachedQuery(firestore, queryFn, cacheKey, options = {}) {
     const cached = firestoreCache.get(cacheKey);
     console.log(
       `%c[CACHE] 📋 QUERY INIT`,
-      'background: #8b5cf6; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+      "background: #8b5cf6; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold",
       cacheKey,
-      cached ? `${cached.length} items from cache` : 'no cache'
+      cached ? `${cached.length} items from cache` : "no cache"
     );
     return cached !== null ? cached : [];
   }, [cacheKey, disabled]);
@@ -242,9 +247,9 @@ export function useCachedQuery(firestore, queryFn, cacheKey, options = {}) {
       const q = queryFn();
       const snapshot = await getDocs(q);
 
-      const results = snapshot.docs.map(doc => ({
+      const results = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       // Cache the results
@@ -268,8 +273,8 @@ export function useCachedQuery(firestore, queryFn, cacheKey, options = {}) {
     }
 
     console.log(
-      '%c[CACHE] 🔄 REALTIME SETUP',
-      'background: #06b6d4; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+      "%c[CACHE] 🔄 REALTIME SETUP",
+      "background: #06b6d4; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold",
       cacheKey
     );
 
@@ -278,15 +283,15 @@ export function useCachedQuery(firestore, queryFn, cacheKey, options = {}) {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const results = snapshot.docs.map(doc => ({
+        const results = snapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }));
 
         // Update cache with real-time data
         console.log(
-          '%c[CACHE] 🔄 REALTIME UPDATE',
-          'background: #06b6d4; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+          "%c[CACHE] 🔄 REALTIME UPDATE",
+          "background: #06b6d4; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold",
           cacheKey,
           `${results.length} items`
         );
@@ -296,7 +301,10 @@ export function useCachedQuery(firestore, queryFn, cacheKey, options = {}) {
         setError(null);
       },
       (err) => {
-        console.error(`Error in real-time listener for query ${cacheKey}:`, err);
+        console.error(
+          `Error in real-time listener for query ${cacheKey}:`,
+          err
+        );
         setError(err);
         setLoading(false);
       }
@@ -326,7 +334,7 @@ export function useCachedQuery(firestore, queryFn, cacheKey, options = {}) {
     loading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 

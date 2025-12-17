@@ -2,25 +2,25 @@
  * Final integration test demonstrating the fixes for the reported bugs
  */
 
-import { renderHook, act } from '@testing-library/react';
-import { useUnifiedScrollManager } from '../useUnifiedScrollManager';
+import { renderHook, act } from "@testing-library/react";
+import { useUnifiedScrollManager } from "../useUnifiedScrollManager";
 
 // Set test timeout to 10 seconds
 jest.setTimeout(10000);
 
 // Mock the message diff classifier
-jest.mock('../../utils/classifyMessageDiff', () => ({
-  classifyMessageDiff: jest.fn()
+jest.mock("../../utils/classifyMessageDiff", () => ({
+  classifyMessageDiff: jest.fn(),
 }));
 
-const { classifyMessageDiff } = require('../../utils/classifyMessageDiff');
+const { classifyMessageDiff } = require("../../utils/classifyMessageDiff");
 
-describe('useUnifiedScrollManager - Bug Fixes Verification', () => {
+describe("useUnifiedScrollManager - Bug Fixes Verification", () => {
   let containerRef, anchorRef, mockContainer, mockAnchor;
 
   beforeEach(() => {
     jest.useFakeTimers();
-    
+
     // Mock DOM elements
     mockContainer = {
       scrollTop: 0,
@@ -30,19 +30,29 @@ describe('useUnifiedScrollManager - Bug Fixes Verification', () => {
       removeEventListener: jest.fn(),
       scrollIntoView: jest.fn(),
       querySelector: jest.fn(() => null),
-      getBoundingClientRect: () => ({ top: 0, left: 0, bottom: 400, right: 800 })
+      getBoundingClientRect: () => ({
+        top: 0,
+        left: 0,
+        bottom: 400,
+        right: 800,
+      }),
     };
 
     mockAnchor = {
       scrollIntoView: jest.fn(),
-      getBoundingClientRect: () => ({ top: 600, left: 0, bottom: 620, right: 800 })
+      getBoundingClientRect: () => ({
+        top: 600,
+        left: 0,
+        bottom: 620,
+        right: 800,
+      }),
     };
 
     containerRef = { current: mockContainer };
     anchorRef = { current: mockAnchor };
 
     // Mock requestAnimationFrame
-    global.requestAnimationFrame = jest.fn(cb => setTimeout(cb, 16));
+    global.requestAnimationFrame = jest.fn((cb) => setTimeout(cb, 16));
     global.cancelAnimationFrame = jest.fn();
 
     // Reset mocks
@@ -57,20 +67,21 @@ describe('useUnifiedScrollManager - Bug Fixes Verification', () => {
     jest.clearAllMocks();
   });
 
-  test('Bug Fix Verification: Both reported bugs are fixed', async () => {
+  test("Bug Fix Verification: Both reported bugs are fixed", async () => {
     // === SETUP: User starts with some messages ===
     const initialMessages = [
-      { id: 'm1', text: 'First message' },
-      { id: 'm2', text: 'Second message' }
+      { id: "m1", text: "First message" },
+      { id: "m2", text: "Second message" },
     ];
 
     const { result, rerender } = renderHook(
-      ({ messages }) => useUnifiedScrollManager({
-        containerRef,
-        anchorRef,
-        messages,
-        threshold: 10
-      }),
+      ({ messages }) =>
+        useUnifiedScrollManager({
+          containerRef,
+          anchorRef,
+          messages,
+          threshold: 10,
+        }),
       { initialProps: { messages: initialMessages } }
     );
 
@@ -87,16 +98,16 @@ describe('useUnifiedScrollManager - Bug Fixes Verification', () => {
     classifyMessageDiff.mockReturnValue({
       didAppend: true,
       appendedCount: 1,
-      newMessages: [{ id: 'm3', text: 'New message while at bottom' }],
+      newMessages: [{ id: "m3", text: "New message while at bottom" }],
       didPrepend: false,
       prependedCount: 0,
-      reset: false
+      reset: false,
     });
 
     // Simulate receiving a new message while at bottom
     const messagesWithNew = [
       ...initialMessages,
-      { id: 'm3', text: 'New message while at bottom' }
+      { id: "m3", text: "New message while at bottom" },
     ];
 
     await act(async () => {
@@ -110,9 +121,9 @@ describe('useUnifiedScrollManager - Bug Fixes Verification', () => {
 
     // ✅ FIXED: Should auto-scroll when at bottom
     expect(mockAnchor.scrollIntoView).toHaveBeenCalledWith({
-      behavior: 'smooth',
-      block: 'end',
-      inline: 'nearest'
+      behavior: "smooth",
+      block: "end",
+      inline: "nearest",
     });
     expect(result.current.isAtBottom).toBe(true);
     expect(result.current.newMessagesCount).toBe(0); // No unread count when auto-scrolled
@@ -127,16 +138,16 @@ describe('useUnifiedScrollManager - Bug Fixes Verification', () => {
     classifyMessageDiff.mockReturnValue({
       didAppend: true,
       appendedCount: 1,
-      newMessages: [{ id: 'm4', text: 'New message while scrolled up' }],
+      newMessages: [{ id: "m4", text: "New message while scrolled up" }],
       didPrepend: false,
       prependedCount: 0,
-      reset: false
+      reset: false,
     });
 
     // Simulate receiving a new message while scrolled up
     const messagesWithMore = [
       ...messagesWithNew,
-      { id: 'm4', text: 'New message while scrolled up' }
+      { id: "m4", text: "New message while scrolled up" },
     ];
 
     await act(async () => {
@@ -156,8 +167,8 @@ describe('useUnifiedScrollManager - Bug Fixes Verification', () => {
     // === TEST SCENARIO 3: Multiple messages while scrolled up ===
     const messagesWithMultiple = [
       ...messagesWithMore,
-      { id: 'm5', text: 'Another new message' },
-      { id: 'm6', text: 'Yet another message' }
+      { id: "m5", text: "Another new message" },
+      { id: "m6", text: "Yet another message" },
     ];
 
     await act(async () => {
@@ -175,7 +186,7 @@ describe('useUnifiedScrollManager - Bug Fixes Verification', () => {
 
     // Trigger scroll event
     const scrollHandler = mockContainer.addEventListener.mock.calls.find(
-      call => call[0] === 'scroll'
+      (call) => call[0] === "scroll"
     )[1];
 
     await act(async () => {

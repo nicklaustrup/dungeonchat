@@ -1,5 +1,12 @@
-import { collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  serverTimestamp,
+} from "firebase/firestore";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Drawing Service
@@ -17,18 +24,34 @@ export const drawingService = {
    * @param {string} userId - User ID
    * @param {string} username - User display name for attribution
    */
-  async createPenStroke(firestore, campaignId, mapId, points, color = '#ffffff', userId, username = '') {
+  async createPenStroke(
+    firestore,
+    campaignId,
+    mapId,
+    points,
+    color = "#ffffff",
+    userId,
+    username = ""
+  ) {
     const strokeId = uuidv4();
-    const strokeRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'drawings', strokeId);
-    
+    const strokeRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "vtt",
+      mapId,
+      "drawings",
+      strokeId
+    );
+
     const stroke = {
       id: strokeId,
-      type: 'pen',
+      type: "pen",
       points,
       color,
       createdBy: userId,
       createdByName: username,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     };
 
     await setDoc(strokeRef, stroke);
@@ -38,7 +61,7 @@ export const drawingService = {
       try {
         await deleteDoc(strokeRef);
       } catch (err) {
-        console.error('Error auto-deleting pen stroke:', err);
+        console.error("Error auto-deleting pen stroke:", err);
       }
     }, 3000);
 
@@ -56,19 +79,36 @@ export const drawingService = {
    * @param {string} userId - User ID
    * @param {string} username - User display name for attribution
    */
-  async createArrow(firestore, campaignId, mapId, start, end, color = '#ffff00', userId, username = '') {
+  async createArrow(
+    firestore,
+    campaignId,
+    mapId,
+    start,
+    end,
+    color = "#ffff00",
+    userId,
+    username = ""
+  ) {
     const arrowId = uuidv4();
-    const arrowRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'drawings', arrowId);
-    
+    const arrowRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "vtt",
+      mapId,
+      "drawings",
+      arrowId
+    );
+
     const arrow = {
       id: arrowId,
-      type: 'arrow',
+      type: "arrow",
       start,
       end,
       color,
       createdBy: userId,
       createdByName: username,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     };
 
     await setDoc(arrowRef, arrow);
@@ -78,7 +118,7 @@ export const drawingService = {
       try {
         await deleteDoc(arrowRef);
       } catch (err) {
-        console.error('Error auto-deleting arrow:', err);
+        console.error("Error auto-deleting arrow:", err);
       }
     }, 3000);
 
@@ -93,18 +133,29 @@ export const drawingService = {
    * @param {Function} callback - Callback function
    */
   subscribeToDrawings(firestore, campaignId, mapId, callback) {
-    const drawingsRef = collection(firestore, 'campaigns', campaignId, 'vtt', mapId, 'drawings');
-    
-    return onSnapshot(drawingsRef, (snapshot) => {
-      const drawings = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      callback(drawings);
-    }, (error) => {
-      console.error('Error subscribing to drawings:', error);
-      callback([]);
-    });
+    const drawingsRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "vtt",
+      mapId,
+      "drawings"
+    );
+
+    return onSnapshot(
+      drawingsRef,
+      (snapshot) => {
+        const drawings = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        callback(drawings);
+      },
+      (error) => {
+        console.error("Error subscribing to drawings:", error);
+        callback([]);
+      }
+    );
   },
 
   /**
@@ -115,7 +166,15 @@ export const drawingService = {
    * @param {string} drawingId - Drawing ID
    */
   async deleteDrawing(firestore, campaignId, mapId, drawingId) {
-    const drawingRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'drawings', drawingId);
+    const drawingRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "vtt",
+      mapId,
+      "drawings",
+      drawingId
+    );
     await deleteDoc(drawingRef);
-  }
+  },
 };

@@ -48,7 +48,11 @@
 }
 
 .fog-mode-btn.active {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(168, 85, 247, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.4),
+    rgba(168, 85, 247, 0.3)
+  );
   border-color: rgba(168, 85, 247, 0.8);
   color: white;
   box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
@@ -177,4 +181,3 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-

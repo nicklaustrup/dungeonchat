@@ -2,14 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
       - '**/*.md'
       - 'LICENSE'
       - '.github/labeler.yml'
       - '.github/workflows/stale.yml'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
       - '**/*.md'
       - 'LICENSE'

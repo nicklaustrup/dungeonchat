@@ -2,32 +2,46 @@
  * Fog of War Service
  * Handles fog of war visibility for maps
  */
-import { doc, setDoc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 
 export const fogOfWarService = {
   /**
    * Initialize fog of war for a map
    */
-  async initializeFogOfWar(firestore, campaignId, mapId, gridWidth, gridHeight) {
+  async initializeFogOfWar(
+    firestore,
+    campaignId,
+    mapId,
+    gridWidth,
+    gridHeight
+  ) {
     try {
-      const fogRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'fog', 'current');
-      
+      const fogRef = doc(
+        firestore,
+        "campaigns",
+        campaignId,
+        "vtt",
+        mapId,
+        "fog",
+        "current"
+      );
+
       // Create a flattened array (Firestore doesn't support nested arrays)
       // Store as 1D array in row-major order: visibility[y * gridWidth + x]
       const totalCells = gridWidth * gridHeight;
       const visibility = Array(totalCells).fill(false);
-      
+
       await setDoc(fogRef, {
         visibility,
         gridWidth,
         gridHeight,
         enabled: true,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
 
       return true;
     } catch (error) {
-      console.error('Error initializing fog of war:', error);
+      console.error("Error initializing fog of war:", error);
       throw error;
     }
   },
@@ -37,9 +51,17 @@ export const fogOfWarService = {
    */
   async getFogOfWar(firestore, campaignId, mapId) {
     try {
-      const fogRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'fog', 'current');
+      const fogRef = doc(
+        firestore,
+        "campaigns",
+        campaignId,
+        "vtt",
+        mapId,
+        "fog",
+        "current"
+      );
       const fogSnap = await getDoc(fogRef);
-      
+
       if (fogSnap.exists()) {
         const data = fogSnap.data();
         // Reconstruct 2D array from flattened array for easier use
@@ -55,7 +77,7 @@ export const fogOfWarService = {
       }
       return null;
     } catch (error) {
-      console.error('Error getting fog of war:', error);
+      console.error("Error getting fog of war:", error);
       throw error;
     }
   },
@@ -65,12 +87,20 @@ export const fogOfWarService = {
    */
   async updateFogOfWar(firestore, campaignId, mapId, visibility, enabled) {
     try {
-      const fogRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'fog', 'current');
-      
+      const fogRef = doc(
+        firestore,
+        "campaigns",
+        campaignId,
+        "vtt",
+        mapId,
+        "fog",
+        "current"
+      );
+
       const updates = {
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
-      
+
       // Update visibility if provided
       if (visibility !== undefined) {
         // Flatten 2D array to 1D for Firestore
@@ -84,17 +114,17 @@ export const fogOfWarService = {
         }
         updates.visibility = flatVisibility;
       }
-      
+
       // Update enabled state if provided
       if (enabled !== undefined) {
         updates.enabled = enabled;
       }
-      
+
       await updateDoc(fogRef, updates);
 
       return true;
     } catch (error) {
-      console.error('Error updating fog of war:', error);
+      console.error("Error updating fog of war:", error);
       throw error;
     }
   },
@@ -105,16 +135,26 @@ export const fogOfWarService = {
   async revealArea(firestore, campaignId, mapId, centerX, centerY, radius = 2) {
     try {
       const fogData = await this.getFogOfWar(firestore, campaignId, mapId);
-      
+
       if (!fogData || !fogData.enabled) return;
 
       const { visibility, gridWidth, gridHeight } = fogData;
-      const newVisibility = visibility.map(row => [...row]);
+      const newVisibility = visibility.map((row) => [...row]);
 
       // Reveal circular area
-      for (let y = Math.max(0, centerY - radius); y <= Math.min(gridHeight - 1, centerY + radius); y++) {
-        for (let x = Math.max(0, centerX - radius); x <= Math.min(gridWidth - 1, centerX + radius); x++) {
-          const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+      for (
+        let y = Math.max(0, centerY - radius);
+        y <= Math.min(gridHeight - 1, centerY + radius);
+        y++
+      ) {
+        for (
+          let x = Math.max(0, centerX - radius);
+          x <= Math.min(gridWidth - 1, centerX + radius);
+          x++
+        ) {
+          const distance = Math.sqrt(
+            Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)
+          );
           if (distance <= radius) {
             newVisibility[y][x] = true;
           }
@@ -124,7 +164,7 @@ export const fogOfWarService = {
       await this.updateFogOfWar(firestore, campaignId, mapId, newVisibility);
       return true;
     } catch (error) {
-      console.error('Error revealing area:', error);
+      console.error("Error revealing area:", error);
       throw error;
     }
   },
@@ -134,21 +174,29 @@ export const fogOfWarService = {
    */
   async toggleFogOfWar(firestore, campaignId, mapId) {
     try {
-      const fogRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'fog', 'current');
+      const fogRef = doc(
+        firestore,
+        "campaigns",
+        campaignId,
+        "vtt",
+        mapId,
+        "fog",
+        "current"
+      );
       const fogSnap = await getDoc(fogRef);
-      
+
       if (fogSnap.exists()) {
         const currentState = fogSnap.data().enabled;
         await updateDoc(fogRef, {
           enabled: !currentState,
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         });
         return !currentState;
       }
-      
+
       return false;
     } catch (error) {
-      console.error('Error toggling fog of war:', error);
+      console.error("Error toggling fog of war:", error);
       throw error;
     }
   },
@@ -158,8 +206,16 @@ export const fogOfWarService = {
    */
   subscribeFogOfWar(firestore, campaignId, mapId, callback) {
     try {
-      const fogRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'fog', 'current');
-      
+      const fogRef = doc(
+        firestore,
+        "campaigns",
+        campaignId,
+        "vtt",
+        mapId,
+        "fog",
+        "current"
+      );
+
       return onSnapshot(fogRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.data();
@@ -178,7 +234,7 @@ export const fogOfWarService = {
         }
       });
     } catch (error) {
-      console.error('Error subscribing to fog of war:', error);
+      console.error("Error subscribing to fog of war:", error);
       throw error;
     }
   },
@@ -188,9 +244,17 @@ export const fogOfWarService = {
    */
   async clearAllFog(firestore, campaignId, mapId) {
     try {
-      const fogRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'fog', 'current');
+      const fogRef = doc(
+        firestore,
+        "campaigns",
+        campaignId,
+        "vtt",
+        mapId,
+        "fog",
+        "current"
+      );
       const fogSnap = await getDoc(fogRef);
-      
+
       if (!fogSnap.exists()) return;
 
       const { gridWidth, gridHeight } = fogSnap.data();
@@ -199,11 +263,11 @@ export const fogOfWarService = {
 
       await updateDoc(fogRef, {
         visibility,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
       return true;
     } catch (error) {
-      console.error('Error clearing fog:', error);
+      console.error("Error clearing fog:", error);
       throw error;
     }
   },
@@ -220,9 +284,17 @@ export const fogOfWarService = {
    */
   async resetAllFog(firestore, campaignId, mapId) {
     try {
-      const fogRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'fog', 'current');
+      const fogRef = doc(
+        firestore,
+        "campaigns",
+        campaignId,
+        "vtt",
+        mapId,
+        "fog",
+        "current"
+      );
       const fogSnap = await getDoc(fogRef);
-      
+
       if (!fogSnap.exists()) return;
 
       const { gridWidth, gridHeight } = fogSnap.data();
@@ -231,11 +303,11 @@ export const fogOfWarService = {
 
       await updateDoc(fogRef, {
         visibility,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
       return true;
     } catch (error) {
-      console.error('Error resetting fog:', error);
+      console.error("Error resetting fog:", error);
       throw error;
     }
   },
@@ -252,20 +324,28 @@ export const fogOfWarService = {
    */
   async updateFogConfig(firestore, campaignId, mapId, config) {
     try {
-      const fogRef = doc(firestore, 'campaigns', campaignId, 'vtt', mapId, 'fog', 'current');
-      
+      const fogRef = doc(
+        firestore,
+        "campaigns",
+        campaignId,
+        "vtt",
+        mapId,
+        "fog",
+        "current"
+      );
+
       const updates = {
         ...config,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
-      
+
       await updateDoc(fogRef, updates);
       return true;
     } catch (error) {
-      console.error('Error updating fog config:', error);
+      console.error("Error updating fog config:", error);
       throw error;
     }
-  }
+  },
 };
 
 export default fogOfWarService;

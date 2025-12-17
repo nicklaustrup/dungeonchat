@@ -1,11 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCampaign } from '../../contexts/CampaignContext';
-import './CampaignSwitcher.css';
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCampaign } from "../../contexts/CampaignContext";
+import "./CampaignSwitcher.css";
 
 function CampaignSwitcher() {
   const navigate = useNavigate();
-  const { userCampaigns, recentCampaigns, currentCampaign, switchCampaign, loading } = useCampaign();
+  const {
+    userCampaigns,
+    recentCampaigns,
+    currentCampaign,
+    switchCampaign,
+    loading,
+  } = useCampaign();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -18,8 +24,9 @@ function CampaignSwitcher() {
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen]);
 
@@ -30,7 +37,7 @@ function CampaignSwitcher() {
   };
 
   const handleViewAllCampaigns = () => {
-    navigate('/campaigns');
+    navigate("/campaigns");
     setIsOpen(false);
   };
 
@@ -52,15 +59,15 @@ function CampaignSwitcher() {
 
   return (
     <div className="campaign-switcher" ref={dropdownRef}>
-      <button 
-        className={`campaign-switcher-trigger ${isOpen ? 'open' : ''}`}
+      <button
+        className={`campaign-switcher-trigger ${isOpen ? "open" : ""}`}
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
         <span className="campaign-icon">⚔️</span>
         <span className="campaign-name">
-          {currentCampaign ? currentCampaign.name : 'Select Campaign'}
+          {currentCampaign ? currentCampaign.name : "Select Campaign"}
         </span>
         <span className="dropdown-arrow">▼</span>
       </button>
@@ -71,16 +78,16 @@ function CampaignSwitcher() {
             <>
               <div className="dropdown-section">
                 <div className="dropdown-header">Recent Campaigns</div>
-                {recentCampaigns.map(campaign => (
+                {recentCampaigns.map((campaign) => (
                   <button
                     key={campaign.id}
-                    className={`campaign-item ${currentCampaign?.id === campaign.id ? 'active' : ''}`}
+                    className={`campaign-item ${currentCampaign?.id === campaign.id ? "active" : ""}`}
                     onClick={() => handleCampaignSelect(campaign.id)}
                   >
                     <div className="campaign-info">
                       <span className="campaign-name">{campaign.name}</span>
                       <span className="campaign-role">
-                        {campaign.userRole === 'dm' ? '👑 DM' : '🎭 Player'}
+                        {campaign.userRole === "dm" ? "👑 DM" : "🎭 Player"}
                       </span>
                     </div>
                   </button>
@@ -95,7 +102,6 @@ function CampaignSwitcher() {
               className="dropdown-action"
               onClick={handleViewAllCampaigns}
             >
-
               View All Campaigns ({userCampaigns.length})
             </button>
           </div>

@@ -59,8 +59,6 @@
     "Friends array updated via transactions"
   ],
   "indexing": {
-    "required": [
-      { "field": "username", "order": "asc" }
-    ]
+    "required": [{ "field": "username", "order": "asc" }]
   }
 }

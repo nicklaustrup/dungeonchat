@@ -1,27 +1,29 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FirebaseContext } from '../../../services/FirebaseContext';
-import { mapService } from '../../../services/vtt/mapService';
-import { fogOfWarService } from '../../../services/vtt/fogOfWarService';
-import { boundaryService } from '../../../services/vtt/boundaryService';
-import { tokenService } from '../../../services/vtt/tokenService';
-import MapCanvas from '../Canvas/MapCanvas';
-import TokenManager from '../TokenManager/TokenManager';
-import DeleteTokenModal from '../Canvas/DeleteTokenModal';
-import ChatPage from '../../../pages/ChatPage';
-import ChatPanel from './ChatPanel';
-import CampaignRules from '../../Campaign/CampaignRules';
-import PartyManagement from '../../Session/PartyManagement';
-import InitiativeTracker from '../../Session/InitiativeTracker';
-import MapQueue from './MapQueue';
-import EncounterBuilder from './EncounterBuilder';
-import ResizablePanel from './ResizablePanel';
-import CharacterSheetPanel from './CharacterSheetPanel';
-import LightingPanel from '../Lighting/LightingPanel';
-import VoiceChatPanel from '../../Voice/VoiceChatPanel';
-import VoiceNotificationContainer, { setNotificationContainer } from '../../Voice/VoiceNotificationContainer';
-import useTokens from '../../../hooks/vtt/useTokens';
-import useLighting from '../../../hooks/vtt/useLighting';
+import React, { useState, useContext, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { FirebaseContext } from "../../../services/FirebaseContext";
+import { mapService } from "../../../services/vtt/mapService";
+import { fogOfWarService } from "../../../services/vtt/fogOfWarService";
+import { boundaryService } from "../../../services/vtt/boundaryService";
+import { tokenService } from "../../../services/vtt/tokenService";
+import MapCanvas from "../Canvas/MapCanvas";
+import TokenManager from "../TokenManager/TokenManager";
+import DeleteTokenModal from "../Canvas/DeleteTokenModal";
+import ChatPage from "../../../pages/ChatPage";
+import ChatPanel from "./ChatPanel";
+import CampaignRules from "../../Campaign/CampaignRules";
+import PartyManagement from "../../Session/PartyManagement";
+import InitiativeTracker from "../../Session/InitiativeTracker";
+import MapQueue from "./MapQueue";
+import EncounterBuilder from "./EncounterBuilder";
+import ResizablePanel from "./ResizablePanel";
+import CharacterSheetPanel from "./CharacterSheetPanel";
+import LightingPanel from "../Lighting/LightingPanel";
+import VoiceChatPanel from "../../Voice/VoiceChatPanel";
+import VoiceNotificationContainer, {
+  setNotificationContainer,
+} from "../../Voice/VoiceNotificationContainer";
+import useTokens from "../../../hooks/vtt/useTokens";
+import useLighting from "../../../hooks/vtt/useLighting";
 import {
   FiMessageSquare,
   FiFileText,
@@ -32,13 +34,13 @@ import {
   FiLogOut,
   FiTarget,
   FiUser,
-  FiSettings
-} from 'react-icons/fi';
-import { SquareMenu, ArrowLeftToLine } from 'lucide-react';
-import { FaHeadphones } from 'react-icons/fa';
-import SessionSettings from './SessionSettings';
-import './VTTSession.css';
-import '../../Campaign/CampaignChatHeader.css'; // For voice panel styles
+  FiSettings,
+} from "react-icons/fi";
+import { SquareMenu, ArrowLeftToLine } from "lucide-react";
+import { FaHeadphones } from "react-icons/fa";
+import SessionSettings from "./SessionSettings";
+import "./VTTSession.css";
+import "../../Campaign/CampaignChatHeader.css"; // For voice panel styles
 
 /**
  * VTTSession - Main Virtual Tabletop Session Room
@@ -63,7 +65,9 @@ function VTTSession() {
   const { tokens } = useTokens(campaignId, activeMap?.id);
 
   // Get selected token object
-  const selectedToken = tokens?.find(t => t.id === selectedTokenId || t.tokenId === selectedTokenId);
+  const selectedToken = tokens?.find(
+    (t) => t.id === selectedTokenId || t.tokenId === selectedTokenId
+  );
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -83,7 +87,7 @@ function VTTSession() {
     rules: false,
     party: false,
     initiative: false,
-    characters: false
+    characters: false,
   });
 
   // Character sheet panel state
@@ -96,9 +100,9 @@ function VTTSession() {
   const [fogOfWarEnabled, setFogOfWarEnabled] = useState(false);
   const [showFogPanel, setShowFogPanel] = useState(false);
   const [fogBrushSize, setFogBrushSize] = useState(3);
-  const [fogBrushMode, setFogBrushMode] = useState('reveal'); // 'reveal' | 'conceal'
+  const [fogBrushMode, setFogBrushMode] = useState("reveal"); // 'reveal' | 'conceal'
   const [fogGridVisible, setFogGridVisible] = useState(false);
-  const [fogGridColor, setFogGridColor] = useState('#ff0000');
+  const [fogGridColor, setFogGridColor] = useState("#ff0000");
   const [fogOpacity, setFogOpacity] = useState(0.35);
 
   // Boundary state
@@ -108,9 +112,9 @@ function VTTSession() {
   const [boundaryMode, setBoundaryMode] = useState(null); // null | 'line' | 'paint'
   const [boundarySnapToGrid, setBoundarySnapToGrid] = useState(true);
   const [boundaryBrushSize, setBoundaryBrushSize] = useState(2);
-  const [boundaryBrushMode, setBoundaryBrushMode] = useState('paint'); // 'paint' | 'erase'
-  const [boundaryLineColor, setBoundaryLineColor] = useState('#ff0000');
-  const [boundaryGridColor, setBoundaryGridColor] = useState('#ff0000');
+  const [boundaryBrushMode, setBoundaryBrushMode] = useState("paint"); // 'paint' | 'erase'
+  const [boundaryLineColor, setBoundaryLineColor] = useState("#ff0000");
+  const [boundaryGridColor, setBoundaryGridColor] = useState("#ff0000");
   const [boundaryOpacity, setBoundaryOpacity] = useState(0.7);
 
   // Lighting state
@@ -119,7 +123,10 @@ function VTTSession() {
   // Voice chat state
   const [showVoicePanel, setShowVoicePanel] = useState(false);
   const [isVoiceMinimized, setIsVoiceMinimized] = useState(false);
-  const [voicePosition, setVoicePosition] = useState({ x: window.innerWidth - 420, y: 100 });
+  const [voicePosition, setVoicePosition] = useState({
+    x: window.innerWidth - 420,
+    y: 100,
+  });
   const [isVoiceDragging, setIsVoiceDragging] = useState(false);
   const voiceDragStartRef = useRef({ x: 0, y: 0 });
   const notificationContainerRef = useRef(null);
@@ -128,21 +135,26 @@ function VTTSession() {
   const centerCameraRef = useRef(null);
 
   // Load lighting system for active map
-  const lightingHook = useLighting(firestore, campaignId, activeMap?.id, activeMap?.lighting);
+  const lightingHook = useLighting(
+    firestore,
+    campaignId,
+    activeMap?.id,
+    activeMap?.lighting
+  );
 
   // Hide app navigation on mount, restore on unmount
   useEffect(() => {
     // Hide the app navigation and breadcrumb
-    const appNav = document.querySelector('.app-navigation');
-    const breadcrumb = document.querySelector('.breadcrumb');
+    const appNav = document.querySelector(".app-navigation");
+    const breadcrumb = document.querySelector(".breadcrumb");
 
-    if (appNav) appNav.style.display = 'none';
-    if (breadcrumb) breadcrumb.style.display = 'none';
+    if (appNav) appNav.style.display = "none";
+    if (breadcrumb) breadcrumb.style.display = "none";
 
     // Restore on unmount
     return () => {
-      if (appNav) appNav.style.display = '';
-      if (breadcrumb) breadcrumb.style.display = '';
+      if (appNav) appNav.style.display = "";
+      if (breadcrumb) breadcrumb.style.display = "";
     };
   }, []);
 
@@ -155,52 +167,77 @@ function VTTSession() {
 
     const setupCampaignListener = async () => {
       try {
-        const { doc, onSnapshot } = await import('firebase/firestore');
-        const campaignRef = doc(firestore, 'campaigns', campaignId);
+        const { doc, onSnapshot } = await import("firebase/firestore");
+        const campaignRef = doc(firestore, "campaigns", campaignId);
 
         // Subscribe to real-time campaign updates
-        campaignUnsubscribe = onSnapshot(campaignRef, async (snapshot) => {
-          if (snapshot.exists()) {
-            const campaignData = { id: snapshot.id, ...snapshot.data() };
-            console.log('🔄 Campaign update received. Active map ID:', campaignData.activeMapId, 'User is DM:', campaignData.dmId === user.uid);
-            setCampaign(campaignData);
-            setIsUserDM(campaignData.dmId === user.uid);
+        campaignUnsubscribe = onSnapshot(
+          campaignRef,
+          async (snapshot) => {
+            if (snapshot.exists()) {
+              const campaignData = { id: snapshot.id, ...snapshot.data() };
+              console.log(
+                "🔄 Campaign update received. Active map ID:",
+                campaignData.activeMapId,
+                "User is DM:",
+                campaignData.dmId === user.uid
+              );
+              setCampaign(campaignData);
+              setIsUserDM(campaignData.dmId === user.uid);
 
-            // Unsubscribe from previous map if switching maps
-            if (mapUnsubscribe) {
-              mapUnsubscribe();
-              mapUnsubscribe = null;
-            }
+              // Unsubscribe from previous map if switching maps
+              if (mapUnsubscribe) {
+                mapUnsubscribe();
+                mapUnsubscribe = null;
+              }
 
-            // Subscribe to active map changes in real-time
-            if (campaignData.activeMapId) {
-              console.log('📍 Subscribing to map:', campaignData.activeMapId);
-              const mapRef = doc(firestore, 'campaigns', campaignId, 'maps', campaignData.activeMapId);
-              mapUnsubscribe = onSnapshot(mapRef, (mapSnapshot) => {
-                if (mapSnapshot.exists()) {
-                  const mapData = { id: mapSnapshot.id, ...mapSnapshot.data() };
-                  setActiveMap(mapData);
-                  console.log('🗺️ Map loaded successfully:', mapData.name || mapData.id);
-                } else {
-                  console.warn('⚠️ Map document does not exist');
-                  setActiveMap(null);
-                }
-              }, (err) => {
-                console.error('Error in map listener:', err);
-                // Handle permission errors gracefully by clearing the active map
+              // Subscribe to active map changes in real-time
+              if (campaignData.activeMapId) {
+                console.log("📍 Subscribing to map:", campaignData.activeMapId);
+                const mapRef = doc(
+                  firestore,
+                  "campaigns",
+                  campaignId,
+                  "maps",
+                  campaignData.activeMapId
+                );
+                mapUnsubscribe = onSnapshot(
+                  mapRef,
+                  (mapSnapshot) => {
+                    if (mapSnapshot.exists()) {
+                      const mapData = {
+                        id: mapSnapshot.id,
+                        ...mapSnapshot.data(),
+                      };
+                      setActiveMap(mapData);
+                      console.log(
+                        "🗺️ Map loaded successfully:",
+                        mapData.name || mapData.id
+                      );
+                    } else {
+                      console.warn("⚠️ Map document does not exist");
+                      setActiveMap(null);
+                    }
+                  },
+                  (err) => {
+                    console.error("Error in map listener:", err);
+                    // Handle permission errors gracefully by clearing the active map
+                    setActiveMap(null);
+                  }
+                );
+              } else {
                 setActiveMap(null);
-              });
-            } else {
-              setActiveMap(null);
+              }
             }
+            setLoading(false);
+          },
+          (err) => {
+            console.error("Error in campaign listener:", err);
+            setLoading(false);
           }
-          setLoading(false);
-        }, (err) => {
-          console.error('Error in campaign listener:', err);
-          setLoading(false);
-        });
+        );
       } catch (err) {
-        console.error('Error setting up campaign listener:', err);
+        console.error("Error setting up campaign listener:", err);
         setLoading(false);
       }
     };
@@ -220,41 +257,59 @@ function VTTSession() {
 
   // Auto-create player tokens for players with character sheets
   useEffect(() => {
-    console.log('Auto-create player token check:', {
+    console.log("Auto-create player token check:", {
       hasCampaign: !!campaign,
       hasUser: !!user,
       hasFirestore: !!firestore,
       hasActiveMap: !!activeMap,
       isUserDM,
-      willRun: !!(campaign && user && firestore && activeMap && !isUserDM)
+      willRun: !!(campaign && user && firestore && activeMap && !isUserDM),
     });
 
     if (!campaign || !user || !firestore || !activeMap || isUserDM) return;
 
     const createPlayerToken = async () => {
       try {
-        const { collection, query, where, getDocs, doc, getDoc } = await import('firebase/firestore');
+        const { collection, query, where, getDocs, doc, getDoc } =
+          await import("firebase/firestore");
 
         // First check if player has a character sheet
-        const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', user.uid);
+        const characterRef = doc(
+          firestore,
+          "campaigns",
+          campaignId,
+          "characters",
+          user.uid
+        );
         const characterSnap = await getDoc(characterRef);
 
         if (!characterSnap.exists()) {
-          console.log('Player has no character sheet, skipping token creation');
+          console.log("Player has no character sheet, skipping token creation");
           return; // Only create tokens for players with character sheets
         }
 
         const character = characterSnap.data();
 
         // Check if player already has a token for this map
-        const tokensRef = collection(firestore, 'campaigns', campaignId, 'vtt', activeMap.id, 'tokens');
-        const q = query(tokensRef, where('ownerId', '==', user.uid), where('type', '==', 'pc'));
+        const tokensRef = collection(
+          firestore,
+          "campaigns",
+          campaignId,
+          "vtt",
+          activeMap.id,
+          "tokens"
+        );
+        const q = query(
+          tokensRef,
+          where("ownerId", "==", user.uid),
+          where("type", "==", "pc")
+        );
         const existingTokens = await getDocs(q);
 
         if (!existingTokens.empty) return; // Player already has a token on this map
 
         // Get user profile for photo
-        const profileRef = doc(firestore, 'userProfiles', user.uid);
+        const profileRef = doc(firestore, "userProfiles", user.uid);
         const profileSnap = await getDoc(profileRef);
         const profile = profileSnap.exists() ? profileSnap.data() : {};
 
@@ -262,28 +317,41 @@ function VTTSession() {
         // 1. Character avatar from character sheet (highest priority)
         // 2. User profile photo (backup)
         // 3. Empty string (will use default blue color in TokenSprite)
-        const tokenImageUrl = character.avatarUrl || profile.photoURL || user.photoURL || '';
+        const tokenImageUrl =
+          character.avatarUrl || profile.photoURL || user.photoURL || "";
 
         // Create staged player token
         // Priority for name: character name > username (never displayName)
         const playerToken = {
-          name: character.name || profile.username || 'Player',
-          type: 'pc', // Use 'pc' to match TokenPalette
+          name: character.name || profile.username || "Player",
+          type: "pc", // Use 'pc' to match TokenPalette
           imageUrl: tokenImageUrl,
           position: { x: 100, y: 100 },
           size: { width: 50, height: 50 },
-          color: '#4a9eff',
+          color: "#4a9eff",
           characterId: user.uid,
           ownerId: user.uid,
           staged: true, // Start in staging area
           isHidden: false,
-          createdBy: user.uid
+          createdBy: user.uid,
         };
 
-        const createdToken = await tokenService.createToken(firestore, campaignId, activeMap.id, playerToken);
-        console.log('Player token created and staged for:', character.name, 'Token ID:', createdToken, 'Token data:', playerToken);
+        const createdToken = await tokenService.createToken(
+          firestore,
+          campaignId,
+          activeMap.id,
+          playerToken
+        );
+        console.log(
+          "Player token created and staged for:",
+          character.name,
+          "Token ID:",
+          createdToken,
+          "Token data:",
+          playerToken
+        );
       } catch (err) {
-        console.error('Error creating player token:', err);
+        console.error("Error creating player token:", err);
       }
     };
 
@@ -294,13 +362,18 @@ function VTTSession() {
   useEffect(() => {
     if (!firestore || !campaignId || !activeMap?.id) return;
 
-    const unsubscribe = fogOfWarService.subscribeFogOfWar(firestore, campaignId, activeMap.id, (data) => {
-      if (data) {
-        setFogOfWarEnabled(data.enabled || false);
-      } else {
-        setFogOfWarEnabled(false);
+    const unsubscribe = fogOfWarService.subscribeFogOfWar(
+      firestore,
+      campaignId,
+      activeMap.id,
+      (data) => {
+        if (data) {
+          setFogOfWarEnabled(data.enabled || false);
+        } else {
+          setFogOfWarEnabled(false);
+        }
       }
-    });
+    );
 
     return () => unsubscribe();
   }, [firestore, campaignId, activeMap?.id]);
@@ -309,10 +382,15 @@ function VTTSession() {
   useEffect(() => {
     if (!firestore || !campaignId || !activeMap?.id) return;
 
-    const unsubscribe = boundaryService.subscribeToBoundaryState(firestore, campaignId, activeMap.id, (state) => {
-      setBoundariesEnabled(state.enabled);
-      setBoundariesVisible(state.visible);
-    });
+    const unsubscribe = boundaryService.subscribeToBoundaryState(
+      firestore,
+      campaignId,
+      activeMap.id,
+      (state) => {
+        setBoundariesEnabled(state.enabled);
+        setBoundariesVisible(state.visible);
+      }
+    );
 
     return () => unsubscribe();
   }, [firestore, campaignId, activeMap?.id]);
@@ -323,7 +401,10 @@ function VTTSession() {
 
     const handleMouseMove = (e) => {
       const deltaX = e.clientX - sidebarResizeStartRef.current.x;
-      const newWidth = Math.max(300, Math.min(800, sidebarResizeStartRef.current.width + deltaX));
+      const newWidth = Math.max(
+        300,
+        Math.min(800, sidebarResizeStartRef.current.width + deltaX)
+      );
       setSidebarWidth(newWidth);
     };
 
@@ -331,12 +412,12 @@ function VTTSession() {
       setIsResizingSidebar(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isResizingSidebar]);
 
@@ -346,7 +427,7 @@ function VTTSession() {
     setIsResizingSidebar(true);
     sidebarResizeStartRef.current = {
       x: e.clientX,
-      width: sidebarWidth
+      width: sidebarWidth,
     };
   };
 
@@ -361,13 +442,13 @@ function VTTSession() {
         await mapService.setActiveMap(firestore, campaignId, mapId);
       }
     } catch (err) {
-      console.error('Error loading map:', err);
+      console.error("Error loading map:", err);
     }
   };
 
   // Toggle a sidebar panel; ensure sidebar opens when selecting a panel
   const togglePanel = (panelName) => {
-    setActivePanel(prev => {
+    setActivePanel((prev) => {
       const next = prev === panelName ? null : panelName;
       // Always open sidebar when selecting a panel, close when toggling off
       setIsSidebarOpen(next !== null);
@@ -377,26 +458,26 @@ function VTTSession() {
 
   // Toggle floating panel
   const toggleFloatingPanel = (panelName) => {
-    setFloatingPanels(prev => ({
+    setFloatingPanels((prev) => ({
       ...prev,
-      [panelName]: !prev[panelName]
+      [panelName]: !prev[panelName],
     }));
   };
 
   // Close floating panel
   const closeFloatingPanel = (panelName) => {
-    setFloatingPanels(prev => ({
+    setFloatingPanels((prev) => ({
       ...prev,
-      [panelName]: false
+      [panelName]: false,
     }));
   };
 
   // Open character sheet panel to specific character
   const openCharacterSheet = (characterUserId) => {
     setSelectedCharacterUserId(characterUserId);
-    setFloatingPanels(prev => ({
+    setFloatingPanels((prev) => ({
       ...prev,
-      characters: true
+      characters: true,
     }));
   };
 
@@ -412,35 +493,46 @@ function VTTSession() {
 
     // Get user confirmation first
     if (fogOfWarEnabled) {
-      const confirm = window.confirm('Disabling Fog of War will reveal unexplored areas on the map. Do you want to continue?');
+      const confirm = window.confirm(
+        "Disabling Fog of War will reveal unexplored areas on the map. Do you want to continue?"
+      );
       if (!confirm) {
         return;
-      }
-      else {
+      } else {
         setFogOfWarEnabled(false);
       }
     }
 
     try {
       // Check if fog exists first
-      const fogData = await fogOfWarService.getFogOfWar(firestore, campaignId, activeMap.id);
+      const fogData = await fogOfWarService.getFogOfWar(
+        firestore,
+        campaignId,
+        activeMap.id
+      );
 
       if (!fogData) {
         // Initialize fog if it doesn't exist
         if (!activeMap.gridEnabled) {
-          alert('Grid must be enabled to use Fog of War');
+          alert("Grid must be enabled to use Fog of War");
           return;
         }
         await handleInitializeFog();
         setFogOfWarEnabled(true);
       } else {
         // Update fog enabled state
-        await fogOfWarService.updateFogOfWar(firestore, campaignId, activeMap.id, fogData.visibility, enabled);
+        await fogOfWarService.updateFogOfWar(
+          firestore,
+          campaignId,
+          activeMap.id,
+          fogData.visibility,
+          enabled
+        );
         setFogOfWarEnabled(enabled);
       }
     } catch (err) {
-      console.error('Error toggling fog of war:', err);
-      alert('Failed to toggle fog of war: ' + err.message);
+      console.error("Error toggling fog of war:", err);
+      alert("Failed to toggle fog of war: " + err.message);
     }
   };
 
@@ -451,8 +543,8 @@ function VTTSession() {
     try {
       await fogOfWarService.clearFogOfWar(firestore, campaignId, activeMap.id);
     } catch (err) {
-      console.error('Error revealing all fog:', err);
-      alert('Failed to reveal all: ' + err.message);
+      console.error("Error revealing all fog:", err);
+      alert("Failed to reveal all: " + err.message);
     }
   };
 
@@ -463,8 +555,8 @@ function VTTSession() {
     try {
       await fogOfWarService.resetFogOfWar(firestore, campaignId, activeMap.id);
     } catch (err) {
-      console.error('Error concealing all fog:', err);
-      alert('Failed to conceal all: ' + err.message);
+      console.error("Error concealing all fog:", err);
+      alert("Failed to conceal all: " + err.message);
     }
   };
 
@@ -477,10 +569,16 @@ function VTTSession() {
       const gridWidth = Math.ceil(activeMap.width / activeMap.gridSize) + 2;
       const gridHeight = Math.ceil(activeMap.height / activeMap.gridSize) + 2;
 
-      await fogOfWarService.initializeFogOfWar(firestore, campaignId, activeMap.id, gridWidth, gridHeight);
+      await fogOfWarService.initializeFogOfWar(
+        firestore,
+        campaignId,
+        activeMap.id,
+        gridWidth,
+        gridHeight
+      );
       setFogOfWarEnabled(true);
     } catch (err) {
-      console.error('Error initializing fog of war:', err);
+      console.error("Error initializing fog of war:", err);
     }
   };
 
@@ -494,11 +592,16 @@ function VTTSession() {
     if (!isUserDM || !activeMap) return;
 
     try {
-      await boundaryService.updateBoundaryState(firestore, campaignId, activeMap.id, { enabled });
+      await boundaryService.updateBoundaryState(
+        firestore,
+        campaignId,
+        activeMap.id,
+        { enabled }
+      );
       setBoundariesEnabled(enabled);
     } catch (err) {
-      console.error('Error toggling boundaries:', err);
-      alert('Failed to toggle boundaries: ' + err.message);
+      console.error("Error toggling boundaries:", err);
+      alert("Failed to toggle boundaries: " + err.message);
     }
   };
 
@@ -506,25 +609,36 @@ function VTTSession() {
     if (!isUserDM || !activeMap) return;
 
     try {
-      await boundaryService.updateBoundaryState(firestore, campaignId, activeMap.id, { visible });
+      await boundaryService.updateBoundaryState(
+        firestore,
+        campaignId,
+        activeMap.id,
+        { visible }
+      );
       setBoundariesVisible(visible);
     } catch (err) {
-      console.error('Error toggling boundary visibility:', err);
-      alert('Failed to toggle boundary visibility: ' + err.message);
+      console.error("Error toggling boundary visibility:", err);
+      alert("Failed to toggle boundary visibility: " + err.message);
     }
   };
 
   const handleClearAllBoundaries = async () => {
     if (!isUserDM || !activeMap) return;
 
-    const confirm = window.confirm('Are you sure you want to delete all boundaries on this map? This cannot be undone.');
+    const confirm = window.confirm(
+      "Are you sure you want to delete all boundaries on this map? This cannot be undone."
+    );
     if (!confirm) return;
 
     try {
-      await boundaryService.clearAllBoundaries(firestore, campaignId, activeMap.id);
+      await boundaryService.clearAllBoundaries(
+        firestore,
+        campaignId,
+        activeMap.id
+      );
     } catch (err) {
-      console.error('Error clearing boundaries:', err);
-      alert('Failed to clear boundaries: ' + err.message);
+      console.error("Error clearing boundaries:", err);
+      alert("Failed to clear boundaries: " + err.message);
     }
   };
 
@@ -533,13 +647,18 @@ function VTTSession() {
 
     try {
       const tokenId = tokenToDelete.id || tokenToDelete.tokenId;
-      await tokenService.deleteToken(firestore, campaignId, activeMap.id, tokenId);
+      await tokenService.deleteToken(
+        firestore,
+        campaignId,
+        activeMap.id,
+        tokenId
+      );
       setSelectedTokenId(null);
       setShowDeleteModal(false);
       setTokenToDelete(null);
     } catch (err) {
-      console.error('Error deleting token:', err);
-      alert('Failed to delete token: ' + err.message);
+      console.error("Error deleting token:", err);
+      alert("Failed to delete token: " + err.message);
     }
   };
 
@@ -561,9 +680,9 @@ function VTTSession() {
       const deltaX = e.clientX - voiceDragStartRef.current.x;
       const deltaY = e.clientY - voiceDragStartRef.current.y;
 
-      setVoicePosition(prev => ({
+      setVoicePosition((prev) => ({
         x: Math.max(0, Math.min(window.innerWidth - 380, prev.x + deltaX)),
-        y: Math.max(0, Math.min(window.innerHeight - 100, prev.y + deltaY))
+        y: Math.max(0, Math.min(window.innerHeight - 100, prev.y + deltaY)),
       }));
 
       voiceDragStartRef.current = { x: e.clientX, y: e.clientY };
@@ -573,12 +692,12 @@ function VTTSession() {
       setIsVoiceDragging(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isVoiceDragging]);
 
@@ -599,16 +718,18 @@ function VTTSession() {
   const handleCenterCameraOnToken = (x, y) => {
     if (centerCameraRef.current) {
       centerCameraRef.current(x, y);
-      console.log('VTTSession: Centering camera on token at:', x, y);
+      console.log("VTTSession: Centering camera on token at:", x, y);
     } else {
-      console.warn('VTTSession: Camera center function not available yet');
+      console.warn("VTTSession: Camera center function not available yet");
     }
   };
 
-
   // Handle opening light editor from Token Manager Active tab
   const handleOpenLightEditor = (light) => {
-    console.log('VTTSession: Opening light editor for:', light.name || light.type);
+    console.log(
+      "VTTSession: Opening light editor for:",
+      light.name || light.type
+    );
     // Open the lighting panel if not already open
     setShowLightingPanel(true);
     // The LightingPanel component will need to handle selecting the specific light
@@ -628,7 +749,10 @@ function VTTSession() {
     return (
       <div className="vtt-session-error">
         <h2>Campaign not found</h2>
-        <p>The campaign you're looking for doesn't exist or you don't have access.</p>
+        <p>
+          The campaign you're looking for doesn't exist or you don't have
+          access.
+        </p>
       </div>
     );
   }
@@ -641,34 +765,38 @@ function VTTSession() {
           <button
             className="sidebar-toggle"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            title={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-            aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+            title={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
+            aria-label={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
             aria-pressed={isSidebarOpen}
           >
-            {isSidebarOpen ? <ArrowLeftToLine size={25} /> : <SquareMenu size={25} />}
+            {isSidebarOpen ? (
+              <ArrowLeftToLine size={25} />
+            ) : (
+              <SquareMenu size={25} />
+            )}
           </button>
           <h1 className="session-title">{campaign.name}</h1>
           <span className="user-role-badge">
-            {isUserDM ? '👑 Dungeon Master' : '🎭 Player'}
+            {isUserDM ? "👑 Dungeon Master" : "🎭 Player"}
           </span>
         </div>
 
         <div className="toolbar-center">
           {/* Quick Action Buttons */}
           <button
-            className={`toolbar-button ${activePanel === 'chat' || floatingPanels.chat ? 'active' : ''}`}
+            className={`toolbar-button ${activePanel === "chat" || floatingPanels.chat ? "active" : ""}`}
             onClick={() => {
               if (floatingPanels.chat) {
                 // Close floating panel
-                setFloatingPanels(prev => ({ ...prev, chat: false }));
-              } else if (activePanel === 'chat') {
+                setFloatingPanels((prev) => ({ ...prev, chat: false }));
+              } else if (activePanel === "chat") {
                 // Pop out from sidebar
-                setFloatingPanels(prev => ({ ...prev, chat: true }));
+                setFloatingPanels((prev) => ({ ...prev, chat: true }));
                 setActivePanel(null);
                 setIsSidebarOpen(false);
               } else {
                 // Open in sidebar
-                setActivePanel('chat');
+                setActivePanel("chat");
                 setIsSidebarOpen(true);
               }
             }}
@@ -676,55 +804,55 @@ function VTTSession() {
               e.preventDefault();
               if (!floatingPanels.chat) {
                 // Pop out directly
-                setFloatingPanels(prev => ({ ...prev, chat: true }));
+                setFloatingPanels((prev) => ({ ...prev, chat: true }));
                 setActivePanel(null);
                 setIsSidebarOpen(false);
               }
             }}
             title="Session Chat (Click to toggle, Right-click to pop out)"
             aria-label="Session Chat"
-            aria-pressed={activePanel === 'chat' || floatingPanels.chat}
+            aria-pressed={activePanel === "chat" || floatingPanels.chat}
           >
             <FiMessageSquare />
-            <span>Chat {floatingPanels.chat && '⬜'}</span>
+            <span>Chat {floatingPanels.chat && "⬜"}</span>
           </button>
 
           <button
-            className={`toolbar-button ${activePanel === 'rules' ? 'active' : ''}`}
-            onClick={() => togglePanel('rules')}
+            className={`toolbar-button ${activePanel === "rules" ? "active" : ""}`}
+            onClick={() => togglePanel("rules")}
             title="Campaign Rules"
             aria-label="Campaign Rules"
-            aria-pressed={activePanel === 'rules'}
+            aria-pressed={activePanel === "rules"}
           >
             <FiFileText />
             <span>Rules</span>
           </button>
 
           <button
-            className={`toolbar-button ${activePanel === 'party' ? 'active' : ''}`}
-            onClick={() => togglePanel('party')}
+            className={`toolbar-button ${activePanel === "party" ? "active" : ""}`}
+            onClick={() => togglePanel("party")}
             title="Party Management"
             aria-label="Party Management"
-            aria-pressed={activePanel === 'party'}
+            aria-pressed={activePanel === "party"}
           >
             <FiUsers />
             <span>Party</span>
           </button>
 
           <button
-            className={`toolbar-button ${activePanel === 'initiative' ? 'active' : ''}`}
-            onClick={() => togglePanel('initiative')}
+            className={`toolbar-button ${activePanel === "initiative" ? "active" : ""}`}
+            onClick={() => togglePanel("initiative")}
             title="Initiative Tracker"
             aria-label="Initiative Tracker"
-            aria-pressed={activePanel === 'initiative'}
+            aria-pressed={activePanel === "initiative"}
           >
             <FiTarget />
             <span>Initiative</span>
           </button>
 
           <button
-            className={`toolbar-button ${floatingPanels.characters ? 'active' : ''}`}
-            onClick={() => toggleFloatingPanel('characters')}
+            className={`toolbar-button ${floatingPanels.characters ? "active" : ""}`}
+            onClick={() => toggleFloatingPanel("characters")}
             title="Character Sheets"
             aria-label="Character Sheets"
             aria-pressed={floatingPanels.characters}
@@ -734,9 +862,9 @@ function VTTSession() {
           </button>
 
           <button
-            className={`toolbar-button ${showVoicePanel ? 'active' : ''}`}
+            className={`toolbar-button ${showVoicePanel ? "active" : ""}`}
             onClick={() => setShowVoicePanel(!showVoicePanel)}
-            title={showVoicePanel ? 'Close Voice Chat' : 'Open Voice Chat'}
+            title={showVoicePanel ? "Close Voice Chat" : "Open Voice Chat"}
             aria-label="Voice Chat"
             aria-pressed={showVoicePanel}
           >
@@ -777,13 +905,13 @@ function VTTSession() {
             {/* Sidebar Header with Close Button */}
             <div className="sidebar-header">
               <h3 className="sidebar-title">
-                {activePanel === 'chat' && '💬 Chat'}
-                {activePanel === 'rules' && '📖 Rules'}
-                {activePanel === 'party' && '👥 Party'}
-                {activePanel === 'initiative' && '🎲 Initiative'}
-                {activePanel === 'maps' && '🗺️ Maps'}
-                {activePanel === 'encounter' && '⚔️ Encounters'}
-                {!activePanel && '📁 Panel'}
+                {activePanel === "chat" && "💬 Chat"}
+                {activePanel === "rules" && "📖 Rules"}
+                {activePanel === "party" && "👥 Party"}
+                {activePanel === "initiative" && "🎲 Initiative"}
+                {activePanel === "maps" && "🗺️ Maps"}
+                {activePanel === "encounter" && "⚔️ Encounters"}
+                {!activePanel && "📁 Panel"}
               </h3>
               <button
                 className="sidebar-close-btn"
@@ -800,29 +928,26 @@ function VTTSession() {
 
             {/* Sidebar Content */}
             <div className="sidebar-content">
-              {activePanel === 'chat' && !floatingPanels.chat && (
+              {activePanel === "chat" && !floatingPanels.chat && (
                 <ChatPage campaignContext={true} showHeader={false} />
               )}
 
-              {activePanel === 'rules' && (
-                <CampaignRules
-                  campaignId={campaignId}
-                  isUserDM={isUserDM}
-                />
+              {activePanel === "rules" && (
+                <CampaignRules campaignId={campaignId} isUserDM={isUserDM} />
               )}
 
-              {activePanel === 'party' && !floatingPanels.party && (
+              {activePanel === "party" && !floatingPanels.party && (
                 <PartyManagement
                   campaignId={campaignId}
                   onOpenCharacterSheet={openCharacterSheet}
                 />
               )}
 
-              {activePanel === 'initiative' && (
+              {activePanel === "initiative" && (
                 <InitiativeTracker campaignId={campaignId} />
               )}
 
-              {activePanel === 'maps' && isUserDM && (
+              {activePanel === "maps" && isUserDM && (
                 <MapQueue
                   campaignId={campaignId}
                   activeMapId={activeMap?.id}
@@ -830,7 +955,7 @@ function VTTSession() {
                 />
               )}
 
-              {activePanel === 'encounter' && isUserDM && (
+              {activePanel === "encounter" && isUserDM && (
                 <EncounterBuilder
                   campaignId={campaignId}
                   mapId={activeMap?.id}
@@ -860,7 +985,11 @@ function VTTSession() {
             <MapCanvas
               map={activeMap}
               campaignId={campaignId}
-              width={window.innerWidth - (isSidebarOpen ? sidebarWidth : 0) - (showTokenManager ? 320 : 0)}
+              width={
+                window.innerWidth -
+                (isSidebarOpen ? sidebarWidth : 0) -
+                (showTokenManager ? 320 : 0)
+              }
               height={window.innerHeight - 60}
               isDM={isUserDM}
               selectedTokenId={selectedTokenId}
@@ -893,7 +1022,9 @@ function VTTSession() {
               boundaryMode={boundaryMode}
               onBoundaryModeChange={setBoundaryMode}
               boundarySnapToGrid={boundarySnapToGrid}
-              onBoundarySnapToGridToggle={() => setBoundarySnapToGrid(!boundarySnapToGrid)}
+              onBoundarySnapToGridToggle={() =>
+                setBoundarySnapToGrid(!boundarySnapToGrid)
+              }
               boundaryBrushSize={boundaryBrushSize}
               onBoundaryBrushSizeChange={setBoundaryBrushSize}
               boundaryBrushMode={boundaryBrushMode}
@@ -905,10 +1036,14 @@ function VTTSession() {
               boundaryOpacity={boundaryOpacity}
               onBoundaryOpacityChange={setBoundaryOpacity}
               onClearAllBoundaries={handleClearAllBoundaries}
-              onShowMaps={isUserDM ? () => togglePanel('maps') : null}
-              onShowEncounters={isUserDM ? () => togglePanel('encounter') : null}
+              onShowMaps={isUserDM ? () => togglePanel("maps") : null}
+              onShowEncounters={
+                isUserDM ? () => togglePanel("encounter") : null
+              }
               showTokenManager={showTokenManager}
-              onToggleTokenManager={() => setShowTokenManager(!showTokenManager)}
+              onToggleTokenManager={() =>
+                setShowTokenManager(!showTokenManager)
+              }
               onCenterCamera={centerCameraRef}
             />
           ) : (
@@ -917,14 +1052,13 @@ function VTTSession() {
               <h2>No Active Map</h2>
               <p>
                 {isUserDM
-                  ? 'Select a map from the Map Library to get started'
-                  : 'Waiting for DM to load a map...'
-                }
+                  ? "Select a map from the Map Library to get started"
+                  : "Waiting for DM to load a map..."}
               </p>
               {isUserDM && (
                 <button
                   className="map-library-cta-button"
-                  onClick={() => togglePanel('maps')}
+                  onClick={() => togglePanel("maps")}
                 >
                   <FiMap size={20} />
                   <span>Open Map Library</span>
@@ -942,13 +1076,13 @@ function VTTSession() {
               mapId={activeMap.id}
               selectedToken={selectedToken}
               onTokenCreated={(token) => {
-                console.log('Token created:', token);
+                console.log("Token created:", token);
               }}
               onTokenUpdated={(tokenId, updates) => {
-                console.log('Token updated:', tokenId);
+                console.log("Token updated:", tokenId);
               }}
               onTokenDeleted={(tokenId) => {
-                console.log('Token deleted:', tokenId);
+                console.log("Token deleted:", tokenId);
                 if (selectedTokenId === tokenId) {
                   setSelectedTokenId(null);
                 }
@@ -970,7 +1104,7 @@ function VTTSession() {
       {floatingPanels.rules && (
         <ResizablePanel
           title="Campaign Rules"
-          onClose={() => closeFloatingPanel('rules')}
+          onClose={() => closeFloatingPanel("rules")}
           defaultWidth={500}
           defaultHeight={600}
           defaultPosition={{ x: 100, y: 120 }}
@@ -985,7 +1119,7 @@ function VTTSession() {
       {floatingPanels.initiative && (
         <ResizablePanel
           title="Initiative Tracker"
-          onClose={() => closeFloatingPanel('initiative')}
+          onClose={() => closeFloatingPanel("initiative")}
           defaultWidth={400}
           defaultHeight={500}
           defaultPosition={{ x: 200, y: 160 }}
@@ -999,7 +1133,7 @@ function VTTSession() {
         <ResizablePanel
           title="Character Sheets"
           onClose={() => {
-            closeFloatingPanel('characters');
+            closeFloatingPanel("characters");
             setSelectedCharacterUserId(null); // Clear selection when closing
           }}
           defaultWidth={600}
@@ -1007,9 +1141,9 @@ function VTTSession() {
           defaultPosition={{ x: 250, y: 80 }}
           zIndex={1005}
         >
-          <CharacterSheetPanel 
-            campaignId={campaignId} 
-            isUserDM={isUserDM} 
+          <CharacterSheetPanel
+            campaignId={campaignId}
+            isUserDM={isUserDM}
             initialCharacterId={selectedCharacterUserId}
           />
         </ResizablePanel>
@@ -1030,10 +1164,10 @@ function VTTSession() {
           key="floating-chat-panel"
           campaignId={campaignId}
           isFloating={true}
-          onClose={() => closeFloatingPanel('chat')}
+          onClose={() => closeFloatingPanel("chat")}
           onDock={() => {
-            closeFloatingPanel('chat');
-            setActivePanel('chat');
+            closeFloatingPanel("chat");
+            setActivePanel("chat");
             setIsSidebarOpen(true);
           }}
         />
@@ -1059,14 +1193,14 @@ function VTTSession() {
       <VoiceNotificationContainer ref={notificationContainerRef} />
       {showVoicePanel && campaign && (
         <div
-          className={`floating-voice-panel ${isVoiceDragging ? 'dragging' : ''}`}
+          className={`floating-voice-panel ${isVoiceDragging ? "dragging" : ""}`}
           onMouseDown={handleVoiceDragStart}
           style={{
-            position: 'fixed',
+            position: "fixed",
             top: `${voicePosition.y}px`,
             left: `${voicePosition.x}px`,
-            cursor: isVoiceDragging ? 'grabbing' : 'grab',
-            zIndex: 1000
+            cursor: isVoiceDragging ? "grabbing" : "grab",
+            zIndex: 1000,
           }}
         >
           <div className="floating-voice-header">
@@ -1081,7 +1215,7 @@ function VTTSession() {
                 onMouseDown={(e) => e.stopPropagation()}
                 title={isVoiceMinimized ? "Maximize" : "Minimize"}
               >
-                {isVoiceMinimized ? '🗖' : '🗕'}
+                {isVoiceMinimized ? "🗖" : "🗕"}
               </button>
               <button
                 className="btn-voice-action"

@@ -18,14 +18,16 @@ services/
 ## Key Services
 
 ### `firebase.js`
+
 - **Purpose**: Initialize Firebase app and export configured services
 - **Exports**: `auth`, `firestore`, `storage`, `database` (RTDB), `analytics`
 - **Usage**: Import Firebase services from this file throughout the app
 - **Note**: Do not modify without guidance; config migration to `.env.local` planned
 
 ### `campaign/`
+
 - **Purpose**: Campaign creation, updates, member management
-- **Key Functions**: 
+- **Key Functions**:
   - `createCampaign(data)` - Create new campaign
   - `updateCampaign(campaignId, data)` - Update campaign
   - `addMember(campaignId, userId)` - Add member (uses transaction)
@@ -33,6 +35,7 @@ services/
 - **Pattern**: Always use transactions for member list updates
 
 ### `vtt/`
+
 - **Purpose**: Virtual tabletop operations (maps, tokens, fog of war, lighting)
 - **Submodules**:
   - `mapService.js` - Map CRUD operations
@@ -42,6 +45,7 @@ services/
 - **Pattern**: Real-time subscriptions for multiplayer sync
 
 ### `cache/`
+
 - **Purpose**: Caching layer for Firestore data to reduce reads
 - **Key Functions**:
   - `getCachedDocument(path)` - Get document with cache
@@ -49,6 +53,7 @@ services/
 - **Pattern**: Used by hooks like `useCampaignCache`
 
 ### `presence/`
+
 - **Purpose**: Real-time presence and typing indicators
 - **Database**: Uses RTDB (not Firestore) for ephemeral state
 - **Key Functions**:
@@ -57,6 +62,7 @@ services/
 - **Pattern**: Always use `onDisconnect()` for cleanup
 
 ### `profiles/`
+
 - **Purpose**: User profile management
 - **Key Functions**:
   - `createUserProfile(uid, data)` - Create profile after auth
@@ -67,7 +73,9 @@ services/
 ## Common Patterns
 
 ### Transaction Usage
+
 Always use transactions for concurrent updates:
+
 ```javascript
 import { runTransaction } from 'firebase/firestore';
 
@@ -80,18 +88,22 @@ await runTransaction(firestore, async (transaction) => {
 ```
 
 ### Server Timestamps
+
 Always use server timestamps for createdAt/updatedAt:
+
 ```javascript
 import { serverTimestamp } from 'firebase/firestore';
 
 await setDoc(docRef, {
   ...data,
-  createdAt: serverTimestamp()
+  createdAt: serverTimestamp(),
 });
 ```
 
 ### Error Handling
+
 All services should include error handling:
+
 ```javascript
 try {
   await firestoreOperation();
@@ -102,7 +114,9 @@ try {
 ```
 
 ### RTDB Presence Pattern
+
 Use onDisconnect for cleanup:
+
 ```javascript
 import { ref, set, onDisconnect } from 'firebase/database';
 
@@ -114,6 +128,7 @@ await onDisconnect(presenceRef).set({ online: false });
 ## Testing
 
 Services should be tested with Firebase emulators:
+
 ```bash
 firebase emulators:start
 npm test -- src/services/

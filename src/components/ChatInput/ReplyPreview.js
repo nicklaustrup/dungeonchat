@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 export function ReplyPreview({ replyingTo, onCancel, onJump }) {
   if (!replyingTo) return null;

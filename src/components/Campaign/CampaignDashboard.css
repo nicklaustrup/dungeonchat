@@ -32,7 +32,11 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, transparent 0%, var(--bg-secondary) 100%);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--bg-secondary) 100%
+  );
 }
 
 .campaign-header-content {
@@ -357,8 +361,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-container h2 {
@@ -559,7 +567,7 @@
   .dice-history-tab h2 {
     font-size: 1.25rem;
   }
-  
+
   .dice-history-tab .tab-description {
     font-size: 0.9rem;
   }
@@ -580,7 +588,7 @@
 }
 
 .initiative-tab h2::before {
-  content: "⚔️";
+  content: '⚔️';
   font-size: 1.2em;
 }
 
@@ -603,11 +611,11 @@
   .initiative-tab h2 {
     font-size: 1.25rem;
   }
-  
+
   .initiative-tab .tab-description {
     font-size: 0.9rem;
   }
-  
+
   .initiative-tab .initiative-content {
     min-height: 300px;
   }
@@ -650,7 +658,7 @@
   .voice-tab h2 {
     font-size: 1.25rem;
   }
-  
+
   .voice-tab .tab-description {
     font-size: 0.9rem;
     margin-bottom: 0.75rem;
@@ -750,7 +758,11 @@
 
 .character-card.own-character {
   border-color: var(--accent-color);
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(99, 102, 241, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary) 0%,
+    rgba(99, 102, 241, 0.05) 100%
+  );
 }
 
 .character-card.own-character::before {
@@ -928,39 +940,39 @@
     align-items: flex-start;
     gap: 1rem;
   }
-  
+
   .characters-actions {
     width: 100%;
     justify-content: stretch;
   }
-  
+
   .characters-actions .btn {
     flex: 1;
   }
-  
+
   .characters-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .character-card {
     padding: 1rem;
   }
-  
+
   .character-card-header {
     flex-direction: row;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .character-card-stats {
     gap: 0.5rem;
   }
-  
+
   .no-characters {
     padding: 2rem 1rem;
   }
-  
+
   .no-characters-icon {
     font-size: 3rem;
   }

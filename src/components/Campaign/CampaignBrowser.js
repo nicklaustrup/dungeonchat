@@ -1,29 +1,32 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { searchCampaigns, joinCampaign } from '../../services/campaign/campaignService';
-import campaignRequestService from '../../services/campaign/campaignRequestService';
-import { useAuth } from '../../hooks/useAuth';
-import { useFirebase } from '../../services/FirebaseContext';
-import { CampaignContext } from '../../contexts/CampaignContext';
-import UserProfileModal from '../UserProfileModal/UserProfileModal';
-import './CampaignBrowser.css';
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  searchCampaigns,
+  joinCampaign,
+} from "../../services/campaign/campaignService";
+import campaignRequestService from "../../services/campaign/campaignRequestService";
+import { useAuth } from "../../hooks/useAuth";
+import { useFirebase } from "../../services/FirebaseContext";
+import { CampaignContext } from "../../contexts/CampaignContext";
+import UserProfileModal from "../UserProfileModal/UserProfileModal";
+import "./CampaignBrowser.css";
 
 const CampaignBrowser = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [userCampaigns, setUserCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSystem, setSelectedSystem] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSystem, setSelectedSystem] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [characterInfo, setCharacterInfo] = useState({
-    characterName: '',
-    characterClass: '',
-    message: ''
+    characterName: "",
+    characterClass: "",
+    message: "",
   });
   const [pendingRequests, setPendingRequests] = useState({});
   const [selectedUserId, setSelectedUserId] = useState(null);
@@ -35,27 +38,27 @@ const CampaignBrowser = () => {
   const navigate = useNavigate();
 
   const gameSystems = [
-    'D&D 5e',
-    'Pathfinder 2e',
-    'D&D 3.5e',
-    'Pathfinder 1e',
-    'Call of Cthulhu',
-    'Vampire: The Masquerade',
-    'Shadowrun',
-    'Other'
+    "D&D 5e",
+    "Pathfinder 2e",
+    "D&D 3.5e",
+    "Pathfinder 1e",
+    "Call of Cthulhu",
+    "Vampire: The Masquerade",
+    "Shadowrun",
+    "Other",
   ];
 
   const availableTags = [
-    'beginner-friendly',
-    'experienced-only',
-    'roleplay-heavy',
-    'combat-focused',
-    'homebrew',
-    'published-adventure',
-    'sandbox',
-    'mystery',
-    'horror',
-    'political-intrigue'
+    "beginner-friendly",
+    "experienced-only",
+    "roleplay-heavy",
+    "combat-focused",
+    "homebrew",
+    "published-adventure",
+    "sandbox",
+    "mystery",
+    "horror",
+    "political-intrigue",
   ];
 
   useEffect(() => {
@@ -69,25 +72,27 @@ const CampaignBrowser = () => {
       const data = await searchCampaigns(firestore, {
         gameSystem: selectedSystem,
         tags: selectedTags,
-        searchTerm: searchTerm
+        searchTerm: searchTerm,
       });
-      
+
       // Separate user campaigns from all campaigns
-      const userCampaignsList = data.filter(campaign => 
-        campaign.dmId === user.uid || 
-        (campaign.members && campaign.members.includes(user.uid))
+      const userCampaignsList = data.filter(
+        (campaign) =>
+          campaign.dmId === user.uid ||
+          (campaign.members && campaign.members.includes(user.uid))
       );
-      
-      const otherCampaigns = data.filter(campaign => 
-        campaign.dmId !== user.uid && 
-        (!campaign.members || !campaign.members.includes(user.uid))
+
+      const otherCampaigns = data.filter(
+        (campaign) =>
+          campaign.dmId !== user.uid &&
+          (!campaign.members || !campaign.members.includes(user.uid))
       );
-      
+
       setUserCampaigns(userCampaignsList);
       setCampaigns(otherCampaigns);
     } catch (err) {
-      setError('Failed to load campaigns');
-      console.error('Error loading campaigns:', err);
+      setError("Failed to load campaigns");
+      console.error("Error loading campaigns:", err);
     } finally {
       setLoading(false);
     }
@@ -98,22 +103,22 @@ const CampaignBrowser = () => {
   };
 
   const handleTagToggle = (tag) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
   const handleJoinCampaign = (campaign) => {
     // If user is already a member or DM, navigate directly to campaign dashboard
-    if (campaign.dmId === user.uid || 
-        (campaign.members && campaign.members.includes(user.uid))) {
+    if (
+      campaign.dmId === user.uid ||
+      (campaign.members && campaign.members.includes(user.uid))
+    ) {
       setCurrentCampaign(campaign);
       navigate(`/campaign/${campaign.id}`);
       return;
     }
-    
+
     // Otherwise, show join modal
     setSelectedCampaign(campaign);
     setShowJoinModal(true);
@@ -121,28 +126,33 @@ const CampaignBrowser = () => {
 
   const handleJoinSubmit = async () => {
     if (!characterInfo.characterName.trim()) {
-      setError('Character name is required');
+      setError("Character name is required");
       return;
     }
 
     // Validate character name length
     if (characterInfo.characterName.trim().length < 2) {
-      setError('Character name must be at least 2 characters long');
+      setError("Character name must be at least 2 characters long");
       return;
     }
 
     try {
       setLoading(true);
-      await joinCampaign(firestore, selectedCampaign.id, user.uid, characterInfo);
+      await joinCampaign(
+        firestore,
+        selectedCampaign.id,
+        user.uid,
+        characterInfo
+      );
       setCurrentCampaign(selectedCampaign);
       navigate(`/campaign/${selectedCampaign.id}`);
     } catch (err) {
-      setError(err.message || 'Failed to join campaign');
-      console.error('Error joining campaign:', err);
+      setError(err.message || "Failed to join campaign");
+      console.error("Error joining campaign:", err);
     } finally {
       setLoading(false);
       setShowJoinModal(false);
-      setCharacterInfo({ characterName: '', characterClass: '', message: '' });
+      setCharacterInfo({ characterName: "", characterClass: "", message: "" });
     }
   };
 
@@ -153,7 +163,7 @@ const CampaignBrowser = () => {
 
   const handleRequestSubmit = async () => {
     if (!characterInfo.characterName.trim()) {
-      setError('Character name is required');
+      setError("Character name is required");
       return;
     }
 
@@ -167,18 +177,18 @@ const CampaignBrowser = () => {
       );
 
       // Update local pending requests state
-      setPendingRequests(prev => ({
+      setPendingRequests((prev) => ({
         ...prev,
-        [selectedCampaign.id]: true
+        [selectedCampaign.id]: true,
       }));
 
       setShowRequestModal(false);
-      setCharacterInfo({ characterName: '', characterClass: '', message: '' });
+      setCharacterInfo({ characterName: "", characterClass: "", message: "" });
       setError(null);
-      alert('Join request sent successfully! The DM will review your request.');
+      alert("Join request sent successfully! The DM will review your request.");
     } catch (err) {
-      setError(err.message || 'Failed to send join request');
-      console.error('Error sending join request:', err);
+      setError(err.message || "Failed to send join request");
+      console.error("Error sending join request:", err);
     } finally {
       setLoading(false);
     }
@@ -189,7 +199,7 @@ const CampaignBrowser = () => {
   };
 
   const formatTag = (tag) => {
-    return tag.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return tag.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   if (loading) {
@@ -205,15 +215,15 @@ const CampaignBrowser = () => {
       <div className="campaign-browser-header">
         <h1>Browse Campaigns</h1>
         <div className="header-actions">
-          <button 
-            className={`btn ${showAdvancedSearch ? 'btn-secondary' : 'btn-outline'}`}
+          <button
+            className={`btn ${showAdvancedSearch ? "btn-secondary" : "btn-outline"}`}
             onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
           >
-            {showAdvancedSearch ? '✕ Close Filters' : '🔍 Advanced Search'}
+            {showAdvancedSearch ? "✕ Close Filters" : "🔍 Advanced Search"}
           </button>
-          <button 
+          <button
             className="btn btn-primary"
-            onClick={() => navigate('/create-campaign')}
+            onClick={() => navigate("/create-campaign")}
           >
             Create Campaign
           </button>
@@ -232,22 +242,21 @@ const CampaignBrowser = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="search-input"
               />
-              <button 
-                className="btn btn-primary"
-                onClick={handleSearch}
-              >
+              <button className="btn btn-primary" onClick={handleSearch}>
                 Search
               </button>
             </div>
-            
+
             <select
               value={selectedSystem}
               onChange={(e) => setSelectedSystem(e.target.value)}
               className="system-filter"
             >
               <option value="">All Game Systems</option>
-              {gameSystems.map(system => (
-                <option key={system} value={system}>{system}</option>
+              {gameSystems.map((system) => (
+                <option key={system} value={system}>
+                  {system}
+                </option>
               ))}
             </select>
           </div>
@@ -255,8 +264,11 @@ const CampaignBrowser = () => {
           <div className="tags-filter">
             <h3>Filter by Tags:</h3>
             <div className="tags-grid">
-              {availableTags.map(tag => (
-                <label key={tag} className={`tag-filter ${selectedTags.includes(tag) ? 'selected' : ''}`}>
+              {availableTags.map((tag) => (
+                <label
+                  key={tag}
+                  className={`tag-filter ${selectedTags.includes(tag) ? "selected" : ""}`}
+                >
                   <input
                     type="checkbox"
                     checked={selectedTags.includes(tag)}
@@ -270,51 +282,55 @@ const CampaignBrowser = () => {
         </div>
       )}
 
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
+      {error && <div className="error-message">{error}</div>}
 
       {/* My Campaigns Section */}
       {userCampaigns.length > 0 && (
         <div className="my-campaigns-section">
           <h2>My Campaigns</h2>
           <div className="campaigns-list">
-            {userCampaigns.map(campaign => (
-              <div 
-                key={campaign.id} 
+            {userCampaigns.map((campaign) => (
+              <div
+                key={campaign.id}
                 className="campaign-card my-campaign"
                 onClick={() => handleJoinCampaign(campaign)}
               >
-                <div 
+                <div
                   className="campaign-header"
-                  style={campaign.campaignPhoto ? {
-                    backgroundImage: `url(${campaign.campaignPhoto})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  } : {}}
+                  style={
+                    campaign.campaignPhoto
+                      ? {
+                          backgroundImage: `url(${campaign.campaignPhoto})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : {}
+                  }
                 >
                   <h3>{campaign.name}</h3>
                   <div className="campaign-badges">
                     <div className="campaign-system">{campaign.gameSystem}</div>
                     <div className="my-campaign-badge">
-                      {campaign.dmId === user.uid ? 'DM' : 'Player'}
+                      {campaign.dmId === user.uid ? "DM" : "Player"}
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="campaign-description">
                   {campaign.description}
                 </div>
-                
+
                 <div className="campaign-details">
                   <div className="player-dm-row">
                     <div className="detail-item">
-                      <strong>Players:</strong> {formatPlayerCount(campaign.currentPlayers, campaign.maxPlayers)}
+                      <strong>Players:</strong>{" "}
+                      {formatPlayerCount(
+                        campaign.currentPlayers,
+                        campaign.maxPlayers
+                      )}
                     </div>
                     <div className="detail-item">
-                      <strong>DM:</strong>{' '}
+                      <strong>DM:</strong>{" "}
                       <span
                         className="clickable-username"
                         onClick={(e) => {
@@ -322,7 +338,7 @@ const CampaignBrowser = () => {
                           setSelectedUserId(campaign.dmId);
                         }}
                       >
-                        {campaign.dmName || 'Unknown'}
+                        {campaign.dmName || "Unknown"}
                       </span>
                     </div>
                   </div>
@@ -330,17 +346,18 @@ const CampaignBrowser = () => {
 
                 {campaign.tags && campaign.tags.length > 0 && (
                   <div className="campaign-tags">
-                    {campaign.tags.map(tag => (
+                    {campaign.tags.map((tag) => (
                       <span key={tag} className="tag">
                         {formatTag(tag)}
                       </span>
                     ))}
                   </div>
                 )}
-                
+
                 <div className="campaign-actions">
                   <span className={`status ${campaign.status}`}>
-                    {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                    {campaign.status.charAt(0).toUpperCase() +
+                      campaign.status.slice(1)}
                   </span>
                   <button
                     className="btn btn-primary"
@@ -365,38 +382,48 @@ const CampaignBrowser = () => {
           {campaigns.length === 0 ? (
             <div className="no-campaigns">
               <h3>No campaigns found</h3>
-              <p>Try adjusting your search criteria or create a new campaign.</p>
+              <p>
+                Try adjusting your search criteria or create a new campaign.
+              </p>
             </div>
           ) : (
-            campaigns.map(campaign => (
-              <div 
-                key={campaign.id} 
+            campaigns.map((campaign) => (
+              <div
+                key={campaign.id}
                 className="campaign-card"
                 onClick={() => navigate(`/campaigns/${campaign.id}/preview`)}
               >
-                <div 
+                <div
                   className="campaign-header"
-                  style={campaign.campaignPhoto ? {
-                    backgroundImage: `url(${campaign.campaignPhoto})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  } : {}}
+                  style={
+                    campaign.campaignPhoto
+                      ? {
+                          backgroundImage: `url(${campaign.campaignPhoto})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : {}
+                  }
                 >
                   <h3>{campaign.name}</h3>
                   <div className="campaign-system">{campaign.gameSystem}</div>
                 </div>
-                
+
                 <div className="campaign-description">
                   {campaign.description}
                 </div>
-                
+
                 <div className="campaign-details">
                   <div className="player-dm-row">
                     <div className="detail-item">
-                      <strong>Players:</strong> {formatPlayerCount(campaign.currentPlayers, campaign.maxPlayers)}
+                      <strong>Players:</strong>{" "}
+                      {formatPlayerCount(
+                        campaign.currentPlayers,
+                        campaign.maxPlayers
+                      )}
                     </div>
                     <div className="detail-item">
-                      <strong>DM:</strong>{' '}
+                      <strong>DM:</strong>{" "}
                       <span
                         className="clickable-username"
                         onClick={(e) => {
@@ -404,7 +431,7 @@ const CampaignBrowser = () => {
                           setSelectedUserId(campaign.dmId);
                         }}
                       >
-                        {campaign.dmName || 'Unknown'}
+                        {campaign.dmName || "Unknown"}
                       </span>
                     </div>
                   </div>
@@ -412,17 +439,18 @@ const CampaignBrowser = () => {
 
                 {campaign.tags && campaign.tags.length > 0 && (
                   <div className="campaign-tags">
-                    {campaign.tags.map(tag => (
+                    {campaign.tags.map((tag) => (
                       <span key={tag} className="tag">
                         {formatTag(tag)}
                       </span>
                     ))}
                   </div>
                 )}
-                
+
                 <div className="campaign-actions">
                   <span className={`status ${campaign.status}`}>
-                    {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                    {campaign.status.charAt(0).toUpperCase() +
+                      campaign.status.slice(1)}
                   </span>
                   {campaign.currentPlayers >= campaign.maxPlayers ? (
                     pendingRequests[campaign.id] ? (
@@ -464,14 +492,14 @@ const CampaignBrowser = () => {
           <div className="modal">
             <div className="modal-header">
               <h2>Join {selectedCampaign?.name}</h2>
-              <button 
+              <button
                 className="close-btn"
                 onClick={() => setShowJoinModal(false)}
               >
                 ×
               </button>
             </div>
-            
+
             <div className="modal-body">
               <div className="form-group">
                 <label htmlFor="characterName">Character Name *</label>
@@ -479,43 +507,52 @@ const CampaignBrowser = () => {
                   id="characterName"
                   type="text"
                   value={characterInfo.characterName}
-                  onChange={(e) => setCharacterInfo(prev => ({
-                    ...prev,
-                    characterName: e.target.value
-                  }))}
+                  onChange={(e) =>
+                    setCharacterInfo((prev) => ({
+                      ...prev,
+                      characterName: e.target.value,
+                    }))
+                  }
                   placeholder="Enter your character's name (e.g., Thorin Ironforge)"
                 />
-                <small>This name will be used in chat instead of your username for this campaign</small>
+                <small>
+                  This name will be used in chat instead of your username for
+                  this campaign
+                </small>
               </div>
-              
+
               <div className="form-group">
-                <label htmlFor="characterClass">Character Class (Optional)</label>
+                <label htmlFor="characterClass">
+                  Character Class (Optional)
+                </label>
                 <input
                   id="characterClass"
                   type="text"
                   value={characterInfo.characterClass}
-                  onChange={(e) => setCharacterInfo(prev => ({
-                    ...prev,
-                    characterClass: e.target.value
-                  }))}
+                  onChange={(e) =>
+                    setCharacterInfo((prev) => ({
+                      ...prev,
+                      characterClass: e.target.value,
+                    }))
+                  }
                   placeholder="e.g., Fighter, Wizard, Rogue"
                 />
               </div>
             </div>
-            
+
             <div className="modal-footer">
-              <button 
+              <button
                 className="btn btn-secondary"
                 onClick={() => setShowJoinModal(false)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="btn btn-primary"
                 onClick={handleJoinSubmit}
                 disabled={loading || !characterInfo.characterName.trim()}
               >
-                {loading ? 'Joining...' : 'Join Campaign'}
+                {loading ? "Joining..." : "Join Campaign"}
               </button>
             </div>
           </div>
@@ -538,7 +575,8 @@ const CampaignBrowser = () => {
 
             <div className="modal-body">
               <p className="modal-info">
-                This campaign is currently full. You can submit a join request and the DM will be notified.
+                This campaign is currently full. You can submit a join request
+                and the DM will be notified.
               </p>
 
               <div className="form-group">
@@ -547,24 +585,30 @@ const CampaignBrowser = () => {
                   id="characterName"
                   type="text"
                   value={characterInfo.characterName}
-                  onChange={(e) => setCharacterInfo(prev => ({
-                    ...prev,
-                    characterName: e.target.value
-                  }))}
+                  onChange={(e) =>
+                    setCharacterInfo((prev) => ({
+                      ...prev,
+                      characterName: e.target.value,
+                    }))
+                  }
                   placeholder="Enter your character's name"
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="characterClass">Character Class (Optional)</label>
+                <label htmlFor="characterClass">
+                  Character Class (Optional)
+                </label>
                 <input
                   id="characterClass"
                   type="text"
                   value={characterInfo.characterClass}
-                  onChange={(e) => setCharacterInfo(prev => ({
-                    ...prev,
-                    characterClass: e.target.value
-                  }))}
+                  onChange={(e) =>
+                    setCharacterInfo((prev) => ({
+                      ...prev,
+                      characterClass: e.target.value,
+                    }))
+                  }
                   placeholder="e.g., Fighter, Wizard, Rogue"
                 />
               </div>
@@ -574,10 +618,12 @@ const CampaignBrowser = () => {
                 <textarea
                   id="message"
                   value={characterInfo.message}
-                  onChange={(e) => setCharacterInfo(prev => ({
-                    ...prev,
-                    message: e.target.value
-                  }))}
+                  onChange={(e) =>
+                    setCharacterInfo((prev) => ({
+                      ...prev,
+                      message: e.target.value,
+                    }))
+                  }
                   placeholder="Tell the DM why you'd like to join..."
                   rows="4"
                 />
@@ -596,7 +642,7 @@ const CampaignBrowser = () => {
                 onClick={handleRequestSubmit}
                 disabled={loading || !characterInfo.characterName.trim()}
               >
-                {loading ? 'Sending...' : 'Send Request'}
+                {loading ? "Sending..." : "Send Request"}
               </button>
             </div>
           </div>

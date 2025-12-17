@@ -31,7 +31,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .empty-state h3 {
@@ -106,8 +108,13 @@
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.8; }
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 .character-tab:hover {

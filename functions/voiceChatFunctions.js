@@ -70,10 +70,7 @@ exports.kickUserFromVoice = functions.https.onCall(async (data, context) => {
   const validation = await validateDMAction(campaignId, context.auth.uid);
 
   if (!validation.valid) {
-    throw new functions.https.HttpsError(
-        "permission-denied",
-        validation.error,
-    );
+    throw new functions.https.HttpsError("permission-denied", validation.error);
   }
 
   // Cannot kick yourself
@@ -170,10 +167,7 @@ exports.muteUserInVoice = functions.https.onCall(async (data, context) => {
   const validation = await validateDMAction(campaignId, context.auth.uid);
 
   if (!validation.valid) {
-    throw new functions.https.HttpsError(
-        "permission-denied",
-        validation.error,
-    );
+    throw new functions.https.HttpsError("permission-denied", validation.error);
   }
 
   try {
@@ -196,7 +190,7 @@ exports.muteUserInVoice = functions.https.onCall(async (data, context) => {
     await participantRef.update({
       isMuted: muted,
       mutedBy: muted ? context.auth.uid : null,
-      muteReason: muted ? (reason || "No reason provided") : null,
+      muteReason: muted ? reason || "No reason provided" : null,
       mutedAt: muted ? admin.firestore.FieldValue.serverTimestamp() : null,
     });
 
@@ -257,10 +251,7 @@ exports.getVoiceLogs = functions.https.onCall(async (data, context) => {
   const validation = await validateDMAction(campaignId, context.auth.uid);
 
   if (!validation.valid) {
-    throw new functions.https.HttpsError(
-        "permission-denied",
-        validation.error,
-    );
+    throw new functions.https.HttpsError("permission-denied", validation.error);
   }
 
   try {
@@ -350,7 +341,7 @@ exports.cleanupStaleVoiceParticipants = functions.pubsub
  */
 exports.validateVoiceSettings = functions.https.onCall(
     async (data, context) => {
-      // Check authentication
+    // Check authentication
       if (!context.auth) {
         throw new functions.https.HttpsError(
             "unauthenticated",
@@ -375,9 +366,11 @@ exports.validateVoiceSettings = functions.https.onCall(
         );
       }
 
-      if (typeof settings.echoCancellation !== "boolean" ||
+      if (
+        typeof settings.echoCancellation !== "boolean" ||
       typeof settings.noiseSuppression !== "boolean" ||
-      typeof settings.autoGainControl !== "boolean") {
+      typeof settings.autoGainControl !== "boolean"
+      ) {
         throw new functions.https.HttpsError(
             "invalid-argument",
             "Invalid settings format",
@@ -391,10 +384,13 @@ exports.validateVoiceSettings = functions.https.onCall(
             .doc(context.auth.uid)
             .collection("voiceSettings")
             .doc("settings")
-            .set({
-              ...settings,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            }, {merge: true});
+            .set(
+                {
+                  ...settings,
+                  updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                },
+                {merge: true},
+            );
 
         return {
           success: true,
@@ -407,4 +403,5 @@ exports.validateVoiceSettings = functions.https.onCall(
             "Failed to save settings: " + error.message,
         );
       }
-    });
+    },
+);

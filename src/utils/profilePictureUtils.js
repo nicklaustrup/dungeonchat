@@ -1,4 +1,9 @@
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 
 /**
  * Upload profile picture to Firebase Storage
@@ -9,18 +14,18 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
  */
 export const uploadProfilePicture = async (file, userId, storage) => {
   if (!file || !userId || !storage) {
-    throw new Error('File, userId, and storage are required');
+    throw new Error("File, userId, and storage are required");
   }
 
   // Validate file type
-  if (!file.type.startsWith('image/')) {
-    throw new Error('Please select an image file');
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Please select an image file");
   }
 
   // Validate file size (5MB limit)
   const maxSize = 5 * 1024 * 1024; // 5MB
   if (file.size > maxSize) {
-    throw new Error('Please select an image smaller than 5MB');
+    throw new Error("Please select an image smaller than 5MB");
   }
 
   try {
@@ -30,14 +35,14 @@ export const uploadProfilePicture = async (file, userId, storage) => {
 
     // Upload the file
     const snapshot = await uploadBytes(storageRef, file);
-    
+
     // Get the download URL
     const downloadURL = await getDownloadURL(snapshot.ref);
-    
+
     return downloadURL;
   } catch (error) {
-    console.error('Error uploading profile picture:', error);
-    throw new Error('Failed to upload profile picture: ' + error.message);
+    console.error("Error uploading profile picture:", error);
+    throw new Error("Failed to upload profile picture: " + error.message);
   }
 };
 
@@ -53,12 +58,15 @@ export const deleteProfilePicture = async (imageUrl, storage) => {
 
   try {
     // Extract the path from the URL if it's a Firebase Storage URL
-    if (imageUrl.includes('firebase') && imageUrl.includes('profile-pictures')) {
+    if (
+      imageUrl.includes("firebase") &&
+      imageUrl.includes("profile-pictures")
+    ) {
       const imageRef = ref(storage, imageUrl);
       await deleteObject(imageRef);
     }
   } catch (error) {
-    console.warn('Could not delete old profile picture:', error);
+    console.warn("Could not delete old profile picture:", error);
     // Don't throw error as this is cleanup and shouldn't block profile updates
   }
 };
@@ -69,7 +77,7 @@ export const deleteProfilePicture = async (imageUrl, storage) => {
  * @param {number} size - Size of the avatar (default: 150)
  * @returns {string} - Placeholder image URL
  */
-export const generatePlaceholderAvatar = (displayName = 'User', size = 150) => {
+export const generatePlaceholderAvatar = (displayName = "User", size = 150) => {
   const initial = displayName.charAt(0).toUpperCase();
   return `https://via.placeholder.com/${size}x${size}?text=${encodeURIComponent(initial)}&color=ffffff&background=007bff`;
 };
@@ -82,16 +90,21 @@ export const generatePlaceholderAvatar = (displayName = 'User', size = 150) => {
  * @param {number} quality - JPEG quality (default: 0.8)
  * @returns {Promise<File>} - Resized image file
  */
-export const resizeImage = (file, maxWidth = 400, maxHeight = 400, quality = 0.8) => {
+export const resizeImage = (
+  file,
+  maxWidth = 400,
+  maxHeight = 400,
+  quality = 0.8
+) => {
   return new Promise((resolve) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
     const img = new Image();
 
     img.onload = () => {
       // Calculate new dimensions
       let { width, height } = img;
-      
+
       if (width > height) {
         if (width > maxWidth) {
           height = (height * maxWidth) / width;
@@ -110,13 +123,13 @@ export const resizeImage = (file, maxWidth = 400, maxHeight = 400, quality = 0.8
 
       // Draw and compress image
       ctx.drawImage(img, 0, 0, width, height);
-      
+
       canvas.toBlob(
         (blob) => {
           // Create new file from blob
           const resizedFile = new File([blob], file.name, {
             type: file.type,
-            lastModified: Date.now()
+            lastModified: Date.now(),
           });
           resolve(resizedFile);
         },

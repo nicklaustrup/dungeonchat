@@ -56,16 +56,16 @@
   .breadcrumb {
     padding: 0.5rem 1rem;
   }
-  
+
   .breadcrumb-list {
     font-size: 0.8rem;
     gap: 0.25rem;
   }
-  
+
   .breadcrumb-separator {
     margin: 0 0.1rem;
   }
-  
+
   .breadcrumb-link,
   .breadcrumb-current {
     padding: 0.2rem 0.4rem;
@@ -78,7 +78,7 @@
     flex-wrap: wrap;
     gap: 0.2rem;
   }
-  
+
   .breadcrumb-item {
     flex-shrink: 0;
   }

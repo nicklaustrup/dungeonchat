@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { useFirebase } from '../../services/FirebaseContext';
-import { useCachedUserProfile } from '../../services/cache';
-import './ProfileDisplay.css';
+import React, { useState, useEffect, useRef } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { useFirebase } from "../../services/FirebaseContext";
+import { useCachedUserProfile } from "../../services/cache";
+import "./ProfileDisplay.css";
 
 /**
  * ProfileDisplay - Shows user profile information with inline editing capability
@@ -14,7 +14,7 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
   const {
     updateProfile,
     uploadPicture: uploadProfilePictureFile,
-    updatePrivacySettings
+    updatePrivacySettings,
   } = useCachedUserProfile();
 
   const [profile, setProfile] = useState(null);
@@ -41,7 +41,7 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
         setLoading(true);
         setError(null);
 
-        const profileRef = doc(firestore, 'userProfiles', userId);
+        const profileRef = doc(firestore, "userProfiles", userId);
         const profileSnap = await getDoc(profileRef);
 
         if (profileSnap.exists()) {
@@ -50,21 +50,21 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
           // Initialize field values for editing if it's own profile
           if (isOwnProfile) {
             setFieldValues({
-              username: profileData.username || '',
-              displayName: profileData.displayName || '',
-              bio: profileData.bio || '',
-              profilePictureURL: profileData.profilePictureURL || '',
-              profileVisibility: profileData.profileVisibility || 'public',
+              username: profileData.username || "",
+              displayName: profileData.displayName || "",
+              bio: profileData.bio || "",
+              profilePictureURL: profileData.profilePictureURL || "",
+              profileVisibility: profileData.profileVisibility || "public",
               showEmail: profileData.showEmail ?? false,
-              showLastActive: profileData.showLastActive ?? true
+              showLastActive: profileData.showLastActive ?? true,
             });
           }
         } else {
-          setError('Profile not found');
+          setError("Profile not found");
         }
       } catch (err) {
-        console.error('Error loading profile:', err);
-        setError('Error loading profile');
+        console.error("Error loading profile:", err);
+        setError("Error loading profile");
       } finally {
         setLoading(false);
       }
@@ -77,16 +77,16 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
     if (profile?.username) {
       return profile.username;
     }
-    return profile?.displayName || 'Anonymous User';
+    return profile?.displayName || "Anonymous User";
   };
 
   const formatJoinDate = (timestamp) => {
-    if (!timestamp) return 'Unknown';
+    if (!timestamp) return "Unknown";
 
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
     });
   };
 
@@ -117,9 +117,9 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
     setEditingField(null);
     // Reset field value to original
     if (editingField && profile) {
-      setFieldValues(prev => ({
+      setFieldValues((prev) => ({
         ...prev,
-        [editingField]: profile[editingField] || ''
+        [editingField]: profile[editingField] || "",
       }));
     }
   };
@@ -131,25 +131,34 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
       setSaving(true);
 
       // Handle privacy settings separately
-      if (['profileVisibility', 'showEmail', 'showLastActive'].includes(editingField)) {
-        await updatePrivacySettings({ [editingField]: fieldValues[editingField] });
+      if (
+        ["profileVisibility", "showEmail", "showLastActive"].includes(
+          editingField
+        )
+      ) {
+        await updatePrivacySettings({
+          [editingField]: fieldValues[editingField],
+        });
       } else {
         await updateProfile({ [editingField]: fieldValues[editingField] });
       }
 
       // Update local profile state
-      setProfile(prev => ({ ...prev, [editingField]: fieldValues[editingField] }));
+      setProfile((prev) => ({
+        ...prev,
+        [editingField]: fieldValues[editingField],
+      }));
       setEditingField(null);
     } catch (err) {
-      console.error('Error saving field:', err);
-      alert('Error saving: ' + err.message);
+      console.error("Error saving field:", err);
+      alert("Error saving: " + err.message);
     } finally {
       setSaving(false);
     }
   };
 
   const handleFieldChange = (value) => {
-    setFieldValues(prev => ({ ...prev, [editingField]: value }));
+    setFieldValues((prev) => ({ ...prev, [editingField]: value }));
   };
 
   // Handle profile picture file selection
@@ -157,14 +166,14 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
       return;
     }
 
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Please select an image smaller than 5MB');
+      alert("Please select an image smaller than 5MB");
       return;
     }
 
@@ -179,16 +188,15 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
       const downloadURL = await uploadProfilePictureFile(file);
 
       // Update local state with the actual URL
-      setFieldValues(prev => ({ ...prev, profilePictureURL: downloadURL }));
-      setProfile(prev => ({ ...prev, profilePictureURL: downloadURL }));
+      setFieldValues((prev) => ({ ...prev, profilePictureURL: downloadURL }));
+      setProfile((prev) => ({ ...prev, profilePictureURL: downloadURL }));
 
       // Clean up preview URL
       URL.revokeObjectURL(preview);
       setPreviewUrl(null);
-
     } catch (error) {
-      console.error('Error uploading profile picture:', error);
-      alert('Error uploading profile picture: ' + error.message);
+      console.error("Error uploading profile picture:", error);
+      alert("Error uploading profile picture: " + error.message);
 
       // Clean up preview URL on error
       if (previewUrl) {
@@ -233,13 +241,17 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
   }
 
   const displayName = getDisplayName();
-  const currentAvatar = previewUrl || fieldValues.profilePictureURL || profile?.profilePictureURL || `https://via.placeholder.com/120x120?text=${encodeURIComponent(displayName.charAt(0).toUpperCase())}`;
+  const currentAvatar =
+    previewUrl ||
+    fieldValues.profilePictureURL ||
+    profile?.profilePictureURL ||
+    `https://via.placeholder.com/120x120?text=${encodeURIComponent(displayName.charAt(0).toUpperCase())}`;
 
   return (
     <div className="profile-display-overlay" onClick={onClose}>
       <div className="profile-display" onClick={(e) => e.stopPropagation()}>
         <div className="profile-display-header">
-          <h2>{isOwnProfile ? 'Your Profile' : `${displayName}'s Profile`}</h2>
+          <h2>{isOwnProfile ? "Your Profile" : `${displayName}'s Profile`}</h2>
           <button
             className="close-button"
             onClick={onClose}
@@ -253,7 +265,9 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
           {/* Profile Picture and Basic Info */}
           <div className="profile-main-info">
             <div className="profile-avatar-section">
-              <div className={`avatar-container ${isOwnProfile ? 'editable' : ''}`}>
+              <div
+                className={`avatar-container ${isOwnProfile ? "editable" : ""}`}
+              >
                 <img
                   src={currentAvatar}
                   alt={`${displayName}'s profile`}
@@ -282,7 +296,9 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
                 {profile?.username && (
                   <div className="profile-field-group">
                     <div className="display-field">
-                      <h3 className="username">{fieldValues.username || profile.username}</h3>
+                      <h3 className="username">
+                        {fieldValues.username || profile.username}
+                      </h3>
                     </div>
                   </div>
                 )}
@@ -290,7 +306,9 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
                 <div className="profile-metadata">
                   <div className="metadata-item">
                     <span className="metadata-label">Joined</span>
-                    <span className="metadata-value">{formatJoinDate(profile?.createdAt)}</span>
+                    <span className="metadata-value">
+                      {formatJoinDate(profile?.createdAt)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -301,62 +319,67 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
           <div className="profile-bio-section">
             <div className="profile-field-group">
               <h4>About</h4>
-                  {isOwnProfile && editingField === 'bio' ? (
-                    <div className="editing-field">
-                      <textarea
-                        value={fieldValues.bio}
-                        onChange={(e) => handleFieldChange(e.target.value)}
-                        placeholder="Tell us about yourself..."
-                        className="form-textarea"
-                        rows={3}
-                        maxLength={500}
-                        disabled={saving}
-                        autoFocus
-                      />
-                      <div className="char-count">{(fieldValues.bio || '').length}/500</div>
-                      <div className="field-actions">
-                        <button
-                          className="save-btn"
-                          onClick={saveField}
-                          disabled={saving}
-                          title="Save"
-                        >
-                          {saving ? '⏳' : '✓'}
-                        </button>
-                        <button
-                          className="cancel-btn"
-                          onClick={cancelEditing}
-                          disabled={saving}
-                          title="Cancel"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="display-field">
-                      <p>{fieldValues.bio || profile?.bio || (isOwnProfile ? 'Click to add a bio...' : 'No bio available')}</p>
-                      {isOwnProfile && (
-                        <button
-                          className="edit-btn"
-                          onClick={() => startEditing('bio')}
-                          title="Edit bio"
-                        >
-                          ✏️
-                        </button>
-                      )}
-                    </div>
+              {isOwnProfile && editingField === "bio" ? (
+                <div className="editing-field">
+                  <textarea
+                    value={fieldValues.bio}
+                    onChange={(e) => handleFieldChange(e.target.value)}
+                    placeholder="Tell us about yourself..."
+                    className="form-textarea"
+                    rows={3}
+                    maxLength={500}
+                    disabled={saving}
+                    autoFocus
+                  />
+                  <div className="char-count">
+                    {(fieldValues.bio || "").length}/500
+                  </div>
+                  <div className="field-actions">
+                    <button
+                      className="save-btn"
+                      onClick={saveField}
+                      disabled={saving}
+                      title="Save"
+                    >
+                      {saving ? "⏳" : "✓"}
+                    </button>
+                    <button
+                      className="cancel-btn"
+                      onClick={cancelEditing}
+                      disabled={saving}
+                      title="Cancel"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="display-field">
+                  <p>
+                    {fieldValues.bio ||
+                      profile?.bio ||
+                      (isOwnProfile
+                        ? "Click to add a bio..."
+                        : "No bio available")}
+                  </p>
+                  {isOwnProfile && (
+                    <button
+                      className="edit-btn"
+                      onClick={() => startEditing("bio")}
+                      title="Edit bio"
+                    >
+                      ✏️
+                    </button>
                   )}
                 </div>
-              </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Actions */}
         <div className="profile-display-actions">
-          <button
-            className="button-secondary"
-            onClick={onClose}
-          >
+          <button className="button-secondary" onClick={onClose}>
             Close
           </button>
         </div>
@@ -368,7 +391,7 @@ export function ProfileDisplay({ userId, onClose, onEdit }) {
             type="file"
             accept="image/*"
             onChange={handleFileSelect}
-            style={{ display: 'none' }}
+            style={{ display: "none" }}
           />
         )}
       </div>

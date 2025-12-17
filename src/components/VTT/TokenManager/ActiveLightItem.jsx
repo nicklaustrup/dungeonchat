@@ -1,5 +1,5 @@
-import React from 'react';
-import './ActiveTokensTab.css';
+import React from "react";
+import "./ActiveTokensTab.css";
 
 /**
  * ActiveLightItem - Individual light entry in the Active Tokens list
@@ -7,17 +7,17 @@ import './ActiveTokensTab.css';
  */
 const ActiveLightItem = ({ light, onFocus, onEdit }) => {
   const lightTypeLabels = {
-    torch: 'Torch',
-    lantern: 'Lantern',
-    candle: 'Candle',
-    'light-spell': 'Light Spell',
-    'magical-blue': 'Magical Blue',
-    'magical-purple': 'Magical Purple',
-    custom: 'Custom',
+    torch: "Torch",
+    lantern: "Lantern",
+    candle: "Candle",
+    "light-spell": "Light Spell",
+    "magical-blue": "Magical Blue",
+    "magical-purple": "Magical Purple",
+    custom: "Custom",
   };
 
-  const displayName = light.name || lightTypeLabels[light.type] || 'Light';
-  const lightColor = light.color || '#ffaa00';
+  const displayName = light.name || lightTypeLabels[light.type] || "Light";
+  const lightColor = light.color || "#ffaa00";
 
   return (
     <div className="active-item">

@@ -1,10 +1,10 @@
-import React from 'react';
-import { getFallbackAvatar } from '../../../utils/avatar';
-import { useProfanityFilter } from '../../../utils/profanityFilter';
-import { useProfanityFilterContext } from '../../../contexts/ProfanityFilterContext';
-import { useCachedUserProfileData } from '../../../services/cache';
-import { useCachedUserProfile } from '../../../services/cache';
-import { useFirebase } from '../../../services/FirebaseContext';
+import React from "react";
+import { getFallbackAvatar } from "../../../utils/avatar";
+import { useProfanityFilter } from "../../../utils/profanityFilter";
+import { useProfanityFilterContext } from "../../../contexts/ProfanityFilterContext";
+import { useCachedUserProfileData } from "../../../services/cache";
+import { useCachedUserProfile } from "../../../services/cache";
+import { useFirebase } from "../../../services/FirebaseContext";
 
 /**
  * InlineReplyContext
@@ -14,22 +14,27 @@ import { useFirebase } from '../../../services/FirebaseContext';
  *  - onViewProfile(userLike)
  *  - onNavigate(id) -> called when snippet clicked/Enter (for scrolling + highlight)
  */
-export default function InlineReplyContext({ replyTo, onViewProfile, onNavigate }) {
+export default function InlineReplyContext({
+  replyTo,
+  onViewProfile,
+  onNavigate,
+}) {
   // Get user's profanity filter preference from context (will re-render when changed)
   const { profanityFilterEnabled } = useProfanityFilterContext();
 
   // Always declare hooks before any early returns to satisfy rules-of-hooks.
   const { id, uid, displayName, text, type, photoURL } = replyTo || {};
-  
+
   // Get enhanced profile data for this user
   const { profileData } = useCachedUserProfileData(uid);
-  
+
   // For the current user, we should use the profile from the global context
   // For other users, we use the fetched profile data
   const { profile: currentUserProfile } = useCachedUserProfile();
   const { user: currentUser } = useFirebase();
 
-  const effectiveProfileData = uid === currentUser?.uid ? currentUserProfile : profileData;
+  const effectiveProfileData =
+    uid === currentUser?.uid ? currentUserProfile : profileData;
 
   // Implement name priority: displayName (highest) > username (medium) > auth displayName (lowest)
   const getDisplayNameWithPriority = () => {
@@ -42,7 +47,7 @@ export default function InlineReplyContext({ replyTo, onViewProfile, onNavigate 
       return effectiveProfileData.username;
     }
     // Lowest priority: Original auth display name from message
-    return displayName || 'Anonymous';
+    return displayName || "Anonymous";
   };
 
   const enhancedDisplayName = getDisplayNameWithPriority();
@@ -50,16 +55,25 @@ export default function InlineReplyContext({ replyTo, onViewProfile, onNavigate 
   // Use profile picture from profile data if available, otherwise fallback
   // Also check if the profile picture URL is a placeholder and use fallback instead
   const isPlaceholderURL = (url) => {
-    return !url || url.includes('via.placeholder.com') || url.includes('placeholder');
+    return (
+      !url || url.includes("via.placeholder.com") || url.includes("placeholder")
+    );
   };
-  
+
   const profilePictureURL = effectiveProfileData?.profilePictureURL;
-  const enhancedPhotoURL = isPlaceholderURL(profilePictureURL) ? 
-    (isPlaceholderURL(photoURL) ? null : photoURL) : 
-    profilePictureURL;
+  const enhancedPhotoURL = isPlaceholderURL(profilePictureURL)
+    ? isPlaceholderURL(photoURL)
+      ? null
+      : photoURL
+    : profilePictureURL;
 
   const fallbackAvatar = React.useMemo(
-    () => getFallbackAvatar({ uid: uid || 'x', displayName: enhancedDisplayName, size: 14 }),
+    () =>
+      getFallbackAvatar({
+        uid: uid || "x",
+        displayName: enhancedDisplayName,
+        size: 14,
+      }),
     [uid, enhancedDisplayName]
   );
 
@@ -68,15 +82,18 @@ export default function InlineReplyContext({ replyTo, onViewProfile, onNavigate 
 
   if (!replyTo) return null;
 
-  const snippet = (filteredText ? filteredText : (type === 'image' ? 'Image' : '')) || '';
+  const snippet =
+    (filteredText ? filteredText : type === "image" ? "Image" : "") || "";
 
-  const handleNavigate = () => { if (id && onNavigate) onNavigate(id); };
+  const handleNavigate = () => {
+    if (id && onNavigate) onNavigate(id);
+  };
 
   const handleProfile = () => {
     if (onViewProfile) {
-      onViewProfile({ 
-        uid, 
-        displayName: enhancedDisplayName, 
+      onViewProfile({
+        uid,
+        displayName: enhancedDisplayName,
         photoURL: enhancedPhotoURL || fallbackAvatar,
         username: effectiveProfileData?.username,
         bio: effectiveProfileData?.bio,
@@ -87,44 +104,56 @@ export default function InlineReplyContext({ replyTo, onViewProfile, onNavigate 
 
   return (
     <div className="inline-reply-context" data-testid="inline-reply-context">
-      <span className="irc-glyph" aria-hidden="true">❝</span>
+      <span className="irc-glyph" aria-hidden="true">
+        ❝
+      </span>
       <div
         className="irc-avatar"
         role="button"
         tabIndex={0}
         onClick={handleProfile}
-        onKeyDown={(e) => { if (e.key === 'Enter') handleProfile(); }}
-        title={`View ${enhancedDisplayName || 'user'} profile`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") handleProfile();
+        }}
+        title={`View ${enhancedDisplayName || "user"} profile`}
         data-testid="irc-avatar"
       >
         <img
           src={enhancedPhotoURL || fallbackAvatar}
-          alt={enhancedDisplayName ? `${enhancedDisplayName} avatar` : 'User avatar'}
-            loading="lazy"
-            decoding="async"
+          alt={
+            enhancedDisplayName
+              ? `${enhancedDisplayName} avatar`
+              : "User avatar"
+          }
+          loading="lazy"
+          decoding="async"
         />
       </div>
       <button
         className="irc-name"
         onClick={handleProfile}
-        title={`View ${enhancedDisplayName || 'user'} profile`}
+        title={`View ${enhancedDisplayName || "user"} profile`}
         type="button"
         data-testid="irc-name-btn"
       >
-        {enhancedDisplayName || 'Unknown'}
+        {enhancedDisplayName || "Unknown"}
       </button>
       <span
         className="irc-text"
-        role={id ? 'link' : undefined}
+        role={id ? "link" : undefined}
         tabIndex={id ? 0 : -1}
         onClick={handleNavigate}
-        onKeyDown={(e) => { if (e.key === 'Enter') handleNavigate(); }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") handleNavigate();
+        }}
         title={snippet}
         data-testid="irc-snippet"
       >
         {snippet}
       </span>
-      <span className="irc-glyph rotate-180" aria-hidden="true">❝</span>
+      <span className="irc-glyph rotate-180" aria-hidden="true">
+        ❝
+      </span>
     </div>
   );
 }

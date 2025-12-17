@@ -1,4 +1,4 @@
-import { 
+import {
   collection,
   doc,
   getDoc,
@@ -11,8 +11,8 @@ import {
   orderBy,
   limit,
   serverTimestamp,
-  onSnapshot
-} from 'firebase/firestore';
+  onSnapshot,
+} from "firebase/firestore";
 
 /**
  * Session Service - Manages campaign session notes and summaries
@@ -22,177 +22,207 @@ import {
 export const sessionService = {
   // Get reference to a specific session document
   getSessionRef: (firestore, campaignId, sessionId) => {
-    return doc(firestore, 'campaigns', campaignId, 'sessions', sessionId);
+    return doc(firestore, "campaigns", campaignId, "sessions", sessionId);
   },
 
   // Get reference to sessions collection
   getSessionsCollectionRef: (firestore, campaignId) => {
-    return collection(firestore, 'campaigns', campaignId, 'sessions');
+    return collection(firestore, "campaigns", campaignId, "sessions");
   },
 
   // Create a new session
   createSession: async (firestore, campaignId, sessionData) => {
     try {
-      const sessionsRef = sessionService.getSessionsCollectionRef(firestore, campaignId);
-      
+      const sessionsRef = sessionService.getSessionsCollectionRef(
+        firestore,
+        campaignId
+      );
+
       // Generate session ID
       const sessionId = `session_${Date.now()}`;
       const sessionRef = doc(sessionsRef, sessionId);
-      
+
       const newSession = {
         ...sessionData,
         createdAt: serverTimestamp(),
-        lastModified: serverTimestamp()
+        lastModified: serverTimestamp(),
       };
-      
+
       await setDoc(sessionRef, newSession);
       return { id: sessionId, ...newSession };
     } catch (error) {
-      console.error('Error creating session:', error);
-      throw new Error('Failed to create session');
+      console.error("Error creating session:", error);
+      throw new Error("Failed to create session");
     }
   },
 
   // Get a specific session
   getSession: async (firestore, campaignId, sessionId) => {
     try {
-      const sessionRef = sessionService.getSessionRef(firestore, campaignId, sessionId);
+      const sessionRef = sessionService.getSessionRef(
+        firestore,
+        campaignId,
+        sessionId
+      );
       const sessionSnap = await getDoc(sessionRef);
-      
+
       if (sessionSnap.exists()) {
         return { id: sessionSnap.id, ...sessionSnap.data() };
       }
       return null;
     } catch (error) {
-      console.error('Error getting session:', error);
-      throw new Error('Failed to load session');
+      console.error("Error getting session:", error);
+      throw new Error("Failed to load session");
     }
   },
 
   // Get all sessions for a campaign
   getSessions: async (firestore, campaignId, limitCount = 50) => {
     try {
-      const sessionsRef = sessionService.getSessionsCollectionRef(firestore, campaignId);
+      const sessionsRef = sessionService.getSessionsCollectionRef(
+        firestore,
+        campaignId
+      );
       const q = query(
         sessionsRef,
-        orderBy('sessionNumber', 'desc'),
+        orderBy("sessionNumber", "desc"),
         limit(limitCount)
       );
-      
+
       const querySnapshot = await getDocs(q);
       const sessions = [];
-      
+
       querySnapshot.forEach((doc) => {
         sessions.push({ id: doc.id, ...doc.data() });
       });
-      
+
       return sessions;
     } catch (error) {
-      console.error('Error getting sessions:', error);
-      throw new Error('Failed to load sessions');
+      console.error("Error getting sessions:", error);
+      throw new Error("Failed to load sessions");
     }
   },
 
   // Update session data
   updateSession: async (firestore, campaignId, sessionId, updates) => {
     try {
-      const sessionRef = sessionService.getSessionRef(firestore, campaignId, sessionId);
-      
+      const sessionRef = sessionService.getSessionRef(
+        firestore,
+        campaignId,
+        sessionId
+      );
+
       await updateDoc(sessionRef, {
         ...updates,
-        lastModified: serverTimestamp()
+        lastModified: serverTimestamp(),
       });
     } catch (error) {
-      console.error('Error updating session:', error);
-      throw new Error('Failed to update session');
+      console.error("Error updating session:", error);
+      throw new Error("Failed to update session");
     }
   },
 
   // Update DM notes (private)
   updateDMNotes: async (firestore, campaignId, sessionId, notes) => {
     return sessionService.updateSession(firestore, campaignId, sessionId, {
-      dmNotes: notes
+      dmNotes: notes,
     });
   },
 
   // Update shared notes (public)
   updateSharedNotes: async (firestore, campaignId, sessionId, notes) => {
     return sessionService.updateSession(firestore, campaignId, sessionId, {
-      sharedNotes: notes
+      sharedNotes: notes,
     });
   },
 
   // Add highlight to session
   addHighlight: async (firestore, campaignId, sessionId, highlight) => {
     try {
-      const session = await sessionService.getSession(firestore, campaignId, sessionId);
-      if (!session) throw new Error('Session not found');
-      
+      const session = await sessionService.getSession(
+        firestore,
+        campaignId,
+        sessionId
+      );
+      if (!session) throw new Error("Session not found");
+
       const highlights = session.highlights || [];
       highlights.push(highlight);
-      
+
       await sessionService.updateSession(firestore, campaignId, sessionId, {
-        highlights
+        highlights,
       });
     } catch (error) {
-      console.error('Error adding highlight:', error);
-      throw new Error('Failed to add highlight');
+      console.error("Error adding highlight:", error);
+      throw new Error("Failed to add highlight");
     }
   },
 
   // Remove highlight from session
   removeHighlight: async (firestore, campaignId, sessionId, highlightIndex) => {
     try {
-      const session = await sessionService.getSession(firestore, campaignId, sessionId);
-      if (!session) throw new Error('Session not found');
-      
+      const session = await sessionService.getSession(
+        firestore,
+        campaignId,
+        sessionId
+      );
+      if (!session) throw new Error("Session not found");
+
       const highlights = session.highlights || [];
       highlights.splice(highlightIndex, 1);
-      
+
       await sessionService.updateSession(firestore, campaignId, sessionId, {
-        highlights
+        highlights,
       });
     } catch (error) {
-      console.error('Error removing highlight:', error);
-      throw new Error('Failed to remove highlight');
+      console.error("Error removing highlight:", error);
+      throw new Error("Failed to remove highlight");
     }
   },
 
   // Add tag to session
   addTag: async (firestore, campaignId, sessionId, tag) => {
     try {
-      const session = await sessionService.getSession(firestore, campaignId, sessionId);
-      if (!session) throw new Error('Session not found');
-      
+      const session = await sessionService.getSession(
+        firestore,
+        campaignId,
+        sessionId
+      );
+      if (!session) throw new Error("Session not found");
+
       const tags = session.tags || [];
       if (!tags.includes(tag)) {
         tags.push(tag);
-        
+
         await sessionService.updateSession(firestore, campaignId, sessionId, {
-          tags
+          tags,
         });
       }
     } catch (error) {
-      console.error('Error adding tag:', error);
-      throw new Error('Failed to add tag');
+      console.error("Error adding tag:", error);
+      throw new Error("Failed to add tag");
     }
   },
 
   // Remove tag from session
   removeTag: async (firestore, campaignId, sessionId, tag) => {
     try {
-      const session = await sessionService.getSession(firestore, campaignId, sessionId);
-      if (!session) throw new Error('Session not found');
-      
+      const session = await sessionService.getSession(
+        firestore,
+        campaignId,
+        sessionId
+      );
+      if (!session) throw new Error("Session not found");
+
       const tags = session.tags || [];
-      const filteredTags = tags.filter(t => t !== tag);
-      
+      const filteredTags = tags.filter((t) => t !== tag);
+
       await sessionService.updateSession(firestore, campaignId, sessionId, {
-        tags: filteredTags
+        tags: filteredTags,
       });
     } catch (error) {
-      console.error('Error removing tag:', error);
-      throw new Error('Failed to remove tag');
+      console.error("Error removing tag:", error);
+      throw new Error("Failed to remove tag");
     }
   },
 
@@ -200,76 +230,104 @@ export const sessionService = {
   completeSession: async (firestore, campaignId, sessionId, endTime = null) => {
     try {
       const updates = {
-        status: 'completed'
+        status: "completed",
       };
-      
+
       if (endTime) {
         updates.endTime = endTime;
       }
-      
-      await sessionService.updateSession(firestore, campaignId, sessionId, updates);
+
+      await sessionService.updateSession(
+        firestore,
+        campaignId,
+        sessionId,
+        updates
+      );
     } catch (error) {
-      console.error('Error completing session:', error);
-      throw new Error('Failed to complete session');
+      console.error("Error completing session:", error);
+      throw new Error("Failed to complete session");
     }
   },
 
   // Delete a session
   deleteSession: async (firestore, campaignId, sessionId) => {
     try {
-      const sessionRef = sessionService.getSessionRef(firestore, campaignId, sessionId);
+      const sessionRef = sessionService.getSessionRef(
+        firestore,
+        campaignId,
+        sessionId
+      );
       await deleteDoc(sessionRef);
     } catch (error) {
-      console.error('Error deleting session:', error);
-      throw new Error('Failed to delete session');
+      console.error("Error deleting session:", error);
+      throw new Error("Failed to delete session");
     }
   },
 
   // Subscribe to session changes
   subscribeToSession: (firestore, campaignId, sessionId, callback) => {
-    const sessionRef = sessionService.getSessionRef(firestore, campaignId, sessionId);
-    
-    return onSnapshot(sessionRef, (doc) => {
-      if (doc.exists()) {
-        callback({ id: doc.id, ...doc.data() });
-      } else {
-        callback(null);
+    const sessionRef = sessionService.getSessionRef(
+      firestore,
+      campaignId,
+      sessionId
+    );
+
+    return onSnapshot(
+      sessionRef,
+      (doc) => {
+        if (doc.exists()) {
+          callback({ id: doc.id, ...doc.data() });
+        } else {
+          callback(null);
+        }
+      },
+      (error) => {
+        console.error("Error subscribing to session:", error);
+        callback(null, error);
       }
-    }, (error) => {
-      console.error('Error subscribing to session:', error);
-      callback(null, error);
-    });
+    );
   },
 
   // Subscribe to all sessions
   subscribeToSessions: (firestore, campaignId, callback) => {
-    const sessionsRef = sessionService.getSessionsCollectionRef(firestore, campaignId);
-    const q = query(sessionsRef, orderBy('sessionNumber', 'desc'));
-    
-    return onSnapshot(q, (querySnapshot) => {
-      const sessions = [];
-      querySnapshot.forEach((doc) => {
-        sessions.push({ id: doc.id, ...doc.data() });
-      });
-      callback(sessions);
-    }, (error) => {
-      console.error('Error subscribing to sessions:', error);
-      callback([], error);
-    });
+    const sessionsRef = sessionService.getSessionsCollectionRef(
+      firestore,
+      campaignId
+    );
+    const q = query(sessionsRef, orderBy("sessionNumber", "desc"));
+
+    return onSnapshot(
+      q,
+      (querySnapshot) => {
+        const sessions = [];
+        querySnapshot.forEach((doc) => {
+          sessions.push({ id: doc.id, ...doc.data() });
+        });
+        callback(sessions);
+      },
+      (error) => {
+        console.error("Error subscribing to sessions:", error);
+        callback([], error);
+      }
+    );
   },
 
   // Get next session number
   getNextSessionNumber: async (firestore, campaignId) => {
     try {
-      const sessions = await sessionService.getSessions(firestore, campaignId, 1);
-      
+      const sessions = await sessionService.getSessions(
+        firestore,
+        campaignId,
+        1
+      );
+
       if (sessions.length === 0) {
         return 1;
       }
-      
+
       return (sessions[0].sessionNumber || 0) + 1;
     } catch (error) {
-      console.error('Error getting next session number:', error);
+      console.error("Error getting next session number:", error);
       return 1;
     }
   },
@@ -277,24 +335,27 @@ export const sessionService = {
   // Get sessions by tag
   getSessionsByTag: async (firestore, campaignId, tag) => {
     try {
-      const sessionsRef = sessionService.getSessionsCollectionRef(firestore, campaignId);
+      const sessionsRef = sessionService.getSessionsCollectionRef(
+        firestore,
+        campaignId
+      );
       const q = query(
         sessionsRef,
-        where('tags', 'array-contains', tag),
-        orderBy('sessionNumber', 'desc')
+        where("tags", "array-contains", tag),
+        orderBy("sessionNumber", "desc")
       );
-      
+
       const querySnapshot = await getDocs(q);
       const sessions = [];
-      
+
       querySnapshot.forEach((doc) => {
         sessions.push({ id: doc.id, ...doc.data() });
       });
-      
+
       return sessions;
     } catch (error) {
-      console.error('Error getting sessions by tag:', error);
-      throw new Error('Failed to load sessions by tag');
+      console.error("Error getting sessions by tag:", error);
+      throw new Error("Failed to load sessions by tag");
     }
   },
 
@@ -302,85 +363,114 @@ export const sessionService = {
   exportSessionToMarkdown: (session) => {
     let markdown = `# ${session.title}\n\n`;
     markdown += `**Session Number**: ${session.sessionNumber}\n`;
-    markdown += `**Date**: ${session.sessionDate ? new Date(session.sessionDate.seconds * 1000).toLocaleDateString() : 'N/A'}\n\n`;
-    
+    markdown += `**Date**: ${session.sessionDate ? new Date(session.sessionDate.seconds * 1000).toLocaleDateString() : "N/A"}\n\n`;
+
     if (session.attendees && session.attendees.length > 0) {
       markdown += `**Attendees**: ${session.attendees.length} players\n\n`;
     }
-    
+
     if (session.highlights && session.highlights.length > 0) {
       markdown += `## Highlights\n\n`;
-      session.highlights.forEach(highlight => {
+      session.highlights.forEach((highlight) => {
         markdown += `- ${highlight}\n`;
       });
       markdown += `\n`;
     }
-    
+
     if (session.sharedNotes) {
       markdown += `## Session Notes\n\n${session.sharedNotes}\n\n`;
     }
-    
+
     if (session.tags && session.tags.length > 0) {
-      markdown += `**Tags**: ${session.tags.join(', ')}\n`;
+      markdown += `**Tags**: ${session.tags.join(", ")}\n`;
     }
-    
+
     return markdown;
   },
 
   // Add encounter reference to a session (tracks active encounters within a session)
-  addEncounterReference: async (firestore, campaignId, sessionId, encounterMeta) => {
+  addEncounterReference: async (
+    firestore,
+    campaignId,
+    sessionId,
+    encounterMeta
+  ) => {
     try {
-      const sessionRef = sessionService.getSessionRef(firestore, campaignId, sessionId);
+      const sessionRef = sessionService.getSessionRef(
+        firestore,
+        campaignId,
+        sessionId
+      );
       const snap = await getDoc(sessionRef);
-      if (!snap.exists()) throw new Error('Session not found');
+      if (!snap.exists()) throw new Error("Session not found");
       const data = snap.data();
-      const activeEncounters = Array.isArray(data.activeEncounters) ? data.activeEncounters : [];
+      const activeEncounters = Array.isArray(data.activeEncounters)
+        ? data.activeEncounters
+        : [];
       // Avoid duplicate by encounterId
-      if (!activeEncounters.some(e => e.encounterId === encounterMeta.encounterId)) {
+      if (
+        !activeEncounters.some(
+          (e) => e.encounterId === encounterMeta.encounterId
+        )
+      ) {
         activeEncounters.push({
           encounterId: encounterMeta.encounterId,
-            name: encounterMeta.name || 'Encounter',
-            startedAt: encounterMeta.startedAt || new Date(),
-            // Optional fields for future expansion
-            difficulty: encounterMeta.difficulty || null
+          name: encounterMeta.name || "Encounter",
+          startedAt: encounterMeta.startedAt || new Date(),
+          // Optional fields for future expansion
+          difficulty: encounterMeta.difficulty || null,
         });
         await updateDoc(sessionRef, {
           activeEncounters,
-          lastModified: serverTimestamp()
+          lastModified: serverTimestamp(),
         });
       }
     } catch (error) {
-      console.error('Error adding encounter reference to session:', error);
-      throw new Error('Failed to link encounter to session');
+      console.error("Error adding encounter reference to session:", error);
+      throw new Error("Failed to link encounter to session");
     }
   },
 
   // Remove (or mark completed) encounter reference from a session
-  removeEncounterReference: async (firestore, campaignId, sessionId, encounterId, options = {}) => {
+  removeEncounterReference: async (
+    firestore,
+    campaignId,
+    sessionId,
+    encounterId,
+    options = {}
+  ) => {
     try {
-      const sessionRef = sessionService.getSessionRef(firestore, campaignId, sessionId);
+      const sessionRef = sessionService.getSessionRef(
+        firestore,
+        campaignId,
+        sessionId
+      );
       const snap = await getDoc(sessionRef);
       if (!snap.exists()) return; // silently ignore
       const data = snap.data();
-      let activeEncounters = Array.isArray(data.activeEncounters) ? data.activeEncounters : [];
-      const updated = activeEncounters.map(e => {
-        if (e.encounterId === encounterId) {
-          if (options.markCompleted) {
-            return { ...e, completedAt: options.completedAt || new Date() };
+      let activeEncounters = Array.isArray(data.activeEncounters)
+        ? data.activeEncounters
+        : [];
+      const updated = activeEncounters
+        .map((e) => {
+          if (e.encounterId === encounterId) {
+            if (options.markCompleted) {
+              return { ...e, completedAt: options.completedAt || new Date() };
+            }
+            return null; // removal
           }
-          return null; // removal
-        }
-        return e;
-      }).filter(Boolean);
+          return e;
+        })
+        .filter(Boolean);
       await updateDoc(sessionRef, {
         activeEncounters: updated,
-        lastModified: serverTimestamp()
+        lastModified: serverTimestamp(),
       });
     } catch (error) {
-      console.error('Error removing encounter reference from session:', error);
-      throw new Error('Failed to unlink encounter from session');
+      console.error("Error removing encounter reference from session:", error);
+      throw new Error("Failed to unlink encounter from session");
     }
-  }
+  },
 };
 
 export default sessionService;

@@ -1,12 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useFirebase } from '../../services/FirebaseContext';
-import { getCampaign, leaveCampaign } from '../../services/campaign/campaignService';
-import { updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import './CampaignSettings.css';
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useFirebase } from "../../services/FirebaseContext";
+import {
+  getCampaign,
+  leaveCampaign,
+} from "../../services/campaign/campaignService";
+import { updateDoc, deleteDoc, doc } from "firebase/firestore";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
+import "./CampaignSettings.css";
 
-const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, userId }) => {
+const CampaignSettings = ({
+  campaign: campaignProp,
+  onCampaignUpdate,
+  isUserDM,
+  userId,
+}) => {
   const { campaignId } = useParams();
   const navigate = useNavigate();
   const { firestore, storage, user } = useFirebase();
@@ -14,28 +27,28 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
   const [loading, setLoading] = useState(!campaignProp);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
 
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    visibility: 'private',
+    name: "",
+    description: "",
+    visibility: "private",
     allowRequests: true,
     maxMembers: 6,
-    gameSystem: 'D&D 5e',
-    sessionFrequency: 'weekly',
-    timeZone: 'UTC',
-    sessionDay: 'saturday',
-    sessionTime: '19:00',
+    gameSystem: "D&D 5e",
+    sessionFrequency: "weekly",
+    timeZone: "UTC",
+    sessionDay: "saturday",
+    sessionTime: "19:00",
     // Session Settings
-    progressionSystem: 'xp',
+    progressionSystem: "xp",
     canViewGold: false,
     canViewInventory: false,
-    canViewCharacterSheet: false
+    canViewCharacterSheet: false,
   });
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -46,31 +59,31 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
       const campaignData = await getCampaign(firestore, campaignId);
 
       if (!campaignData) {
-        setError('Campaign not found');
+        setError("Campaign not found");
         return;
       }
 
       setCampaign(campaignData);
       setFormData({
-        name: campaignData.name || '',
-        description: campaignData.description || '',
-        visibility: campaignData.visibility || 'private',
+        name: campaignData.name || "",
+        description: campaignData.description || "",
+        visibility: campaignData.visibility || "private",
         allowRequests: campaignData.allowRequests ?? true,
         maxMembers: campaignData.maxMembers || 6,
-        gameSystem: campaignData.gameSystem || 'D&D 5e',
-        sessionFrequency: campaignData.sessionFrequency || 'weekly',
-        timeZone: campaignData.timeZone || 'UTC',
-        sessionDay: campaignData.sessionDay || 'saturday',
-        sessionTime: campaignData.sessionTime || '19:00',
+        gameSystem: campaignData.gameSystem || "D&D 5e",
+        sessionFrequency: campaignData.sessionFrequency || "weekly",
+        timeZone: campaignData.timeZone || "UTC",
+        sessionDay: campaignData.sessionDay || "saturday",
+        sessionTime: campaignData.sessionTime || "19:00",
         // Session Settings
-        progressionSystem: campaignData.progressionSystem || 'xp',
+        progressionSystem: campaignData.progressionSystem || "xp",
         canViewGold: campaignData.canViewGold ?? false,
         canViewInventory: campaignData.canViewInventory ?? false,
-        canViewCharacterSheet: campaignData.canViewCharacterSheet ?? false
+        canViewCharacterSheet: campaignData.canViewCharacterSheet ?? false,
       });
     } catch (error) {
-      console.error('Error loading campaign:', error);
-      setError('Failed to load campaign settings');
+      console.error("Error loading campaign:", error);
+      setError("Failed to load campaign settings");
     } finally {
       setLoading(false);
     }
@@ -81,21 +94,21 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
     if (campaignProp) {
       setCampaign(campaignProp);
       setFormData({
-        name: campaignProp.name || '',
-        description: campaignProp.description || '',
-        visibility: campaignProp.visibility || 'private',
+        name: campaignProp.name || "",
+        description: campaignProp.description || "",
+        visibility: campaignProp.visibility || "private",
         allowRequests: campaignProp.allowRequests !== false,
         maxMembers: campaignProp.maxMembers || 6,
-        gameSystem: campaignProp.gameSystem || 'D&D 5e',
-        sessionFrequency: campaignProp.sessionFrequency || 'weekly',
-        timeZone: campaignProp.timeZone || 'UTC',
-        sessionDay: campaignProp.sessionDay || 'saturday',
-        sessionTime: campaignProp.sessionTime || '19:00',
+        gameSystem: campaignProp.gameSystem || "D&D 5e",
+        sessionFrequency: campaignProp.sessionFrequency || "weekly",
+        timeZone: campaignProp.timeZone || "UTC",
+        sessionDay: campaignProp.sessionDay || "saturday",
+        sessionTime: campaignProp.sessionTime || "19:00",
         // Session Settings
-        progressionSystem: campaignProp.progressionSystem || 'xp',
+        progressionSystem: campaignProp.progressionSystem || "xp",
         canViewGold: campaignProp.canViewGold ?? false,
         canViewInventory: campaignProp.canViewInventory ?? false,
-        canViewCharacterSheet: campaignProp.canViewCharacterSheet ?? false
+        canViewCharacterSheet: campaignProp.canViewCharacterSheet ?? false,
       });
       setLoading(false);
       return;
@@ -107,9 +120,9 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -120,17 +133,17 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
       setSaving(true);
       setError(null);
 
-      const campaignRef = doc(firestore, 'campaigns', campaignId);
+      const campaignRef = doc(firestore, "campaigns", campaignId);
       await updateDoc(campaignRef, formData);
 
-      setSuccessMessage('Campaign settings saved successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setSuccessMessage("Campaign settings saved successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
 
       // Reload campaign data
       await loadCampaign();
     } catch (error) {
-      console.error('Error saving campaign:', error);
-      setError('Failed to save campaign settings');
+      console.error("Error saving campaign:", error);
+      setError("Failed to save campaign settings");
     } finally {
       setSaving(false);
     }
@@ -138,18 +151,18 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
 
   const handleDeleteCampaign = async () => {
     if (!campaign || !user) {
-      setError('Unable to delete campaign: Invalid session');
+      setError("Unable to delete campaign: Invalid session");
       return;
     }
 
     // Check if user is the DM
     if (campaign.dmId !== user.uid) {
-      setError('Only the Dungeon Master can delete this campaign.');
+      setError("Only the Dungeon Master can delete this campaign.");
       return;
     }
 
     if (deleteConfirmText !== campaign.name) {
-      setError('Campaign name does not match');
+      setError("Campaign name does not match");
       return;
     }
 
@@ -157,18 +170,20 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
       setSaving(true);
       setError(null);
 
-      const campaignRef = doc(firestore, 'campaigns', campaignId);
+      const campaignRef = doc(firestore, "campaigns", campaignId);
       await deleteDoc(campaignRef);
 
       // Navigate immediately to prevent listener errors
-      navigate('/campaigns');
+      navigate("/campaigns");
     } catch (error) {
-      console.error('Error deleting campaign:', error);
+      console.error("Error deleting campaign:", error);
 
-      if (error.code === 'permission-denied') {
-        setError('You do not have permission to delete this campaign. Only the campaign creator can delete it.');
-      } else if (error.code === 'not-found') {
-        setError('Campaign not found. It may have already been deleted.');
+      if (error.code === "permission-denied") {
+        setError(
+          "You do not have permission to delete this campaign. Only the campaign creator can delete it."
+        );
+      } else if (error.code === "not-found") {
+        setError("Campaign not found. It may have already been deleted.");
       } else {
         setError(`Failed to delete campaign: ${error.message}`);
       }
@@ -180,10 +195,10 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
   const handleLeaveCampaign = async () => {
     try {
       await leaveCampaign(firestore, campaignId, userId);
-      navigate('/campaigns');
+      navigate("/campaigns");
     } catch (err) {
-      console.error('Error leaving campaign:', err);
-      setError('Failed to leave campaign. Please try again.');
+      console.error("Error leaving campaign:", err);
+      setError("Failed to leave campaign. Please try again.");
     }
   };
 
@@ -192,14 +207,14 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file');
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be less than 5MB');
+      setError("Image must be less than 5MB");
       return;
     }
 
@@ -229,20 +244,20 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
       const photoURL = await getDownloadURL(photoRef);
 
       // Update campaign document
-      const campaignRef = doc(firestore, 'campaigns', campaignId);
+      const campaignRef = doc(firestore, "campaigns", campaignId);
       await updateDoc(campaignRef, {
         campaignPhoto: photoURL,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
 
-      setSuccessMessage('Campaign photo updated successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setSuccessMessage("Campaign photo updated successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
 
       // Reload campaign
       await loadCampaign();
     } catch (err) {
-      console.error('Error uploading photo:', err);
-      setError('Failed to upload photo. Please try again.');
+      console.error("Error uploading photo:", err);
+      setError("Failed to upload photo. Please try again.");
     } finally {
       setUploadingPhoto(false);
     }
@@ -259,27 +274,27 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
         await deleteObject(photoRef);
       } catch (err) {
         // Ignore error if file doesn't exist
-        if (err.code !== 'storage/object-not-found') {
+        if (err.code !== "storage/object-not-found") {
           throw err;
         }
       }
 
       // Update campaign document
-      const campaignRef = doc(firestore, 'campaigns', campaignId);
+      const campaignRef = doc(firestore, "campaigns", campaignId);
       await updateDoc(campaignRef, {
         campaignPhoto: null,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
 
       setPhotoPreview(null);
-      setSuccessMessage('Campaign photo removed successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setSuccessMessage("Campaign photo removed successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
 
       // Reload campaign
       await loadCampaign();
     } catch (err) {
-      console.error('Error removing photo:', err);
-      setError('Failed to remove photo. Please try again.');
+      console.error("Error removing photo:", err);
+      setError("Failed to remove photo. Please try again.");
     } finally {
       setUploadingPhoto(false);
     }
@@ -326,13 +341,17 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
 
       {!isUserDM && (
         <div className="info-message">
-          <p>👁️ Viewing campaign settings (read-only). Only the DM can modify these settings.</p>
+          <p>
+            👁️ Viewing campaign settings (read-only). Only the DM can modify
+            these settings.
+          </p>
         </div>
       )}
 
       <p className="settings-description">
         Configure basic campaign information, privacy settings, and scheduling.
-        Session-specific settings (progression system, party visibility) are accessible during VTT sessions.
+        Session-specific settings (progression system, party visibility) are
+        accessible during VTT sessions.
       </p>
 
       {error && (
@@ -394,7 +413,9 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
               <option value="D&D 5e">D&D 5e</option>
               <option value="Pathfinder 2e">Pathfinder 2e</option>
               <option value="Call of Cthulhu">Call of Cthulhu</option>
-              <option value="Vampire: The Masquerade">Vampire: The Masquerade</option>
+              <option value="Vampire: The Masquerade">
+                Vampire: The Masquerade
+              </option>
               <option value="Other">Other</option>
             </select>
           </div>
@@ -402,10 +423,11 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
           <div className="form-group">
             <label>Campaign Header Photo</label>
             <p className="form-help-text">
-              {isUserDM 
-                ? 'Upload a banner image for your campaign. Visible in the campaign dashboard and browse page. (Max 5MB)'
-                : 'Campaign header photo set by the DM. Visible in the campaign dashboard and browse page.'
-              }
+              {isUserDM
+                ? `Upload a banner image for your campaign. ` +
+                  `Visible in the campaign dashboard and browse page. (Max 5MB)`
+                : "Campaign header photo set by the DM. " +
+                  "Visible in the campaign dashboard and browse page."}
             </p>
 
             {(campaign?.campaignPhoto || photoPreview) && (
@@ -420,14 +442,21 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
 
             {isUserDM && (
               <div className="photo-actions">
-                <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'inline-block' }}>
-                  {uploadingPhoto ? 'Uploading...' : (campaign?.campaignPhoto ? 'Change Photo' : 'Upload Photo')}
+                <label
+                  className="btn btn-secondary"
+                  style={{ cursor: "pointer", display: "inline-block" }}
+                >
+                  {uploadingPhoto
+                    ? "Uploading..."
+                    : campaign?.campaignPhoto
+                      ? "Change Photo"
+                      : "Upload Photo"}
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handlePhotoSelect}
                     disabled={uploadingPhoto}
-                    style={{ display: 'none' }}
+                    style={{ display: "none" }}
                   />
                 </label>
 
@@ -437,7 +466,7 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
                     className="btn btn-danger"
                     onClick={handlePhotoRemove}
                     disabled={uploadingPhoto}
-                    style={{ marginLeft: '0.5rem' }}
+                    style={{ marginLeft: "0.5rem" }}
                   >
                     Remove Photo
                   </button>
@@ -569,11 +598,15 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
       </form>
 
       {/* Session Settings Header */}
-      <form className='settings-form'>
+      <form className="settings-form">
         <h2 className="section-header">Session Settings</h2>
 
-        <p className="settings-description" style={{ paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
-          Configure VTT session behavior, progression system, and party management visibility.
+        <p
+          className="settings-description"
+          style={{ paddingLeft: "1.5rem", paddingRight: "1.5rem" }}
+        >
+          Configure VTT session behavior, progression system, and party
+          management visibility.
         </p>
 
         {/* Progression System */}
@@ -596,9 +629,9 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
               <option value="milestone">Milestone</option>
             </select>
             <p className="form-help-text">
-              {formData.progressionSystem === 'xp'
-                ? '📊 Players track experience points from encounters'
-                : '⭐ Players advance when reaching story milestones'}
+              {formData.progressionSystem === "xp"
+                ? "📊 Players track experience points from encounters"
+                : "⭐ Players advance when reaching story milestones"}
             </p>
           </div>
         </div>
@@ -625,7 +658,9 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
               />
               💰 Party Gold
             </label>
-            <p className="form-help-text">Show total party gold in the party overview.</p>
+            <p className="form-help-text">
+              Show total party gold in the party overview.
+            </p>
           </div>
 
           <div className="form-group">
@@ -639,7 +674,9 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
               />
               🎒 Character Inventory
             </label>
-            <p className="form-help-text">Show inventory items on character cards.</p>
+            <p className="form-help-text">
+              Show inventory items on character cards.
+            </p>
           </div>
 
           <div className="form-group">
@@ -653,14 +690,16 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
               />
               📄 Character Sheets
             </label>
-            <p className="form-help-text">Allow opening character sheets for other party members.</p>
+            <p className="form-help-text">
+              Allow opening character sheets for other party members.
+            </p>
           </div>
         </div>
 
         {isUserDM && (
           <div className="form-actions">
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         )}
@@ -684,7 +723,10 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
 
         {isUserDM && (
           <>
-            <p>Once you delete a campaign, there is no going back. Please be certain.</p>
+            <p>
+              Once you delete a campaign, there is no going back. Please be
+              certain.
+            </p>
             <button
               className="btn btn-danger"
               onClick={() => setShowDeleteConfirm(true)}
@@ -695,15 +737,14 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
         )}
       </div>
 
-
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>Delete Campaign</h3>
             <p>
-              This action cannot be undone. This will permanently delete the campaign,
-              all messages, and remove all members.
+              This action cannot be undone. This will permanently delete the
+              campaign, all messages, and remove all members.
             </p>
             <p>
               Please type <strong>{campaign.name}</strong> to confirm:
@@ -723,7 +764,7 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
                 className="btn btn-secondary"
                 onClick={() => {
                   setShowDeleteConfirm(false);
-                  setDeleteConfirmText('');
+                  setDeleteConfirmText("");
                   setError(null);
                 }}
               >
@@ -734,7 +775,7 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
                 onClick={handleDeleteCampaign}
                 disabled={saving || deleteConfirmText !== campaign.name}
               >
-                {saving ? 'Deleting...' : 'Delete Campaign'}
+                {saving ? "Deleting..." : "Delete Campaign"}
               </button>
             </div>
           </div>
@@ -744,11 +785,12 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
       {/* Leave Campaign Modal */}
       {showLeaveModal && (
         <div className="modal-overlay" onClick={() => setShowLeaveModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Leave Campaign</h3>
             <p>Are you sure you want to leave "{campaign.name}"?</p>
             <p className="warning-text">
-              You'll lose access to all campaign channels and will need to be re-invited to rejoin.
+              You'll lose access to all campaign channels and will need to be
+              re-invited to rejoin.
             </p>
             <div className="modal-actions">
               <button
@@ -757,10 +799,7 @@ const CampaignSettings = ({ campaign: campaignProp, onCampaignUpdate, isUserDM, 
               >
                 Cancel
               </button>
-              <button
-                onClick={handleLeaveCampaign}
-                className="btn btn-danger"
-              >
+              <button onClick={handleLeaveCampaign} className="btn btn-danger">
                 Leave Campaign
               </button>
             </div>

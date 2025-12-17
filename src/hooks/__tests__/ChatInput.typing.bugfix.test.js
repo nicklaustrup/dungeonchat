@@ -1,58 +1,58 @@
-import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import { renderHook } from '@testing-library/react';
-import ChatInput from '../../components/ChatInput/ChatInput';
-import { useTypingPresence } from '../useTypingPresence';
-import { ChatStateProvider } from '../../contexts/ChatStateContext';
+import React from "react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
+import ChatInput from "../../components/ChatInput/ChatInput";
+import { useTypingPresence } from "../useTypingPresence";
+import { ChatStateProvider } from "../../contexts/ChatStateContext";
 
 // Mock dependencies
-jest.mock('../../services/FirebaseContext', () => ({
+jest.mock("../../services/FirebaseContext", () => ({
   useFirebase: () => ({
-    auth: { currentUser: { uid: 'user1', displayName: 'Test User' } },
+    auth: { currentUser: { uid: "user1", displayName: "Test User" } },
     firestore: {},
     rtdb: {},
-    storage: {}
-  })
+    storage: {},
+  }),
 }));
 
-jest.mock('../../services/messageService', () => ({
-  createTextMessage: jest.fn().mockResolvedValue()
+jest.mock("../../services/messageService", () => ({
+  createTextMessage: jest.fn().mockResolvedValue(),
 }));
 
-jest.mock('../../utils/sound', () => ({
+jest.mock("../../utils/sound", () => ({
   playSendMessageSound: jest.fn(),
   beginTypingLoop: jest.fn(),
-  endTypingLoop: jest.fn()
+  endTypingLoop: jest.fn(),
 }));
 
-jest.mock('../../services/presenceService', () => ({
+jest.mock("../../services/presenceService", () => ({
   setTyping: jest.fn(),
-  refreshPresence: jest.fn()
+  refreshPresence: jest.fn(),
 }));
 
-jest.mock('../../hooks/useImageMessage', () => ({
+jest.mock("../../hooks/useImageMessage", () => ({
   useImageMessage: () => ({
     handleImageSelect: jest.fn(),
     sendImageMessage: jest.fn(),
     clearImage: jest.fn(),
-    error: null
-  })
+    error: null,
+  }),
 }));
 
-jest.mock('../../hooks/useEmojiPicker', () => ({
+jest.mock("../../hooks/useEmojiPicker", () => ({
   useEmojiPicker: () => ({
     open: false,
     toggle: jest.fn(),
     buttonRef: { current: null },
-    setOnSelect: jest.fn()
-  })
+    setOnSelect: jest.fn(),
+  }),
 }));
 
-const { createTextMessage } = require('../../services/messageService');
-const { setTyping } = require('../../services/presenceService');
-const { endTypingLoop } = require('../../utils/sound');
+const { createTextMessage } = require("../../services/messageService");
+const { setTyping } = require("../../services/presenceService");
+const { endTypingLoop } = require("../../utils/sound");
 
-describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
+describe("ChatInput & TypingPresence - Bug Fix Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -62,14 +62,14 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
     jest.useRealTimers();
   });
 
-  describe('Bug Fix: Typing Indicator Not Clearing on Send', () => {
-    test('should clear typing indicator when message is sent via button', async () => {
+  describe("Bug Fix: Typing Indicator Not Clearing on Send", () => {
+    test("should clear typing indicator when message is sent via button", async () => {
       const forceScrollBottom = jest.fn();
 
       render(
         <ChatStateProvider>
-          <ChatInput 
-            getDisplayName={() => 'Test User'}
+          <ChatInput
+            getDisplayName={() => "Test User"}
             soundEnabled={false}
             forceScrollBottom={forceScrollBottom}
           />
@@ -77,11 +77,11 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       );
 
       const textarea = screen.getByLabelText(/message text/i);
-      const sendButton = screen.getByRole('button', { name: /send message/i });
+      const sendButton = screen.getByRole("button", { name: /send message/i });
 
       // Start typing
-      fireEvent.change(textarea, { target: { value: 'Hello world' } });
-      
+      fireEvent.change(textarea, { target: { value: "Hello world" } });
+
       // Verify typing was set to true
       expect(setTyping).toHaveBeenCalledWith(
         expect.anything(),
@@ -100,16 +100,16 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       );
 
       expect(createTextMessage).toHaveBeenCalled();
-      expect(textarea.value).toBe(''); // Input should be cleared
+      expect(textarea.value).toBe(""); // Input should be cleared
     });
 
-    test('should clear typing indicator when message is sent via Enter key', async () => {
+    test("should clear typing indicator when message is sent via Enter key", async () => {
       const forceScrollBottom = jest.fn();
 
       render(
         <ChatStateProvider>
-          <ChatInput 
-            getDisplayName={() => 'Test User'}
+          <ChatInput
+            getDisplayName={() => "Test User"}
             soundEnabled={false}
             forceScrollBottom={forceScrollBottom}
           />
@@ -119,8 +119,8 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       const textarea = screen.getByLabelText(/message text/i);
 
       // Start typing
-      fireEvent.change(textarea, { target: { value: 'Hello world' } });
-      
+      fireEvent.change(textarea, { target: { value: "Hello world" } });
+
       expect(setTyping).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ typing: true })
@@ -128,7 +128,7 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
 
       // Send with Enter
       await act(async () => {
-        fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+        fireEvent.keyDown(textarea, { key: "Enter", shiftKey: false });
       });
 
       // Should clear typing indicator
@@ -140,11 +140,11 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       expect(createTextMessage).toHaveBeenCalled();
     });
 
-    test('should NOT send message with Shift+Enter but continue typing', async () => {
+    test("should NOT send message with Shift+Enter but continue typing", async () => {
       render(
         <ChatStateProvider>
-          <ChatInput 
-            getDisplayName={() => 'Test User'}
+          <ChatInput
+            getDisplayName={() => "Test User"}
             soundEnabled={false}
             forceScrollBottom={jest.fn()}
           />
@@ -153,8 +153,8 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
 
       const textarea = screen.getByLabelText(/message text/i);
 
-      fireEvent.change(textarea, { target: { value: 'Line 1' } });
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: true });
+      fireEvent.change(textarea, { target: { value: "Line 1" } });
+      fireEvent.keyDown(textarea, { key: "Enter", shiftKey: true });
 
       expect(createTextMessage).not.toHaveBeenCalled();
       expect(setTyping).toHaveBeenCalledWith(
@@ -164,13 +164,13 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
     });
   });
 
-  describe('Bug Fix: Typing Indicator Not Clearing on Text Clear', () => {
-    test('should clear typing indicator when all text is removed', () => {
-      const { result } = renderHook(() => 
+  describe("Bug Fix: Typing Indicator Not Clearing on Text Clear", () => {
+    test("should clear typing indicator when all text is removed", () => {
+      const { result } = renderHook(() =>
         useTypingPresence({
           rtdb: {},
-          user: { uid: 'user1', displayName: 'Test User' },
-          soundEnabled: false
+          user: { uid: "user1", displayName: "Test User" },
+          soundEnabled: false,
         })
       );
 
@@ -198,11 +198,11 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       expect(endTypingLoop).toHaveBeenCalled();
     });
 
-    test('should clear typing indicator in ChatInput when text is cleared', async () => {
+    test("should clear typing indicator in ChatInput when text is cleared", async () => {
       render(
         <ChatStateProvider>
-          <ChatInput 
-            getDisplayName={() => 'Test User'}
+          <ChatInput
+            getDisplayName={() => "Test User"}
             soundEnabled={false}
             forceScrollBottom={jest.fn()}
           />
@@ -212,15 +212,15 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       const textarea = screen.getByLabelText(/message text/i);
 
       // Type some text
-      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      fireEvent.change(textarea, { target: { value: "Hello" } });
       expect(setTyping).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ typing: true })
       );
 
       // Clear all text
-      fireEvent.change(textarea, { target: { value: '' } });
-      
+      fireEvent.change(textarea, { target: { value: "" } });
+
       // Should clear typing indicator
       expect(setTyping).toHaveBeenLastCalledWith(
         expect.anything(),
@@ -229,13 +229,13 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
     });
   });
 
-  describe('Bug Fix: Typing Indicator Auto-Clear After Inactivity', () => {
-    test('should auto-clear typing after 6 seconds of inactivity', () => {
-      const { result } = renderHook(() => 
+  describe("Bug Fix: Typing Indicator Auto-Clear After Inactivity", () => {
+    test("should auto-clear typing after 6 seconds of inactivity", () => {
+      const { result } = renderHook(() =>
         useTypingPresence({
           rtdb: {},
-          user: { uid: 'user1', displayName: 'Test User' },
-          soundEnabled: false
+          user: { uid: "user1", displayName: "Test User" },
+          soundEnabled: false,
         })
       );
 
@@ -263,12 +263,12 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       expect(endTypingLoop).toHaveBeenCalled();
     });
 
-    test('should reset timer on continued typing', () => {
-      const { result } = renderHook(() => 
+    test("should reset timer on continued typing", () => {
+      const { result } = renderHook(() =>
         useTypingPresence({
           rtdb: {},
-          user: { uid: 'user1', displayName: 'Test User' },
-          soundEnabled: false
+          user: { uid: "user1", displayName: "Test User" },
+          soundEnabled: false,
         })
       );
 
@@ -307,13 +307,13 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
     });
   });
 
-  describe('Edge Cases and Error Scenarios', () => {
-    test('should handle user being null gracefully', () => {
-      const { result } = renderHook(() => 
+  describe("Edge Cases and Error Scenarios", () => {
+    test("should handle user being null gracefully", () => {
+      const { result } = renderHook(() =>
         useTypingPresence({
           rtdb: {},
           user: null,
-          soundEnabled: false
+          soundEnabled: false,
         })
       );
 
@@ -327,12 +327,12 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       expect(setTyping).not.toHaveBeenCalled();
     });
 
-    test('should handle rapid text changes correctly', () => {
-      const { result } = renderHook(() => 
+    test("should handle rapid text changes correctly", () => {
+      const { result } = renderHook(() =>
         useTypingPresence({
           rtdb: {},
-          user: { uid: 'user1', displayName: 'Test User' },
-          soundEnabled: false
+          user: { uid: "user1", displayName: "Test User" },
+          soundEnabled: false,
         })
       );
 
@@ -354,12 +354,12 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       );
     });
 
-    test('should cleanup timers on unmount', () => {
-      const { unmount } = renderHook(() => 
+    test("should cleanup timers on unmount", () => {
+      const { unmount } = renderHook(() =>
         useTypingPresence({
           rtdb: {},
-          user: { uid: 'user1', displayName: 'Test User' },
-          soundEnabled: true
+          user: { uid: "user1", displayName: "Test User" },
+          soundEnabled: true,
         })
       );
 
@@ -371,12 +371,12 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
     });
   });
 
-  describe('Integration with ChatInput', () => {
-    test('complete typing flow: type -> send -> clear', async () => {
+  describe("Integration with ChatInput", () => {
+    test("complete typing flow: type -> send -> clear", async () => {
       render(
         <ChatStateProvider>
-          <ChatInput 
-            getDisplayName={() => 'Test User'}
+          <ChatInput
+            getDisplayName={() => "Test User"}
             soundEnabled={false}
             forceScrollBottom={jest.fn()}
           />
@@ -384,17 +384,17 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       );
 
       const textarea = screen.getByLabelText(/message text/i);
-      const sendButton = screen.getByRole('button', { name: /send message/i });
+      const sendButton = screen.getByRole("button", { name: /send message/i });
 
       // 1. Start typing
-      fireEvent.change(textarea, { target: { value: 'H' } });
+      fireEvent.change(textarea, { target: { value: "H" } });
       expect(setTyping).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ typing: true })
       );
 
       // 2. Continue typing
-      fireEvent.change(textarea, { target: { value: 'Hello world!' } });
+      fireEvent.change(textarea, { target: { value: "Hello world!" } });
       expect(setTyping).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ typing: true })
@@ -411,20 +411,20 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
         expect.objectContaining({ typing: false })
       );
       expect(createTextMessage).toHaveBeenCalled();
-      expect(textarea.value).toBe('');
+      expect(textarea.value).toBe("");
     });
 
-    test('should handle message send failure gracefully', async () => {
+    test("should handle message send failure gracefully", async () => {
       // Mock message send to fail
-      createTextMessage.mockRejectedValueOnce(new Error('Network error'));
-      
+      createTextMessage.mockRejectedValueOnce(new Error("Network error"));
+
       // Mock alert to avoid actual alert popup in test
-      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => {});
 
       render(
         <ChatStateProvider>
-          <ChatInput 
-            getDisplayName={() => 'Test User'}
+          <ChatInput
+            getDisplayName={() => "Test User"}
             soundEnabled={false}
             forceScrollBottom={jest.fn()}
           />
@@ -432,9 +432,9 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       );
 
       const textarea = screen.getByLabelText(/message text/i);
-      const sendButton = screen.getByRole('button', { name: /send message/i });
+      const sendButton = screen.getByRole("button", { name: /send message/i });
 
-      fireEvent.change(textarea, { target: { value: 'Test message' } });
+      fireEvent.change(textarea, { target: { value: "Test message" } });
 
       await act(async () => {
         fireEvent.click(sendButton);
@@ -443,7 +443,7 @@ describe('ChatInput & TypingPresence - Bug Fix Tests', () => {
       // Note: We now use toast notifications instead of alerts
       // The error should be handled gracefully without crashing
       expect(createTextMessage).toHaveBeenCalled();
-      
+
       // Should still clear typing indicator even on failure
       // Note: handleInputActivity(0) is called before sendMessage, so we check for typing: false call
       expect(setTyping).toHaveBeenCalledWith(

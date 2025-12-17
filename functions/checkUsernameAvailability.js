@@ -40,16 +40,35 @@ exports.checkUsernameAvailability = onCall(
       if (!usernameRegex.test(username)) {
         return {
           available: false,
-          error: "Username must be 3-20 characters long and contain only " +
-            "letters, numbers, and underscores",
+          error:
+          "Username must be 3-20 characters long and contain only " +
+          "letters, numbers, and underscores",
         };
       }
 
       // Reserved usernames
       const reservedUsernames = [
-        "admin", "administrator", "root", "system", "support", "help",
-        "api", "www", "mail", "email", "test", "guest", "user", "mod",
-        "moderator", "staff", "team", "official", "bot", "null", "undefined",
+        "admin",
+        "administrator",
+        "root",
+        "system",
+        "support",
+        "help",
+        "api",
+        "www",
+        "mail",
+        "email",
+        "test",
+        "guest",
+        "user",
+        "mod",
+        "moderator",
+        "staff",
+        "team",
+        "official",
+        "bot",
+        "null",
+        "undefined",
       ];
 
       if (reservedUsernames.includes(username.toLowerCase())) {
@@ -99,10 +118,7 @@ exports.checkUsernameAvailability = onCall(
         };
       } catch (error) {
         console.error("Error checking username availability:", error);
-        throw new HttpsError(
-            "internal",
-            "Failed to check username availability",
-        );
+        throw new HttpsError("internal", "Failed to check username availability");
       }
     },
 );

@@ -133,14 +133,22 @@
   width: 16px;
   height: 16px;
   cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 50%, rgba(102, 126, 234, 0.5) 50%);
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    rgba(102, 126, 234, 0.5) 50%
+  );
   border-radius: 0 0 inherit inherit;
 }
 
 .resize-handle:hover,
 .panel-resize-handle:hover,
 .chat-panel-resize-handle:hover {
-  background: linear-gradient(135deg, transparent 50%, rgba(102, 126, 234, 0.8) 50%);
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    rgba(102, 126, 234, 0.8) 50%
+  );
 }
 
 /* Floating Panels */
@@ -207,12 +215,12 @@
   .panel-header {
     padding: 3px 4px;
   }
-  
+
   .panel-title {
     font-size: 0.85rem;
     gap: 4px;
   }
-  
+
   .panel-btn,
   .panel-control-btn,
   .chat-control-btn {
@@ -221,7 +229,7 @@
     min-width: 20px;
     min-height: 20px;
   }
-  
+
   .panel-controls {
     gap: 3px;
   }

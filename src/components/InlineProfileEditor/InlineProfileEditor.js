@@ -1,35 +1,35 @@
-import React, { useState, useRef } from 'react';
-import { useCachedUserProfile } from '../../services/cache';
-import './InlineProfileEditor.css';
+import React, { useState, useRef } from "react";
+import { useCachedUserProfile } from "../../services/cache";
+import "./InlineProfileEditor.css";
 
 /**
  * InlineProfileEditor - Profile editing with individual field editing
  * Each field has a pencil icon that enables inline editing with save/cancel
  */
 export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
-  const { 
-    profile, 
-    updateProfile, 
+  const {
+    profile,
+    updateProfile,
     checkUsernameAvailability,
     uploadPicture: uploadProfilePictureFile,
-    loading 
+    loading,
   } = useCachedUserProfile();
-  
+
   const [editingField, setEditingField] = useState(null);
   const [fieldValues, setFieldValues] = useState({
-    username: profile?.username || '',
-    displayName: profile?.displayName || '',
-    bio: profile?.bio || '',
-    profilePictureURL: profile?.profilePictureURL || '',
-    profileVisibility: profile?.profileVisibility || 'public',
+    username: profile?.username || "",
+    displayName: profile?.displayName || "",
+    bio: profile?.bio || "",
+    profilePictureURL: profile?.profilePictureURL || "",
+    profileVisibility: profile?.profileVisibility || "public",
     showEmail: profile?.showEmail ?? false,
-    showLastActive: profile?.showLastActive ?? true
+    showLastActive: profile?.showLastActive ?? true,
   });
-  
+
   const [validationState, setValidationState] = useState({
-    username: { valid: true, message: '', checking: false }
+    username: { valid: true, message: "", checking: false },
   });
-  
+
   const [saving, setSaving] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const fileInputRef = useRef(null);
@@ -38,10 +38,10 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
   const startEditing = (field) => {
     setEditingField(field);
     // Reset validation when starting to edit
-    if (field === 'username') {
-      setValidationState(prev => ({
+    if (field === "username") {
+      setValidationState((prev) => ({
         ...prev,
-        username: { valid: true, message: '', checking: false }
+        username: { valid: true, message: "", checking: false },
       }));
     }
   };
@@ -50,9 +50,9 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
     setEditingField(null);
     // Reset field value to original
     if (editingField && profile) {
-      setFieldValues(prev => ({
+      setFieldValues((prev) => ({
         ...prev,
-        [editingField]: profile[editingField] || ''
+        [editingField]: profile[editingField] || "",
       }));
     }
   };
@@ -61,34 +61,50 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
     if (!editingField) return;
 
     // Validate username if editing username
-    if (editingField === 'username') {
+    if (editingField === "username") {
       if (!fieldValues.username.trim()) {
-        setValidationState(prev => ({
+        setValidationState((prev) => ({
           ...prev,
-          username: { valid: false, message: 'Username is required', checking: false }
+          username: {
+            valid: false,
+            message: "Username is required",
+            checking: false,
+          },
         }));
         return;
       }
 
       if (fieldValues.username !== profile?.username) {
-        setValidationState(prev => ({
+        setValidationState((prev) => ({
           ...prev,
-          username: { valid: false, message: 'Checking availability...', checking: true }
+          username: {
+            valid: false,
+            message: "Checking availability...",
+            checking: true,
+          },
         }));
 
         try {
           const result = await checkUsernameAvailability(fieldValues.username);
           if (!result.available) {
-            setValidationState(prev => ({
+            setValidationState((prev) => ({
               ...prev,
-              username: { valid: false, message: result.error, checking: false }
+              username: {
+                valid: false,
+                message: result.error,
+                checking: false,
+              },
             }));
             return;
           }
         } catch (err) {
-          setValidationState(prev => ({
+          setValidationState((prev) => ({
             ...prev,
-            username: { valid: false, message: 'Error checking username', checking: false }
+            username: {
+              valid: false,
+              message: "Error checking username",
+              checking: false,
+            },
           }));
           return;
         }
@@ -101,46 +117,45 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
       setEditingField(null);
       onSave?.();
     } catch (err) {
-      console.error('Error saving field:', err);
-      alert('Error saving: ' + err.message);
+      console.error("Error saving field:", err);
+      alert("Error saving: " + err.message);
     } finally {
       setSaving(false);
     }
   };
 
   const handleFieldChange = (value) => {
-    setFieldValues(prev => ({ ...prev, [editingField]: value }));
+    setFieldValues((prev) => ({ ...prev, [editingField]: value }));
   };
 
   // Handle profile picture file selection
   const handleFileSelect = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     try {
       setSaving(true);
-      
+
       // Create preview URL immediately for better UX
       const previewUrl = URL.createObjectURL(file);
       setPreviewUrl(previewUrl);
-      
+
       // Upload to Firebase Storage and update profile
       const downloadURL = await uploadProfilePictureFile(file);
-      
+
       // Update local state with the actual URL
-      setFieldValues(prev => ({ ...prev, profilePictureURL: downloadURL }));
-      
+      setFieldValues((prev) => ({ ...prev, profilePictureURL: downloadURL }));
+
       // Clean up preview URL
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
-      
+
       // Show success message
-      console.log('Profile picture uploaded successfully');
-      
+      console.log("Profile picture uploaded successfully");
     } catch (error) {
-      console.error('Error uploading profile picture:', error);
-      alert('Error uploading profile picture: ' + error.message);
-      
+      console.error("Error uploading profile picture:", error);
+      alert("Error uploading profile picture: " + error.message);
+
       // Clean up preview URL on error
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
@@ -164,15 +179,18 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
     );
   }
 
-  const currentAvatar = previewUrl || fieldValues.profilePictureURL || 'https://via.placeholder.com/150x150?text=👤';
+  const currentAvatar =
+    previewUrl ||
+    fieldValues.profilePictureURL ||
+    "https://via.placeholder.com/150x150?text=👤";
 
   return (
-    <div className={`inline-profile-editor ${compact ? 'compact' : ''}`}>
+    <div className={`inline-profile-editor ${compact ? "compact" : ""}`}>
       <div className="inline-profile-editor-header">
         <h2>Edit Profile</h2>
         {compact && (
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="close-button"
             onClick={onCancel}
             aria-label="Close profile editor"
@@ -186,8 +204,8 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
         {/* Profile Picture Section */}
         <div className="profile-picture-section">
           <div className="avatar-container">
-            <img 
-              src={currentAvatar} 
+            <img
+              src={currentAvatar}
               alt="Profile"
               className="profile-avatar"
               onClick={handleAvatarClick}
@@ -201,7 +219,7 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
             type="file"
             accept="image/*"
             onChange={handleFileSelect}
-            style={{ display: 'none' }}
+            style={{ display: "none" }}
           />
           <p className="avatar-hint">Click to change profile picture</p>
         </div>
@@ -209,31 +227,35 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
         {/* Inline Editable Fields */}
         <div className="form-section">
           <h3>Basic Information</h3>
-          
+
           {/* Username Field */}
           <div className="inline-field-group">
             <label>Username *</label>
-            {editingField === 'username' ? (
+            {editingField === "username" ? (
               <div className="editing-field">
                 <input
                   type="text"
                   value={fieldValues.username}
                   onChange={(e) => handleFieldChange(e.target.value)}
                   placeholder="Enter a unique username"
-                  className={`form-input ${!validationState.username.valid ? 'invalid' : ''}`}
+                  className={`form-input ${!validationState.username.valid ? "invalid" : ""}`}
                   disabled={saving}
                   autoFocus
                 />
                 <div className="field-actions">
-                  <button 
+                  <button
                     className="save-btn"
                     onClick={saveField}
-                    disabled={saving || !validationState.username.valid || validationState.username.checking}
+                    disabled={
+                      saving ||
+                      !validationState.username.valid ||
+                      validationState.username.checking
+                    }
                     title="Save"
                   >
-                    {saving ? '⏳' : '✓'}
+                    {saving ? "⏳" : "✓"}
                   </button>
-                  <button 
+                  <button
                     className="cancel-btn"
                     onClick={cancelEditing}
                     disabled={saving}
@@ -243,8 +265,12 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
                   </button>
                 </div>
                 {validationState.username.message && (
-                  <div className={`validation-message ${validationState.username.valid ? 'valid' : 'invalid'}`}>
-                    {validationState.username.checking && <span className="spinner-small"></span>}
+                  <div
+                    className={`validation-message ${validationState.username.valid ? "valid" : "invalid"}`}
+                  >
+                    {validationState.username.checking && (
+                      <span className="spinner-small"></span>
+                    )}
                     {validationState.username.message}
                   </div>
                 )}
@@ -252,11 +278,11 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
             ) : (
               <div className="display-field">
                 <span className="field-value">
-                  {fieldValues.username || 'Not set'}
+                  {fieldValues.username || "Not set"}
                 </span>
-                <button 
+                <button
                   className="edit-btn"
-                  onClick={() => startEditing('username')}
+                  onClick={() => startEditing("username")}
                   title="Edit username"
                 >
                   ✏️
@@ -268,7 +294,7 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
           {/* Display Name Field */}
           <div className="inline-field-group">
             <label>Display Name</label>
-            {editingField === 'displayName' ? (
+            {editingField === "displayName" ? (
               <div className="editing-field">
                 <input
                   type="text"
@@ -280,15 +306,15 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
                   autoFocus
                 />
                 <div className="field-actions">
-                  <button 
+                  <button
                     className="save-btn"
                     onClick={saveField}
                     disabled={saving}
                     title="Save"
                   >
-                    {saving ? '⏳' : '✓'}
+                    {saving ? "⏳" : "✓"}
                   </button>
-                  <button 
+                  <button
                     className="cancel-btn"
                     onClick={cancelEditing}
                     disabled={saving}
@@ -301,11 +327,11 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
             ) : (
               <div className="display-field">
                 <span className="field-value">
-                  {fieldValues.displayName || 'Not set'}
+                  {fieldValues.displayName || "Not set"}
                 </span>
-                <button 
+                <button
                   className="edit-btn"
-                  onClick={() => startEditing('displayName')}
+                  onClick={() => startEditing("displayName")}
                   title="Edit display name"
                 >
                   ✏️
@@ -317,7 +343,7 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
           {/* Bio Field */}
           <div className="inline-field-group">
             <label>Bio</label>
-            {editingField === 'bio' ? (
+            {editingField === "bio" ? (
               <div className="editing-field">
                 <textarea
                   value={fieldValues.bio}
@@ -331,15 +357,15 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
                 />
                 <div className="char-count">{fieldValues.bio.length}/500</div>
                 <div className="field-actions">
-                  <button 
+                  <button
                     className="save-btn"
                     onClick={saveField}
                     disabled={saving}
                     title="Save"
                   >
-                    {saving ? '⏳' : '✓'}
+                    {saving ? "⏳" : "✓"}
                   </button>
-                  <button 
+                  <button
                     className="cancel-btn"
                     onClick={cancelEditing}
                     disabled={saving}
@@ -352,11 +378,11 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
             ) : (
               <div className="display-field">
                 <span className="field-value">
-                  {fieldValues.bio || 'Not set'}
+                  {fieldValues.bio || "Not set"}
                 </span>
-                <button 
+                <button
                   className="edit-btn"
-                  onClick={() => startEditing('bio')}
+                  onClick={() => startEditing("bio")}
                   title="Edit bio"
                 >
                   ✏️
@@ -370,10 +396,10 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
         {!compact && (
           <div className="form-section">
             <h3>Privacy Settings</h3>
-            
+
             <div className="inline-field-group">
               <label>Profile Visibility</label>
-              {editingField === 'profileVisibility' ? (
+              {editingField === "profileVisibility" ? (
                 <div className="editing-field">
                   <select
                     value={fieldValues.profileVisibility}
@@ -382,20 +408,26 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
                     disabled={saving}
                     autoFocus
                   >
-                    <option value="public">Public - Anyone can see your profile</option>
-                    <option value="friends">Friends Only - Only friends can see your profile</option>
-                    <option value="private">Private - Only you can see your profile</option>
+                    <option value="public">
+                      Public - Anyone can see your profile
+                    </option>
+                    <option value="friends">
+                      Friends Only - Only friends can see your profile
+                    </option>
+                    <option value="private">
+                      Private - Only you can see your profile
+                    </option>
                   </select>
                   <div className="field-actions">
-                    <button 
+                    <button
                       className="save-btn"
                       onClick={saveField}
                       disabled={saving}
                       title="Save"
                     >
-                      {saving ? '⏳' : '✓'}
+                      {saving ? "⏳" : "✓"}
                     </button>
-                    <button 
+                    <button
                       className="cancel-btn"
                       onClick={cancelEditing}
                       disabled={saving}
@@ -408,13 +440,14 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
               ) : (
                 <div className="display-field">
                   <span className="field-value">
-                    {fieldValues.profileVisibility === 'public' && 'Public'}
-                    {fieldValues.profileVisibility === 'friends' && 'Friends Only'}
-                    {fieldValues.profileVisibility === 'private' && 'Private'}
+                    {fieldValues.profileVisibility === "public" && "Public"}
+                    {fieldValues.profileVisibility === "friends" &&
+                      "Friends Only"}
+                    {fieldValues.profileVisibility === "private" && "Private"}
                   </span>
-                  <button 
+                  <button
                     className="edit-btn"
-                    onClick={() => startEditing('profileVisibility')}
+                    onClick={() => startEditing("profileVisibility")}
                     title="Edit visibility"
                   >
                     ✏️
@@ -425,7 +458,7 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
 
             <div className="inline-field-group">
               <label>Show Email on Profile</label>
-              {editingField === 'showEmail' ? (
+              {editingField === "showEmail" ? (
                 <div className="editing-field">
                   <label className="checkbox-label">
                     <input
@@ -434,18 +467,20 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
                       onChange={(e) => handleFieldChange(e.target.checked)}
                       disabled={saving}
                     />
-                    <span className="checkbox-text">Email is visible on your profile</span>
+                    <span className="checkbox-text">
+                      Email is visible on your profile
+                    </span>
                   </label>
                   <div className="field-actions">
-                    <button 
+                    <button
                       className="save-btn"
                       onClick={saveField}
                       disabled={saving}
                       title="Save"
                     >
-                      {saving ? '⏳' : '✓'}
+                      {saving ? "⏳" : "✓"}
                     </button>
-                    <button 
+                    <button
                       className="cancel-btn"
                       onClick={cancelEditing}
                       disabled={saving}
@@ -458,11 +493,11 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
               ) : (
                 <div className="display-field">
                   <span className="field-value">
-                    {fieldValues.showEmail ? 'Visible' : 'Hidden'}
+                    {fieldValues.showEmail ? "Visible" : "Hidden"}
                   </span>
-                  <button 
+                  <button
                     className="edit-btn"
-                    onClick={() => startEditing('showEmail')}
+                    onClick={() => startEditing("showEmail")}
                     title="Edit email visibility"
                   >
                     ✏️
@@ -473,7 +508,7 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
 
             <div className="inline-field-group">
               <label>Show Last Active</label>
-              {editingField === 'showLastActive' ? (
+              {editingField === "showLastActive" ? (
                 <div className="editing-field">
                   <label className="checkbox-label">
                     <input
@@ -482,18 +517,20 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
                       onChange={(e) => handleFieldChange(e.target.checked)}
                       disabled={saving}
                     />
-                    <span className="checkbox-text">Show when you were last active</span>
+                    <span className="checkbox-text">
+                      Show when you were last active
+                    </span>
                   </label>
                   <div className="field-actions">
-                    <button 
+                    <button
                       className="save-btn"
                       onClick={saveField}
                       disabled={saving}
                       title="Save"
                     >
-                      {saving ? '⏳' : '✓'}
+                      {saving ? "⏳" : "✓"}
                     </button>
-                    <button 
+                    <button
                       className="cancel-btn"
                       onClick={cancelEditing}
                       disabled={saving}
@@ -506,11 +543,11 @@ export function InlineProfileEditor({ onSave, onCancel, compact = false }) {
               ) : (
                 <div className="display-field">
                   <span className="field-value">
-                    {fieldValues.showLastActive ? 'Visible' : 'Hidden'}
+                    {fieldValues.showLastActive ? "Visible" : "Hidden"}
                   </span>
-                  <button 
+                  <button
                     className="edit-btn"
-                    onClick={() => startEditing('showLastActive')}
+                    onClick={() => startEditing("showLastActive")}
                     title="Edit last active visibility"
                   >
                     ✏️

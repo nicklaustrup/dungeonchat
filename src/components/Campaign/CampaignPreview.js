@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useFirebase } from '../../services/FirebaseContext';
-import { doc, getDoc } from 'firebase/firestore';
-import { joinCampaign } from '../../services/campaign/campaignService';
-import UserProfileModal from '../UserProfileModal/UserProfileModal';
-import './CampaignPreview.css';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useFirebase } from "../../services/FirebaseContext";
+import { doc, getDoc } from "firebase/firestore";
+import { joinCampaign } from "../../services/campaign/campaignService";
+import UserProfileModal from "../UserProfileModal/UserProfileModal";
+import "./CampaignPreview.css";
 
 function CampaignPreview() {
   const { campaignId } = useParams();
@@ -16,23 +16,23 @@ function CampaignPreview() {
   const [error, setError] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joining, setJoining] = useState(false);
-  const [requestMessage, setRequestMessage] = useState('');
+  const [requestMessage, setRequestMessage] = useState("");
   const [selectedUserId, setSelectedUserId] = useState(null);
 
   const loadCampaign = async () => {
     try {
       setLoading(true);
-      const campaignRef = doc(firestore, 'campaigns', campaignId);
+      const campaignRef = doc(firestore, "campaigns", campaignId);
       const campaignSnap = await getDoc(campaignRef);
 
       if (campaignSnap.exists()) {
         setCampaign({ id: campaignSnap.id, ...campaignSnap.data() });
       } else {
-        setError('Campaign not found');
+        setError("Campaign not found");
       }
     } catch (err) {
-      console.error('Error loading campaign:', err);
-      setError('Failed to load campaign');
+      console.error("Error loading campaign:", err);
+      setError("Failed to load campaign");
     } finally {
       setLoading(false);
     }
@@ -45,8 +45,10 @@ function CampaignPreview() {
 
   const isUserMember = () => {
     if (!campaign || !user) return false;
-    return campaign.dmId === user.uid || 
-           (campaign.members && campaign.members.includes(user.uid));
+    return (
+      campaign.dmId === user.uid ||
+      (campaign.members && campaign.members.includes(user.uid))
+    );
   };
 
   const handleJoinClick = () => {
@@ -62,19 +64,19 @@ function CampaignPreview() {
       setJoining(true);
       setError(null);
       await joinCampaign(firestore, campaignId, user.uid, {
-        requestMessage: requestMessage.trim()
+        requestMessage: requestMessage.trim(),
       });
       navigate(`/campaign/${campaignId}`);
     } catch (err) {
-      console.error('Error joining campaign:', err);
-      setError('Failed to join campaign');
+      console.error("Error joining campaign:", err);
+      setError("Failed to join campaign");
     } finally {
       setJoining(false);
     }
   };
 
   const formatTag = (tag) => {
-    return tag.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return tag.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   if (loading) {
@@ -94,7 +96,10 @@ function CampaignPreview() {
         <div className="preview-error-container">
           <h2>Error</h2>
           <p>{error}</p>
-          <button onClick={() => navigate('/campaigns')} className="btn btn-primary">
+          <button
+            onClick={() => navigate("/campaigns")}
+            className="btn btn-primary"
+          >
             Back to Campaigns
           </button>
         </div>
@@ -114,7 +119,7 @@ function CampaignPreview() {
       <div className="preview-container">
         {/* Header with photo */}
         {campaign.campaignPhoto && (
-          <div 
+          <div
             className="preview-header-photo"
             style={{ backgroundImage: `url(${campaign.campaignPhoto})` }}
           />
@@ -122,8 +127,8 @@ function CampaignPreview() {
 
         <div className="preview-content">
           {/* Back button */}
-          <button 
-            onClick={() => navigate('/campaigns')} 
+          <button
+            onClick={() => navigate("/campaigns")}
             className="btn btn-secondary preview-back-btn"
           >
             ← Back to Campaigns
@@ -132,11 +137,16 @@ function CampaignPreview() {
           {/* Campaign info */}
           <div className="preview-info">
             <h1>{campaign.name}</h1>
-            
+
             <div className="preview-badges">
-              <span className="preview-badge preview-badge-system">{campaign.gameSystem}</span>
-              <span className={`preview-badge preview-badge-status preview-status-${campaign.status}`}>
-                {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+              <span className="preview-badge preview-badge-system">
+                {campaign.gameSystem}
+              </span>
+              <span
+                className={`preview-badge preview-badge-status preview-status-${campaign.status}`}
+              >
+                {campaign.status.charAt(0).toUpperCase() +
+                  campaign.status.slice(1)}
               </span>
             </div>
 
@@ -145,7 +155,7 @@ function CampaignPreview() {
             {/* Tags */}
             {campaign.tags && campaign.tags.length > 0 && (
               <div className="preview-tags">
-                {campaign.tags.map(tag => (
+                {campaign.tags.map((tag) => (
                   <span key={tag} className="preview-tag">
                     {formatTag(tag)}
                   </span>
@@ -162,12 +172,14 @@ function CampaignPreview() {
                     className="clickable-username"
                     onClick={() => setSelectedUserId(campaign.dmId)}
                   >
-                    {campaign.dmName || 'Unknown'}
+                    {campaign.dmName || "Unknown"}
                   </span>
                 </div>
                 <div className="preview-detail-item">
                   <strong>Players:</strong>
-                  <span>{campaign.currentPlayers}/{campaign.maxPlayers}</span>
+                  <span>
+                    {campaign.currentPlayers}/{campaign.maxPlayers}
+                  </span>
                 </div>
               </div>
 
@@ -189,7 +201,9 @@ function CampaignPreview() {
                   {campaign.sessionTime && (
                     <div className="preview-detail-item">
                       <strong>Session Time:</strong>
-                      <span>{campaign.sessionTime} {campaign.timeZone || ''}</span>
+                      <span>
+                        {campaign.sessionTime} {campaign.timeZone || ""}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -198,11 +212,13 @@ function CampaignPreview() {
               <div className="preview-detail-row">
                 <div className="preview-detail-item">
                   <strong>Visibility:</strong>
-                  <span>{campaign.visibility === 'public' ? 'Public' : 'Private'}</span>
+                  <span>
+                    {campaign.visibility === "public" ? "Public" : "Private"}
+                  </span>
                 </div>
                 <div className="preview-detail-item">
                   <strong>Accepting Requests:</strong>
-                  <span>{campaign.allowRequests ? 'Yes' : 'No'}</span>
+                  <span>{campaign.allowRequests ? "Yes" : "No"}</span>
                 </div>
               </div>
             </div>
@@ -210,19 +226,19 @@ function CampaignPreview() {
             {/* Action buttons */}
             <div className="preview-actions">
               {isMember ? (
-                <button 
+                <button
                   onClick={handleJoinClick}
                   className="btn btn-primary preview-btn-large"
                 >
                   Open Campaign Dashboard
                 </button>
               ) : (
-                <button 
+                <button
                   onClick={handleJoinClick}
                   className="btn btn-primary preview-btn-large"
                   disabled={isFull}
                 >
-                  {isFull ? 'Campaign Full' : 'Join Campaign'}
+                  {isFull ? "Campaign Full" : "Join Campaign"}
                 </button>
               )}
             </div>
@@ -234,11 +250,17 @@ function CampaignPreview() {
 
       {/* Join Modal */}
       {showJoinModal && (
-        <div className="preview-modal-overlay" onClick={() => setShowJoinModal(false)}>
-          <div className="preview-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="preview-modal-overlay"
+          onClick={() => setShowJoinModal(false)}
+        >
+          <div
+            className="preview-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="preview-modal-header">
               <h2>Join {campaign.name}</h2>
-              <button 
+              <button
                 className="preview-modal-close"
                 onClick={() => setShowJoinModal(false)}
               >
@@ -247,7 +269,10 @@ function CampaignPreview() {
             </div>
 
             <div className="preview-modal-body">
-              <p>Send a request to join this campaign. Your username will be included automatically.</p>
+              <p>
+                Send a request to join this campaign. Your username will be
+                included automatically.
+              </p>
 
               <div className="preview-form-group">
                 <label htmlFor="requestMessage">Message (optional)</label>
@@ -262,19 +287,19 @@ function CampaignPreview() {
             </div>
 
             <div className="preview-modal-actions">
-              <button 
+              <button
                 onClick={() => setShowJoinModal(false)}
                 className="btn btn-secondary"
                 disabled={joining}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleJoinSubmit}
                 className="btn btn-primary"
                 disabled={joining}
               >
-                {joining ? 'Sending Request...' : 'Send Join Request'}
+                {joining ? "Sending Request..." : "Send Join Request"}
               </button>
             </div>
           </div>

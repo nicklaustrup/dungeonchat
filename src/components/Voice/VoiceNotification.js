@@ -3,9 +3,9 @@
  * Toast notifications for voice chat events
  */
 
-import React, { useEffect, useState } from 'react';
-import { FaUserPlus, FaUserMinus, FaExclamationTriangle } from 'react-icons/fa';
-import './VoiceNotification.css';
+import React, { useEffect, useState } from "react";
+import { FaUserPlus, FaUserMinus, FaExclamationTriangle } from "react-icons/fa";
+import "./VoiceNotification.css";
 
 function VoiceNotification({ notification, onDismiss }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -14,7 +14,7 @@ function VoiceNotification({ notification, onDismiss }) {
   useEffect(() => {
     // Trigger entrance animation
     const showTimer = setTimeout(() => setIsVisible(true), 10);
-    
+
     // Auto-dismiss after 3 seconds
     const hideTimer = setTimeout(() => {
       setIsExiting(true);
@@ -31,21 +31,23 @@ function VoiceNotification({ notification, onDismiss }) {
 
   const getIcon = () => {
     switch (notification.type) {
-      case 'user-joined':
+      case "user-joined":
         return <FaUserPlus className="notification-icon icon-join" />;
-      case 'user-left':
+      case "user-left":
         return <FaUserMinus className="notification-icon icon-leave" />;
-      case 'error':
-        return <FaExclamationTriangle className="notification-icon icon-error" />;
+      case "error":
+        return (
+          <FaExclamationTriangle className="notification-icon icon-error" />
+        );
       default:
         return null;
     }
   };
 
   const getClassName = () => {
-    let className = 'voice-notification';
-    if (isVisible && !isExiting) className += ' visible';
-    if (isExiting) className += ' exiting';
+    let className = "voice-notification";
+    if (isVisible && !isExiting) className += " visible";
+    if (isExiting) className += " exiting";
     className += ` notification-${notification.type}`;
     return className;
   };

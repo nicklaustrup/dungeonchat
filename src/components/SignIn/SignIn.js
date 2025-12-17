@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import './SignIn.css';
-import useAuth from '../../hooks/useAuth';
+import React, { useState } from "react";
+import "./SignIn.css";
+import useAuth from "../../hooks/useAuth";
 
 function SignIn() {
-  const [mode, setMode] = useState('signin'); // 'signin', 'signup', 'reset'
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [mode, setMode] = useState("signin"); // 'signin', 'signup', 'reset'
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showSetupNotice, setShowSetupNotice] = useState(false);
@@ -19,11 +19,11 @@ function SignIn() {
     signInWithGithub,
     signUpWithEmail,
     signInWithEmail,
-    resetPassword
+    resetPassword,
   } = useAuth();
 
   // Check if error is related to setup issues
-  const isSetupError = error && error.includes('not enabled');
+  const isSetupError = error && error.includes("not enabled");
 
   const handleModeChange = (newMode) => {
     setMode(newMode);
@@ -50,17 +50,17 @@ function SignIn() {
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
-    
-    if (mode === 'signup' && password !== confirmPassword) {
+
+    if (mode === "signup" && password !== confirmPassword) {
       return; // Password mismatch error will be shown in UI
     }
 
     try {
-      if (mode === 'signin') {
+      if (mode === "signin") {
         await signInWithEmail(email, password);
-      } else if (mode === 'signup') {
+      } else if (mode === "signup") {
         await signUpWithEmail(email, password);
-      } else if (mode === 'reset') {
+      } else if (mode === "reset") {
         await resetPassword(email);
         setResetEmailSent(true);
       }
@@ -70,7 +70,8 @@ function SignIn() {
   };
 
   const passwordsMatch = password === confirmPassword;
-  const isFormValid = email && password && (mode !== 'signup' || passwordsMatch);
+  const isFormValid =
+    email && password && (mode !== "signup" || passwordsMatch);
 
   return (
     <div className="sign-in-container">
@@ -78,21 +79,21 @@ function SignIn() {
         <div className="sign-in-header">
           <h1>Welcome to Superchat</h1>
           <p>
-            {mode === 'signin' && 'Sign in to your account'}
-            {mode === 'signup' && 'Create a new account'}
-            {mode === 'reset' && 'Reset your password'}
+            {mode === "signin" && "Sign in to your account"}
+            {mode === "signup" && "Create a new account"}
+            {mode === "reset" && "Reset your password"}
           </p>
         </div>
 
         <div className="sign-in-content">
-          {mode === 'reset' && resetEmailSent ? (
+          {mode === "reset" && resetEmailSent ? (
             <div className="auth-success">
               <div className="success-icon">✅</div>
               <h3>Reset email sent!</h3>
               <p>Check your inbox for password reset instructions.</p>
-              <button 
+              <button
                 className="auth-link-button"
-                onClick={() => handleModeChange('signin')}
+                onClick={() => handleModeChange("signin")}
               >
                 Back to Sign In
               </button>
@@ -114,13 +115,13 @@ function SignIn() {
                   />
                 </div>
 
-                {mode !== 'reset' && (
+                {mode !== "reset" && (
                   <div className="auth-field">
                     <label htmlFor="password">Password</label>
                     <div className="password-input-container">
                       <input
                         id="password"
-                        type={showPassword ? 'text' : 'password'}
+                        type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter your password"
@@ -134,18 +135,18 @@ function SignIn() {
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label="Toggle password visibility"
                       >
-                        {showPassword ? '👁️' : '🙈'}
+                        {showPassword ? "👁️" : "🙈"}
                       </button>
                     </div>
                   </div>
                 )}
 
-                {mode === 'signup' && (
+                {mode === "signup" && (
                   <div className="auth-field">
                     <label htmlFor="confirmPassword">Confirm Password</label>
                     <input
                       id="confirmPassword"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Confirm your password"
@@ -160,15 +161,17 @@ function SignIn() {
                 )}
 
                 {error && (
-                  <div className={`auth-error ${isSetupError ? 'setup-error' : ''}`}>
+                  <div
+                    className={`auth-error ${isSetupError ? "setup-error" : ""}`}
+                  >
                     {error}
                     {isSetupError && (
-                      <button 
+                      <button
                         type="button"
                         className="setup-help-btn"
                         onClick={() => setShowSetupNotice(!showSetupNotice)}
                       >
-                        {showSetupNotice ? 'Hide Help' : 'Setup Help'}
+                        {showSetupNotice ? "Hide Help" : "Setup Help"}
                       </button>
                     )}
                   </div>
@@ -179,61 +182,85 @@ function SignIn() {
                     <h4>🔧 Firebase Setup Required</h4>
                     <p>To enable email/password authentication:</p>
                     <ol>
-                      <li>Go to <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer">Firebase Console</a></li>
+                      <li>
+                        Go to{" "}
+                        <a
+                          href="https://console.firebase.google.com/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Firebase Console
+                        </a>
+                      </li>
                       <li>Select your project</li>
-                      <li>Navigate to <strong>Authentication → Sign-in method</strong></li>
-                      <li>Enable <strong>Email/Password</strong></li>
-                      <li>Optionally enable <strong>GitHub</strong> for more sign-in options</li>
+                      <li>
+                        Navigate to{" "}
+                        <strong>Authentication → Sign-in method</strong>
+                      </li>
+                      <li>
+                        Enable <strong>Email/Password</strong>
+                      </li>
+                      <li>
+                        Optionally enable <strong>GitHub</strong> for more
+                        sign-in options
+                      </li>
                     </ol>
-                    <p><small>See docs/FIREBASE_AUTH_SETUP.md for detailed instructions.</small></p>
+                    <p>
+                      <small>
+                        See docs/FIREBASE_AUTH_SETUP.md for detailed
+                        instructions.
+                      </small>
+                    </p>
                   </div>
                 )}
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="auth-submit-button"
                   disabled={loading || !isFormValid}
                 >
-                  {loading ? 'Loading...' : (
-                    mode === 'signin' ? 'Sign In' :
-                    mode === 'signup' ? 'Create Account' :
-                    'Send Reset Email'
-                  )}
+                  {loading
+                    ? "Loading..."
+                    : mode === "signin"
+                      ? "Sign In"
+                      : mode === "signup"
+                        ? "Create Account"
+                        : "Send Reset Email"}
                 </button>
               </form>
 
               {/* Mode Switching Links */}
               <div className="auth-links">
-                {mode === 'signin' && (
+                {mode === "signin" && (
                   <>
-                    <button 
+                    <button
                       className="auth-link-button"
-                      onClick={() => handleModeChange('signup')}
+                      onClick={() => handleModeChange("signup")}
                     >
                       Don't have an account? Sign up
                     </button>
-                    <button 
+                    <button
                       className="auth-link-button"
-                      onClick={() => handleModeChange('reset')}
+                      onClick={() => handleModeChange("reset")}
                     >
                       Forgot password?
                     </button>
                   </>
                 )}
-                
-                {mode === 'signup' && (
-                  <button 
+
+                {mode === "signup" && (
+                  <button
                     className="auth-link-button"
-                    onClick={() => handleModeChange('signin')}
+                    onClick={() => handleModeChange("signin")}
                   >
                     Already have an account? Sign in
                   </button>
                 )}
-                
-                {mode === 'reset' && (
-                  <button 
+
+                {mode === "reset" && (
+                  <button
                     className="auth-link-button"
-                    onClick={() => handleModeChange('signin')}
+                    onClick={() => handleModeChange("signin")}
                   >
                     Back to Sign In
                   </button>
@@ -241,14 +268,14 @@ function SignIn() {
               </div>
 
               {/* OAuth Providers - Below forgot password link */}
-              {mode !== 'reset' && (
+              {mode !== "reset" && (
                 <div className="auth-oauth-section">
                   <div className="auth-divider">
                     <span>or continue with</span>
                   </div>
-                  
+
                   <div className="oauth-buttons">
-                    <button 
+                    <button
                       className="auth-oauth-button google"
                       onClick={handleGoogleSignIn}
                       disabled={loading}
@@ -256,8 +283,8 @@ function SignIn() {
                       <span className="oauth-icon">🔍</span>
                       Google
                     </button>
-                    
-                    <button 
+
+                    <button
                       className="auth-oauth-button github"
                       onClick={handleGithubSignIn}
                       disabled={loading}

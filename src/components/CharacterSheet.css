@@ -181,8 +181,12 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .remove-avatar-btn {
@@ -458,8 +462,13 @@
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .hp-input-wrapper {
@@ -761,11 +770,11 @@
     grid-template-columns: 1fr;
     gap: 24px;
   }
-  
+
   .ability-scores-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .combat-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -775,29 +784,29 @@
   .character-sheet-content {
     padding: 16px;
   }
-  
+
   .character-details {
     grid-template-columns: 1fr;
   }
-  
+
   .ability-scores-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
   }
-  
+
   .combat-stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .hit-points-display {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .hp-separator {
     display: none;
   }
-  
+
   .character-title h1 {
     font-size: 1.5rem;
   }

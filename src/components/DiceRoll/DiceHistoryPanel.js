@@ -3,56 +3,74 @@
  * Combines dice roll history and statistics with tabbed interface
  */
 
-import React, { useState } from 'react';
-import { useDiceHistory } from '../../hooks/useDiceHistory';
-import { DiceRollHistory } from './DiceRollDisplay';
-import DiceStatistics from './DiceStatistics';
-import './DiceHistoryPanel.css';
+import React, { useState } from "react";
+import { useDiceHistory } from "../../hooks/useDiceHistory";
+import { DiceRollHistory } from "./DiceRollDisplay";
+import DiceStatistics from "./DiceStatistics";
+import "./DiceHistoryPanel.css";
 
 function DiceHistoryPanel({ firestore, campaignId, userId = null }) {
-  const [activeTab, setActiveTab] = useState('history');
+  const [activeTab, setActiveTab] = useState("history");
   const [error, setError] = useState(null);
   const { history, statistics, loading, refresh } = useDiceHistory(
-    firestore, 
-    campaignId, 
+    firestore,
+    campaignId,
     { limitCount: 50, autoRefresh: true, userId }
   );
 
   // Format history data for DiceRollHistory component
-  const formattedRolls = history.map(roll => ({
+  const formattedRolls = history.map((roll) => ({
     rollData: roll.diceData,
     playerName: roll.displayName,
     timestamp: roll.timestamp,
     channelName: roll.channelName,
-    id: roll.id
+    id: roll.id,
   }));
 
   // Handle errors from the hook
   React.useEffect(() => {
     if (history.length === 0 && !loading) {
       // Try to refresh once more in case of initial load issues
-      refresh().catch(err => {
+      refresh().catch((err) => {
         setError(err.message);
       });
     }
   }, [history, loading, refresh]);
 
   if (error) {
-    const isIndexError = error.includes('index');
+    const isIndexError = error.includes("index");
     return (
       <div className="dice-history-panel error">
         <div className="error-state">
-          <h4>{isIndexError ? '⏳ Setting Up Dice History' : '❌ Error Loading Dice Data'}</h4>
+          <h4>
+            {isIndexError
+              ? "⏳ Setting Up Dice History"
+              : "❌ Error Loading Dice Data"}
+          </h4>
           <p>{error}</p>
           {isIndexError && (
             <div className="index-building-info">
-              <p><strong>What's happening?</strong></p>
-              <p>Firebase is building database indexes for dice roll queries. This usually takes 2-5 minutes.</p>
-              <p>You can continue using the app normally - dice history will be available once the indexes are ready.</p>
+              <p>
+                <strong>What's happening?</strong>
+              </p>
+              <p>
+                Firebase is building database indexes for dice roll queries.
+                This usually takes 2-5 minutes.
+              </p>
+              <p>
+                You can continue using the app normally - dice history will be
+                available once the indexes are ready.
+              </p>
             </div>
           )}
-          <button onClick={() => { setError(null); refresh(); }} className="retry-button">
-            {isIndexError ? 'Check Again' : 'Try Again'}
+          <button
+            onClick={() => {
+              setError(null);
+              refresh();
+            }}
+            className="retry-button"
+          >
+            {isIndexError ? "Check Again" : "Try Again"}
           </button>
         </div>
       </div>
@@ -64,39 +82,39 @@ function DiceHistoryPanel({ firestore, campaignId, userId = null }) {
       <div className="panel-header">
         <div className="panel-tabs">
           <button
-            className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
-            onClick={() => setActiveTab('history')}
+            className={`tab-button ${activeTab === "history" ? "active" : ""}`}
+            onClick={() => setActiveTab("history")}
           >
             🎲 Roll History
           </button>
           <button
-            className={`tab-button ${activeTab === 'statistics' ? 'active' : ''}`}
-            onClick={() => setActiveTab('statistics')}
+            className={`tab-button ${activeTab === "statistics" ? "active" : ""}`}
+            onClick={() => setActiveTab("statistics")}
           >
             📊 Statistics
           </button>
         </div>
-        
+
         <button onClick={refresh} className="refresh-button" disabled={loading}>
-          {loading ? '⟳' : '🔄'}
+          {loading ? "⟳" : "🔄"}
         </button>
       </div>
 
       <div className="panel-content">
-        {activeTab === 'history' && (
+        {activeTab === "history" && (
           <div className="history-tab">
-            <DiceRollHistory 
-              rolls={formattedRolls} 
+            <DiceRollHistory
+              rolls={formattedRolls}
               maxDisplayed={20}
               showChannelNames={!!campaignId}
             />
           </div>
         )}
-        
-        {activeTab === 'statistics' && (
+
+        {activeTab === "statistics" && (
           <div className="statistics-tab">
-            <DiceStatistics 
-              statistics={statistics} 
+            <DiceStatistics
+              statistics={statistics}
               loading={loading}
               campaignId={campaignId}
             />

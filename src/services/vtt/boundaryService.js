@@ -5,18 +5,18 @@
  * Players must travel through the map as intended, cannot teleport through walls
  */
 
-import { 
-  collection, 
-  addDoc, 
-  deleteDoc, 
-  doc, 
-  onSnapshot, 
-  query, 
-  Timestamp, 
-  getDocs, 
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  Timestamp,
+  getDocs,
   getDoc,
-  updateDoc 
-} from 'firebase/firestore';
+  updateDoc,
+} from "firebase/firestore";
 
 export const boundaryService = {
   /**
@@ -29,25 +29,40 @@ export const boundaryService = {
    * @param {string} createdBy - User ID of DM who created it
    * @param {boolean} snappedToGrid - Whether the boundary was snapped to grid
    */
-  async createBoundary(firestore, campaignId, mapId, start, end, createdBy, snappedToGrid = false) {
-    const boundariesRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'boundaries');
-    
+  async createBoundary(
+    firestore,
+    campaignId,
+    mapId,
+    start,
+    end,
+    createdBy,
+    snappedToGrid = false
+  ) {
+    const boundariesRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "boundaries"
+    );
+
     const boundaryData = {
-      type: 'line',
+      type: "line",
       start: {
         x: start.x,
-        y: start.y
+        y: start.y,
       },
       end: {
         x: end.x,
-        y: end.y
+        y: end.y,
       },
       createdBy: createdBy,
       createdAt: Timestamp.now(),
-      visibleTo: 'dm', // Only visible to DMs
-      snappedToGrid: snappedToGrid
+      visibleTo: "dm", // Only visible to DMs
+      snappedToGrid: snappedToGrid,
     };
-    
+
     const docRef = await addDoc(boundariesRef, boundaryData);
     return { id: docRef.id, ...boundaryData };
   },
@@ -61,16 +76,23 @@ export const boundaryService = {
    * @param {string} createdBy - User ID of DM who created it
    */
   async createPaintedBoundary(firestore, campaignId, mapId, cells, createdBy) {
-    const boundariesRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'boundaries');
-    
+    const boundariesRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "boundaries"
+    );
+
     const boundaryData = {
-      type: 'painted',
+      type: "painted",
       cells: cells,
       createdBy: createdBy,
       createdAt: Timestamp.now(),
-      visibleTo: 'dm'
+      visibleTo: "dm",
     };
-    
+
     const docRef = await addDoc(boundariesRef, boundaryData);
     return { id: docRef.id, ...boundaryData };
   },
@@ -84,24 +106,32 @@ export const boundaryService = {
    * @param {Array} newCells - Array of new grid cells to add {gridX, gridY}
    */
   async addPaintedCells(firestore, campaignId, mapId, boundaryId, newCells) {
-    const boundaryRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId, 'boundaries', boundaryId);
+    const boundaryRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "boundaries",
+      boundaryId
+    );
     const boundaryDoc = await getDoc(boundaryRef);
-    
-    if (!boundaryDoc.exists() || boundaryDoc.data().type !== 'painted') {
-      throw new Error('Invalid painted boundary');
+
+    if (!boundaryDoc.exists() || boundaryDoc.data().type !== "painted") {
+      throw new Error("Invalid painted boundary");
     }
-    
+
     const existingCells = boundaryDoc.data().cells || [];
-    
+
     // Merge new cells, avoiding duplicates
-    const cellSet = new Set(existingCells.map(c => `${c.gridX},${c.gridY}`));
-    newCells.forEach(cell => cellSet.add(`${cell.gridX},${cell.gridY}`));
-    
-    const updatedCells = Array.from(cellSet).map(cellStr => {
-      const [gridX, gridY] = cellStr.split(',').map(Number);
+    const cellSet = new Set(existingCells.map((c) => `${c.gridX},${c.gridY}`));
+    newCells.forEach((cell) => cellSet.add(`${cell.gridX},${cell.gridY}`));
+
+    const updatedCells = Array.from(cellSet).map((cellStr) => {
+      const [gridX, gridY] = cellStr.split(",").map(Number);
       return { gridX, gridY };
     });
-    
+
     await updateDoc(boundaryRef, { cells: updatedCells });
     return updatedCells;
   },
@@ -114,21 +144,37 @@ export const boundaryService = {
    * @param {string} boundaryId - Boundary document ID
    * @param {Array} cellsToRemove - Array of grid cells to remove {gridX, gridY}
    */
-  async removePaintedCells(firestore, campaignId, mapId, boundaryId, cellsToRemove) {
-    const boundaryRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId, 'boundaries', boundaryId);
-    const boundaryDoc = await getDoc(boundaryRef);
-    
-    if (!boundaryDoc.exists() || boundaryDoc.data().type !== 'painted') {
-      throw new Error('Invalid painted boundary');
-    }
-    
-    const existingCells = boundaryDoc.data().cells || [];
-    const removeSet = new Set(cellsToRemove.map(c => `${c.gridX},${c.gridY}`));
-    
-    const updatedCells = existingCells.filter(cell => 
-      !removeSet.has(`${cell.gridX},${cell.gridY}`)
+  async removePaintedCells(
+    firestore,
+    campaignId,
+    mapId,
+    boundaryId,
+    cellsToRemove
+  ) {
+    const boundaryRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "boundaries",
+      boundaryId
     );
-    
+    const boundaryDoc = await getDoc(boundaryRef);
+
+    if (!boundaryDoc.exists() || boundaryDoc.data().type !== "painted") {
+      throw new Error("Invalid painted boundary");
+    }
+
+    const existingCells = boundaryDoc.data().cells || [];
+    const removeSet = new Set(
+      cellsToRemove.map((c) => `${c.gridX},${c.gridY}`)
+    );
+
+    const updatedCells = existingCells.filter(
+      (cell) => !removeSet.has(`${cell.gridX},${cell.gridY}`)
+    );
+
     await updateDoc(boundaryRef, { cells: updatedCells });
     return updatedCells;
   },
@@ -137,7 +183,15 @@ export const boundaryService = {
    * Delete a boundary
    */
   async deleteBoundary(firestore, campaignId, mapId, boundaryId) {
-    const boundaryRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId, 'boundaries', boundaryId);
+    const boundaryRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "boundaries",
+      boundaryId
+    );
     await deleteDoc(boundaryRef);
   },
 
@@ -145,19 +199,26 @@ export const boundaryService = {
    * Subscribe to boundaries for a map
    */
   subscribeToBoundaries(firestore, campaignId, mapId, callback) {
-    const boundariesRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'boundaries');
+    const boundariesRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "boundaries"
+    );
     const boundariesQuery = query(boundariesRef);
 
     return onSnapshot(boundariesQuery, (snapshot) => {
       const boundaries = [];
-      
+
       snapshot.forEach((doc) => {
         boundaries.push({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         });
       });
-      
+
       callback(boundaries);
     });
   },
@@ -166,9 +227,16 @@ export const boundaryService = {
    * Clear all boundaries for a map
    */
   async clearAllBoundaries(firestore, campaignId, mapId) {
-    const boundariesRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'boundaries');
+    const boundariesRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "boundaries"
+    );
     const snapshot = await getDocs(boundariesRef);
-    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+    const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
     await Promise.all(deletePromises);
   },
 
@@ -180,17 +248,17 @@ export const boundaryService = {
    * @returns {Object} - Boundary state { enabled, visible }
    */
   async getBoundaryState(firestore, campaignId, mapId) {
-    const mapRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId);
+    const mapRef = doc(firestore, "campaigns", campaignId, "maps", mapId);
     const mapDoc = await getDoc(mapRef);
-    
+
     if (!mapDoc.exists()) {
       return { enabled: false, visible: true };
     }
-    
+
     const data = mapDoc.data();
     return {
       enabled: data.boundariesEnabled ?? false,
-      visible: data.boundariesVisible ?? true
+      visible: data.boundariesVisible ?? true,
     };
   },
 
@@ -202,16 +270,16 @@ export const boundaryService = {
    * @param {Object} state - State object { enabled?, visible? }
    */
   async updateBoundaryState(firestore, campaignId, mapId, state) {
-    const mapRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId);
+    const mapRef = doc(firestore, "campaigns", campaignId, "maps", mapId);
     const updates = {};
-    
+
     if (state.enabled !== undefined) {
       updates.boundariesEnabled = state.enabled;
     }
     if (state.visible !== undefined) {
       updates.boundariesVisible = state.visible;
     }
-    
+
     await updateDoc(mapRef, updates);
   },
 
@@ -223,18 +291,18 @@ export const boundaryService = {
    * @param {Function} callback - Callback function receiving state
    */
   subscribeToBoundaryState(firestore, campaignId, mapId, callback) {
-    const mapRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId);
-    
+    const mapRef = doc(firestore, "campaigns", campaignId, "maps", mapId);
+
     return onSnapshot(mapRef, (snapshot) => {
       if (!snapshot.exists()) {
         callback({ enabled: false, visible: true });
         return;
       }
-      
+
       const data = snapshot.data();
       callback({
         enabled: data.boundariesEnabled ?? false,
-        visible: data.boundariesVisible ?? true
+        visible: data.boundariesVisible ?? true,
       });
     });
   },
@@ -250,22 +318,38 @@ export const boundaryService = {
    * @param {Object} gridOffset - Grid offset {x, y} for painted boundary checks
    * @returns {boolean} - True if move crosses a boundary
    */
-  checkBoundaryCrossing(from, to, boundaries, gridSize = 50, gridOffset = { x: 0, y: 0 }) {
+  checkBoundaryCrossing(
+    from,
+    to,
+    boundaries,
+    gridSize = 50,
+    gridOffset = { x: 0, y: 0 }
+  ) {
     if (!boundaries || boundaries.length === 0) return false;
 
     // Check each boundary
     for (const boundary of boundaries) {
-      if (boundary.type === 'line') {
+      if (boundary.type === "line") {
         // Check line boundary intersection
-        if (this.linesIntersect(
-          from.x, from.y, to.x, to.y,
-          boundary.start.x, boundary.start.y, boundary.end.x, boundary.end.y
-        )) {
+        if (
+          this.linesIntersect(
+            from.x,
+            from.y,
+            to.x,
+            to.y,
+            boundary.start.x,
+            boundary.start.y,
+            boundary.end.x,
+            boundary.end.y
+          )
+        ) {
           return true; // Move crosses this line boundary
         }
-      } else if (boundary.type === 'painted') {
+      } else if (boundary.type === "painted") {
         // Check if destination point is in a painted boundary cell
-        if (this.checkPointInPaintedBoundary(to, boundary, gridSize, gridOffset)) {
+        if (
+          this.checkPointInPaintedBoundary(to, boundary, gridSize, gridOffset)
+        ) {
           return true; // Destination is in out of bounds area
         }
       }
@@ -282,8 +366,17 @@ export const boundaryService = {
    * @param {Object} gridOffset - Grid offset {x, y}
    * @returns {boolean} - True if point is in the painted boundary
    */
-  checkPointInPaintedBoundary(point, paintedBoundary, gridSize, gridOffset = { x: 0, y: 0 }) {
-    if (!paintedBoundary || !paintedBoundary.cells || paintedBoundary.type !== 'painted') {
+  checkPointInPaintedBoundary(
+    point,
+    paintedBoundary,
+    gridSize,
+    gridOffset = { x: 0, y: 0 }
+  ) {
+    if (
+      !paintedBoundary ||
+      !paintedBoundary.cells ||
+      paintedBoundary.type !== "painted"
+    ) {
       return false;
     }
 
@@ -292,8 +385,8 @@ export const boundaryService = {
     const gridY = Math.floor((point.y - gridOffset.y) / gridSize);
 
     // Check if this grid cell is in the painted boundary
-    return paintedBoundary.cells.some(cell => 
-      cell.gridX === gridX && cell.gridY === gridY
+    return paintedBoundary.cells.some(
+      (cell) => cell.gridX === gridX && cell.gridY === gridY
     );
   },
 
@@ -307,10 +400,10 @@ export const boundaryService = {
   checkCellInPaintedBoundaries(gridX, gridY, paintedBoundaries) {
     if (!paintedBoundaries || paintedBoundaries.length === 0) return false;
 
-    return paintedBoundaries.some(boundary => {
-      if (boundary.type !== 'painted' || !boundary.cells) return false;
-      return boundary.cells.some(cell => 
-        cell.gridX === gridX && cell.gridY === gridY
+    return paintedBoundaries.some((boundary) => {
+      if (boundary.type !== "painted" || !boundary.cells) return false;
+      return boundary.cells.some(
+        (cell) => cell.gridX === gridX && cell.gridY === gridY
       );
     });
   },
@@ -322,15 +415,15 @@ export const boundaryService = {
   linesIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
     // Calculate direction of line segments
     const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-    
+
     // Lines are parallel if denominator is 0
     if (Math.abs(denom) < 0.0001) return false;
-    
+
     // Calculate intersection parameters
     const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
     const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
-    
+
     // Lines intersect if both parameters are between 0 and 1
     return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
-  }
+  },
 };

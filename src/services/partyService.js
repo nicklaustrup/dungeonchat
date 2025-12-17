@@ -1,12 +1,12 @@
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  updateDoc, 
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
   onSnapshot,
-  Timestamp
-} from 'firebase/firestore';
+  Timestamp,
+} from "firebase/firestore";
 
 /**
  * Party Management Service
@@ -23,13 +23,18 @@ import {
  */
 export async function getPartyCharacters(firestore, campaignId) {
   if (!firestore || !campaignId) {
-    throw new Error('Firestore and campaignId are required');
+    throw new Error("Firestore and campaignId are required");
   }
 
-  const charactersRef = collection(firestore, 'campaigns', campaignId, 'characters');
+  const charactersRef = collection(
+    firestore,
+    "campaigns",
+    campaignId,
+    "characters"
+  );
   const charactersSnap = await getDocs(charactersRef);
-  
-  return charactersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+  return charactersSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
 /**
@@ -45,7 +50,7 @@ export function calculatePartyStats(characters) {
       hpPercentage: 0,
       classes: {},
       averageAC: 0,
-      partyLevel: 0
+      partyLevel: 0,
     };
   }
 
@@ -57,18 +62,18 @@ export function calculatePartyStats(characters) {
     hpPercentage: 0,
     classes: {},
     averageAC: 0,
-    partyLevel: 0
+    partyLevel: 0,
   };
 
   let totalLevel = 0;
   let totalAC = 0;
 
-  characters.forEach(character => {
+  characters.forEach((character) => {
     const level = character.level || 1;
     const maxHP = character.maxHp || 10;
     const currentHP = character.hp !== undefined ? character.hp : maxHP;
     const ac = character.armorClass || character.AC || 10;
-    const charClass = character.class || 'Unknown';
+    const charClass = character.class || "Unknown";
 
     totalLevel += level;
     stats.totalHP += maxHP;
@@ -84,9 +89,8 @@ export function calculatePartyStats(characters) {
 
   stats.averageLevel = Math.round(totalLevel / characters.length);
   stats.averageAC = Math.round(totalAC / characters.length);
-  stats.hpPercentage = stats.totalHP > 0 
-    ? Math.round((stats.currentHP / stats.totalHP) * 100) 
-    : 0;
+  stats.hpPercentage =
+    stats.totalHP > 0 ? Math.round((stats.currentHP / stats.totalHP) * 100) : 0;
   stats.partyLevel = stats.averageLevel; // Can be more sophisticated
 
   return stats;
@@ -95,15 +99,22 @@ export function calculatePartyStats(characters) {
 /**
  * Distribute XP to all party members
  */
-export async function distributeXP(firestore, campaignId, xpAmount, characterIds = null) {
+export async function distributeXP(
+  firestore,
+  campaignId,
+  xpAmount,
+  characterIds = null
+) {
   if (!firestore || !campaignId || !xpAmount) {
-    throw new Error('Firestore, campaignId, and xpAmount are required');
+    throw new Error("Firestore, campaignId, and xpAmount are required");
   }
 
-  const characters = characterIds 
-    ? await Promise.all(characterIds.map(id => 
-        getDoc(doc(firestore, 'campaigns', campaignId, 'characters', id))
-      ))
+  const characters = characterIds
+    ? await Promise.all(
+        characterIds.map((id) =>
+          getDoc(doc(firestore, "campaigns", campaignId, "characters", id))
+        )
+      )
     : await getPartyCharacters(firestore, campaignId);
 
   const updates = [];
@@ -111,19 +122,25 @@ export async function distributeXP(firestore, campaignId, xpAmount, characterIds
   for (const character of characters) {
     const charData = character.data ? character.data() : character;
     const charId = character.id;
-    
+
     if (!charData) continue;
 
     const currentXP = charData.experience || charData.experiencePoints || 0;
     const newXP = currentXP + xpAmount;
 
-    const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', charId);
+    const characterRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "characters",
+      charId
+    );
     updates.push(
       updateDoc(characterRef, {
         experience: newXP,
         experiencePoints: newXP,
         lastXPGain: xpAmount,
-        lastXPDate: Timestamp.now()
+        lastXPDate: Timestamp.now(),
       })
     );
   }
@@ -135,30 +152,48 @@ export async function distributeXP(firestore, campaignId, xpAmount, characterIds
 /**
  * Update HP for a character
  */
-export async function updateCharacterHP(firestore, campaignId, characterId, currentHP) {
+export async function updateCharacterHP(
+  firestore,
+  campaignId,
+  characterId,
+  currentHP
+) {
   if (!firestore || !campaignId || !characterId) {
-    throw new Error('All parameters are required');
+    throw new Error("All parameters are required");
   }
 
-  const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', characterId);
+  const characterRef = doc(
+    firestore,
+    "campaigns",
+    campaignId,
+    "characters",
+    characterId
+  );
   await updateDoc(characterRef, {
     hp: currentHP,
-    lastHPUpdate: Timestamp.now()
+    lastHPUpdate: Timestamp.now(),
   });
 }
 
 /**
  * Heal party (restore HP)
  */
-export async function healParty(firestore, campaignId, healAmount, characterIds = null) {
+export async function healParty(
+  firestore,
+  campaignId,
+  healAmount,
+  characterIds = null
+) {
   if (!firestore || !campaignId || !healAmount) {
-    throw new Error('Firestore, campaignId, and healAmount are required');
+    throw new Error("Firestore, campaignId, and healAmount are required");
   }
 
   const characters = characterIds
-    ? await Promise.all(characterIds.map(id => 
-        getDoc(doc(firestore, 'campaigns', campaignId, 'characters', id))
-      ))
+    ? await Promise.all(
+        characterIds.map((id) =>
+          getDoc(doc(firestore, "campaigns", campaignId, "characters", id))
+        )
+      )
     : await getPartyCharacters(firestore, campaignId);
 
   const updates = [];
@@ -166,18 +201,24 @@ export async function healParty(firestore, campaignId, healAmount, characterIds 
   for (const character of characters) {
     const charData = character.data ? character.data() : character;
     const charId = character.id;
-    
+
     if (!charData) continue;
 
     const maxHP = charData.maxHp || 10;
     const currentHP = charData.hp !== undefined ? charData.hp : maxHP;
     const newHP = Math.min(currentHP + healAmount, maxHP);
 
-    const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', charId);
+    const characterRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "characters",
+      charId
+    );
     updates.push(
       updateDoc(characterRef, {
         hp: newHP,
-        lastHPUpdate: Timestamp.now()
+        lastHPUpdate: Timestamp.now(),
       })
     );
   }
@@ -191,13 +232,15 @@ export async function healParty(firestore, campaignId, healAmount, characterIds 
  */
 export async function longRest(firestore, campaignId, characterIds = null) {
   if (!firestore || !campaignId) {
-    throw new Error('Firestore and campaignId are required');
+    throw new Error("Firestore and campaignId are required");
   }
 
   const characters = characterIds
-    ? await Promise.all(characterIds.map(id => 
-        getDoc(doc(firestore, 'campaigns', campaignId, 'characters', id))
-      ))
+    ? await Promise.all(
+        characterIds.map((id) =>
+          getDoc(doc(firestore, "campaigns", campaignId, "characters", id))
+        )
+      )
     : await getPartyCharacters(firestore, campaignId);
 
   const updates = [];
@@ -205,24 +248,30 @@ export async function longRest(firestore, campaignId, characterIds = null) {
   for (const character of characters) {
     const charData = character.data ? character.data() : character;
     const charId = character.id;
-    
+
     if (!charData) continue;
 
     const maxHP = charData.maxHp || 10;
     const level = charData.level || 1;
-    
+
     // Calculate hit dice restoration (half of total, minimum 1)
     const totalHitDice = level;
     const restoredHitDice = Math.max(1, Math.floor(totalHitDice / 2));
 
-    const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', charId);
+    const characterRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "characters",
+      charId
+    );
     updates.push(
       updateDoc(characterRef, {
         hp: maxHP,
         hitDiceUsed: Math.max(0, (charData.hitDiceUsed || 0) - restoredHitDice),
         spellSlotsUsed: {}, // Reset spell slots
         lastRestDate: Timestamp.now(),
-        restType: 'long'
+        restType: "long",
       })
     );
   }
@@ -234,30 +283,42 @@ export async function longRest(firestore, campaignId, characterIds = null) {
 /**
  * Short rest (partial HP restoration via hit dice)
  */
-export async function shortRest(firestore, campaignId, characterId, hitDiceUsed = 1) {
+export async function shortRest(
+  firestore,
+  campaignId,
+  characterId,
+  hitDiceUsed = 1
+) {
   if (!firestore || !campaignId || !characterId) {
-    throw new Error('All parameters are required');
+    throw new Error("All parameters are required");
   }
 
-  const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', characterId);
+  const characterRef = doc(
+    firestore,
+    "campaigns",
+    campaignId,
+    "characters",
+    characterId
+  );
   const characterSnap = await getDoc(characterRef);
-  
+
   if (!characterSnap.exists()) {
-    throw new Error('Character not found');
+    throw new Error("Character not found");
   }
 
   const charData = characterSnap.data();
-  const hitDice = charData.hitDice || 'd8';
-  const conMod = charData.abilityScores?.constitution 
-    ? Math.floor((charData.abilityScores.constitution - 10) / 2) 
+  const hitDice = charData.hitDice || "d8";
+  const conMod = charData.abilityScores?.constitution
+    ? Math.floor((charData.abilityScores.constitution - 10) / 2)
     : 0;
 
   // Calculate HP restoration (average of hit die + CON mod per die)
-  const dieSize = parseInt(hitDice.replace('d', ''));
+  const dieSize = parseInt(hitDice.replace("d", ""));
   const averageRoll = Math.ceil(dieSize / 2) + 1;
   const hpRestored = (averageRoll + conMod) * hitDiceUsed;
 
-  const currentHP = charData.hp !== undefined ? charData.hp : (charData.maxHp || 10);
+  const currentHP =
+    charData.hp !== undefined ? charData.hp : charData.maxHp || 10;
   const maxHP = charData.maxHp || 10;
   const newHP = Math.min(currentHP + hpRestored, maxHP);
 
@@ -265,7 +326,7 @@ export async function shortRest(firestore, campaignId, characterId, hitDiceUsed 
     hp: newHP,
     hitDiceUsed: (charData.hitDiceUsed || 0) + hitDiceUsed,
     lastRestDate: Timestamp.now(),
-    restType: 'short'
+    restType: "short",
   });
 
   return { hpRestored, newHP, hitDiceUsed };
@@ -281,66 +342,67 @@ export function analyzePartyComposition(characters) {
       healer: 0,
       damage: 0,
       support: 0,
-      controller: 0
+      controller: 0,
     },
-    balance: 'balanced',
+    balance: "balanced",
     warnings: [],
-    recommendations: []
+    recommendations: [],
   };
 
   if (!characters || characters.length === 0) {
-    analysis.warnings.push('No characters in party');
+    analysis.warnings.push("No characters in party");
     return analysis;
   }
 
   // Simplified role analysis based on class
   const roleMap = {
-    'Fighter': 'tank',
-    'Paladin': 'tank',
-    'Barbarian': 'tank',
-    'Cleric': 'healer',
-    'Druid': 'healer',
-    'Rogue': 'damage',
-    'Ranger': 'damage',
-    'Monk': 'damage',
-    'Wizard': 'controller',
-    'Sorcerer': 'controller',
-    'Warlock': 'damage',
-    'Bard': 'support',
-    'Artificer': 'support'
+    Fighter: "tank",
+    Paladin: "tank",
+    Barbarian: "tank",
+    Cleric: "healer",
+    Druid: "healer",
+    Rogue: "damage",
+    Ranger: "damage",
+    Monk: "damage",
+    Wizard: "controller",
+    Sorcerer: "controller",
+    Warlock: "damage",
+    Bard: "support",
+    Artificer: "support",
   };
 
-  characters.forEach(character => {
-    const charClass = character.class || 'Unknown';
-    const role = roleMap[charClass] || 'damage';
+  characters.forEach((character) => {
+    const charClass = character.class || "Unknown";
+    const role = roleMap[charClass] || "damage";
     analysis.roles[role]++;
   });
 
   // Analyze balance
   if (analysis.roles.healer === 0) {
-    analysis.warnings.push('No healers in party - consider healing potions');
+    analysis.warnings.push("No healers in party - consider healing potions");
   }
   if (analysis.roles.tank === 0) {
-    analysis.warnings.push('No tanks in party - fragile frontline');
+    analysis.warnings.push("No tanks in party - fragile frontline");
   }
   if (characters.length < 3) {
-    analysis.warnings.push('Small party - encounters may be more dangerous');
+    analysis.warnings.push("Small party - encounters may be more dangerous");
   }
   if (characters.length > 6) {
-    analysis.warnings.push('Large party - combat may be slower');
+    analysis.warnings.push("Large party - combat may be slower");
   }
 
   // Determine overall balance
-  const roleVariance = Math.max(...Object.values(analysis.roles)) - 
-                        Math.min(...Object.values(analysis.roles));
-  
+  const roleVariance =
+    Math.max(...Object.values(analysis.roles)) -
+    Math.min(...Object.values(analysis.roles));
+
   if (roleVariance <= 1) {
-    analysis.balance = 'well-balanced';
+    analysis.balance = "well-balanced";
   } else if (roleVariance <= 2) {
-    analysis.balance = 'balanced';
+    analysis.balance = "balanced";
   } else {
-    analysis.balance = 'unbalanced';
-    analysis.recommendations.push('Consider diversifying party roles');
+    analysis.balance = "unbalanced";
+    analysis.recommendations.push("Consider diversifying party roles");
   }
 
   return analysis;
@@ -351,13 +413,21 @@ export function analyzePartyComposition(characters) {
  */
 export function subscribeToPartyCharacters(firestore, campaignId, callback) {
   if (!firestore || !campaignId) {
-    throw new Error('Firestore and campaignId are required');
+    throw new Error("Firestore and campaignId are required");
   }
 
-  const charactersRef = collection(firestore, 'campaigns', campaignId, 'characters');
-  
+  const charactersRef = collection(
+    firestore,
+    "campaigns",
+    campaignId,
+    "characters"
+  );
+
   return onSnapshot(charactersRef, (snapshot) => {
-    const characters = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const characters = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
     callback(characters);
   });
 }
@@ -367,10 +437,16 @@ export function subscribeToPartyCharacters(firestore, campaignId, callback) {
  */
 export async function getCharacterByUserId(firestore, campaignId, userId) {
   if (!firestore || !campaignId || !userId) {
-    throw new Error('All parameters are required');
+    throw new Error("All parameters are required");
   }
 
-  const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
+  const characterRef = doc(
+    firestore,
+    "campaigns",
+    campaignId,
+    "characters",
+    userId
+  );
   const characterSnap = await getDoc(characterRef);
 
   if (!characterSnap.exists()) {
@@ -388,7 +464,7 @@ export function calculatePartyWealth(characters) {
   let totalSilver = 0;
   let totalCopper = 0;
 
-  characters.forEach(character => {
+  characters.forEach((character) => {
     const currency = character.currency || {};
     totalGold += currency.gold || currency.gp || 0;
     totalSilver += currency.silver || currency.sp || 0;
@@ -396,16 +472,17 @@ export function calculatePartyWealth(characters) {
   });
 
   // Convert to gold equivalent
-  const goldEquivalent = totalGold + (totalSilver / 10) + (totalCopper / 100);
+  const goldEquivalent = totalGold + totalSilver / 10 + totalCopper / 100;
 
   return {
     gold: totalGold,
     silver: totalSilver,
     copper: totalCopper,
     goldEquivalent: Math.round(goldEquivalent * 100) / 100,
-    perMember: characters.length > 0 
-      ? Math.round((goldEquivalent / characters.length) * 100) / 100 
-      : 0
+    perMember:
+      characters.length > 0
+        ? Math.round((goldEquivalent / characters.length) * 100) / 100
+        : 0,
   };
 }
 
@@ -421,7 +498,7 @@ const partyService = {
   analyzePartyComposition,
   subscribeToPartyCharacters,
   getCharacterByUserId,
-  calculatePartyWealth
+  calculatePartyWealth,
 };
 
 export default partyService;

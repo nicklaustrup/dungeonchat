@@ -3,16 +3,22 @@
  * Settings panel for voice chat audio quality and processing options
  */
 
-import React, { useState, useEffect } from 'react';
-import { FaCog, FaTimes, FaCheck, FaMicrophone, FaVolumeUp } from 'react-icons/fa';
-import './VoiceSettings.css';
+import React, { useState, useEffect } from "react";
+import {
+  FaCog,
+  FaTimes,
+  FaCheck,
+  FaMicrophone,
+  FaVolumeUp,
+} from "react-icons/fa";
+import "./VoiceSettings.css";
 
-export default function VoiceSettings({ 
-  isOpen, 
-  onClose, 
-  settings, 
+export default function VoiceSettings({
+  isOpen,
+  onClose,
+  settings,
   onSettingsChange,
-  onSave 
+  onSave,
 }) {
   const [localSettings, setLocalSettings] = useState(settings);
   const [audioInputDevices, setAudioInputDevices] = useState([]);
@@ -28,36 +34,36 @@ export default function VoiceSettings({
     const getDevices = async () => {
       try {
         setDevicesLoading(true);
-        
+
         // Request permission to access media devices
         await navigator.mediaDevices.getUserMedia({ audio: true });
-        
+
         // Get all media devices
         const devices = await navigator.mediaDevices.enumerateDevices();
-        
+
         // Filter audio input devices (microphones)
         const inputDevices = devices.filter(
-          device => device.kind === 'audioinput'
+          (device) => device.kind === "audioinput"
         );
         setAudioInputDevices(inputDevices);
-        
+
         // Filter audio output devices (speakers/headphones)
         const outputDevices = devices.filter(
-          device => device.kind === 'audiooutput'
+          (device) => device.kind === "audiooutput"
         );
         setAudioOutputDevices(outputDevices);
-        
-        console.log('[VoiceSettings] Found devices:', {
+
+        console.log("[VoiceSettings] Found devices:", {
           inputs: inputDevices.length,
-          outputs: outputDevices.length
+          outputs: outputDevices.length,
         });
       } catch (error) {
-        console.error('[VoiceSettings] Error enumerating devices:', error);
+        console.error("[VoiceSettings] Error enumerating devices:", error);
       } finally {
         setDevicesLoading(false);
       }
     };
-    
+
     if (isOpen) {
       getDevices();
     }
@@ -87,13 +93,16 @@ export default function VoiceSettings({
 
   return (
     <div className="voice-settings-overlay" onClick={handleCancel}>
-      <div className="voice-settings-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="voice-settings-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="voice-settings-header">
           <div className="voice-settings-title">
             <FaCog />
             <h3>Voice Settings</h3>
           </div>
-          <button 
+          <button
             className="btn-close-settings"
             onClick={handleCancel}
             title="Close"
@@ -107,7 +116,7 @@ export default function VoiceSettings({
           <div className="setting-group">
             <label className="setting-label">
               <span className="setting-name">
-                <FaMicrophone style={{ marginRight: '8px' }} />
+                <FaMicrophone style={{ marginRight: "8px" }} />
                 Microphone
               </span>
               <span className="setting-description">
@@ -116,19 +125,24 @@ export default function VoiceSettings({
             </label>
             <div className="setting-control">
               <select
-                value={localSettings.audioInputDeviceId || 'default'}
-                onChange={(e) => handleChange('audioInputDeviceId', e.target.value)}
+                value={localSettings.audioInputDeviceId || "default"}
+                onChange={(e) =>
+                  handleChange("audioInputDeviceId", e.target.value)
+                }
                 className="setting-select"
                 disabled={devicesLoading}
               >
                 <option value="default">Default Microphone</option>
                 {audioInputDevices.map((device) => (
                   <option key={device.deviceId} value={device.deviceId}>
-                    {device.label || `Microphone ${device.deviceId.substring(0, 8)}`}
+                    {device.label ||
+                      `Microphone ${device.deviceId.substring(0, 8)}`}
                   </option>
                 ))}
               </select>
-              {devicesLoading && <span className="device-loading">Loading...</span>}
+              {devicesLoading && (
+                <span className="device-loading">Loading...</span>
+              )}
             </div>
           </div>
 
@@ -136,7 +150,7 @@ export default function VoiceSettings({
           <div className="setting-group">
             <label className="setting-label">
               <span className="setting-name">
-                <FaVolumeUp style={{ marginRight: '8px' }} />
+                <FaVolumeUp style={{ marginRight: "8px" }} />
                 Speakers
               </span>
               <span className="setting-description">
@@ -145,19 +159,24 @@ export default function VoiceSettings({
             </label>
             <div className="setting-control">
               <select
-                value={localSettings.audioOutputDeviceId || 'default'}
-                onChange={(e) => handleChange('audioOutputDeviceId', e.target.value)}
+                value={localSettings.audioOutputDeviceId || "default"}
+                onChange={(e) =>
+                  handleChange("audioOutputDeviceId", e.target.value)
+                }
                 className="setting-select"
                 disabled={devicesLoading}
               >
                 <option value="default">Default Speakers</option>
                 {audioOutputDevices.map((device) => (
                   <option key={device.deviceId} value={device.deviceId}>
-                    {device.label || `Speakers ${device.deviceId.substring(0, 8)}`}
+                    {device.label ||
+                      `Speakers ${device.deviceId.substring(0, 8)}`}
                   </option>
                 ))}
               </select>
-              {devicesLoading && <span className="device-loading">Loading...</span>}
+              {devicesLoading && (
+                <span className="device-loading">Loading...</span>
+              )}
             </div>
           </div>
 
@@ -172,7 +191,7 @@ export default function VoiceSettings({
             <div className="setting-control">
               <select
                 value={localSettings.audioQuality}
-                onChange={(e) => handleChange('audioQuality', e.target.value)}
+                onChange={(e) => handleChange("audioQuality", e.target.value)}
                 className="setting-select"
               >
                 <option value="low">Low (16 kbps)</option>
@@ -195,12 +214,14 @@ export default function VoiceSettings({
                 <input
                   type="checkbox"
                   checked={localSettings.echoCancellation}
-                  onChange={(e) => handleChange('echoCancellation', e.target.checked)}
+                  onChange={(e) =>
+                    handleChange("echoCancellation", e.target.checked)
+                  }
                 />
                 <span className="toggle-slider"></span>
               </label>
               <span className="setting-value">
-                {localSettings.echoCancellation ? 'Enabled' : 'Disabled'}
+                {localSettings.echoCancellation ? "Enabled" : "Disabled"}
               </span>
             </div>
           </div>
@@ -218,12 +239,14 @@ export default function VoiceSettings({
                 <input
                   type="checkbox"
                   checked={localSettings.noiseSuppression}
-                  onChange={(e) => handleChange('noiseSuppression', e.target.checked)}
+                  onChange={(e) =>
+                    handleChange("noiseSuppression", e.target.checked)
+                  }
                 />
                 <span className="toggle-slider"></span>
               </label>
               <span className="setting-value">
-                {localSettings.noiseSuppression ? 'Enabled' : 'Disabled'}
+                {localSettings.noiseSuppression ? "Enabled" : "Disabled"}
               </span>
             </div>
           </div>
@@ -241,28 +264,24 @@ export default function VoiceSettings({
                 <input
                   type="checkbox"
                   checked={localSettings.autoGainControl}
-                  onChange={(e) => handleChange('autoGainControl', e.target.checked)}
+                  onChange={(e) =>
+                    handleChange("autoGainControl", e.target.checked)
+                  }
                 />
                 <span className="toggle-slider"></span>
               </label>
               <span className="setting-value">
-                {localSettings.autoGainControl ? 'Enabled' : 'Disabled'}
+                {localSettings.autoGainControl ? "Enabled" : "Disabled"}
               </span>
             </div>
           </div>
         </div>
 
         <div className="voice-settings-footer">
-          <button 
-            className="btn-settings-cancel"
-            onClick={handleCancel}
-          >
+          <button className="btn-settings-cancel" onClick={handleCancel}>
             Cancel
           </button>
-          <button 
-            className="btn-settings-save"
-            onClick={handleSave}
-          >
+          <button className="btn-settings-save" onClick={handleSave}>
             <FaCheck /> Save Settings
           </button>
         </div>

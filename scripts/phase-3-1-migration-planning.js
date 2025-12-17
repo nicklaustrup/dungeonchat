@@ -2,90 +2,90 @@
 
 /**
  * Phase 3.1: Migration Planning and Deployment Preparation
- * 
+ *
  * This script prepares everything needed for the production migration
  * from V1 to V2 scroll implementation.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { execSync } = require("child_process");
 
-console.log('🚀 Phase 3.1: Migration Planning and Deployment Preparation\n');
+console.log("🚀 Phase 3.1: Migration Planning and Deployment Preparation\n");
 
 class MigrationPlanner {
   constructor() {
     this.plan = {
       timestamp: new Date().toISOString(),
-      phase: '3.1 - Migration Planning',
+      phase: "3.1 - Migration Planning",
       readiness: {},
       deployment: {},
       monitoring: {},
-      rollback: {}
+      rollback: {},
     };
   }
 
   validatePreRequisites() {
-    console.log('✅ Validating Migration Prerequisites...\n');
+    console.log("✅ Validating Migration Prerequisites...\n");
 
     const checks = [
       {
-        name: 'V2 Implementation Complete',
-        check: () => fs.existsSync('src/hooks/useAutoScrollV2.js'),
-        critical: true
+        name: "V2 Implementation Complete",
+        check: () => fs.existsSync("src/hooks/useAutoScrollV2.js"),
+        critical: true,
       },
       {
-        name: 'Feature Flag System',
+        name: "Feature Flag System",
         check: () => {
-          const chatRoom = 'src/components/ChatRoom/ChatRoom.js';
+          const chatRoom = "src/components/ChatRoom/ChatRoom.js";
           if (!fs.existsSync(chatRoom)) return false;
-          const content = fs.readFileSync(chatRoom, 'utf8');
-          return content.includes('REACT_APP_USE_AUTO_SCROLL_V2');
+          const content = fs.readFileSync(chatRoom, "utf8");
+          return content.includes("REACT_APP_USE_AUTO_SCROLL_V2");
         },
-        critical: true
+        critical: true,
       },
       {
-        name: 'Test Suite Coverage',
+        name: "Test Suite Coverage",
         check: () => {
           const tests = [
-            'src/hooks/__tests__/useAutoScrollV2.test.js',
-            'src/hooks/__tests__/useAutoScroll.ab-comparison.test.js'
+            "src/hooks/__tests__/useAutoScrollV2.test.js",
+            "src/hooks/__tests__/useAutoScroll.ab-comparison.test.js",
           ];
-          return tests.every(t => fs.existsSync(t));
+          return tests.every((t) => fs.existsSync(t));
         },
-        critical: true
+        critical: true,
       },
       {
-        name: 'Documentation Complete',
+        name: "Documentation Complete",
         check: () => {
           const docs = [
-            'docs/scroll-behavior-spec.md',
-            'docs/manual-testing-guide.md',
-            'docs/phase-2-3-COMPLETE.md'
+            "docs/scroll-behavior-spec.md",
+            "docs/manual-testing-guide.md",
+            "docs/phase-2-3-COMPLETE.md",
           ];
-          return docs.every(d => fs.existsSync(d));
+          return docs.every((d) => fs.existsSync(d));
         },
-        critical: false
+        critical: false,
       },
       {
-        name: 'Migration Scripts Ready',
+        name: "Migration Scripts Ready",
         check: () => {
           const scripts = [
-            'scripts/validate-ab-integration.js',
-            'scripts/quick-performance-analysis.js'
+            "scripts/validate-ab-integration.js",
+            "scripts/quick-performance-analysis.js",
           ];
-          return scripts.every(s => fs.existsSync(s));
+          return scripts.every((s) => fs.existsSync(s));
         },
-        critical: false
+        critical: false,
       },
       {
-        name: 'Environment Configuration',
+        name: "Environment Configuration",
         check: () => {
-          const envFiles = ['.env', '.env.local'];
-          return envFiles.some(f => fs.existsSync(f));
+          const envFiles = [".env", ".env.local"];
+          return envFiles.some((f) => fs.existsSync(f));
         },
-        critical: true
-      }
+        critical: true,
+      },
     ];
 
     let passed = 0;
@@ -93,90 +93,94 @@ class MigrationPlanner {
 
     checks.forEach(({ name, check, critical }) => {
       const result = check();
-      const status = result ? 'PASS' : 'FAIL';
-      const icon = result ? '✅' : (critical ? '❌' : '⚠️');
-      
-      console.log(`   ${icon} ${name}: ${status} ${critical ? '(Critical)' : '(Nice to have)'}`);
-      
+      const status = result ? "PASS" : "FAIL";
+      const icon = result ? "✅" : critical ? "❌" : "⚠️";
+
+      console.log(
+        `   ${icon} ${name}: ${status} ${critical ? "(Critical)" : "(Nice to have)"}`
+      );
+
       if (result) passed++;
       if (!result && critical) critical_failed++;
     });
 
     console.log(`\n   📊 Prerequisites: ${passed}/${checks.length} passed`);
-    
+
     this.plan.readiness = {
       total: checks.length,
       passed,
       criticalFailed: critical_failed,
-      ready: critical_failed === 0
+      ready: critical_failed === 0,
     };
 
     if (critical_failed > 0) {
-      console.log('   ❌ CRITICAL ISSUES FOUND - Migration cannot proceed');
+      console.log("   ❌ CRITICAL ISSUES FOUND - Migration cannot proceed");
       return false;
     } else {
-      console.log('   ✅ All critical requirements met - Ready for migration!\n');
+      console.log(
+        "   ✅ All critical requirements met - Ready for migration!\n"
+      );
       return true;
     }
   }
 
   createProductionEnvironmentConfig() {
-    console.log('🔧 Preparing Production Environment Configuration...\n');
+    console.log("🔧 Preparing Production Environment Configuration...\n");
 
     const environments = {
-      'development': {
-        REACT_APP_USE_AUTO_SCROLL_V2: 'true',
-        REACT_APP_SCROLL_COMPARISON: 'true',
-        description: 'Development - A/B comparison active for testing'
+      development: {
+        REACT_APP_USE_AUTO_SCROLL_V2: "true",
+        REACT_APP_SCROLL_COMPARISON: "true",
+        description: "Development - A/B comparison active for testing",
       },
-      'staging': {
-        REACT_APP_USE_AUTO_SCROLL_V2: 'true', 
-        REACT_APP_SCROLL_COMPARISON: 'true',
-        description: 'Staging - A/B comparison active for validation'
+      staging: {
+        REACT_APP_USE_AUTO_SCROLL_V2: "true",
+        REACT_APP_SCROLL_COMPARISON: "true",
+        description: "Staging - A/B comparison active for validation",
       },
-      'production-gradual': {
-        REACT_APP_USE_AUTO_SCROLL_V2: 'true',
-        REACT_APP_SCROLL_COMPARISON: 'true',
-        REACT_APP_V2_ROLLOUT_PERCENTAGE: '10', // Start with 10% of users
-        description: 'Production - Gradual rollout with monitoring'
+      "production-gradual": {
+        REACT_APP_USE_AUTO_SCROLL_V2: "true",
+        REACT_APP_SCROLL_COMPARISON: "true",
+        REACT_APP_V2_ROLLOUT_PERCENTAGE: "10", // Start with 10% of users
+        description: "Production - Gradual rollout with monitoring",
       },
-      'production-full': {
-        REACT_APP_USE_AUTO_SCROLL_V2: 'true',
-        REACT_APP_SCROLL_COMPARISON: 'false',
-        description: 'Production - Full V2 deployment'
+      "production-full": {
+        REACT_APP_USE_AUTO_SCROLL_V2: "true",
+        REACT_APP_SCROLL_COMPARISON: "false",
+        description: "Production - Full V2 deployment",
       },
-      'production-rollback': {
-        REACT_APP_USE_AUTO_SCROLL_V2: 'false',
-        REACT_APP_SCROLL_COMPARISON: 'false', 
-        description: 'Production - Emergency rollback to V1'
-      }
+      "production-rollback": {
+        REACT_APP_USE_AUTO_SCROLL_V2: "false",
+        REACT_APP_SCROLL_COMPARISON: "false",
+        description: "Production - Emergency rollback to V1",
+      },
     };
 
-    const configPath = 'deployment-configs';
+    const configPath = "deployment-configs";
     if (!fs.existsSync(configPath)) {
       fs.mkdirSync(configPath);
     }
 
     Object.entries(environments).forEach(([env, config]) => {
       const envContent = Object.entries(config)
-        .filter(([key]) => key.startsWith('REACT_APP_'))
+        .filter(([key]) => key.startsWith("REACT_APP_"))
         .map(([key, value]) => `${key}=${value}`)
-        .join('\n');
-        
+        .join("\n");
+
       const filePath = path.join(configPath, `.env.${env}`);
       const fullContent = `# ${config.description}\n# Generated: ${new Date().toISOString()}\n\n${envContent}\n`;
-      
+
       fs.writeFileSync(filePath, fullContent);
       console.log(`   📄 Created: ${filePath}`);
     });
 
-    console.log('\n   ✅ Environment configurations prepared\n');
-    
+    console.log("\n   ✅ Environment configurations prepared\n");
+
     this.plan.deployment.environments = environments;
   }
 
   setupMonitoringAndRollback() {
-    console.log('📊 Setting up Monitoring and Rollback Procedures...\n');
+    console.log("📊 Setting up Monitoring and Rollback Procedures...\n");
 
     // Create monitoring script
     const monitoringScript = `#!/usr/bin/env node
@@ -238,8 +242,8 @@ if (require.main === module) {
 }
 `;
 
-    fs.writeFileSync('scripts/monitor-migration.js', monitoringScript);
-    console.log('   📄 Created: scripts/monitor-migration.js');
+    fs.writeFileSync("scripts/monitor-migration.js", monitoringScript);
+    console.log("   📄 Created: scripts/monitor-migration.js");
 
     // Create rollback script
     const rollbackScript = `#!/usr/bin/env node
@@ -290,125 +294,128 @@ if (require.main === module) {
 }
 `;
 
-    fs.writeFileSync('scripts/emergency-rollback.js', rollbackScript);
-    console.log('   📄 Created: scripts/emergency-rollback.js');
+    fs.writeFileSync("scripts/emergency-rollback.js", rollbackScript);
+    console.log("   📄 Created: scripts/emergency-rollback.js");
 
-    console.log('\n   ✅ Monitoring and rollback procedures ready\n');
+    console.log("\n   ✅ Monitoring and rollback procedures ready\n");
 
     this.plan.monitoring = {
-      script: 'scripts/monitor-migration.js',
-      description: 'Automated monitoring of migration health'
+      script: "scripts/monitor-migration.js",
+      description: "Automated monitoring of migration health",
     };
 
     this.plan.rollback = {
-      script: 'scripts/emergency-rollback.js',
-      description: 'Emergency rollback to V1 implementation',
-      usage: 'node scripts/emergency-rollback.js "reason for rollback"'
+      script: "scripts/emergency-rollback.js",
+      description: "Emergency rollback to V1 implementation",
+      usage: "node scripts/emergency-rollback.js \"reason for rollback\"",
     };
   }
 
   createDeploymentTimeline() {
-    console.log('📅 Creating Deployment Timeline...\n');
+    console.log("📅 Creating Deployment Timeline...\n");
 
     const timeline = {
-      'Phase 3.1': {
-        name: 'Migration Planning',
-        status: 'IN PROGRESS',
-        duration: 'Immediate',
+      "Phase 3.1": {
+        name: "Migration Planning",
+        status: "IN PROGRESS",
+        duration: "Immediate",
         tasks: [
-          '✅ Validate prerequisites',
-          '✅ Create environment configurations', 
-          '✅ Setup monitoring scripts',
-          '✅ Prepare deployment timeline'
-        ]
+          "✅ Validate prerequisites",
+          "✅ Create environment configurations",
+          "✅ Setup monitoring scripts",
+          "✅ Prepare deployment timeline",
+        ],
       },
-      'Phase 3.2': {
-        name: 'Gradual Rollout',
-        status: 'READY',
-        duration: '1-2 weeks',
+      "Phase 3.2": {
+        name: "Gradual Rollout",
+        status: "READY",
+        duration: "1-2 weeks",
         tasks: [
-          '⏳ Deploy with 10% V2 users',
-          '⏳ Monitor behavior comparison',
-          '⏳ Increase to 50% V2 users',
-          '⏳ Full validation before 100%'
-        ]
+          "⏳ Deploy with 10% V2 users",
+          "⏳ Monitor behavior comparison",
+          "⏳ Increase to 50% V2 users",
+          "⏳ Full validation before 100%",
+        ],
       },
-      'Phase 3.3': {
-        name: 'Full Deployment',
-        status: 'PENDING',
-        duration: '1 week',
+      "Phase 3.3": {
+        name: "Full Deployment",
+        status: "PENDING",
+        duration: "1 week",
         tasks: [
-          '⏳ Set 100% users to V2',
-          '⏳ Disable comparison mode',
-          '⏳ Monitor performance',
-          '⏳ Confirm stable operation'
-        ]
+          "⏳ Set 100% users to V2",
+          "⏳ Disable comparison mode",
+          "⏳ Monitor performance",
+          "⏳ Confirm stable operation",
+        ],
       },
-      'Phase 3.4': {
-        name: 'Cleanup',
-        status: 'PENDING', 
-        duration: '1-2 weeks',
+      "Phase 3.4": {
+        name: "Cleanup",
+        status: "PENDING",
+        duration: "1-2 weeks",
         tasks: [
-          '⏳ Remove V1 implementation',
-          '⏳ Clean up feature flags',
-          '⏳ Update documentation',
-          '⏳ Archive migration artifacts'
-        ]
-      }
+          "⏳ Remove V1 implementation",
+          "⏳ Clean up feature flags",
+          "⏳ Update documentation",
+          "⏳ Archive migration artifacts",
+        ],
+      },
     };
 
-    console.log('   Timeline Overview:');
+    console.log("   Timeline Overview:");
     Object.entries(timeline).forEach(([phase, details]) => {
       const statusIcon = {
-        'IN PROGRESS': '🔄',
-        'READY': '✅', 
-        'PENDING': '⏳'
+        "IN PROGRESS": "🔄",
+        READY: "✅",
+        PENDING: "⏳",
       }[details.status];
-      
-      console.log(`   ${statusIcon} ${phase}: ${details.name} (${details.duration})`);
+
+      console.log(
+        `   ${statusIcon} ${phase}: ${details.name} (${details.duration})`
+      );
     });
 
-    console.log('\n   ✅ Deployment timeline prepared\n');
+    console.log("\n   ✅ Deployment timeline prepared\n");
     this.plan.timeline = timeline;
   }
 
   runFinalValidation() {
-    console.log('🔍 Final Validation Before Migration...\n');
+    console.log("🔍 Final Validation Before Migration...\n");
 
     try {
       // Run all tests
-      console.log('   Running comprehensive test suite...');
-      execSync('npm test -- --watchAll=false --verbose', { stdio: 'pipe' });
-      console.log('   ✅ All tests passing');
+      console.log("   Running comprehensive test suite...");
+      execSync("npm test -- --watchAll=false --verbose", { stdio: "pipe" });
+      console.log("   ✅ All tests passing");
 
       // Validate A/B integration
-      console.log('   Validating A/B integration...');
-      execSync('node scripts/validate-ab-integration.js', { stdio: 'pipe' });
-      console.log('   ✅ A/B integration verified');
+      console.log("   Validating A/B integration...");
+      execSync("node scripts/validate-ab-integration.js", { stdio: "pipe" });
+      console.log("   ✅ A/B integration verified");
 
       // Performance check
-      console.log('   Running performance analysis...');
-      execSync('node scripts/quick-performance-analysis.js', { stdio: 'pipe' });
-      console.log('   ✅ Performance analysis passed');
+      console.log("   Running performance analysis...");
+      execSync("node scripts/quick-performance-analysis.js", { stdio: "pipe" });
+      console.log("   ✅ Performance analysis passed");
 
-      console.log('\n   🎉 ALL VALIDATIONS PASSED - READY FOR DEPLOYMENT!\n');
-      
+      console.log("\n   🎉 ALL VALIDATIONS PASSED - READY FOR DEPLOYMENT!\n");
+
       this.plan.validation = {
-        status: 'passed',
+        status: "passed",
         timestamp: new Date().toISOString(),
-        checks: ['tests', 'ab-integration', 'performance']
+        checks: ["tests", "ab-integration", "performance"],
       };
 
       return true;
-
     } catch (error) {
-      console.log('   ❌ Validation failed:', error.message.slice(0, 100));
-      console.log('\n   Fix validation issues before proceeding with migration.\n');
-      
+      console.log("   ❌ Validation failed:", error.message.slice(0, 100));
+      console.log(
+        "\n   Fix validation issues before proceeding with migration.\n"
+      );
+
       this.plan.validation = {
-        status: 'failed',
+        status: "failed",
         timestamp: new Date().toISOString(),
-        error: error.message
+        error: error.message,
       };
 
       return false;
@@ -416,18 +423,18 @@ if (require.main === module) {
   }
 
   generateMigrationReport() {
-    console.log('📋 Generating Migration Plan Report...\n');
+    console.log("📋 Generating Migration Plan Report...\n");
 
     // Save detailed plan
-    const planPath = 'docs/phase-3-1-migration-plan.json';
+    const planPath = "docs/phase-3-1-migration-plan.json";
     fs.writeFileSync(planPath, JSON.stringify(this.plan, null, 2));
 
     // Create execution guide
     const executionGuide = `# Phase 3.1 Complete - Ready for Migration! ✅
 
 **Generated**: ${new Date().toISOString()}  
-**Status**: ${this.plan.validation?.status === 'passed' ? 'READY FOR DEPLOYMENT' : 'VALIDATION ISSUES'}  
-**Readiness**: ${this.plan.readiness?.ready ? 'FULLY READY' : 'ISSUES FOUND'}
+**Status**: ${this.plan.validation?.status === "passed" ? "READY FOR DEPLOYMENT" : "VALIDATION ISSUES"}  
+**Readiness**: ${this.plan.readiness?.ready ? "FULLY READY" : "ISSUES FOUND"}
 
 ## 🚀 Deployment Instructions
 
@@ -438,19 +445,29 @@ if (require.main === module) {
 4. **Watch console logs**: Monitor A/B comparison data
 
 ### Environment Configurations Created:
-${Object.keys(this.plan.deployment?.environments || {}).map(env => 
-  `- \`deployment-configs/.env.${env}\` - ${this.plan.deployment.environments[env].description}`
-).join('\n')}
+${Object.keys(this.plan.deployment?.environments || {})
+  .map(
+    (env) =>
+      `- \`deployment-configs/.env.${env}\` - ${this.plan.deployment.environments[env].description}`
+  )
+  .join("\n")}
 
 ### Monitoring Tools:
 - **Health Check**: \`node scripts/monitor-migration.js\`
 - **Emergency Rollback**: \`node scripts/emergency-rollback.js "reason"\`
 
 ### Deployment Timeline:
-${Object.entries(this.plan.timeline || {}).map(([phase, details]) => {
-  const icon = details.status === 'IN PROGRESS' ? '🔄' : details.status === 'READY' ? '✅' : '⏳';
-  return `- ${icon} **${phase}**: ${details.name} (${details.duration})`;
-}).join('\n')}
+${Object.entries(this.plan.timeline || {})
+  .map(([phase, details]) => {
+    const icon =
+      details.status === "IN PROGRESS"
+        ? "🔄"
+        : details.status === "READY"
+          ? "✅"
+          : "⏳";
+    return `- ${icon} **${phase}**: ${details.name} (${details.duration})`;
+  })
+  .join("\n")}
 
 ## ⚡ Quick Start Commands
 
@@ -481,12 +498,12 @@ node scripts/emergency-rollback.js "describe the issue"
 Next: Execute Phase 3.2 - Gradual Rollout
 `;
 
-    const guidePath = 'docs/phase-3-1-COMPLETE.md';
+    const guidePath = "docs/phase-3-1-COMPLETE.md";
     fs.writeFileSync(guidePath, executionGuide);
 
     console.log(`   📄 Migration plan: ${planPath}`);
     console.log(`   📄 Execution guide: ${guidePath}`);
-    console.log('\n   ✅ Migration planning complete!\n');
+    console.log("\n   ✅ Migration planning complete!\n");
   }
 }
 
@@ -494,12 +511,14 @@ async function main() {
   const planner = new MigrationPlanner();
 
   try {
-    console.log('Starting Phase 3.1: Migration Planning and Preparation...\n');
+    console.log("Starting Phase 3.1: Migration Planning and Preparation...\n");
 
     // Step 1: Validate we're ready
     const ready = planner.validatePreRequisites();
     if (!ready) {
-      console.log('❌ Critical prerequisites not met. Fix issues before proceeding.');
+      console.log(
+        "❌ Critical prerequisites not met. Fix issues before proceeding."
+      );
       process.exit(1);
     }
 
@@ -515,32 +534,42 @@ async function main() {
     // Step 5: Final validation
     const validated = planner.runFinalValidation();
     if (!validated) {
-      console.log('⚠️  Validation issues found. Review and fix before deployment.');
+      console.log(
+        "⚠️  Validation issues found. Review and fix before deployment."
+      );
     }
 
     // Step 6: Generate comprehensive plan
     planner.generateMigrationReport();
 
-    console.log('🎉 Phase 3.1 Complete!');
-    console.log('\n📊 Summary:');
-    console.log(`   Prerequisites: ${planner.plan.readiness?.ready ? 'All met ✅' : 'Issues found ❌'}`);
-    console.log(`   Validation: ${planner.plan.validation?.status === 'passed' ? 'Passed ✅' : 'Failed ❌'}`);
+    console.log("🎉 Phase 3.1 Complete!");
+    console.log("\n📊 Summary:");
+    console.log(
+      `   Prerequisites: ${planner.plan.readiness?.ready ? "All met ✅" : "Issues found ❌"}`
+    );
+    console.log(
+      `   Validation: ${planner.plan.validation?.status === "passed" ? "Passed ✅" : "Failed ❌"}`
+    );
     console.log(`   Environment configs: Created ✅`);
     console.log(`   Monitoring tools: Ready ✅`);
 
-    if (planner.plan.readiness?.ready && planner.plan.validation?.status === 'passed') {
-      console.log('\n🚀 READY FOR PHASE 3.2: GRADUAL ROLLOUT!');
-      console.log('\nNext steps:');
-      console.log('1. Use deployment-configs/.env.production-gradual for initial deployment');
-      console.log('2. Monitor with scripts/monitor-migration.js');
-      console.log('3. Gradually increase V2 percentage');
-      console.log('4. Proceed to full deployment when confident');
+    if (
+      planner.plan.readiness?.ready &&
+      planner.plan.validation?.status === "passed"
+    ) {
+      console.log("\n🚀 READY FOR PHASE 3.2: GRADUAL ROLLOUT!");
+      console.log("\nNext steps:");
+      console.log(
+        "1. Use deployment-configs/.env.production-gradual for initial deployment"
+      );
+      console.log("2. Monitor with scripts/monitor-migration.js");
+      console.log("3. Gradually increase V2 percentage");
+      console.log("4. Proceed to full deployment when confident");
     } else {
-      console.log('\n⚠️  Address issues before proceeding to Phase 3.2');
+      console.log("\n⚠️  Address issues before proceeding to Phase 3.2");
     }
-
   } catch (error) {
-    console.error('❌ Phase 3.1 planning error:', error.message);
+    console.error("❌ Phase 3.1 planning error:", error.message);
     process.exit(1);
   }
 }

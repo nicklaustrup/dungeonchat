@@ -1,10 +1,10 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
-import UserMenu from './UserMenu';
-import SearchBar from './SearchBar';
-import { ProfileDisplay } from '../ProfileDisplay/ProfileDisplay';
+import React, { Suspense, lazy, useEffect, useState } from "react";
+import UserMenu from "./UserMenu";
+import SearchBar from "./SearchBar";
+import { ProfileDisplay } from "../ProfileDisplay/ProfileDisplay";
 
 // Lazy load heavier settings modal
-const SettingsModal = lazy(() => import('../SettingsModal/SettingsModal'));
+const SettingsModal = lazy(() => import("../SettingsModal/SettingsModal"));
 
 function ChatHeader({
   user,
@@ -16,7 +16,7 @@ function ChatHeader({
   setSearchTerm,
   onViewProfile,
   awayAfterSeconds,
-  setAwayAfterSeconds
+  setAwayAfterSeconds,
 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileEditorOpen, setProfileEditorOpen] = useState(false);
@@ -25,11 +25,11 @@ function ChatHeader({
 
   // Detect viewport width (simple listener; could be replaced by CSS-only solution but we need state for collapsed default)
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 599px)');
+    const mq = window.matchMedia("(max-width: 599px)");
     const handle = () => setIsMobile(mq.matches);
     handle();
-    mq.addEventListener('change', handle);
-    return () => mq.removeEventListener('change', handle);
+    mq.addEventListener("change", handle);
+    return () => mq.removeEventListener("change", handle);
   }, []);
 
   useEffect(() => {
@@ -37,11 +37,11 @@ function ChatHeader({
     setSearchCollapsed(isMobile);
   }, [isMobile]);
 
-  const toggleSearch = () => setSearchCollapsed(c => !c);
+  const toggleSearch = () => setSearchCollapsed((c) => !c);
 
   return (
     <>
-      <header className={`App-header ${isMobile ? 'mobile-condense' : ''}`}>
+      <header className={`App-header ${isMobile ? "mobile-condense" : ""}`}>
         {!isMobile && (
           <div className="header-top desktop-layout">
             <h1 className="app-title">DungeonChat</h1>
@@ -53,7 +53,13 @@ function ChatHeader({
                   onViewProfile={onViewProfile}
                   openSettings={() => setSettingsOpen(true)}
                 />
-                <SearchBar value={searchTerm} onChange={setSearchTerm} collapsed={false} onToggle={() => {}} disableClose />
+                <SearchBar
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  collapsed={false}
+                  onToggle={() => {}}
+                  disableClose
+                />
               </div>
             )}
           </div>

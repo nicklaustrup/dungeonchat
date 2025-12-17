@@ -8,8 +8,8 @@ import {
   where,
   getDocs,
   getDoc,
-  serverTimestamp
-} from 'firebase/firestore';
+  serverTimestamp,
+} from "firebase/firestore";
 
 /**
  * Campaign Request Service
@@ -38,30 +38,35 @@ import {
  * @param {Object} requestData - Request data (characterName, characterClass, message)
  * @returns {Promise<Object>} Created request document
  */
-export async function createJoinRequest(firestore, campaignId, userId, requestData) {
+export async function createJoinRequest(
+  firestore,
+  campaignId,
+  userId,
+  requestData
+) {
   // Check if user already has a pending request for this campaign
   const existingRequest = await getJoinRequest(firestore, campaignId, userId);
-  if (existingRequest && existingRequest.status === 'pending') {
-    throw new Error('You already have a pending request for this campaign');
+  if (existingRequest && existingRequest.status === "pending") {
+    throw new Error("You already have a pending request for this campaign");
   }
 
   // Get user profile for username
-  const userDoc = await getDoc(doc(firestore, 'userProfiles', userId));
+  const userDoc = await getDoc(doc(firestore, "userProfiles", userId));
   const userData = userDoc.exists() ? userDoc.data() : {};
-  const username = userData.username || userData.displayName || 'Unknown User';
+  const username = userData.username || userData.displayName || "Unknown User";
 
   // Create request document
-  const requestRef = await addDoc(collection(firestore, 'campaignRequests'), {
+  const requestRef = await addDoc(collection(firestore, "campaignRequests"), {
     campaignId,
     userId,
     username,
-    characterName: requestData.characterName || '',
-    characterClass: requestData.characterClass || '',
-    message: requestData.message || '',
-    status: 'pending',
+    characterName: requestData.characterName || "",
+    characterClass: requestData.characterClass || "",
+    message: requestData.message || "",
+    status: "pending",
     createdAt: serverTimestamp(),
     processedAt: null,
-    processedBy: null
+    processedBy: null,
   });
 
   return {
@@ -70,10 +75,10 @@ export async function createJoinRequest(firestore, campaignId, userId, requestDa
     userId,
     username,
     ...requestData,
-    status: 'pending',
+    status: "pending",
     createdAt: new Date(),
     processedAt: null,
-    processedBy: null
+    processedBy: null,
   };
 }
 
@@ -85,11 +90,11 @@ export async function createJoinRequest(firestore, campaignId, userId, requestDa
  * @returns {Promise<Object|null>} Request document or null
  */
 export async function getJoinRequest(firestore, campaignId, userId) {
-  const requestsRef = collection(firestore, 'campaignRequests');
+  const requestsRef = collection(firestore, "campaignRequests");
   const q = query(
     requestsRef,
-    where('campaignId', '==', campaignId),
-    where('userId', '==', userId)
+    where("campaignId", "==", campaignId),
+    where("userId", "==", userId)
   );
 
   const snapshot = await getDocs(q);
@@ -108,7 +113,7 @@ export async function getJoinRequest(firestore, campaignId, userId) {
   const mostRecent = docs[0];
   return {
     id: mostRecent.id,
-    ...mostRecent.data()
+    ...mostRecent.data(),
   };
 }
 
@@ -119,20 +124,20 @@ export async function getJoinRequest(firestore, campaignId, userId) {
  * @returns {Promise<Array>} Array of pending request objects
  */
 export async function getPendingRequests(firestore, campaignId) {
-  const requestsRef = collection(firestore, 'campaignRequests');
+  const requestsRef = collection(firestore, "campaignRequests");
   const q = query(
     requestsRef,
-    where('campaignId', '==', campaignId),
-    where('status', '==', 'pending')
+    where("campaignId", "==", campaignId),
+    where("status", "==", "pending")
   );
 
   const snapshot = await getDocs(q);
   const requests = [];
 
-  snapshot.forEach(doc => {
+  snapshot.forEach((doc) => {
     requests.push({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     });
   });
 
@@ -151,11 +156,8 @@ export async function getPendingRequests(firestore, campaignId) {
  * @returns {Promise<Array>} Array of request objects
  */
 export async function getUserRequests(firestore, userId) {
-  const requestsRef = collection(firestore, 'campaignRequests');
-  const q = query(
-    requestsRef,
-    where('userId', '==', userId)
-  );
+  const requestsRef = collection(firestore, "campaignRequests");
+  const q = query(requestsRef, where("userId", "==", userId));
 
   const snapshot = await getDocs(q);
   const requests = [];
@@ -164,17 +166,21 @@ export async function getUserRequests(firestore, userId) {
     const data = docSnap.data();
 
     // Fetch campaign info
-    const campaignDoc = await getDoc(doc(firestore, 'campaigns', data.campaignId));
+    const campaignDoc = await getDoc(
+      doc(firestore, "campaigns", data.campaignId)
+    );
     const campaignData = campaignDoc.exists() ? campaignDoc.data() : null;
 
     requests.push({
       id: docSnap.id,
       ...data,
-      campaign: campaignData ? {
-        id: data.campaignId,
-        name: campaignData.name,
-        gameSystem: campaignData.gameSystem
-      } : null
+      campaign: campaignData
+        ? {
+            id: data.campaignId,
+            name: campaignData.name,
+            gameSystem: campaignData.gameSystem,
+          }
+        : null,
     });
   }
 
@@ -194,24 +200,24 @@ export async function getUserRequests(firestore, userId) {
  * @returns {Promise<void>}
  */
 export async function approveJoinRequest(firestore, requestId, dmId) {
-  const requestRef = doc(firestore, 'campaignRequests', requestId);
+  const requestRef = doc(firestore, "campaignRequests", requestId);
   const requestDoc = await getDoc(requestRef);
 
   if (!requestDoc.exists()) {
-    throw new Error('Request not found');
+    throw new Error("Request not found");
   }
 
   const requestData = requestDoc.data();
 
-  if (requestData.status !== 'pending') {
-    throw new Error('Request has already been processed');
+  if (requestData.status !== "pending") {
+    throw new Error("Request has already been processed");
   }
 
   // Update request status
   await updateDoc(requestRef, {
-    status: 'approved',
+    status: "approved",
     processedAt: serverTimestamp(),
-    processedBy: dmId
+    processedBy: dmId,
   });
 
   return requestData;
@@ -225,24 +231,24 @@ export async function approveJoinRequest(firestore, requestId, dmId) {
  * @returns {Promise<void>}
  */
 export async function denyJoinRequest(firestore, requestId, dmId) {
-  const requestRef = doc(firestore, 'campaignRequests', requestId);
+  const requestRef = doc(firestore, "campaignRequests", requestId);
   const requestDoc = await getDoc(requestRef);
 
   if (!requestDoc.exists()) {
-    throw new Error('Request not found');
+    throw new Error("Request not found");
   }
 
   const requestData = requestDoc.data();
 
-  if (requestData.status !== 'pending') {
-    throw new Error('Request has already been processed');
+  if (requestData.status !== "pending") {
+    throw new Error("Request has already been processed");
   }
 
   // Update request status
   await updateDoc(requestRef, {
-    status: 'denied',
+    status: "denied",
     processedAt: serverTimestamp(),
-    processedBy: dmId
+    processedBy: dmId,
   });
 }
 
@@ -254,22 +260,22 @@ export async function denyJoinRequest(firestore, requestId, dmId) {
  * @returns {Promise<void>}
  */
 export async function cancelJoinRequest(firestore, requestId, userId) {
-  const requestRef = doc(firestore, 'campaignRequests', requestId);
+  const requestRef = doc(firestore, "campaignRequests", requestId);
   const requestDoc = await getDoc(requestRef);
 
   if (!requestDoc.exists()) {
-    throw new Error('Request not found');
+    throw new Error("Request not found");
   }
 
   const requestData = requestDoc.data();
 
   // Verify the user owns this request
   if (requestData.userId !== userId) {
-    throw new Error('You can only cancel your own requests');
+    throw new Error("You can only cancel your own requests");
   }
 
-  if (requestData.status !== 'pending') {
-    throw new Error('Can only cancel pending requests');
+  if (requestData.status !== "pending") {
+    throw new Error("Can only cancel pending requests");
   }
 
   // Delete the request
@@ -282,15 +288,12 @@ export async function cancelJoinRequest(firestore, requestId, userId) {
  * @returns {Promise<number>} Number of deleted requests
  */
 export async function cleanupOldRequests(firestore) {
-  const requestsRef = collection(firestore, 'campaignRequests');
+  const requestsRef = collection(firestore, "campaignRequests");
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   // Get all processed requests
-  const q = query(
-    requestsRef,
-    where('status', 'in', ['approved', 'denied'])
-  );
+  const q = query(requestsRef, where("status", "in", ["approved", "denied"]));
 
   const snapshot = await getDocs(q);
   let deletedCount = 0;
@@ -300,7 +303,7 @@ export async function cleanupOldRequests(firestore) {
     const processedAt = data.processedAt?.toDate();
 
     if (processedAt && processedAt < thirtyDaysAgo) {
-      await deleteDoc(doc(firestore, 'campaignRequests', docSnap.id));
+      await deleteDoc(doc(firestore, "campaignRequests", docSnap.id));
       deletedCount++;
     }
   }
@@ -316,7 +319,7 @@ const campaignRequestService = {
   approveJoinRequest,
   denyJoinRequest,
   cancelJoinRequest,
-  cleanupOldRequests
+  cleanupOldRequests,
 };
 
 export default campaignRequestService;

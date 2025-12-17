@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useCachedUserProfile } from '../../services/cache';
-import { ProfileEditor } from '../ProfileEditor/ProfileEditor';
-import './ProfileSetupModal.css';
+import React, { useState } from "react";
+import { useCachedUserProfile } from "../../services/cache";
+import { ProfileEditor } from "../ProfileEditor/ProfileEditor";
+import "./ProfileSetupModal.css";
 
 /**
  * ProfileSetupModal - First-time user profile setup experience
@@ -32,12 +32,18 @@ export function ProfileSetupModal({ onComplete, canSkip = false }) {
             <div className="setup-header">
               <div className="setup-icon">👋</div>
               <h2>Welcome to DungeonChat!</h2>
-              <p>Before you can start, please choose a unique username. This is how other users will recognize you across campaigns and chat rooms.</p>
-              <p className="setup-note">⚠️ Username is required and cannot be changed later</p>
+              <p>
+                Before you can start, please choose a unique username. This is
+                how other users will recognize you across campaigns and chat
+                rooms.
+              </p>
+              <p className="setup-note">
+                ⚠️ Username is required and cannot be changed later
+              </p>
             </div>
 
             <div className="setup-content">
-              <ProfileEditor 
+              <ProfileEditor
                 onSave={handleComplete}
                 onCancel={undefined}
                 compact={true}
@@ -52,7 +58,10 @@ export function ProfileSetupModal({ onComplete, canSkip = false }) {
               <div className="checkmark">✓</div>
             </div>
             <h2>Username Set!</h2>
-            <p>Welcome to DungeonChat! Your profile has been created successfully.</p>
+            <p>
+              Welcome to DungeonChat! Your profile has been created
+              successfully.
+            </p>
             <div className="success-loading">
               <div className="spinner"></div>
               <span>Loading application...</span>

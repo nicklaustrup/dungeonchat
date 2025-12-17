@@ -2,91 +2,91 @@
  * End-to-end test for drag and drop image upload functionality
  * This test verifies that drag and drop images work correctly through the entire flow
  */
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ChatStateProvider } from '../../contexts/ChatStateContext';
-import ChatRoom from '../../components/ChatRoom/ChatRoom';
-import ChatInput from '../../components/ChatInput/ChatInput';
+import React from "react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { ChatStateProvider } from "../../contexts/ChatStateContext";
+import ChatRoom from "../../components/ChatRoom/ChatRoom";
+import ChatInput from "../../components/ChatInput/ChatInput";
 
 // Mock Firebase context
-jest.mock('../../services/FirebaseContext', () => ({
+jest.mock("../../services/FirebaseContext", () => ({
   useFirebase: () => ({
-    auth: { currentUser: { uid: 'test-user', displayName: 'Test User' } },
-    user: { uid: 'test-user', displayName: 'Test User' },
+    auth: { currentUser: { uid: "test-user", displayName: "Test User" } },
+    user: { uid: "test-user", displayName: "Test User" },
     firestore: {},
     rtdb: {},
-    storage: {}
-  })
+    storage: {},
+  }),
 }));
 
 // Mock sound utilities
-jest.mock('../../utils/sound', () => ({
+jest.mock("../../utils/sound", () => ({
   playSendMessageSound: jest.fn(),
-  playReceiveMessageSound: jest.fn()
+  playReceiveMessageSound: jest.fn(),
 }));
 
 // Mock message services
-jest.mock('../../services/messageService', () => ({
+jest.mock("../../services/messageService", () => ({
   createTextMessage: jest.fn(),
-  createImageMessage: jest.fn()
+  createImageMessage: jest.fn(),
 }));
 
 // Mock image upload service
-jest.mock('../../services/imageUploadService', () => ({
+jest.mock("../../services/imageUploadService", () => ({
   compressImage: jest.fn(async (file) => file),
-  uploadImage: jest.fn(async () => 'https://example.com/uploaded-image.png')
+  uploadImage: jest.fn(async () => "https://example.com/uploaded-image.png"),
 }));
 
 // Mock chat messages hook
-jest.mock('../../hooks/useChatMessages', () => ({
-  useChatMessages: () => ({ 
-    messages: [], 
-    loadMore: jest.fn(), 
-    hasMore: false 
-  })
+jest.mock("../../hooks/useChatMessages", () => ({
+  useChatMessages: () => ({
+    messages: [],
+    loadMore: jest.fn(),
+    hasMore: false,
+  }),
 }));
 
 // Mock scroll manager
-jest.mock('../../hooks/useUnifiedScrollManager', () => ({
+jest.mock("../../hooks/useUnifiedScrollManager", () => ({
   useUnifiedScrollManager: () => ({
     isAtBottom: true,
     hasNewMessages: false,
     newMessagesCount: 0,
     scrollToBottom: jest.fn(),
-    captureBeforeLoadMore: jest.fn()
-  })
+    captureBeforeLoadMore: jest.fn(),
+  }),
 }));
 
 // Mock infinite scroll
-jest.mock('../../hooks/useInfiniteScrollTop', () => ({
+jest.mock("../../hooks/useInfiniteScrollTop", () => ({
   useInfiniteScrollTop: () => ({
     sentinelRef: { current: null },
-    isFetching: false
-  })
+    isFetching: false,
+  }),
 }));
 
 // Mock typing presence
-jest.mock('../../hooks/useTypingPresence', () => ({
+jest.mock("../../hooks/useTypingPresence", () => ({
   useTypingPresence: () => ({
-    handleInputActivity: jest.fn()
-  })
+    handleInputActivity: jest.fn(),
+  }),
 }));
 
 // Mock emoji picker
-jest.mock('../../hooks/useEmojiPicker', () => ({
+jest.mock("../../hooks/useEmojiPicker", () => ({
   useEmojiPicker: () => ({
     open: false,
     toggle: jest.fn(),
     buttonRef: { current: null },
-    setOnSelect: jest.fn()
-  })
+    setOnSelect: jest.fn(),
+  }),
 }));
 
 // Mock toast
-jest.mock('../../hooks/useToast', () => ({
+jest.mock("../../hooks/useToast", () => ({
   useToast: () => ({
-    push: jest.fn()
-  })
+    push: jest.fn(),
+  }),
 }));
 
 // Mock FileReader
@@ -95,7 +95,7 @@ class MockFileReader {
     this.result = null;
     this.onload = null;
   }
-  
+
   readAsDataURL(file) {
     // Simulate async file reading
     setTimeout(() => {
@@ -121,19 +121,21 @@ class MockIntersectionObserver {
 function simulateDragDrop(element, file) {
   const dataTransfer = {
     files: [file],
-    items: [{ 
-      kind: 'file', 
-      type: file.type, 
-      getAsFile: () => file 
-    }]
+    items: [
+      {
+        kind: "file",
+        type: file.type,
+        getAsFile: () => file,
+      },
+    ],
   };
-  
+
   fireEvent.dragEnter(element, { dataTransfer });
   fireEvent.dragOver(element, { dataTransfer });
   fireEvent.drop(element, { dataTransfer });
 }
 
-describe('Drag and Drop Image Upload - End to End', () => {
+describe("Drag and Drop Image Upload - End to End", () => {
   let originalFileReader;
   let originalIntersectionObserver;
 
@@ -153,15 +155,16 @@ describe('Drag and Drop Image Upload - End to End', () => {
     jest.clearAllMocks();
   });
 
-  test('complete drag and drop flow from ChatRoom to ChatInput modal', async () => {
+  test("complete drag and drop flow from ChatRoom to ChatInput modal", async () => {
     // Component that properly connects ChatRoom to context like ChatPage does
     const IntegratedChatComponent = () => {
-      const { handleImageDrop } = require('../../contexts/ChatStateContext').useChatImage();
-      
+      const { handleImageDrop } =
+        require("../../contexts/ChatStateContext").useChatImage();
+
       return (
         <div>
           <ChatRoom
-            getDisplayName={() => 'Test User'}
+            getDisplayName={() => "Test User"}
             searchTerm=""
             onDragStateChange={() => {}}
             onImageDrop={handleImageDrop} // Properly connected to context
@@ -170,7 +173,7 @@ describe('Drag and Drop Image Upload - End to End', () => {
             soundEnabled={false}
           />
           <ChatInput
-            getDisplayName={() => 'Test User'}
+            getDisplayName={() => "Test User"}
             soundEnabled={false}
             forceScrollBottom={() => {}}
           />
@@ -186,39 +189,50 @@ describe('Drag and Drop Image Upload - End to End', () => {
     );
 
     // Find the chat room element (drop target)
-    const chatRoom = screen.getByRole('log');
+    const chatRoom = screen.getByRole("log");
     expect(chatRoom).toBeInTheDocument();
 
     // Initially, no image modal should be visible
-    expect(screen.queryByRole('button', { name: /send image/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /send image/i })
+    ).not.toBeInTheDocument();
 
     // Create a test image file
-    const imageFile = new File(['test image data'], 'test.png', { type: 'image/png' });
+    const imageFile = new File(["test image data"], "test.png", {
+      type: "image/png",
+    });
 
     // Simulate drag and drop on the chat room
     simulateDragDrop(chatRoom, imageFile);
 
     // Wait for the image preview modal to appear
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /send image/i })).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole("button", { name: /send image/i })
+        ).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     // Verify cancel button is also present
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
 
     // Test canceling the image
-    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
 
     await waitFor(() => {
-      expect(screen.queryByRole('button', { name: /send image/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /send image/i })
+      ).not.toBeInTheDocument();
     });
   });
 
-  test('drag and drop shows drag overlay states', async () => {
+  test("drag and drop shows drag overlay states", async () => {
     render(
       <ChatStateProvider>
         <ChatRoom
-          getDisplayName={() => 'Test User'}
+          getDisplayName={() => "Test User"}
           searchTerm=""
           onDragStateChange={() => {}}
           onImageDrop={() => {}}
@@ -229,27 +243,31 @@ describe('Drag and Drop Image Upload - End to End', () => {
       </ChatStateProvider>
     );
 
-    const chatRoom = screen.getByRole('log');
-    const imageFile = new File(['test'], 'test.png', { type: 'image/png' });
+    const chatRoom = screen.getByRole("log");
+    const imageFile = new File(["test"], "test.png", { type: "image/png" });
 
     // Start drag over
     fireEvent.dragEnter(chatRoom, {
       dataTransfer: {
         files: [imageFile],
-        items: [{ kind: 'file', type: 'image/png', getAsFile: () => imageFile }]
-      }
+        items: [
+          { kind: "file", type: "image/png", getAsFile: () => imageFile },
+        ],
+      },
     });
 
     fireEvent.dragOver(chatRoom, {
       dataTransfer: {
         files: [imageFile],
-        items: [{ kind: 'file', type: 'image/png', getAsFile: () => imageFile }]
-      }
+        items: [
+          { kind: "file", type: "image/png", getAsFile: () => imageFile },
+        ],
+      },
     });
 
     // Verify drag overlay appears (it should show "Release to upload image")
     await waitFor(() => {
-      const overlay = document.querySelector('.drag-overlay');
+      const overlay = document.querySelector(".drag-overlay");
       expect(overlay).toBeInTheDocument();
     });
   });

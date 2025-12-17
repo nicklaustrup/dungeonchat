@@ -1,15 +1,15 @@
-import React from 'react';
-import { Slash, PaintBucket, Eraser } from 'lucide-react';
-import './BoundaryPanel.css';
+import React from "react";
+import { Slash, PaintBucket, Eraser } from "lucide-react";
+import "./BoundaryPanel.css";
 
 /**
  * BoundaryPanel
  * DM-only panel for managing movement boundaries
  * Supports both line boundaries (walls) and painted boundaries (out of bounds areas)
  */
-function BoundaryPanel({ 
-  open, 
-  onClose, 
+function BoundaryPanel({
+  open,
+  onClose,
   boundariesEnabled,
   onToggleBoundaries,
   boundariesVisible,
@@ -28,7 +28,7 @@ function BoundaryPanel({
   onGridColorChange,
   boundaryOpacity,
   onBoundaryOpacityChange,
-  onClearAll
+  onClearAll,
 }) {
   if (!open) return null;
 
@@ -36,7 +36,7 @@ function BoundaryPanel({
     <div className="toolbar-settings-panel boundary-panel">
       <div className="panel-header">
         <label>Boundary Controls</label>
-        <button 
+        <button
           className="panel-close-btn"
           onClick={onClose}
           aria-label="Close boundary controls"
@@ -44,15 +44,15 @@ function BoundaryPanel({
           ×
         </button>
       </div>
-      
+
       {/* Enable/Disable Toggle */}
       <div className="setting-group">
         <label>Boundaries</label>
         <div className="checkbox-group">
           <label className="checkbox-label">
-            <input 
-              type="checkbox" 
-              checked={boundariesEnabled} 
+            <input
+              type="checkbox"
+              checked={boundariesEnabled}
               onChange={(e) => onToggleBoundaries?.(e.target.checked)}
             />
             <span>Enable Boundaries</span>
@@ -68,9 +68,9 @@ function BoundaryPanel({
             <label>Visibility (DM Only)</label>
             <div className="checkbox-group">
               <label className="checkbox-label">
-                <input 
-                  type="checkbox" 
-                  checked={boundariesVisible} 
+                <input
+                  type="checkbox"
+                  checked={boundariesVisible}
                   onChange={(e) => onToggleVisibility?.(e.target.checked)}
                 />
                 <span>Show Boundaries</span>
@@ -84,15 +84,15 @@ function BoundaryPanel({
             <label>Drawing Mode</label>
             <div className="boundary-mode-buttons">
               <button
-                className={`boundary-mode-btn ${boundaryMode === 'line' ? 'active' : ''}`}
-                onClick={() => onBoundaryModeChange?.('line')}
+                className={`boundary-mode-btn ${boundaryMode === "line" ? "active" : ""}`}
+                onClick={() => onBoundaryModeChange?.("line")}
                 title="Draw line boundaries (walls, cliffs)"
               >
                 <Slash size={16} /> Line
               </button>
               <button
-                className={`boundary-mode-btn ${boundaryMode === 'paint' ? 'active' : ''}`}
-                onClick={() => onBoundaryModeChange?.('paint')}
+                className={`boundary-mode-btn ${boundaryMode === "paint" ? "active" : ""}`}
+                onClick={() => onBoundaryModeChange?.("paint")}
                 title="Paint out of bounds areas"
               >
                 <PaintBucket size={16} /> Paint
@@ -101,16 +101,16 @@ function BoundaryPanel({
           </div>
 
           {/* Line Mode Options */}
-          {boundaryMode === 'line' && (
+          {boundaryMode === "line" && (
             <>
               <div className="setting-divider" />
               <div className="setting-group">
                 <label>Line Options</label>
                 <div className="checkbox-group">
                   <label className="checkbox-label">
-                    <input 
-                      type="checkbox" 
-                      checked={snapToGrid} 
+                    <input
+                      type="checkbox"
+                      checked={snapToGrid}
                       onChange={(e) => onSnapToGridToggle?.(e.target.checked)}
                     />
                     <span>Snap to Grid</span>
@@ -120,7 +120,7 @@ function BoundaryPanel({
                   💡 Click and drag to draw boundary lines
                 </small>
               </div>
-              
+
               {/* Line Color */}
               <div className="setting-divider" />
               <div className="setting-group">
@@ -141,7 +141,9 @@ function BoundaryPanel({
           {/* Boundary Opacity */}
           <div className="setting-divider" />
           <div className="setting-group">
-            <label>Boundary Opacity: {Math.round(boundaryOpacity * 100)}%</label>
+            <label>
+              Boundary Opacity: {Math.round(boundaryOpacity * 100)}%
+            </label>
             <div className="opacity-slider">
               <input
                 type="range"
@@ -149,28 +151,30 @@ function BoundaryPanel({
                 max={100}
                 step={5}
                 value={Math.round(boundaryOpacity * 100)}
-                onChange={(e) => onBoundaryOpacityChange?.(parseInt(e.target.value, 10) / 100)}
+                onChange={(e) =>
+                  onBoundaryOpacityChange?.(parseInt(e.target.value, 10) / 100)
+                }
               />
             </div>
           </div>
 
           {/* Paint Mode Options */}
-          {boundaryMode === 'paint' && (
+          {boundaryMode === "paint" && (
             <>
               <div className="setting-divider" />
               <div className="setting-group">
                 <label>Paint Mode</label>
                 <div className="boundary-brush-modes">
                   <button
-                    className={`boundary-brush-btn ${brushMode === 'paint' ? 'active' : ''}`}
-                    onClick={() => onBrushModeChange?.('paint')}
+                    className={`boundary-brush-btn ${brushMode === "paint" ? "active" : ""}`}
+                    onClick={() => onBrushModeChange?.("paint")}
                     title="Paint out of bounds areas"
                   >
                     <PaintBucket size={16} /> Paint
                   </button>
                   <button
-                    className={`boundary-brush-btn ${brushMode === 'erase' ? 'active' : ''}`}
-                    onClick={() => onBrushModeChange?.('erase')}
+                    className={`boundary-brush-btn ${brushMode === "erase" ? "active" : ""}`}
+                    onClick={() => onBrushModeChange?.("erase")}
                     title="Erase painted boundaries"
                   >
                     <Eraser size={16} /> Erase
@@ -196,7 +200,9 @@ function BoundaryPanel({
               {/* Brush Size Slider */}
               <div className="setting-divider" />
               <div className="setting-group">
-                <label>Brush Size: {brushSize} cell{brushSize !== 1 ? 's' : ''}</label>
+                <label>
+                  Brush Size: {brushSize} cell{brushSize !== 1 ? "s" : ""}
+                </label>
                 <div className="opacity-slider">
                   <input
                     type="range"
@@ -204,7 +210,9 @@ function BoundaryPanel({
                     max={10}
                     step={1}
                     value={brushSize}
-                    onChange={(e) => onBrushSizeChange?.(parseInt(e.target.value, 10))}
+                    onChange={(e) =>
+                      onBrushSizeChange?.(parseInt(e.target.value, 10))
+                    }
                   />
                 </div>
                 <small className="setting-hint">
@@ -233,7 +241,8 @@ function BoundaryPanel({
             <small>
               <strong>Boundaries prevent token movement:</strong>
               <br />• <strong>Line Mode:</strong> Draw walls, cliffs, barriers
-              <br />• <strong>Paint Mode:</strong> Mark entire areas as impassable
+              <br />• <strong>Paint Mode:</strong> Mark entire areas as
+              impassable
               <br />• Only visible to DMs, invisible to players
             </small>
           </div>

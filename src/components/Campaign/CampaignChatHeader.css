@@ -259,15 +259,15 @@
     gap: 0.75rem;
     text-align: center;
   }
-  
+
   .campaign-info {
     order: -1;
   }
-  
+
   .back-to-dashboard-btn {
     align-self: flex-start;
   }
-  
+
   .campaign-meta {
     justify-content: center;
   }
@@ -277,11 +277,11 @@
   .campaign-chat-header {
     padding: 0.75rem 0;
   }
-  
+
   .campaign-name {
     font-size: 1.125rem;
   }
-  
+
   .campaign-meta {
     flex-direction: column;
     gap: 0.5rem;

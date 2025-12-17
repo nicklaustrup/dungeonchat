@@ -1,23 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { HexColorPicker } from 'react-colorful';
-import './TokenProperties.css';
+import React, { useState, useEffect } from "react";
+import { HexColorPicker } from "react-colorful";
+import "./TokenProperties.css";
 
 /**
  * TokenProperties - Edit properties of selected token
  * Allows editing name, color, size, visibility, and deletion
  */
 const TokenProperties = ({ token, onUpdate, onDelete }) => {
-  const [name, setName] = useState(token.name || '');
-  const [color, setColor] = useState(token.color || getComputedStyle(document.documentElement).getPropertyValue('--player-token-default').trim() || '#4a90e2');
-  const [size, setSize] = useState(token.size?.width ? token.size.width / 50 : 1);
+  const [name, setName] = useState(token.name || "");
+  const [color, setColor] = useState(
+    token.color ||
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--player-token-default")
+        .trim() ||
+      "#4a90e2"
+  );
+  const [size, setSize] = useState(
+    token.size?.width ? token.size.width / 50 : 1
+  );
   const [hidden, setHidden] = useState(token.hidden || false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   // Update form when token changes
   useEffect(() => {
-    setName(token.name || '');
-    setColor(token.color || getComputedStyle(document.documentElement).getPropertyValue('--player-token-default').trim() || '#4a90e2');
+    setName(token.name || "");
+    setColor(
+      token.color ||
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--player-token-default")
+          .trim() ||
+        "#4a90e2"
+    );
     setSize(token.size?.width ? token.size.width / 50 : 1);
     setHidden(token.hidden || false);
     setHasChanges(false);
@@ -26,31 +40,40 @@ const TokenProperties = ({ token, onUpdate, onDelete }) => {
   // Track changes
   useEffect(() => {
     const currentSize = token.size?.width ? token.size.width / 50 : 1;
-    const changed = 
+    const changed =
       name !== token.name ||
       color !== token.color ||
       size !== currentSize ||
       hidden !== token.hidden;
     setHasChanges(changed);
-  }, [name, color, size, hidden, token.name, token.color, token.size?.width, token.hidden]);
+  }, [
+    name,
+    color,
+    size,
+    hidden,
+    token.name,
+    token.color,
+    token.size?.width,
+    token.hidden,
+  ]);
 
   const sizeOptions = [
-    { value: 0.5, label: 'Tiny', gridSquares: '0.5x0.5' },
-    { value: 1, label: 'Small/Medium', gridSquares: '1x1' },
-    { value: 2, label: 'Large', gridSquares: '2x2' },
-    { value: 3, label: 'Huge', gridSquares: '3x3' },
-    { value: 4, label: 'Gargantuan', gridSquares: '4x4' },
+    { value: 0.5, label: "Tiny", gridSquares: "0.5x0.5" },
+    { value: 1, label: "Small/Medium", gridSquares: "1x1" },
+    { value: 2, label: "Large", gridSquares: "2x2" },
+    { value: 3, label: "Huge", gridSquares: "3x3" },
+    { value: 4, label: "Gargantuan", gridSquares: "4x4" },
   ];
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert('Token name cannot be empty');
+      alert("Token name cannot be empty");
       return;
     }
 
     if (!token.id && !token.tokenId) {
-      alert('Token ID is missing. Cannot update token.');
-      console.error('Token object:', token);
+      alert("Token ID is missing. Cannot update token.");
+      console.error("Token object:", token);
       return;
     }
 
@@ -70,8 +93,14 @@ const TokenProperties = ({ token, onUpdate, onDelete }) => {
   };
 
   const handleReset = () => {
-    setName(token.name || '');
-    setColor(token.color || getComputedStyle(document.documentElement).getPropertyValue('--player-token-default').trim() || '#4a90e2');
+    setName(token.name || "");
+    setColor(
+      token.color ||
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--player-token-default")
+          .trim() ||
+        "#4a90e2"
+    );
     setSize(token.size?.width ? token.size.width / 50 : 1);
     setHidden(token.hidden || false);
     setHasChanges(false);
@@ -80,7 +109,7 @@ const TokenProperties = ({ token, onUpdate, onDelete }) => {
   const handleDelete = () => {
     const tokenId = token.id || token.tokenId;
     if (!tokenId) {
-      alert('Token ID is missing. Cannot delete token.');
+      alert("Token ID is missing. Cannot delete token.");
       return;
     }
     onDelete(tokenId, token.imageUrl);
@@ -112,18 +141,26 @@ const TokenProperties = ({ token, onUpdate, onDelete }) => {
         <div className="form-group">
           <label className="form-label">Token Type</label>
           <div className="token-type-display">
-            <span className="type-badge" style={{
-              backgroundColor: token.type === 'player' ? '#4a9eff' : 
-                               token.type === 'enemy' ? '#dc2626' : 
-                               token.type === 'npc' ? '#22c55e' : '#888888',
-              color: 'white',
-              padding: '4px 12px',
-              borderRadius: '12px',
-              fontSize: '0.85rem',
-              fontWeight: 'bold',
-              textTransform: 'capitalize'
-            }}>
-              {token.type || 'unknown'}
+            <span
+              className="type-badge"
+              style={{
+                backgroundColor:
+                  token.type === "player"
+                    ? "#4a9eff"
+                    : token.type === "enemy"
+                      ? "#dc2626"
+                      : token.type === "npc"
+                        ? "#22c55e"
+                        : "#888888",
+                color: "white",
+                padding: "4px 12px",
+                borderRadius: "12px",
+                fontSize: "0.85rem",
+                fontWeight: "bold",
+                textTransform: "capitalize",
+              }}
+            >
+              {token.type || "unknown"}
             </span>
           </div>
         </div>
@@ -141,9 +178,9 @@ const TokenProperties = ({ token, onUpdate, onDelete }) => {
             </button>
             {showColorPicker && (
               <div className="color-picker-popover">
-                <div 
-                  className="color-picker-backdrop" 
-                  onClick={() => setShowColorPicker(false)} 
+                <div
+                  className="color-picker-backdrop"
+                  onClick={() => setShowColorPicker(false)}
                 />
                 <HexColorPicker color={color} onChange={setColor} />
               </div>
@@ -157,7 +194,7 @@ const TokenProperties = ({ token, onUpdate, onDelete }) => {
             {sizeOptions.map((option) => (
               <button
                 key={option.value}
-                className={`size-button ${size === option.value ? 'selected' : ''}`}
+                className={`size-button ${size === option.value ? "selected" : ""}`}
                 onClick={() => setSize(option.value)}
               >
                 <div className="size-label">{option.label}</div>
@@ -177,16 +214,18 @@ const TokenProperties = ({ token, onUpdate, onDelete }) => {
             />
             <span>Hidden from players</span>
           </label>
-          <p className="form-hint">
-            Hidden tokens are only visible to the DM
-          </p>
+          <p className="form-hint">Hidden tokens are only visible to the DM</p>
         </div>
 
         <div className="form-group">
           <label className="form-label">Position</label>
           <div className="position-display">
-            <span className="position-coord">X: {Math.round(token.position?.x || 0)}</span>
-            <span className="position-coord">Y: {Math.round(token.position?.y || 0)}</span>
+            <span className="position-coord">
+              X: {Math.round(token.position?.x || 0)}
+            </span>
+            <span className="position-coord">
+              Y: {Math.round(token.position?.y || 0)}
+            </span>
           </div>
           <p className="form-hint">
             Drag the token on the map to change position
@@ -209,10 +248,7 @@ const TokenProperties = ({ token, onUpdate, onDelete }) => {
         >
           ↺ Reset
         </button>
-        <button
-          className="action-button danger"
-          onClick={handleDelete}
-        >
+        <button className="action-button danger" onClick={handleDelete}>
           🗑️ Delete Token
         </button>
       </div>

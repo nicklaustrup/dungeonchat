@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import './TokenArtUpload.css';
+import React, { useState } from "react";
+import { useDropzone } from "react-dropzone";
+import "./TokenArtUpload.css";
 
 /**
  * TokenArtUpload - Component for uploading custom token artwork
@@ -12,7 +12,7 @@ const TokenArtUpload = ({ selectedToken, onUpload, onRemove, isUploading }) => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+      "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
     },
     maxSize: 5 * 1024 * 1024, // 5MB
     multiple: false,
@@ -21,12 +21,14 @@ const TokenArtUpload = ({ selectedToken, onUpload, onRemove, isUploading }) => {
 
       if (rejectedFiles.length > 0) {
         const rejection = rejectedFiles[0];
-        if (rejection.errors[0]?.code === 'file-too-large') {
-          setError('File is too large. Maximum size is 5MB.');
-        } else if (rejection.errors[0]?.code === 'file-invalid-type') {
-          setError('Invalid file type. Please upload an image (PNG, JPG, GIF, or WebP).');
+        if (rejection.errors[0]?.code === "file-too-large") {
+          setError("File is too large. Maximum size is 5MB.");
+        } else if (rejection.errors[0]?.code === "file-invalid-type") {
+          setError(
+            "Invalid file type. Please upload an image (PNG, JPG, GIF, or WebP)."
+          );
         } else {
-          setError('Failed to upload file. Please try again.');
+          setError("Failed to upload file. Please try again.");
         }
         return;
       }
@@ -44,7 +46,7 @@ const TokenArtUpload = ({ selectedToken, onUpload, onRemove, isUploading }) => {
         // Call upload handler
         onUpload(selectedFile);
       }
-    }
+    },
   });
 
   const handleRemove = () => {
@@ -59,7 +61,7 @@ const TokenArtUpload = ({ selectedToken, onUpload, onRemove, isUploading }) => {
   return (
     <div className="token-art-upload-section">
       <label className="upload-label">Custom Token Art</label>
-      
+
       {hasImage ? (
         <div className="current-art-container">
           <div className="art-preview">
@@ -68,16 +70,16 @@ const TokenArtUpload = ({ selectedToken, onUpload, onRemove, isUploading }) => {
           <div className="art-actions">
             <div {...getRootProps()} className="update-dropzone">
               <input {...getInputProps()} />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="update-button"
                 disabled={isUploading}
               >
-                {isUploading ? '⏳ Uploading...' : '🔄 Update Image'}
+                {isUploading ? "⏳ Uploading..." : "🔄 Update Image"}
               </button>
             </div>
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="remove-button"
               onClick={handleRemove}
               disabled={isUploading}
@@ -89,24 +91,20 @@ const TokenArtUpload = ({ selectedToken, onUpload, onRemove, isUploading }) => {
       ) : (
         <div
           {...getRootProps()}
-          className={`dropzone-compact ${isDragActive ? 'active' : ''}`}
+          className={`dropzone-compact ${isDragActive ? "active" : ""}`}
         >
           <input {...getInputProps()} />
           <div className="dropzone-content-compact">
             <span className="upload-icon">📤</span>
             <span className="upload-text">
-              {isDragActive ? 'Drop image here' : 'Upload custom art'}
+              {isDragActive ? "Drop image here" : "Upload custom art"}
             </span>
             <span className="upload-hint">PNG, JPG, GIF, WebP • Max 5MB</span>
           </div>
         </div>
       )}
 
-      {error && (
-        <div className="upload-error-compact">
-          ⚠️ {error}
-        </div>
-      )}
+      {error && <div className="upload-error-compact">⚠️ {error}</div>}
     </div>
   );
 };

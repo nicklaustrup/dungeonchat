@@ -8,7 +8,11 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: linear-gradient(135deg, rgba(46, 213, 115, 0.15) 0%, rgba(0, 184, 148, 0.15) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(46, 213, 115, 0.15) 0%,
+    rgba(0, 184, 148, 0.15) 100%
+  );
   border: 2px solid rgba(46, 213, 115, 0.4);
   border-radius: 8px;
   margin-top: 8px;
@@ -19,7 +23,11 @@
 }
 
 .ptt-indicator.active {
-  background: linear-gradient(135deg, rgba(46, 213, 115, 0.3) 0%, rgba(0, 184, 148, 0.3) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(46, 213, 115, 0.3) 0%,
+    rgba(0, 184, 148, 0.3) 100%
+  );
   border-color: #2ed573;
   box-shadow: 0 0 20px rgba(46, 213, 115, 0.3);
   animation: pttPulse 1.5s ease-in-out infinite;
@@ -78,7 +86,8 @@
 
 /* Animations */
 @keyframes pttPulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(46, 213, 115, 0.3);
   }
   50% {
@@ -104,19 +113,19 @@
     font-size: 12px;
     gap: 6px;
   }
-  
+
   .ptt-indicator-icon {
     font-size: 14px;
   }
-  
+
   .ptt-indicator-label {
     font-size: 10px;
   }
-  
+
   .ptt-indicator-status {
     font-size: 12px;
   }
-  
+
   .ptt-key-hint {
     font-size: 10px;
     padding: 1px 4px;

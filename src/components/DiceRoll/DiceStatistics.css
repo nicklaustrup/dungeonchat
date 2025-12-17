@@ -31,8 +31,12 @@
 }
 
 @keyframes loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .dice-statistics.empty {
@@ -95,7 +99,9 @@
   border-radius: 6px;
   padding: 0.75rem;
   text-align: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
@@ -225,21 +231,21 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
   }
-  
+
   .stat-card {
     padding: 0.5rem;
   }
-  
+
   .stat-value {
     font-size: 1rem;
   }
-  
+
   .stats-header {
     flex-direction: column;
     gap: 0.5rem;
     align-items: flex-start;
   }
-  
+
   .roll-type-item {
     font-size: 0.9rem;
   }
@@ -250,19 +256,19 @@
   .skeleton-item {
     background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
   }
-  
+
   .stat-card.critical-hits {
     border-color: #20c997;
   }
-  
+
   .stat-card.critical-hits .stat-value {
     color: #20c997;
   }
-  
+
   .stat-card.critical-fails {
     border-color: #e74c3c;
   }
-  
+
   .stat-card.critical-fails .stat-value {
     color: #e74c3c;
   }

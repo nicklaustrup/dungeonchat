@@ -3,7 +3,14 @@
   "title": "Friendship",
   "description": "Friendship or block relationship between users",
   "type": "object",
-  "required": ["id", "userId1", "userId2", "status", "initiatorId", "createdAt"],
+  "required": [
+    "id",
+    "userId1",
+    "userId2",
+    "status",
+    "initiatorId",
+    "createdAt"
+  ],
   "properties": {
     "id": {
       "type": "string",

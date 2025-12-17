@@ -1,10 +1,22 @@
-import React from 'react';
+import React from "react";
 
-export default function SearchBar({ value, onChange, collapsed, onToggle, disableClose }) {
+export default function SearchBar({
+  value,
+  onChange,
+  collapsed,
+  onToggle,
+  disableClose,
+}) {
   return (
-    <div className={`search-wrapper ${collapsed ? 'collapsed' : 'expanded'}`}>
+    <div className={`search-wrapper ${collapsed ? "collapsed" : "expanded"}`}>
       {collapsed ? (
-        <button className="search-icon-btn" aria-label="Open search" onClick={onToggle}>🔍</button>
+        <button
+          className="search-icon-btn"
+          aria-label="Open search"
+          onClick={onToggle}
+        >
+          🔍
+        </button>
       ) : (
         <div className="search-container">
           <input
@@ -17,7 +29,13 @@ export default function SearchBar({ value, onChange, collapsed, onToggle, disabl
             autoFocus
           />
           {!disableClose && (
-            <button className="search-close-btn" aria-label="Close search" onClick={onToggle}>✕</button>
+            <button
+              className="search-close-btn"
+              aria-label="Close search"
+              onClick={onToggle}
+            >
+              ✕
+            </button>
           )}
         </div>
       )}

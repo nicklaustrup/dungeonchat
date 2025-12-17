@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useFirebase } from '../../services/FirebaseContext';
-import { useCachedUserProfile } from '../../services/cache';
-import { deleteUserAccount, confirmAccountDeletion } from '../../services/userDeletionService';
-import './DeleteAccountSection.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useFirebase } from "../../services/FirebaseContext";
+import { useCachedUserProfile } from "../../services/cache";
+import {
+  deleteUserAccount,
+  confirmAccountDeletion,
+} from "../../services/userDeletionService";
+import "./DeleteAccountSection.css";
 
 /**
  * DeleteAccountSection Component
- * 
+ *
  * Provides UI for users to delete their account with proper warnings
  * and confirmation steps.
  */
@@ -15,14 +18,14 @@ function DeleteAccountSection() {
   const { functions, auth } = useFirebase();
   const { profile } = useCachedUserProfile();
   const navigate = useNavigate();
-  
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState(null);
   const [showDangerZone, setShowDangerZone] = useState(false);
 
   const handleDeleteAccount = async () => {
     if (!profile?.username) {
-      setError('Unable to load user profile. Please refresh and try again.');
+      setError("Unable to load user profile. Please refresh and try again.");
       return;
     }
 
@@ -32,7 +35,7 @@ function DeleteAccountSection() {
     try {
       // Show confirmation dialogs
       const confirmed = await confirmAccountDeletion(profile.username);
-      
+
       if (!confirmed) {
         setIsDeleting(false);
         return;
@@ -40,7 +43,7 @@ function DeleteAccountSection() {
 
       // Show final loading state
       const finalConfirm = window.confirm(
-        'This is your final chance to cancel. Click OK to permanently delete your account now.'
+        "This is your final chance to cancel. Click OK to permanently delete your account now."
       );
 
       if (!finalConfirm) {
@@ -50,17 +53,19 @@ function DeleteAccountSection() {
 
       // Proceed with deletion
       const result = await deleteUserAccount(functions, auth);
-      
+
       if (result.success) {
         // Show success message
-        alert('Your account has been successfully deleted. You will now be redirected to the home page.');
-        
+        alert(
+          "Your account has been successfully deleted. You will now be redirected to the home page."
+        );
+
         // Redirect to home page
-        navigate('/');
+        navigate("/");
       }
     } catch (err) {
-      console.error('Account deletion error:', err);
-      setError(err.message || 'Failed to delete account. Please try again.');
+      console.error("Account deletion error:", err);
+      setError(err.message || "Failed to delete account. Please try again.");
       setIsDeleting(false);
     }
   };
@@ -68,7 +73,7 @@ function DeleteAccountSection() {
   return (
     <div className="delete-account-section">
       <h3 className="section-title">Danger Zone</h3>
-      
+
       {!showDangerZone ? (
         <div className="danger-zone-collapsed">
           <button
@@ -88,19 +93,23 @@ function DeleteAccountSection() {
             <div className="warning-content">
               <h4>Delete Your Account</h4>
               <p>
-                Once you delete your account, there is no going back. This action is permanent and will:
+                Once you delete your account, there is no going back. This
+                action is permanent and will:
               </p>
               <ul className="deletion-effects">
                 <li>🗑️ Delete your profile and all personal data</li>
                 <li>👑 Delete all campaigns you own (cannot be recovered)</li>
                 <li>👥 Remove you from all campaigns you've joined</li>
                 <li>📝 Delete all your character sheets</li>
-                <li>💬 Anonymize your messages (will show as [Deleted User])</li>
+                <li>
+                  💬 Anonymize your messages (will show as [Deleted User])
+                </li>
                 <li>🎲 Delete all your tokens and game assets</li>
               </ul>
               <p className="warning-note">
-                <strong>Note:</strong> Other players' games that depend on your campaigns will be affected. 
-                Consider transferring ownership or notifying your players first.
+                <strong>Note:</strong> Other players' games that depend on your
+                campaigns will be affected. Consider transferring ownership or
+                notifying your players first.
               </p>
             </div>
           </div>
@@ -123,7 +132,7 @@ function DeleteAccountSection() {
             >
               Cancel
             </button>
-            
+
             <button
               className="btn-delete-account"
               onClick={handleDeleteAccount}
@@ -144,7 +153,8 @@ function DeleteAccountSection() {
           </div>
 
           <p className="final-warning">
-            This action <strong>CANNOT</strong> be undone. All your data will be permanently deleted.
+            This action <strong>CANNOT</strong> be undone. All your data will be
+            permanently deleted.
           </p>
         </div>
       )}

@@ -2,82 +2,106 @@
 
 /**
  * Phase 3.2: Gradual Rollout Execution
- * 
+ *
  * This script orchestrates the gradual rollout of V2 implementation
  * to production users with monitoring and safety controls.
  */
 
-const fs = require('fs');
-const { execSync } = require('child_process');
+const fs = require("fs");
+const { execSync } = require("child_process");
 
-console.log('🚀 Phase 3.2: Gradual Rollout - Production Deployment\n');
+console.log("🚀 Phase 3.2: Gradual Rollout - Production Deployment\n");
 
 class GradualRolloutManager {
   constructor() {
     this.rolloutStages = [
-      { percentage: 10, duration: '2-3 days', description: 'Initial rollout - canary testing' },
-      { percentage: 25, duration: '2-3 days', description: 'Small user group validation' },
-      { percentage: 50, duration: '2-3 days', description: 'Half user base - major validation' },
-      { percentage: 75, duration: '1-2 days', description: 'Large majority testing' },
-      { percentage: 100, duration: '1 day', description: 'Full deployment' }
+      {
+        percentage: 10,
+        duration: "2-3 days",
+        description: "Initial rollout - canary testing",
+      },
+      {
+        percentage: 25,
+        duration: "2-3 days",
+        description: "Small user group validation",
+      },
+      {
+        percentage: 50,
+        duration: "2-3 days",
+        description: "Half user base - major validation",
+      },
+      {
+        percentage: 75,
+        duration: "1-2 days",
+        description: "Large majority testing",
+      },
+      { percentage: 100, duration: "1 day", description: "Full deployment" },
     ];
-    
+
     this.currentStage = 0;
     this.startTime = new Date();
-    
+
     this.metrics = {
       deployment: {},
       monitoring: {},
       userFeedback: {},
-      performance: {}
+      performance: {},
     };
   }
 
   validatePreDeployment() {
-    console.log('🔍 Pre-Deployment Validation...\n');
+    console.log("🔍 Pre-Deployment Validation...\n");
 
     const checks = [
       {
-        name: 'Phase 3.1 Completion',
-        check: () => fs.existsSync('docs/phase-3-1-FINAL-COMPLETE.md')
+        name: "Phase 3.1 Completion",
+        check: () => fs.existsSync("docs/phase-3-1-FINAL-COMPLETE.md"),
       },
       {
-        name: 'Production Config Ready',
-        check: () => fs.existsSync('deployment-configs/.env.production-gradual')
+        name: "Production Config Ready",
+        check: () =>
+          fs.existsSync("deployment-configs/.env.production-gradual"),
       },
       {
-        name: 'Monitoring Scripts',
-        check: () => fs.existsSync('scripts/monitor-migration.js')
+        name: "Monitoring Scripts",
+        check: () => fs.existsSync("scripts/monitor-migration.js"),
       },
       {
-        name: 'Rollback Scripts',
-        check: () => fs.existsSync('scripts/emergency-rollback.js')
+        name: "Rollback Scripts",
+        check: () => fs.existsSync("scripts/emergency-rollback.js"),
       },
       {
-        name: 'V2 Implementation',
-        check: () => fs.existsSync('src/hooks/useAutoScrollV2.js')
+        name: "V2 Implementation",
+        check: () => fs.existsSync("src/hooks/useAutoScrollV2.js"),
       },
       {
-        name: 'Test Suite Status',
+        name: "Test Suite Status",
         check: () => {
           try {
-            execSync('npm test -- src/hooks/__tests__/useAutoScrollV2.test.js --watchAll=false --silent', { stdio: 'pipe', timeout: 20000 });
+            execSync(
+              "npm test -- src/hooks/__tests__/useAutoScrollV2.test.js --watchAll=false --silent",
+              { stdio: "pipe", timeout: 20000 }
+            );
             return true;
           } catch {
             return false;
           }
-        }
-      }
+        },
+      },
     ];
 
     let allPassed = true;
     checks.forEach(({ name, check }) => {
       const passed = check();
-      console.log(`   ${passed ? '✅' : '❌'} ${name}: ${passed ? 'READY' : 'FAILED'}`);
+      console.log(
+        `   ${passed ? "✅" : "❌"} ${name}: ${passed ? "READY" : "FAILED"}`
+      );
       if (!passed) allPassed = false;
     });
 
-    console.log(`\n   📊 Pre-deployment Status: ${allPassed ? 'ALL SYSTEMS GO ✅' : 'ISSUES FOUND ❌'}\n`);
+    console.log(
+      `\n   📊 Pre-deployment Status: ${allPassed ? "ALL SYSTEMS GO ✅" : "ISSUES FOUND ❌"}\n`
+    );
     return allPassed;
   }
 
@@ -108,7 +132,7 @@ REACT_APP_MAX_ERROR_THRESHOLD=5
 
     const configPath = `deployment-configs/.env.production-${percentage}pct`;
     fs.writeFileSync(configPath, config);
-    
+
     console.log(`   📄 Configuration created: ${configPath}`);
     console.log(`   🎯 Target: ${percentage}% of users will use V2`);
     console.log(`   📊 Monitoring: A/B comparison active`);
@@ -121,7 +145,7 @@ REACT_APP_MAX_ERROR_THRESHOLD=5
     console.log(`📋 Deployment Instructions for ${percentage}% Rollout...\n`);
 
     const stage = this.rolloutStages[this.currentStage];
-    
+
     const instructions = `# ${percentage}% Rollout Deployment Instructions
 
 ## 🎯 Stage ${this.currentStage + 1}: ${stage.description}
@@ -183,13 +207,13 @@ node scripts/emergency-rollback.js "${percentage}% rollout issues detected"
 
 ### 6. After ${stage.duration}
 If all success criteria are met:
-- Proceed to next rollout stage (${this.rolloutStages[this.currentStage + 1]?.percentage || 'completion'}%)
+- Proceed to next rollout stage (${this.rolloutStages[this.currentStage + 1]?.percentage || "completion"}%)
 - Document any findings
 - Continue monitoring
 
 ---
 **Stage Duration**: ${stage.duration}  
-**Next Stage**: ${this.rolloutStages[this.currentStage + 1]?.percentage || 'Full deployment complete'}%  
+**Next Stage**: ${this.rolloutStages[this.currentStage + 1]?.percentage || "Full deployment complete"}%  
 **Emergency Contact**: [Your team contact info]
 `;
 
@@ -198,14 +222,18 @@ If all success criteria are met:
 
     console.log(`   📄 Instructions saved: ${instructionsPath}`);
     console.log(`   ⏱️  Stage Duration: ${stage.duration}`);
-    console.log(`   🎯 Success Criteria: Monitor for consistency and stability`);
-    console.log(`   🚨 Rollback Available: node scripts/emergency-rollback.js\n`);
+    console.log(
+      `   🎯 Success Criteria: Monitor for consistency and stability`
+    );
+    console.log(
+      `   🚨 Rollback Available: node scripts/emergency-rollback.js\n`
+    );
 
     return instructionsPath;
   }
 
   createMonitoringDashboard() {
-    console.log('📊 Setting up Monitoring Dashboard...\n');
+    console.log("📊 Setting up Monitoring Dashboard...\n");
 
     const dashboardScript = `#!/usr/bin/env node
 
@@ -310,43 +338,48 @@ const dashboard = new MigrationDashboard();
 dashboard.run();
 `;
 
-    fs.writeFileSync('scripts/monitoring-dashboard.js', dashboardScript);
-    console.log('   📄 Dashboard created: scripts/monitoring-dashboard.js');
-    console.log('   🖥️  Usage: node scripts/monitoring-dashboard.js');
-    console.log('   🔄 Updates: Every 5 minutes with health checks\n');
+    fs.writeFileSync("scripts/monitoring-dashboard.js", dashboardScript);
+    console.log("   📄 Dashboard created: scripts/monitoring-dashboard.js");
+    console.log("   🖥️  Usage: node scripts/monitoring-dashboard.js");
+    console.log("   🔄 Updates: Every 5 minutes with health checks\n");
   }
 
   executeStage(stageIndex) {
     if (stageIndex >= this.rolloutStages.length) {
-      console.log('🎉 All rollout stages complete! Ready for Phase 3.3\n');
+      console.log("🎉 All rollout stages complete! Ready for Phase 3.3\n");
       return false;
     }
 
     this.currentStage = stageIndex;
     const stage = this.rolloutStages[stageIndex];
-    
-    console.log(`🚀 Executing Stage ${stageIndex + 1}/${this.rolloutStages.length}`);
+
+    console.log(
+      `🚀 Executing Stage ${stageIndex + 1}/${this.rolloutStages.length}`
+    );
     console.log(`   Target: ${stage.percentage}% V2 users`);
     console.log(`   Duration: ${stage.duration}`);
     console.log(`   Description: ${stage.description}\n`);
 
     // Create configuration
     const configPath = this.createRolloutConfiguration(stage.percentage);
-    
+
     // Generate deployment instructions
-    const instructionsPath = this.generateDeploymentInstructions(stage.percentage, configPath);
-    
+    const instructionsPath = this.generateDeploymentInstructions(
+      stage.percentage,
+      configPath
+    );
+
     return {
       stage: stageIndex + 1,
       percentage: stage.percentage,
       configPath,
       instructionsPath,
-      duration: stage.duration
+      duration: stage.duration,
     };
   }
 
   generatePhaseReport() {
-    console.log('📋 Generating Phase 3.2 Execution Plan...\n');
+    console.log("📋 Generating Phase 3.2 Execution Plan...\n");
 
     const report = `# Phase 3.2: Gradual Rollout - EXECUTION PLAN 🚀
 
@@ -356,20 +389,27 @@ dashboard.run();
 
 ## 🎯 Rollout Strategy
 
-${this.rolloutStages.map((stage, index) => `
+${this.rolloutStages
+  .map(
+    (stage, index) => `
 ### Stage ${index + 1}: ${stage.percentage}% Rollout
 - **Duration**: ${stage.duration}
 - **Description**: ${stage.description}
 - **Config**: \`deployment-configs/.env.production-${stage.percentage}pct\`
 - **Instructions**: \`docs/deployment-instructions-${stage.percentage}pct.md\`
-`).join('')}
+`
+  )
+  .join("")}
 
 ## 🛠️ Tools Created
 
 ### Deployment Configurations
-${this.rolloutStages.map(stage => 
-  `- \`deployment-configs/.env.production-${stage.percentage}pct\` - ${stage.percentage}% rollout config`
-).join('\n')}
+${this.rolloutStages
+  .map(
+    (stage) =>
+      `- \`deployment-configs/.env.production-${stage.percentage}pct\` - ${stage.percentage}% rollout config`
+  )
+  .join("\n")}
 
 ### Monitoring Tools
 - \`scripts/monitoring-dashboard.js\` - Real-time monitoring dashboard
@@ -377,9 +417,12 @@ ${this.rolloutStages.map(stage =>
 - \`scripts/emergency-rollback.js\` - Emergency rollback procedure
 
 ### Documentation
-${this.rolloutStages.map(stage => 
-  `- \`docs/deployment-instructions-${stage.percentage}pct.md\` - Stage ${stage.percentage}% deployment guide`
-).join('\n')}
+${this.rolloutStages
+  .map(
+    (stage) =>
+      `- \`docs/deployment-instructions-${stage.percentage}pct.md\` - Stage ${stage.percentage}% deployment guide`
+  )
+  .join("\n")}
 
 ## 🚀 Quick Start - Execute Stage 1 (10%)
 
@@ -433,9 +476,9 @@ Start with Stage 1 (10% rollout) and progress through each stage systematically.
 **Ready to begin production migration!** 🚀
 `;
 
-    const reportPath = 'docs/phase-3-2-EXECUTION-PLAN.md';
+    const reportPath = "docs/phase-3-2-EXECUTION-PLAN.md";
     fs.writeFileSync(reportPath, report);
-    
+
     console.log(`   📄 Execution plan: ${reportPath}`);
     console.log(`   🎯 Total Stages: ${this.rolloutStages.length}`);
     console.log(`   ⏱️  Estimated Duration: 1-2 weeks total`);
@@ -447,12 +490,14 @@ async function main() {
   const rollout = new GradualRolloutManager();
 
   try {
-    console.log('🚀 Phase 3.2: Gradual Rollout Preparation\n');
+    console.log("🚀 Phase 3.2: Gradual Rollout Preparation\n");
 
     // Step 1: Validate readiness
     const ready = rollout.validatePreDeployment();
     if (!ready) {
-      console.log('❌ Pre-deployment validation failed. Address issues before proceeding.');
+      console.log(
+        "❌ Pre-deployment validation failed. Address issues before proceeding."
+      );
       process.exit(1);
     }
 
@@ -460,7 +505,7 @@ async function main() {
     rollout.createMonitoringDashboard();
 
     // Step 3: Generate all rollout stage configurations
-    console.log('🔧 Generating All Rollout Stage Configurations...\n');
+    console.log("🔧 Generating All Rollout Stage Configurations...\n");
     rollout.rolloutStages.forEach((stage, index) => {
       rollout.executeStage(index);
     });
@@ -468,29 +513,34 @@ async function main() {
     // Step 4: Generate comprehensive execution plan
     rollout.generatePhaseReport();
 
-    console.log('🎉 Phase 3.2 Preparation Complete!');
-    console.log('\n📊 Summary:');
-    console.log(`   Rollout Stages: ${rollout.rolloutStages.length} configurations created`);
-    console.log('   Monitoring Tools: Dashboard and health checks ready');
-    console.log('   Documentation: Complete deployment guides generated');
-    console.log('   Safety Controls: Emergency rollback procedures active');
+    console.log("🎉 Phase 3.2 Preparation Complete!");
+    console.log("\n📊 Summary:");
+    console.log(
+      `   Rollout Stages: ${rollout.rolloutStages.length} configurations created`
+    );
+    console.log("   Monitoring Tools: Dashboard and health checks ready");
+    console.log("   Documentation: Complete deployment guides generated");
+    console.log("   Safety Controls: Emergency rollback procedures active");
 
-    console.log('\n🚀 READY TO START PRODUCTION ROLLOUT!');
-    console.log('\n📋 Next Steps:');
-    console.log('1. Review docs/phase-3-2-EXECUTION-PLAN.md');
-    console.log('2. Start with Stage 1: cp deployment-configs/.env.production-10pct .env.production');
-    console.log('3. Deploy to production using your deployment process');
-    console.log('4. Start monitoring: node scripts/monitoring-dashboard.js');
-    console.log('5. Monitor for 2-3 days, then proceed to next stage');
+    console.log("\n🚀 READY TO START PRODUCTION ROLLOUT!");
+    console.log("\n📋 Next Steps:");
+    console.log("1. Review docs/phase-3-2-EXECUTION-PLAN.md");
+    console.log(
+      "2. Start with Stage 1: cp deployment-configs/.env.production-10pct .env.production"
+    );
+    console.log("3. Deploy to production using your deployment process");
+    console.log("4. Start monitoring: node scripts/monitoring-dashboard.js");
+    console.log("5. Monitor for 2-3 days, then proceed to next stage");
 
-    console.log('\n⚠️  Remember:');
-    console.log('- Emergency rollback available: node scripts/emergency-rollback.js');
-    console.log('- Monitor A/B comparison logs continuously');
-    console.log('- Each stage requires 2-3 days validation');
-    console.log('- Progress only if success criteria are met');
-
+    console.log("\n⚠️  Remember:");
+    console.log(
+      "- Emergency rollback available: node scripts/emergency-rollback.js"
+    );
+    console.log("- Monitor A/B comparison logs continuously");
+    console.log("- Each stage requires 2-3 days validation");
+    console.log("- Progress only if success criteria are met");
   } catch (error) {
-    console.error('❌ Phase 3.2 preparation error:', error.message);
+    console.error("❌ Phase 3.2 preparation error:", error.message);
     process.exit(1);
   }
 }

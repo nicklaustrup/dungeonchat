@@ -29,7 +29,11 @@
         "path": "src/components/ChatRoom/ChatRoom.js",
         "purpose": "Main chat interface with messages and input",
         "props": ["campaignId"],
-        "hooks": ["useAutoScrollV2", "useInfiniteScrollTop", "useTypingIndicator"],
+        "hooks": [
+          "useAutoScrollV2",
+          "useInfiniteScrollTop",
+          "useTypingIndicator"
+        ],
         "children": ["Message", "ChatInput", "TypingBubble"],
         "critical": true
       },
@@ -53,8 +57,19 @@
         "path": "src/components/VTT/VTTCanvas.js",
         "purpose": "Main virtual tabletop canvas",
         "props": ["campaignId"],
-        "hooks": ["useVTTCanvas", "useTokens", "useMaps", "useFogOfWar", "useLighting"],
-        "features": ["map display", "token movement", "fog of war", "dynamic lighting"],
+        "hooks": [
+          "useVTTCanvas",
+          "useTokens",
+          "useMaps",
+          "useFogOfWar",
+          "useLighting"
+        ],
+        "features": [
+          "map display",
+          "token movement",
+          "fog of war",
+          "dynamic lighting"
+        ],
         "critical": true
       },
       "TokenLayer": {
@@ -165,17 +180,8 @@
       "VoiceChat",
       "TypingBubble"
     ],
-    "dataDisplay": [
-      "CharacterSheet",
-      "Message",
-      "CampaignBrowser",
-      "DiceRoll"
-    ],
-    "input": [
-      "ChatInput",
-      "DiceRoller",
-      "CharacterCreationModal"
-    ]
+    "dataDisplay": ["CharacterSheet", "Message", "CampaignBrowser", "DiceRoll"],
+    "input": ["ChatInput", "DiceRoller", "CharacterCreationModal"]
   },
   "criticalComponents": [
     {

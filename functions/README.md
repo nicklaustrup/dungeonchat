@@ -5,6 +5,7 @@ This directory contains Firebase Cloud Functions for the DungeonChat application
 ## Available Functions
 
 ### 1. checkUsernameAvailability
+
 **File:** `checkUsernameAvailability.js`
 
 Checks if a username is available for registration.
@@ -12,6 +13,7 @@ Checks if a username is available for registration.
 **Type:** Callable HTTPS Function
 
 **Usage:**
+
 ```javascript
 const checkUsername = httpsCallable(functions, 'checkUsernameAvailability');
 const result = await checkUsername({ username: 'testuser' });
@@ -19,6 +21,7 @@ console.log(result.data.available); // true or false
 ```
 
 ### 2. deleteUser
+
 **File:** `deleteUser.js`
 
 Permanently deletes a user account and all associated data.
@@ -28,6 +31,7 @@ Permanently deletes a user account and all associated data.
 **Authentication:** Required (user can only delete their own account)
 
 **Usage:**
+
 ```javascript
 const deleteUserFunc = httpsCallable(functions, 'deleteUser');
 const result = await deleteUserFunc();
@@ -35,6 +39,7 @@ const result = await deleteUserFunc();
 ```
 
 **What it deletes:**
+
 - User profile and settings
 - Username reservation
 - Presence data
@@ -47,11 +52,13 @@ const result = await deleteUserFunc();
 See [USER_DELETION.md](../docs/USER_DELETION.md) for complete documentation.
 
 ### 3. Voice Chat Functions
+
 **File:** `voiceChatFunctions.js`
 
 Functions for managing voice chat sessions.
 
 **Included Functions:**
+
 - Voice room management
 - Participant tracking
 - Audio stream coordination
@@ -78,11 +85,13 @@ npm test
 ### Deployment
 
 Deploy all functions:
+
 ```bash
 firebase deploy --only functions
 ```
 
 Deploy specific function:
+
 ```bash
 firebase deploy --only functions:deleteUser
 ```
@@ -92,11 +101,13 @@ firebase deploy --only functions:deleteUser
 ### Environment Variables
 
 Set environment variables for functions:
+
 ```bash
 firebase functions:config:set someservice.key="THE API KEY"
 ```
 
 View current config:
+
 ```bash
 firebase functions:config:get
 ```
@@ -104,11 +115,13 @@ firebase functions:config:get
 ### Dependencies
 
 Main dependencies:
+
 - `firebase-admin`: Firebase Admin SDK
 - `firebase-functions`: Cloud Functions SDK
 - `leo-profanity`: Profanity filtering (legacy)
 
 Install dependencies:
+
 ```bash
 npm install
 ```
@@ -116,16 +129,19 @@ npm install
 ## Security
 
 ### Authentication
+
 - Callable functions automatically include user authentication
 - Check `request.auth` to verify user is authenticated
 - Use `request.auth.uid` to get user ID
 
 ### Authorization
+
 - Functions run with admin privileges
 - Implement proper authorization checks
 - Validate all user inputs
 
 ### Best Practices
+
 - Always validate input parameters
 - Use try-catch for error handling
 - Log errors for debugging
@@ -135,19 +151,24 @@ npm install
 ## Monitoring
 
 ### Cloud Functions Dashboard
+
 View function metrics in Firebase Console:
+
 - Invocations
 - Execution time
 - Memory usage
 - Error rates
 
 ### Logs
+
 View function logs:
+
 ```bash
 firebase functions:log
 ```
 
 Filter by function:
+
 ```bash
 firebase functions:log --only deleteUser
 ```
@@ -155,6 +176,7 @@ firebase functions:log --only deleteUser
 ## Performance
 
 ### Optimization Tips
+
 1. Use caching when it makes sense to
 2. Use async/await properly
 3. Batch Firestore operations
@@ -163,6 +185,7 @@ firebase functions:log --only deleteUser
 6. Implement timeouts for long operations
 
 ### Limits
+
 - Max execution time: 540 seconds (9 minutes)
 - Max memory: 8GB
 - Max concurrent executions: 3000 (default)
@@ -170,6 +193,7 @@ firebase functions:log --only deleteUser
 ## Error Handling
 
 ### Standard Error Codes
+
 - `unauthenticated`: User not signed in
 - `permission-denied`: Insufficient permissions
 - `invalid-argument`: Invalid function parameters
@@ -177,6 +201,7 @@ firebase functions:log --only deleteUser
 - `internal`: Server error
 
 ### Throwing Errors
+
 ```javascript
 const { HttpsError } = require('firebase-functions/v2/https');
 
@@ -186,7 +211,9 @@ throw new HttpsError('invalid-argument', 'Username is required');
 ## Testing
 
 ### Unit Tests
+
 Create tests in `__tests__` directory:
+
 ```javascript
 const { deleteUser } = require('../deleteUser');
 
@@ -200,6 +227,7 @@ describe('deleteUser', () => {
 ## Contributing
 
 When adding new functions:
+
 1. Create new file in `functions/` directory
 2. Export function in `index.js`
 3. Add documentation in this README
@@ -211,21 +239,25 @@ When adding new functions:
 ### Common Issues
 
 **Function not found:**
+
 - Check if function is exported in `index.js`
 - Verify function name matches
 - Ensure function is deployed
 
 **Permission denied:**
+
 - Check Firestore security rules
 - Verify user authentication
 - Check function authorization logic
 
 **Timeout errors:**
+
 - Optimize database queries
 - Use batch operations
 - Consider breaking into smaller operations
 
 **Memory exceeded:**
+
 - Optimize data processing
 - Process in smaller batches
 - Increase memory allocation

@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
-import { useFirebase } from '../../services/FirebaseContext';
-import { updateCampaignMember, removeCampaignMember } from '../../services/campaign/campaignService';
-import { useCampaignCharacters, invalidateCampaignCharacters, useCachedUserProfileData } from '../../services/cache';
-import UserProfileModal from '../UserProfileModal/UserProfileModal';
-import './CampaignMemberList.css';
+import React, { useState } from "react";
+import { useFirebase } from "../../services/FirebaseContext";
+import {
+  updateCampaignMember,
+  removeCampaignMember,
+} from "../../services/campaign/campaignService";
+import {
+  useCampaignCharacters,
+  invalidateCampaignCharacters,
+  useCachedUserProfileData,
+} from "../../services/cache";
+import UserProfileModal from "../UserProfileModal/UserProfileModal";
+import "./CampaignMemberList.css";
 
-function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) {
+function CampaignMemberList({
+  campaignId,
+  members,
+  isUserDM,
+  onMembersUpdate,
+}) {
   const { firestore } = useFirebase();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -21,24 +33,28 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
       setLoading(true);
       setError(null);
 
-      if (action === 'remove') {
+      if (action === "remove") {
         await removeCampaignMember(firestore, campaignId, memberId);
         // Update local state
-        const updatedMembers = members.filter(member => member.userId !== memberId);
+        const updatedMembers = members.filter(
+          (member) => member.userId !== memberId
+        );
         onMembersUpdate(updatedMembers);
         // Invalidate campaign characters cache since member was removed
         invalidateCampaignCharacters(campaignId);
-      } else if (action === 'updateStatus' && newStatus) {
-        await updateCampaignMember(firestore, campaignId, memberId, { status: newStatus });
+      } else if (action === "updateStatus" && newStatus) {
+        await updateCampaignMember(firestore, campaignId, memberId, {
+          status: newStatus,
+        });
         // Update local state
-        const updatedMembers = members.map(member => 
+        const updatedMembers = members.map((member) =>
           member.userId === memberId ? { ...member, status: newStatus } : member
         );
         onMembersUpdate(updatedMembers);
       }
     } catch (err) {
-      console.error('Error updating member:', err);
-      setError('Failed to update member. Please try again.');
+      console.error("Error updating member:", err);
+      setError("Failed to update member. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -46,53 +62,76 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
 
   const getRoleIcon = (role) => {
     switch (role) {
-      case 'dm': return '👑';
-      case 'player': return '🎭';
-      case 'spectator': return '👁️';
-      default: return '👤';
+      case "dm":
+        return "👑";
+      case "player":
+        return "🎭";
+      case "spectator":
+        return "👁️";
+      default:
+        return "👤";
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return '#22c55e';
-      case 'pending': return '#f59e0b';
-      case 'invited': return '#3b82f6';
-      case 'banned': return '#ef4444';
-      default: return '#6b7280';
+      case "active":
+        return "#22c55e";
+      case "pending":
+        return "#f59e0b";
+      case "invited":
+        return "#3b82f6";
+      case "banned":
+        return "#ef4444";
+      default:
+        return "#6b7280";
     }
   };
-  
+
   // Helper function to get character data for a member
   const getMemberCharacter = (userId) => {
-    return characters.find(char => char.userId === userId);
+    return characters.find((char) => char.userId === userId);
   };
 
   // Component to render member with cached profile data
   const MemberItem = ({ member }) => {
-    const { profileData, loading: profileLoading } = useCachedUserProfileData(member.userId);
+    const { profileData, loading: profileLoading } = useCachedUserProfileData(
+      member.userId
+    );
     const memberCharacter = getMemberCharacter(member.userId);
-    
+
     // Debug logging (can be removed after verification)
     if (profileData && !profileLoading) {
-      console.log('Profile data for', member.userId, ':', {
+      console.log("Profile data for", member.userId, ":", {
         profilePictureURL: profileData.profilePictureURL,
         photoURL: profileData.photoURL,
         memberPhotoURL: member.photoURL,
         username: profileData.username,
-        displayName: profileData.displayName
+        displayName: profileData.displayName,
       });
     }
-    
-    const profilePictureURL = profileData?.profilePictureURL || profileData?.photoURL || member.photoURL;
-    const displayName = profileData?.username || profileData?.displayName || member.username || member.displayName || 'Unknown User';
+
+    const profilePictureURL =
+      profileData?.profilePictureURL ||
+      profileData?.photoURL ||
+      member.photoURL;
+    const displayName =
+      profileData?.username ||
+      profileData?.displayName ||
+      member.username ||
+      member.displayName ||
+      "Unknown User";
 
     return (
       <div key={member.userId} className="member-item">
         <div className="member-info">
           <div className="member-avatar">
             {profilePictureURL ? (
-              <img src={profilePictureURL} alt={displayName} className="member-avatar-img" />
+              <img
+                src={profilePictureURL}
+                alt={displayName}
+                className="member-avatar-img"
+              />
             ) : (
               <span className="role-icon" title={member.role}>
                 {getRoleIcon(member.role)}
@@ -108,47 +147,59 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
                   setSelectedUserId(member.userId);
                 }}
               >
-                {member.role === 'dm'
+                {member.role === "dm"
                   ? displayName
-                  : (memberCharacter?.name || member.characterName || displayName)
-                }
+                  : memberCharacter?.name ||
+                    member.characterName ||
+                    displayName}
               </span>
-              {member.role === 'dm' && <span className="dm-badge">DM</span>}
+              {member.role === "dm" && <span className="dm-badge">DM</span>}
             </div>
-            {member.role !== 'dm' && (
+            {member.role !== "dm" && (
               <div className="character-info">
                 {memberCharacter ? (
                   <div className="character-details">
                     <div className="character-basic">
-                      <span className="character-label">Character:</span> 
-                      <span className="character-name">{memberCharacter.name}</span>
+                      <span className="character-label">Character:</span>
+                      <span className="character-name">
+                        {memberCharacter.name}
+                      </span>
                       <span className="character-class-race">
-                        Level {memberCharacter.level} {memberCharacter.race} {memberCharacter.class}
+                        Level {memberCharacter.level} {memberCharacter.race}{" "}
+                        {memberCharacter.class}
                       </span>
                     </div>
                     <div className="character-stats">
                       {memberCharacter.hitPoints && (
                         <span className="stat-item">
-                          HP: {memberCharacter.hitPoints.current || 0}/{memberCharacter.hitPoints.maximum || 0}
+                          HP: {memberCharacter.hitPoints.current || 0}/
+                          {memberCharacter.hitPoints.maximum || 0}
                         </span>
                       )}
                       {memberCharacter.armorClass !== undefined && (
-                        <span className="stat-item">AC: {memberCharacter.armorClass}</span>
+                        <span className="stat-item">
+                          AC: {memberCharacter.armorClass}
+                        </span>
                       )}
                       {memberCharacter.experiencePoints !== undefined && (
-                        <span className="stat-item">XP: {memberCharacter.experiencePoints.toLocaleString()}</span>
+                        <span className="stat-item">
+                          XP:{" "}
+                          {memberCharacter.experiencePoints.toLocaleString()}
+                        </span>
                       )}
                     </div>
                   </div>
                 ) : (
                   <div className="no-character-sheet">
-                    <span className="no-character">📝 No character sheet created</span>
+                    <span className="no-character">
+                      📝 No character sheet created
+                    </span>
                   </div>
                 )}
               </div>
             )}
             <div className="member-meta">
-              <span 
+              <span
                 className="member-status-indicator"
                 style={{ backgroundColor: getStatusColor(member.status) }}
                 title={member.status}
@@ -164,19 +215,21 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
           </div>
         </div>
 
-        {isUserDM && member.role !== 'dm' && (
+        {isUserDM && member.role !== "dm" && (
           <div className="member-actions">
-            {member.status === 'pending' && (
+            {member.status === "pending" && (
               <>
                 <button
-                  onClick={() => handleMemberAction(member.userId, 'updateStatus', 'active')}
+                  onClick={() =>
+                    handleMemberAction(member.userId, "updateStatus", "active")
+                  }
                   className="btn btn-sm btn-success"
                   disabled={loading}
                 >
                   Approve
                 </button>
                 <button
-                  onClick={() => handleMemberAction(member.userId, 'remove')}
+                  onClick={() => handleMemberAction(member.userId, "remove")}
                   className="btn btn-sm btn-danger"
                   disabled={loading}
                 >
@@ -184,18 +237,20 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
                 </button>
               </>
             )}
-            
-            {member.status === 'active' && (
+
+            {member.status === "active" && (
               <>
                 <button
-                  onClick={() => handleMemberAction(member.userId, 'updateStatus', 'banned')}
+                  onClick={() =>
+                    handleMemberAction(member.userId, "updateStatus", "banned")
+                  }
                   className="btn btn-sm btn-warning"
                   disabled={loading}
                 >
                   Ban
                 </button>
                 <button
-                  onClick={() => handleMemberAction(member.userId, 'remove')}
+                  onClick={() => handleMemberAction(member.userId, "remove")}
                   className="btn btn-sm btn-danger"
                   disabled={loading}
                 >
@@ -204,17 +259,19 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
               </>
             )}
 
-            {member.status === 'banned' && (
+            {member.status === "banned" && (
               <>
                 <button
-                  onClick={() => handleMemberAction(member.userId, 'updateStatus', 'active')}
+                  onClick={() =>
+                    handleMemberAction(member.userId, "updateStatus", "active")
+                  }
                   className="btn btn-sm btn-success"
                   disabled={loading}
                 >
                   Unban
                 </button>
                 <button
-                  onClick={() => handleMemberAction(member.userId, 'remove')}
+                  onClick={() => handleMemberAction(member.userId, "remove")}
                   className="btn btn-sm btn-danger"
                   disabled={loading}
                 >
@@ -230,22 +287,27 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
 
   // Sort members: DM first, then by role, then by display name
   const sortedMembers = [...members].sort((a, b) => {
-    if (a.role === 'dm') return -1;
-    if (b.role === 'dm') return 1;
+    if (a.role === "dm") return -1;
+    if (b.role === "dm") return 1;
     if (a.role !== b.role) {
       const roleOrder = { player: 0, spectator: 1 };
       return (roleOrder[a.role] || 2) - (roleOrder[b.role] || 2);
     }
-    
+
     // Get display name for sorting
     const getDisplayName = (member) => {
-      if (member.role === 'dm') {
-        return member.username || member.displayName || 'Unknown DM';
+      if (member.role === "dm") {
+        return member.username || member.displayName || "Unknown DM";
       } else {
-        return member.characterName || member.username || member.displayName || 'Unknown Player';
+        return (
+          member.characterName ||
+          member.username ||
+          member.displayName ||
+          "Unknown Player"
+        );
       }
     };
-    
+
     return getDisplayName(a).localeCompare(getDisplayName(b));
   });
 
@@ -263,7 +325,7 @@ function CampaignMemberList({ campaignId, members, isUserDM, onMembersUpdate }) 
       )}
 
       <div className="member-list">
-        {sortedMembers.map(member => (
+        {sortedMembers.map((member) => (
           <MemberItem key={member.userId} member={member} />
         ))}
 

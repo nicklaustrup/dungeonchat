@@ -5,6 +5,7 @@ This directory contains JSON schemas and documentation for all Firestore documen
 ## Available Schemas
 
 ### Firestore Collections
+
 - **[campaign.json](./campaign.json)** - Campaigns with members and settings
 - **[userProfile.json](./userProfile.json)** - User profiles with friends and blocked users
 - **[message.json](./message.json)** - Chat messages with reactions and replies
@@ -16,10 +17,12 @@ This directory contains JSON schemas and documentation for all Firestore documen
 - **[voiceRoom.json](./voiceRoom.json)** - Voice chat rooms
 
 ### Realtime Database (RTDB)
+
 - **[presence.json](./presence.json)** - Real-time user presence
 - **[typing.json](./typing.json)** - Real-time typing indicators
 
 ### Architecture Overview
+
 - **[DATA_ARCHITECTURE.md](./DATA_ARCHITECTURE.md)** - Complete Firebase data architecture
 
 ## Document Examples
@@ -29,6 +32,7 @@ This directory contains JSON schemas and documentation for all Firestore documen
 **Firestore Path:** `/campaigns/{campaignId}/messages/{messageId}`
 
 **Example:**
+
 ```javascript
 {
   id: "msg123",
@@ -53,6 +57,7 @@ This directory contains JSON schemas and documentation for all Firestore documen
 ```
 
 **Required Fields:**
+
 - `id` - Message ID (string)
 - `createdAt` - Firestore server timestamp
 - `uid` - Author's user ID (string)
@@ -60,6 +65,7 @@ This directory contains JSON schemas and documentation for all Firestore documen
 - Must have either `text` OR `imageURL` (at least one)
 
 **Optional Fields:**
+
 - `text` - Message text content (string, max 5000 chars)
 - `imageURL` - URL to uploaded image (string, valid URL)
 - `photoURL` - Author's profile photo (string, valid URL)
@@ -67,12 +73,14 @@ This directory contains JSON schemas and documentation for all Firestore documen
 - `replyTo` - Reference to original message (object)
 
 **Security Rules:**
+
 - Users can only create messages with their own `uid`
 - Only message author can delete their own messages
 - Reactions updated via transactions to prevent race conditions
 - `createdAt` must be `serverTimestamp()`
 
 **Indexing:**
+
 - Composite index: `createdAt DESC` for pagination
 
 ---
@@ -82,6 +90,7 @@ This directory contains JSON schemas and documentation for all Firestore documen
 **Firestore Path:** `/userProfiles/{userId}`
 
 **Example:**
+
 ```javascript
 {
   uid: "user123",
@@ -97,12 +106,14 @@ This directory contains JSON schemas and documentation for all Firestore documen
 ```
 
 **Required Fields:**
+
 - `uid` - Firebase Auth user ID (string)
 - `username` - Unique username (string, 3-20 alphanumeric + underscore)
 - `displayName` - User's display name (string)
 - `createdAt` - Firestore server timestamp
 
 **Optional Fields:**
+
 - `bio` - User biography (string, max 500 chars)
 - `photoURL` - Profile photo URL (string, valid URL)
 - `friends` - Array of friend user IDs (array of strings)
@@ -110,12 +121,14 @@ This directory contains JSON schemas and documentation for all Firestore documen
 - `updatedAt` - Last update timestamp (Firestore timestamp)
 
 **Security Rules:**
+
 - Users can only read/write their own profile
 - Username must be unique (checked via Cloud Function)
 - Profile creation happens after Firebase Auth signup
 - Friends array updated via transactions
 
 **Indexing:**
+
 - Single field index: `username ASC` for username lookups
 
 ---
@@ -125,6 +138,7 @@ This directory contains JSON schemas and documentation for all Firestore documen
 **Firestore Path:** `/campaigns/{campaignId}`
 
 **Example:**
+
 ```javascript
 {
   id: "campaign123",
@@ -143,6 +157,7 @@ This directory contains JSON schemas and documentation for all Firestore documen
 ```
 
 **Required Fields:**
+
 - `id` - Campaign ID (string)
 - `name` - Campaign name (string, 1-100 chars)
 - `dmId` - Dungeon Master's user ID (string)
@@ -150,6 +165,7 @@ This directory contains JSON schemas and documentation for all Firestore documen
 - `createdAt` - Firestore server timestamp
 
 **Optional Fields:**
+
 - `description` - Campaign description (string, max 1000 chars)
 - `settings` - Campaign settings object
   - `isPublic` - Public visibility (boolean, default: false)
@@ -158,18 +174,21 @@ This directory contains JSON schemas and documentation for all Firestore documen
 - `updatedAt` - Last update timestamp (Firestore timestamp)
 
 **Subcollections:**
+
 - `/campaigns/{campaignId}/messages/{messageId}` - Chat messages
 - `/campaigns/{campaignId}/characters/{characterId}` - Player characters
 - `/campaigns/{campaignId}/tokens/{tokenId}` - VTT tokens
 - `/campaigns/{campaignId}/maps/{mapId}` - VTT maps
 
 **Security Rules:**
+
 - Only DM can update campaign settings
 - Members can read campaign data
 - DM can add/remove members
 - Members array updated via transactions
 
 **Indexing:**
+
 - Composite index: `createdAt DESC` for browsing
 - Array-contains index: `members` for user's campaigns query
 
@@ -216,9 +235,9 @@ test('creates valid message document', () => {
     text: 'Test message',
     createdAt: serverTimestamp(),
     uid: 'user123',
-    displayName: 'TestUser'
+    displayName: 'TestUser',
   };
-  
+
   expect(validateMessage(message)).toBe(true);
 });
 ```
@@ -226,6 +245,7 @@ test('creates valid message document', () => {
 ## Schema Maintenance
 
 When updating schemas:
+
 1. Update the JSON schema file
 2. Update security rules in `firestore.rules`
 3. Update this README with new examples

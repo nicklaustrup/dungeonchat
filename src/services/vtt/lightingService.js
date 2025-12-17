@@ -4,31 +4,43 @@
  * Handles light sources, global lighting, and token vision
  */
 
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
   onSnapshot,
   serverTimestamp,
   query,
-  orderBy 
-} from 'firebase/firestore';
+  orderBy,
+} from "firebase/firestore";
 
 /**
  * Create a new light source
  */
-export const createLightSource = async (firestore, campaignId, mapId, lightData) => {
+export const createLightSource = async (
+  firestore,
+  campaignId,
+  mapId,
+  lightData
+) => {
   try {
-    const lightsRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'lights');
+    const lightsRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "lights"
+    );
     const docRef = await addDoc(lightsRef, {
       ...lightData,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
     return docRef.id;
   } catch (error) {
-    console.error('Error creating light source:', error);
+    console.error("Error creating light source:", error);
     throw error;
   }
 };
@@ -36,15 +48,29 @@ export const createLightSource = async (firestore, campaignId, mapId, lightData)
 /**
  * Update an existing light source
  */
-export const updateLightSource = async (firestore, campaignId, mapId, lightId, updates) => {
+export const updateLightSource = async (
+  firestore,
+  campaignId,
+  mapId,
+  lightId,
+  updates
+) => {
   try {
-    const lightRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId, 'lights', lightId);
+    const lightRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "lights",
+      lightId
+    );
     await updateDoc(lightRef, {
       ...updates,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error('Error updating light source:', error);
+    console.error("Error updating light source:", error);
     throw error;
   }
 };
@@ -52,12 +78,25 @@ export const updateLightSource = async (firestore, campaignId, mapId, lightId, u
 /**
  * Delete a light source
  */
-export const deleteLightSource = async (firestore, campaignId, mapId, lightId) => {
+export const deleteLightSource = async (
+  firestore,
+  campaignId,
+  mapId,
+  lightId
+) => {
   try {
-    const lightRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId, 'lights', lightId);
+    const lightRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "lights",
+      lightId
+    );
     await deleteDoc(lightRef);
   } catch (error) {
-    console.error('Error deleting light source:', error);
+    console.error("Error deleting light source:", error);
     throw error;
   }
 };
@@ -66,51 +105,67 @@ export const deleteLightSource = async (firestore, campaignId, mapId, lightId) =
  * Subscribe to light sources for a map
  */
 export const subscribeToLights = (firestore, campaignId, mapId, callback) => {
-  const lightsRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'lights');
-  const q = query(lightsRef, orderBy('createdAt', 'asc'));
-  
-  return onSnapshot(q, (snapshot) => {
-    const lights = [];
-    snapshot.forEach((doc) => {
-      lights.push({
-        id: doc.id,
-        ...doc.data()
+  const lightsRef = collection(
+    firestore,
+    "campaigns",
+    campaignId,
+    "maps",
+    mapId,
+    "lights"
+  );
+  const q = query(lightsRef, orderBy("createdAt", "asc"));
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const lights = [];
+      snapshot.forEach((doc) => {
+        lights.push({
+          id: doc.id,
+          ...doc.data(),
+        });
       });
-    });
-    callback(lights);
-  }, (error) => {
-    console.error('Error subscribing to lights:', error);
-  });
+      callback(lights);
+    },
+    (error) => {
+      console.error("Error subscribing to lights:", error);
+    }
+  );
 };
 
 /**
  * Update global lighting settings for a map
  */
-export const updateGlobalLighting = async (firestore, campaignId, mapId, settings) => {
+export const updateGlobalLighting = async (
+  firestore,
+  campaignId,
+  mapId,
+  settings
+) => {
   try {
-    const mapRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId);
-    
+    const mapRef = doc(firestore, "campaigns", campaignId, "maps", mapId);
+
     // Build update object with only the fields provided
     const updates = {
-      'lighting.updatedAt': serverTimestamp()
+      "lighting.updatedAt": serverTimestamp(),
     };
-    
+
     if (settings.enabled !== undefined) {
-      updates['lighting.enabled'] = settings.enabled;
+      updates["lighting.enabled"] = settings.enabled;
     }
     if (settings.timeOfDay !== undefined) {
-      updates['lighting.timeOfDay'] = settings.timeOfDay;
+      updates["lighting.timeOfDay"] = settings.timeOfDay;
     }
     if (settings.ambientLight !== undefined) {
-      updates['lighting.ambientLight'] = settings.ambientLight;
+      updates["lighting.ambientLight"] = settings.ambientLight;
     }
     if (settings.outdoorLighting !== undefined) {
-      updates['lighting.outdoorLighting'] = settings.outdoorLighting;
+      updates["lighting.outdoorLighting"] = settings.outdoorLighting;
     }
-    
+
     await updateDoc(mapRef, updates);
   } catch (error) {
-    console.error('Error updating global lighting:', error);
+    console.error("Error updating global lighting:", error);
     throw error;
   }
 };
@@ -122,23 +177,27 @@ export const updateGlobalLighting = async (firestore, campaignId, mapId, setting
  * @param {string} falloff - Falloff type: 'linear', 'quadratic', 'realistic'
  * @returns {number} - Intensity from 0 to 1
  */
-export const calculateLightIntensity = (distance, radius, falloff = 'realistic') => {
+export const calculateLightIntensity = (
+  distance,
+  radius,
+  falloff = "realistic"
+) => {
   if (distance >= radius) return 0;
   if (distance <= 0) return 1;
-  
+
   const ratio = distance / radius;
-  
+
   switch (falloff) {
-    case 'linear':
+    case "linear":
       return 1 - ratio;
-    
-    case 'quadratic':
+
+    case "quadratic":
       return Math.pow(1 - ratio, 2);
-    
-    case 'realistic':
+
+    case "realistic":
       // Inverse square law, but smoothed for better visuals
       return Math.pow(1 - ratio, 1.5);
-    
+
     default:
       return 1 - ratio;
   }
@@ -175,11 +234,13 @@ export const getAmbientLightLevel = (timeOfDay) => {
  */
 export const hexToRgb = (hex) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  } : null;
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
+    : null;
 };
 
 /**
@@ -188,12 +249,15 @@ export const hexToRgb = (hex) => {
  * @returns {string} - Blended color as hex
  */
 export const blendLightColors = (lights) => {
-  if (lights.length === 0) return '#FFFFFF';
+  if (lights.length === 0) return "#FFFFFF";
   if (lights.length === 1) return lights[0].color;
-  
-  let totalR = 0, totalG = 0, totalB = 0, totalIntensity = 0;
-  
-  lights.forEach(light => {
+
+  let totalR = 0,
+    totalG = 0,
+    totalB = 0,
+    totalIntensity = 0;
+
+  lights.forEach((light) => {
     const rgb = hexToRgb(light.color);
     if (rgb) {
       const weight = light.intensity;
@@ -203,13 +267,13 @@ export const blendLightColors = (lights) => {
       totalIntensity += weight;
     }
   });
-  
-  if (totalIntensity === 0) return '#FFFFFF';
-  
+
+  if (totalIntensity === 0) return "#FFFFFF";
+
   const r = Math.round(totalR / totalIntensity);
   const g = Math.round(totalG / totalIntensity);
   const b = Math.round(totalB / totalIntensity);
-  
+
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
 };
 
@@ -219,77 +283,77 @@ export const blendLightColors = (lights) => {
 export const getLightPresets = () => {
   return {
     torch: {
-      type: 'point',
+      type: "point",
       radius: 40, // 40ft bright, 40ft dim (total 80ft radius with falloff)
       intensity: 0.8,
-      color: '#FF8800', // Warm orange
+      color: "#FF8800", // Warm orange
       flicker: true,
       animated: false,
-      falloff: 'realistic'
+      falloff: "realistic",
     },
     lantern: {
-      type: 'point',
+      type: "point",
       radius: 30,
       intensity: 0.9,
-      color: '#FFB366', // Soft orange-yellow
+      color: "#FFB366", // Soft orange-yellow
       flicker: false,
       animated: false,
-      falloff: 'realistic'
+      falloff: "realistic",
     },
     candle: {
-      type: 'point',
+      type: "point",
       radius: 10,
       intensity: 0.6,
-      color: '#FFD700', // Golden yellow
+      color: "#FFD700", // Golden yellow
       flicker: true,
       animated: false,
-      falloff: 'realistic'
+      falloff: "realistic",
     },
     lightSpell: {
-      type: 'point',
+      type: "point",
       radius: 40, // Light spell: 20ft bright, 20ft dim
       intensity: 1.0,
-      color: '#FFFFFF', // Pure white
+      color: "#FFFFFF", // Pure white
       flicker: false,
       animated: false,
-      falloff: 'linear'
+      falloff: "linear",
     },
     daylight: {
-      type: 'point',
+      type: "point",
       radius: 60,
       intensity: 1.0,
-      color: '#FFFFEE', // Bright white
+      color: "#FFFFEE", // Bright white
       flicker: false,
       animated: false,
-      falloff: 'linear'
+      falloff: "linear",
     },
     magicalBlue: {
-      type: 'point',
+      type: "point",
       radius: 30,
       intensity: 0.9,
-      color: '#4444FF', // Magical blue
+      color: "#4444FF", // Magical blue
       flicker: false,
       animated: true,
-      falloff: 'realistic'
+      falloff: "realistic",
     },
     magicalPurple: {
-      type: 'point',
+      type: "point",
       radius: 30,
       intensity: 0.9,
-      color: '#AA44FF', // Magical purple
+      color: "#AA44FF", // Magical purple
       flicker: false,
       animated: true,
-      falloff: 'realistic'
+      falloff: "realistic",
     },
     fireplace: {
-      type: 'point',
+      type: "point",
       radius: 35,
       intensity: 0.85,
-      color: '#FF6600', // Deep orange
+      color: "#FF6600", // Deep orange
       flicker: true,
       animated: false,
-      falloff: 'realistic'
-    }
+      falloff: "realistic",
+    },
   };
 };
 
@@ -303,5 +367,5 @@ export const lightingService = {
   getAmbientLightLevel,
   hexToRgb,
   blendLightColors,
-  getLightPresets
+  getLightPresets,
 };

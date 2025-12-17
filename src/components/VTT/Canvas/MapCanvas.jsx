@@ -1,39 +1,56 @@
-import React, { useRef, useState, useEffect, useContext, Fragment, useMemo, useCallback } from 'react';
-import { Stage, Layer, Image as KonvaImage, Rect, Line, Arrow, Circle, Text as KonvaText } from 'react-konva';
-import useImage from 'use-image';
-import { FiMap, FiSettings } from 'react-icons/fi';
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useContext,
+  Fragment,
+  useMemo,
+  useCallback,
+} from "react";
+import {
+  Stage,
+  Layer,
+  Image as KonvaImage,
+  Rect,
+  Line,
+  Arrow,
+  Circle,
+  Text as KonvaText,
+} from "react-konva";
+import useImage from "use-image";
+import { FiMap, FiSettings } from "react-icons/fi";
 import { Keyboard, Info } from "lucide-react";
-import GridLayer from './GridLayer';
-import TokenSprite from '../TokenManager/TokenSprite';
-import MapToolbar from './MapToolbar';
-import GridConfigurator from './GridConfigurator';
-import LayerManager from './LayerManager';
-import AudioController from '../Audio/AudioController';
-import TokenExtendedEditor from '../TokenManager/TokenExtendedEditor';
-import TokenContextMenu from '../TokenManager/TokenContextMenu';
-import MapContextMenu from './MapContextMenu';
-import LightingLayer from './LightingLayer';
-import LightingPanel from '../Lighting/LightingPanel';
+import GridLayer from "./GridLayer";
+import TokenSprite from "../TokenManager/TokenSprite";
+import MapToolbar from "./MapToolbar";
+import GridConfigurator from "./GridConfigurator";
+import LayerManager from "./LayerManager";
+import AudioController from "../Audio/AudioController";
+import TokenExtendedEditor from "../TokenManager/TokenExtendedEditor";
+import TokenContextMenu from "../TokenManager/TokenContextMenu";
+import MapContextMenu from "./MapContextMenu";
+import LightingLayer from "./LightingLayer";
+import LightingPanel from "../Lighting/LightingPanel";
 // import MovementRuler from './MovementRuler'; // TODO: Wire up in Phase 1 continuation
-import { initiativeService } from '../../../services/initiativeService';
-import { mapService } from '../../../services/vtt/mapService';
-import useTokens from '../../../hooks/vtt/useTokens';
-import useCanvasTools from '../../../hooks/vtt/useCanvasTools';
-import useDrawingState from '../../../hooks/vtt/useDrawingState';
-import useCanvasViewport from '../../../hooks/vtt/useCanvasViewport';
-import useLighting from '../../../hooks/vtt/useLighting';
+import { initiativeService } from "../../../services/initiativeService";
+import { mapService } from "../../../services/vtt/mapService";
+import useTokens from "../../../hooks/vtt/useTokens";
+import useCanvasTools from "../../../hooks/vtt/useCanvasTools";
+import useDrawingState from "../../../hooks/vtt/useDrawingState";
+import useCanvasViewport from "../../../hooks/vtt/useCanvasViewport";
+import useLighting from "../../../hooks/vtt/useLighting";
 // import useTokenMovement from '../../../hooks/vtt/useTokenMovement'; // TODO: Wire up in Phase 1 continuation
-import { tokenService } from '../../../services/vtt/tokenService';
-import { pingService } from '../../../services/vtt/pingService';
-import { fogOfWarService } from '../../../services/vtt/fogOfWarService';
-import { boundaryService } from '../../../services/vtt/boundaryService';
-import { drawingService } from '../../../services/vtt/drawingService';
-import { shapeService } from '../../../services/vtt/shapeService';
-import { shapePreviewService } from '../../../services/vtt/shapePreviewService';
-import { FirebaseContext } from '../../../services/FirebaseContext';
-import { useCachedUserProfile } from '../../../services/cache';
-import { generateLightName } from '../../../utils/lightNameGenerator';
-import './MapCanvas.css';
+import { tokenService } from "../../../services/vtt/tokenService";
+import { pingService } from "../../../services/vtt/pingService";
+import { fogOfWarService } from "../../../services/vtt/fogOfWarService";
+import { boundaryService } from "../../../services/vtt/boundaryService";
+import { drawingService } from "../../../services/vtt/drawingService";
+import { shapeService } from "../../../services/vtt/shapeService";
+import { shapePreviewService } from "../../../services/vtt/shapePreviewService";
+import { FirebaseContext } from "../../../services/FirebaseContext";
+import { useCachedUserProfile } from "../../../services/cache";
+import { generateLightName } from "../../../utils/lightNameGenerator";
+import "./MapCanvas.css";
 
 /**
  * Determine light type from preset data
@@ -41,59 +58,64 @@ import './MapCanvas.css';
  */
 function determineLightType(lightData) {
   const { color, radius, flicker, animated } = lightData;
-  
+
   // Torch: orange/warm, 40ft, flickering
-  if (color === '#FF8800' && radius === 40 && flicker) {
-    return 'torch';
+  if (color === "#FF8800" && radius === 40 && flicker) {
+    return "torch";
   }
-  
+
   // Lantern: warm orange, 30ft, steady
-  if (color === '#FFB366' && radius === 30 && !flicker) {
-    return 'lantern';
+  if (color === "#FFB366" && radius === 30 && !flicker) {
+    return "lantern";
   }
-  
+
   // Candle: yellow, small radius, flickering
-  if (color === '#FFD700' && radius <= 15 && flicker) {
-    return 'candle';
+  if (color === "#FFD700" && radius <= 15 && flicker) {
+    return "candle";
   }
-  
+
   // Light Spell: white, 40ft, bright, steady
-  if (color === '#FFFFFF' && radius === 40 && !flicker) {
-    return 'lightSpell';
+  if (color === "#FFFFFF" && radius === 40 && !flicker) {
+    return "lightSpell";
   }
-  
+
   // Magical Blue: blue tones, animated
-  if ((color === '#4444FF' || color.startsWith('#44')) && animated) {
-    return 'magicalBlue';
+  if ((color === "#4444FF" || color.startsWith("#44")) && animated) {
+    return "magicalBlue";
   }
-  
+
   // Magical Purple: purple tones, animated
-  if ((color === '#AA44FF' || color.startsWith('#AA')) && animated) {
-    return 'magicalPurple';
+  if ((color === "#AA44FF" || color.startsWith("#AA")) && animated) {
+    return "magicalPurple";
   }
-  
+
   // Magical Green
-  if (color.startsWith('#44') && color.includes('FF') && animated) {
-    return 'magicalGreen';
+  if (color.startsWith("#44") && color.includes("FF") && animated) {
+    return "magicalGreen";
   }
-  
+
   // Magical Red
-  if (color.startsWith('#FF44') && animated) {
-    return 'magicalRed';
+  if (color.startsWith("#FF44") && animated) {
+    return "magicalRed";
   }
-  
+
   // Campfire: orange/red, large radius, flickering
-  if ((color === '#FF6600' || color === '#FF4400') && radius >= 50 && flicker) {
-    return 'campfire';
+  if ((color === "#FF6600" || color === "#FF4400") && radius >= 50 && flicker) {
+    return "campfire";
   }
-  
+
   // Brazier: similar to campfire but smaller
-  if ((color === '#FF6600' || color === '#FF8800') && radius >= 30 && radius < 50 && flicker) {
-    return 'brazier';
+  if (
+    (color === "#FF6600" || color === "#FF8800") &&
+    radius >= 30 &&
+    radius < 50 &&
+    flicker
+  ) {
+    return "brazier";
   }
-  
+
   // Default to custom
-  return 'custom';
+  return "custom";
 }
 
 /**
@@ -119,11 +141,11 @@ function MapCanvas({
   onConcealAll,
   fogBrushSize = 3,
   onFogBrushSizeChange,
-  fogBrushMode = 'reveal',
+  fogBrushMode = "reveal",
   onFogBrushModeChange,
   fogGridVisible = false,
   onFogGridVisibleChange,
-  fogGridColor = '#ff0000',
+  fogGridColor = "#ff0000",
   onFogGridColorChange,
   fogOpacity = 0.35,
   onFogOpacityChange,
@@ -136,17 +158,17 @@ function MapCanvas({
   onCloseBoundaryPanel,
   onToggleBoundariesEnabled,
   onToggleBoundariesVisible,
-  boundaryMode = 'line',
+  boundaryMode = "line",
   onBoundaryModeChange,
   boundarySnapToGrid = true,
   onBoundarySnapToGridToggle,
   boundaryBrushSize = 2,
   onBoundaryBrushSizeChange,
-  boundaryBrushMode = 'paint',
+  boundaryBrushMode = "paint",
   onBoundaryBrushModeChange,
-  boundaryLineColor = '#ff0000',
+  boundaryLineColor = "#ff0000",
   onBoundaryLineColorChange,
-  boundaryGridColor = '#ff0000',
+  boundaryGridColor = "#ff0000",
   onBoundaryGridColorChange,
   boundaryOpacity = 0.7,
   onBoundaryOpacityChange,
@@ -156,12 +178,12 @@ function MapCanvas({
   showTokenManager = false,
   onToggleTokenManager,
   onCenterCamera,
-  children
+  children,
 }) {
   const { firestore, user } = useContext(FirebaseContext);
   const { profile: userProfile } = useCachedUserProfile(); // Get profile with username
   const stageRef = useRef(null);
-  const [mapImage] = useImage(map?.imageUrl || '', 'anonymous');
+  const [mapImage] = useImage(map?.imageUrl || "", "anonymous");
 
   // Custom hooks for organized state management
   const {
@@ -170,7 +192,7 @@ function MapCanvas({
     isDragging,
     setStagePos,
     setStageScale,
-    setIsDragging
+    setIsDragging,
   } = useCanvasViewport({ minScale: 0.2, maxScale: 5, scaleBy: 1.05 });
 
   const {
@@ -187,8 +209,8 @@ function MapCanvas({
     setShapeColor,
     setShapeOpacity,
     setShapePersistent,
-    setShapeVisibility
-  } = useCanvasTools('pointer'); // Set default tool to pointer
+    setShapeVisibility,
+  } = useCanvasTools("pointer"); // Set default tool to pointer
 
   const {
     drawings,
@@ -204,7 +226,7 @@ function MapCanvas({
     setCurrentDrawing,
     setArrowStart,
     setShapeStart,
-    setShapePreview
+    setShapePreview,
   } = useDrawingState();
 
   // Load tokens with real-time sync
@@ -217,7 +239,7 @@ function MapCanvas({
     createLight,
     updateLight,
     deleteLight,
-    updateGlobalLighting
+    updateGlobalLighting,
   } = useLighting(firestore, campaignId, map?.id, map?.lighting);
 
   // Ping state
@@ -248,7 +270,7 @@ function MapCanvas({
   const [snapToGrid, setSnapToGrid] = useState(false); // global snap
   const [rulerPersistent, setRulerPersistent] = useState(false);
   const [pinnedRulers, setPinnedRulers] = useState([]); // Array of pinned measurements
-  const [rulerColor, setRulerColor] = useState('#00ff00'); // Default green ruler
+  const [rulerColor, setRulerColor] = useState("#00ff00"); // Default green ruler
 
   // Token-specific snapping toggle & drag highlight footprint
   const [tokenSnap, setTokenSnap] = useState(true);
@@ -260,7 +282,15 @@ function MapCanvas({
   const [contextMenu, setContextMenu] = useState(null); // { tokenId, x, y }
   const [mapContextMenu, setMapContextMenu] = useState(null); // { x, y }
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
-  const [layerVisibility, setLayerVisibility] = useState({ grid: true, fog: true, tokens: true, shapes: true, drawings: true, pings: true, rulers: true });
+  const [layerVisibility, setLayerVisibility] = useState({
+    grid: true,
+    fog: true,
+    tokens: true,
+    shapes: true,
+    drawings: true,
+    pings: true,
+    rulers: true,
+  });
   // Undo/Redo state (future enhancement)
   // const [undoStack, setUndoStack] = useState([]);
   // const [redoStack, setRedoStack] = useState([]);
@@ -280,7 +310,9 @@ function MapCanvas({
   const [selectedLightId, setSelectedLightId] = useState(null);
   // Local optimistic map state for immediate grid visual response
   const [mapLive, setMapLive] = useState(map);
-  useEffect(() => { setMapLive(map); }, [map]);
+  useEffect(() => {
+    setMapLive(map);
+  }, [map]);
   const gMap = mapLive || map;
 
   // Animation state for shape fade-out
@@ -288,12 +320,14 @@ function MapCanvas({
 
   // Performance optimization: Memoize filtered shapes
   const visibleShapes = useMemo(() => {
-    return shapes.filter(s => (s.visibleTo === 'all') || isDM);
+    return shapes.filter((s) => s.visibleTo === "all" || isDM);
   }, [shapes, isDM]);
 
   // Performance optimization: Memoize player tokens for fog reveal
   const playerTokens = useMemo(() => {
-    return tokens ? tokens.filter(t => t.type === 'pc' && !t.staged && t.position) : [];
+    return tokens
+      ? tokens.filter((t) => t.type === "pc" && !t.staged && t.position)
+      : [];
   }, [tokens]);
 
   // Generate natural light for player tokens during dark ambience
@@ -306,19 +340,24 @@ function MapCanvas({
 
     // Create natural light sources for each player token
     return playerTokens
-      .filter(token => token.position && typeof token.position.x === 'number' && typeof token.position.y === 'number')
+      .filter(
+        (token) =>
+          token.position &&
+          typeof token.position.x === "number" &&
+          typeof token.position.y === "number"
+      )
       .map((token, index) => ({
         id: `player-light-${token.id}`,
         position: {
           x: token.position.x,
-          y: token.position.y
+          y: token.position.y,
         },
         radius: 120, // Natural vision radius (~24ft at 5ft/square)
         intensity: 0.5, // Subtle natural light
-        color: '#ffe6cc', // Warm candlelight color
+        color: "#ffe6cc", // Warm candlelight color
         flicker: false, // No flicker for natural vision
         enabled: true,
-        name: `${token.name} Vision`
+        name: `${token.name} Vision`,
       }));
   }, [playerTokens, globalLighting]);
 
@@ -340,107 +379,122 @@ function MapCanvas({
 
     const handleClickOutside = (e) => {
       // Check if click is outside the FX Library dropdown
-      const fxLibraryElement = document.querySelector('[data-fx-library]');
+      const fxLibraryElement = document.querySelector("[data-fx-library]");
       if (fxLibraryElement && !fxLibraryElement.contains(e.target)) {
         setShowFXLibrary(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showFXLibrary]);
 
   // Handle light deletion from context menu
   useEffect(() => {
     const handleDeleteLight = (e) => {
       const lightId = e.detail;
-      if (window.confirm('Delete this light source?')) {
-        deleteLight(lightId).catch(error => {
-          console.error('Error deleting light:', error);
+      if (window.confirm("Delete this light source?")) {
+        deleteLight(lightId).catch((error) => {
+          console.error("Error deleting light:", error);
         });
       }
     };
 
-    window.addEventListener('deleteLight', handleDeleteLight);
-    return () => window.removeEventListener('deleteLight', handleDeleteLight);
+    window.addEventListener("deleteLight", handleDeleteLight);
+    return () => window.removeEventListener("deleteLight", handleDeleteLight);
   }, [deleteLight]);
 
   // Helper to optionally snap any point to grid when global snap is enabled
-  const maybeSnapPoint = useCallback((pt) => {
-    if (snapToGrid && gMap?.gridSize) {
-      const g = gMap.gridSize;
-      const offsetX = gMap.gridOffsetX || 0;
-      const offsetY = gMap.gridOffsetY || 0;
-      // Adjust point by removing offset, snap to grid, then add offset back
-      const adjustedX = pt.x - offsetX;
-      const adjustedY = pt.y - offsetY;
-      const snappedX = Math.round(adjustedX / g) * g + offsetX;
-      const snappedY = Math.round(adjustedY / g) * g + offsetY;
-      return { x: snappedX, y: snappedY };
-    }
-    return pt;
-  }, [snapToGrid, gMap?.gridSize, gMap?.gridOffsetX, gMap?.gridOffsetY]);
+  const maybeSnapPoint = useCallback(
+    (pt) => {
+      if (snapToGrid && gMap?.gridSize) {
+        const g = gMap.gridSize;
+        const offsetX = gMap.gridOffsetX || 0;
+        const offsetY = gMap.gridOffsetY || 0;
+        // Adjust point by removing offset, snap to grid, then add offset back
+        const adjustedX = pt.x - offsetX;
+        const adjustedY = pt.y - offsetY;
+        const snappedX = Math.round(adjustedX / g) * g + offsetX;
+        const snappedY = Math.round(adjustedY / g) * g + offsetY;
+        return { x: snappedX, y: snappedY };
+      }
+      return pt;
+    },
+    [snapToGrid, gMap?.gridSize, gMap?.gridOffsetX, gMap?.gridOffsetY]
+  );
 
   // Helper to snap point to nearest token center if within threshold
-  const snapToTokenCenter = useCallback((pt, snapThreshold = 30) => {
-    if (!tokens || tokens.length === 0) return pt;
+  const snapToTokenCenter = useCallback(
+    (pt, snapThreshold = 30) => {
+      if (!tokens || tokens.length === 0) return pt;
 
-    let closestToken = null;
-    let minDistance = snapThreshold;
+      let closestToken = null;
+      let minDistance = snapThreshold;
 
-    // Find closest token center within threshold
-    tokens.forEach(token => {
-      const tokenCenter = {
-        x: token.position.x,
-        y: token.position.y
-      };
+      // Find closest token center within threshold
+      tokens.forEach((token) => {
+        const tokenCenter = {
+          x: token.position.x,
+          y: token.position.y,
+        };
 
-      const dx = pt.x - tokenCenter.x;
-      const dy = pt.y - tokenCenter.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+        const dx = pt.x - tokenCenter.x;
+        const dy = pt.y - tokenCenter.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestToken = tokenCenter;
-      }
-    });
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestToken = tokenCenter;
+        }
+      });
 
-    // Return snapped position if found, otherwise original
-    return closestToken || pt;
-  }, [tokens]);
+      // Return snapped position if found, otherwise original
+      return closestToken || pt;
+    },
+    [tokens]
+  );
 
   // Combined snap function: first try token snap, then grid snap
-  const smartSnapPoint = useCallback((pt) => {
-    // Try token snapping first (for targeting)
-    const tokenSnapped = snapToTokenCenter(pt);
-    if (tokenSnapped !== pt) return tokenSnapped;
+  const smartSnapPoint = useCallback(
+    (pt) => {
+      // Try token snapping first (for targeting)
+      const tokenSnapped = snapToTokenCenter(pt);
+      if (tokenSnapped !== pt) return tokenSnapped;
 
-    // Fall back to grid snapping if enabled
-    return maybeSnapPoint(pt);
-  }, [snapToTokenCenter, maybeSnapPoint]);
+      // Fall back to grid snapping if enabled
+      return maybeSnapPoint(pt);
+    },
+    [snapToTokenCenter, maybeSnapPoint]
+  );
 
   // Clamp a token center position so the token stays fully on the map
-  const clampTokenCenter = useCallback((pos, token) => {
-    if (!gMap) return pos;
-    const w = gMap.width || 0;
-    const h = gMap.height || 0;
-    const tw = token?.size?.width || gMap.gridSize || 50;
-    const th = token?.size?.height || gMap.gridSize || 50;
-    const halfW = tw / 2;
-    const halfH = th / 2;
-    return {
-      x: Math.min(Math.max(pos.x, halfW), Math.max(halfW, w - halfW)),
-      y: Math.min(Math.max(pos.y, halfH), Math.max(halfH, h - halfH))
-    };
-  }, [gMap]);
+  const clampTokenCenter = useCallback(
+    (pos, token) => {
+      if (!gMap) return pos;
+      const w = gMap.width || 0;
+      const h = gMap.height || 0;
+      const tw = token?.size?.width || gMap.gridSize || 50;
+      const th = token?.size?.height || gMap.gridSize || 50;
+      const halfW = tw / 2;
+      const halfH = th / 2;
+      return {
+        x: Math.min(Math.max(pos.x, halfW), Math.max(halfW, w - halfW)),
+        y: Math.min(Math.max(pos.y, halfH), Math.max(halfH, h - halfH)),
+      };
+    },
+    [gMap]
+  );
 
   // Check if a point is within map boundaries
-  const isPointInMapBounds = useCallback((pos) => {
-    if (!gMap) return true; // If no map loaded, allow by default
-    const w = gMap.width || 0;
-    const h = gMap.height || 0;
-    return pos.x >= 0 && pos.x <= w && pos.y >= 0 && pos.y <= h;
-  }, [gMap]);
+  const isPointInMapBounds = useCallback(
+    (pos) => {
+      if (!gMap) return true; // If no map loaded, allow by default
+      const w = gMap.width || 0;
+      const h = gMap.height || 0;
+      return pos.x >= 0 && pos.x <= w && pos.y >= 0 && pos.y <= h;
+    },
+    [gMap]
+  );
 
   // Timeout refs for unfinished shapes/drawings
   const shapeTimeoutRef = useRef(null);
@@ -458,7 +512,7 @@ function MapCanvas({
       shapeTimeoutRef.current = setTimeout(() => {
         setShapeStart(null);
         setShapePreview(null);
-        console.log('Shape drawing cancelled due to inactivity');
+        console.log("Shape drawing cancelled due to inactivity");
       }, 30000); // 30 seconds
     } else {
       // Clear timeout when shape is completed or cancelled
@@ -484,7 +538,7 @@ function MapCanvas({
       rulerTimeoutRef.current = setTimeout(() => {
         setRulerStart(null);
         setRulerEnd(null);
-        console.log('Ruler measurement cancelled due to inactivity');
+        console.log("Ruler measurement cancelled due to inactivity");
       }, 30000);
     } else {
       if (rulerTimeoutRef.current) {
@@ -507,7 +561,7 @@ function MapCanvas({
       }
       arrowTimeoutRef.current = setTimeout(() => {
         setArrowStart(null);
-        console.log('Arrow drawing cancelled due to inactivity');
+        console.log("Arrow drawing cancelled due to inactivity");
       }, 30000);
     } else {
       if (arrowTimeoutRef.current) {
@@ -530,14 +584,15 @@ function MapCanvas({
       if (!isDM) return;
 
       // R key to toggle ruler tool
-      if (e.key === 'r' || e.key === 'R') {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === "r" || e.key === "R") {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+          return;
         e.preventDefault();
-        setActiveTool(prev => prev === 'ruler' ? 'pointer' : 'ruler');
+        setActiveTool((prev) => (prev === "ruler" ? "pointer" : "ruler"));
       }
 
       // ESC key to clear ruler, shapes, or close context menu
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         if (contextMenu) {
           setContextMenu(null);
           return;
@@ -550,69 +605,85 @@ function MapCanvas({
         if (shapeStart || shapePreview) {
           setShapeStart(null);
           setShapePreview(null);
-          console.log('Shape preview cleared by Escape key');
+          console.log("Shape preview cleared by Escape key");
           return;
         }
         // Clear ruler
-        if (activeTool === 'ruler') {
+        if (activeTool === "ruler") {
           setRulerStart(null);
           setRulerEnd(null);
         }
       }
 
       // Grid toggle G
-      if (e.key === 'g' || e.key === 'G') {
+      if (e.key === "g" || e.key === "G") {
         if (gMap?.id) {
           const next = !gMap.gridEnabled;
-          setMapLive(m => m ? { ...m, gridEnabled: next } : m);
-          mapService.updateMap(firestore, campaignId, gMap.id, { gridEnabled: next }).catch(() => { });
+          setMapLive((m) => (m ? { ...m, gridEnabled: next } : m));
+          mapService
+            .updateMap(firestore, campaignId, gMap.id, { gridEnabled: next })
+            .catch(() => {});
         }
       }
       // Global snap S
-      if (e.key === 's' || e.key === 'S') {
-        setSnapToGrid(prev => !prev);
+      if (e.key === "s" || e.key === "S") {
+        setSnapToGrid((prev) => !prev);
       }
       // Token snap T
-      if (e.key === 't' || e.key === 'T') {
-        setTokenSnap(prev => !prev);
+      if (e.key === "t" || e.key === "T") {
+        setTokenSnap((prev) => !prev);
       }
-      
+
       // Boundary shortcuts
       // B key to toggle boundary panel
-      if (e.key === 'b' || e.key === 'B') {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === "b" || e.key === "B") {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+          return;
         e.preventDefault();
         if (onOpenBoundaryPanel) {
           onOpenBoundaryPanel();
         }
       }
-      
+
       // L key for Line boundary mode (when panel is open)
-      if ((e.key === 'l' || e.key === 'L') && showBoundaryPanel) {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if ((e.key === "l" || e.key === "L") && showBoundaryPanel) {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+          return;
         e.preventDefault();
         if (onBoundaryModeChange) {
-          onBoundaryModeChange('line');
+          onBoundaryModeChange("line");
         }
       }
-      
+
       // P key for Paint boundary mode (when panel is open)
-      if ((e.key === 'p' || e.key === 'P') && showBoundaryPanel) {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if ((e.key === "p" || e.key === "P") && showBoundaryPanel) {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+          return;
         e.preventDefault();
         if (onBoundaryModeChange) {
-          onBoundaryModeChange('paint');
+          onBoundaryModeChange("paint");
         }
       }
-      
+
       // Undo/Redo - Disabled (future enhancement)
       // TODO: Re-enable when undo/redo stack is implemented
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDM, activeTool, contextMenu, mapContextMenu, gMap, firestore, campaignId, showBoundaryPanel, onOpenBoundaryPanel, onBoundaryModeChange]);
+  }, [
+    isDM,
+    activeTool,
+    contextMenu,
+    mapContextMenu,
+    gMap,
+    firestore,
+    campaignId,
+    showBoundaryPanel,
+    onOpenBoundaryPanel,
+    onBoundaryModeChange,
+  ]);
 
   // Reset position and scale when map changes
   useEffect(() => {
@@ -627,9 +698,14 @@ function MapCanvas({
   useEffect(() => {
     if (!firestore || !campaignId || !map?.id) return;
 
-    const unsubscribe = pingService.subscribeToPings(firestore, campaignId, map.id, (newPings) => {
-      setPings(newPings);
-    });
+    const unsubscribe = pingService.subscribeToPings(
+      firestore,
+      campaignId,
+      map.id,
+      (newPings) => {
+        setPings(newPings);
+      }
+    );
 
     return () => unsubscribe();
   }, [firestore, campaignId, map?.id]);
@@ -638,94 +714,136 @@ function MapCanvas({
   useEffect(() => {
     if (!firestore || !campaignId || !map?.id) return;
 
-    console.log('Setting up fog subscription for map:', map.id);
+    console.log("Setting up fog subscription for map:", map.id);
 
-    const unsubscribe = fogOfWarService.subscribeFogOfWar(firestore, campaignId, map.id, (data) => {
-      setFogData(data);
-    });
+    const unsubscribe = fogOfWarService.subscribeFogOfWar(
+      firestore,
+      campaignId,
+      map.id,
+      (data) => {
+        setFogData(data);
+      }
+    );
 
     return () => {
-      console.log('Unsubscribing from fog');
+      console.log("Unsubscribing from fog");
       unsubscribe();
     };
   }, [firestore, campaignId, map?.id]);
-  
+
   // Load fog configuration from Firestore when fogData changes (only once on load)
   useEffect(() => {
     if (!fogData || !isDM) return;
-    
+
     // Only load if values are different from current (prevent loops)
-    if (fogData.fogGridColor && fogData.fogGridColor !== fogGridColor && onFogGridColorChange) {
+    if (
+      fogData.fogGridColor &&
+      fogData.fogGridColor !== fogGridColor &&
+      onFogGridColorChange
+    ) {
       onFogGridColorChange(fogData.fogGridColor);
     }
-    if (typeof fogData.fogGridVisible === 'boolean' && fogData.fogGridVisible !== fogGridVisible && onFogGridVisibleChange) {
+    if (
+      typeof fogData.fogGridVisible === "boolean" &&
+      fogData.fogGridVisible !== fogGridVisible &&
+      onFogGridVisibleChange
+    ) {
       onFogGridVisibleChange(fogData.fogGridVisible);
     }
-    if (typeof fogData.fogOpacity === 'number' && fogData.fogOpacity !== fogOpacity && onFogOpacityChange) {
+    if (
+      typeof fogData.fogOpacity === "number" &&
+      fogData.fogOpacity !== fogOpacity &&
+      onFogOpacityChange
+    ) {
       onFogOpacityChange(fogData.fogOpacity);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fogData?.fogGridColor, fogData?.fogGridVisible, fogData?.fogOpacity, isDM]);
+  }, [
+    fogData?.fogGridColor,
+    fogData?.fogGridVisible,
+    fogData?.fogOpacity,
+    isDM,
+  ]);
 
   // Sync fog configuration to Firestore when it changes
   useEffect(() => {
     if (!firestore || !campaignId || !map?.id || !fogData || !isDM) return;
-    
+
     const timeoutId = setTimeout(async () => {
       try {
         await fogOfWarService.updateFogConfig(firestore, campaignId, map.id, {
           fogGridColor,
           fogGridVisible,
-          fogOpacity
+          fogOpacity,
         });
       } catch (error) {
-        console.error('Error syncing fog config:', error);
+        console.error("Error syncing fog config:", error);
       }
     }, 500); // Debounce
-    
+
     return () => clearTimeout(timeoutId);
-  }, [fogGridColor, fogGridVisible, fogOpacity, firestore, campaignId, map?.id, fogData, isDM]);
+  }, [
+    fogGridColor,
+    fogGridVisible,
+    fogOpacity,
+    firestore,
+    campaignId,
+    map?.id,
+    fogData,
+    isDM,
+  ]);
 
   // Subscribe to boundaries
   useEffect(() => {
     if (!firestore || !campaignId || !map?.id) return;
 
-    console.log('Setting up boundaries subscription for map:', map.id);
+    console.log("Setting up boundaries subscription for map:", map.id);
 
-    const unsubscribe = boundaryService.subscribeToBoundaries(firestore, campaignId, map.id, (newBoundaries) => {
-      setBoundaries(newBoundaries);
-      console.log('Boundaries updated:', newBoundaries.length, 'boundaries');
-    });
+    const unsubscribe = boundaryService.subscribeToBoundaries(
+      firestore,
+      campaignId,
+      map.id,
+      (newBoundaries) => {
+        setBoundaries(newBoundaries);
+        console.log("Boundaries updated:", newBoundaries.length, "boundaries");
+      }
+    );
 
     return () => {
-      console.log('Unsubscribing from boundaries');
+      console.log("Unsubscribing from boundaries");
       unsubscribe();
     };
   }, [firestore, campaignId, map?.id]);
 
   // Debug: Log boundary mode changes
   useEffect(() => {
-    console.log('[BOUNDARY MODE DEBUG] boundaryMode changed to:', boundaryMode, '| activeTool:', activeTool);
+    console.log(
+      "[BOUNDARY MODE DEBUG] boundaryMode changed to:",
+      boundaryMode,
+      "| activeTool:",
+      activeTool
+    );
   }, [boundaryMode, activeTool]);
 
   // Clear shape preview when switching away from shape tools
   useEffect(() => {
-    const shapeTools = ['circle', 'rectangle', 'cone', 'line'];
+    const shapeTools = ["circle", "rectangle", "cone", "line"];
     if (!shapeTools.includes(activeTool)) {
       // User switched away from shape tool - clear any in-progress shape
       if (shapeStart || shapePreview) {
         setShapeStart(null);
         setShapePreview(null);
-        console.log('Shape preview cleared due to tool switch');
+        console.log("Shape preview cleared due to tool switch");
       }
     }
   }, [activeTool, shapeStart, shapePreview, setShapeStart, setShapePreview]);
 
   // Enable fog brush when fog panel is open and fog is enabled
   useEffect(() => {
-    const shouldActivate = isDM && showFogPanel && fogOfWarEnabled && fogData?.enabled;
+    const shouldActivate =
+      isDM && showFogPanel && fogOfWarEnabled && fogData?.enabled;
     setFogBrushActive(shouldActivate);
-    
+
     // Reset brushing state when deactivated
     if (!shouldActivate) {
       setIsFogBrushing(false);
@@ -737,9 +855,14 @@ function MapCanvas({
   useEffect(() => {
     if (!firestore || !campaignId || !map?.id) return;
 
-    const unsubscribe = drawingService.subscribeToDrawings(firestore, campaignId, map.id, (newDrawings) => {
-      setDrawings(newDrawings);
-    });
+    const unsubscribe = drawingService.subscribeToDrawings(
+      firestore,
+      campaignId,
+      map.id,
+      (newDrawings) => {
+        setDrawings(newDrawings);
+      }
+    );
 
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -760,7 +883,7 @@ function MapCanvas({
 
   // Animation loop for shape fade-out
   useEffect(() => {
-    const nonPersistentShapes = shapes.filter(s => !s.persistent);
+    const nonPersistentShapes = shapes.filter((s) => !s.persistent);
     if (nonPersistentShapes.length === 0) return;
 
     let frameId;
@@ -781,21 +904,36 @@ function MapCanvas({
     const fadeDuration = 2000;
     const now = Date.now();
 
-    shapes.filter(s => !s.persistent).forEach(shape => {
-      const createdAt = shape.createdAt?.toDate ? shape.createdAt.toDate() : new Date();
-      const age = now - createdAt.getTime();
+    shapes
+      .filter((s) => !s.persistent)
+      .forEach((shape) => {
+        const createdAt = shape.createdAt?.toDate
+          ? shape.createdAt.toDate()
+          : new Date();
+        const age = now - createdAt.getTime();
 
-      // Delete if fully faded
-      if (age > fadeStart + fadeDuration) {
-        shapeService.deleteShape(firestore, campaignId, map.id, shape.id)
-          .catch(err => console.error('Error auto-cleaning faded shape:', err));
-      }
-    });
+        // Delete if fully faded
+        if (age > fadeStart + fadeDuration) {
+          shapeService
+            .deleteShape(firestore, campaignId, map.id, shape.id)
+            .catch((err) =>
+              console.error("Error auto-cleaning faded shape:", err)
+            );
+        }
+      });
   }, [animationTime, shapes, firestore, campaignId, map?.id, isDM]);
 
   // Reveal fog around all player tokens when tokens or fog data changes
   useEffect(() => {
-    if (!firestore || !campaignId || !gMap?.id || !fogOfWarEnabled || !fogData?.enabled || !playerTokens.length) return;
+    if (
+      !firestore ||
+      !campaignId ||
+      !gMap?.id ||
+      !fogOfWarEnabled ||
+      !fogData?.enabled ||
+      !playerTokens.length
+    )
+      return;
 
     const revealAroundPlayerTokens = async () => {
       try {
@@ -811,7 +949,7 @@ function MapCanvas({
           const gridY = Math.floor(adjustedY / map.gridSize) + 1;
 
           // Check if player has a light source (torch/lantern) nearby
-          const hasNearbyLight = lights.some(light => {
+          const hasNearbyLight = lights.some((light) => {
             if (!light.position) return false;
             const dx = light.position.x - token.position.x;
             const dy = light.position.y - token.position.y;
@@ -821,20 +959,47 @@ function MapCanvas({
 
           // Base reveal radius is 3, increase to 5 if carrying a light (torch)
           const revealRadius = hasNearbyLight ? 5 : 3;
-          await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, revealRadius);
+          await fogOfWarService.revealArea(
+            firestore,
+            campaignId,
+            map.id,
+            gridX,
+            gridY,
+            revealRadius
+          );
         }
       } catch (error) {
-        console.error('Error revealing fog around player tokens:', error);
+        console.error("Error revealing fog around player tokens:", error);
       }
     };
 
     revealAroundPlayerTokens();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, JSON.stringify(playerTokens.map(t => ({ x: t.position?.x, y: t.position?.y }))), lights.length, map.gridSize, map.id]);
+  }, [
+    firestore,
+    campaignId,
+    gMap?.id,
+    fogOfWarEnabled,
+    fogData?.enabled,
+    JSON.stringify(
+      playerTokens.map((t) => ({ x: t.position?.x, y: t.position?.y }))
+    ),
+    lights.length,
+    map.gridSize,
+    map.id,
+  ]);
 
   // Reveal fog around light sources when lights or fog data changes
   useEffect(() => {
-    if (!firestore || !campaignId || !gMap?.id || !fogOfWarEnabled || !fogData?.enabled || !lights.length) return;
+    if (
+      !firestore ||
+      !campaignId ||
+      !gMap?.id ||
+      !fogOfWarEnabled ||
+      !fogData?.enabled ||
+      !lights.length
+    )
+      return;
 
     const revealAroundLights = async () => {
       try {
@@ -851,16 +1016,34 @@ function MapCanvas({
           const gridY = Math.floor(adjustedY / map.gridSize) + 1;
           // Calculate reveal radius based on light radius (convert pixels to grid cells)
           const revealRadius = Math.ceil((light.radius || 40) / map.gridSize);
-          await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, revealRadius);
+          await fogOfWarService.revealArea(
+            firestore,
+            campaignId,
+            map.id,
+            gridX,
+            gridY,
+            revealRadius
+          );
         }
       } catch (error) {
-        console.error('Error revealing fog around lights:', error);
+        console.error("Error revealing fog around lights:", error);
       }
     };
 
     revealAroundLights();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firestore, campaignId, gMap?.id, fogOfWarEnabled, fogData?.enabled, JSON.stringify(lights.map(l => ({ x: l.position?.x, y: l.position?.y, r: l.radius }))), map.gridSize, map.id]);
+  }, [
+    firestore,
+    campaignId,
+    gMap?.id,
+    fogOfWarEnabled,
+    fogData?.enabled,
+    JSON.stringify(
+      lights.map((l) => ({ x: l.position?.x, y: l.position?.y, r: l.radius }))
+    ),
+    map.gridSize,
+    map.id,
+  ]);
 
   // Force re-render for fade animations (drawings)
   useEffect(() => {
@@ -868,7 +1051,7 @@ function MapCanvas({
 
     const interval = setInterval(() => {
       // Force re-render to update opacity calculations
-      setDrawings(prev => [...prev]);
+      setDrawings((prev) => [...prev]);
     }, 100); // Update every 100ms for smooth fading
 
     return () => clearInterval(interval);
@@ -881,7 +1064,7 @@ function MapCanvas({
 
     const interval = setInterval(() => {
       // Force re-render to update ping opacity/color calculations
-      setPings(prev => [...prev]);
+      setPings((prev) => [...prev]);
     }, 50); // Update every 50ms for smooth ping animation
 
     return () => clearInterval(interval);
@@ -904,17 +1087,21 @@ function MapCanvas({
     return () => {
       unsubscribe();
       // Clear own preview on unmount
-      shapePreviewService.clearPreview(firestore, campaignId, gMap.id, user.uid)
-        .catch(err => console.debug('Error clearing preview on unmount:', err));
+      shapePreviewService
+        .clearPreview(firestore, campaignId, gMap.id, user.uid)
+        .catch((err) =>
+          console.debug("Error clearing preview on unmount:", err)
+        );
     };
   }, [firestore, campaignId, gMap?.id, user?.uid]);
 
   // Clear shape preview when tool changes
   useEffect(() => {
     if (!firestore || !campaignId || !gMap?.id || !user?.uid) return;
-    if (!['circle', 'rectangle', 'cone', 'line'].includes(activeTool)) {
-      shapePreviewService.clearPreview(firestore, campaignId, gMap.id, user.uid)
-        .catch(err => console.debug('Error clearing preview:', err));
+    if (!["circle", "rectangle", "cone", "line"].includes(activeTool)) {
+      shapePreviewService
+        .clearPreview(firestore, campaignId, gMap.id, user.uid)
+        .catch((err) => console.debug("Error clearing preview:", err));
     }
   }, [activeTool, firestore, campaignId, gMap?.id, user?.uid]);
 
@@ -951,7 +1138,7 @@ function MapCanvas({
   };
 
   const handleDragEnd = (e) => {
-    console.log('[DRAG END] Camera drag ended');
+    console.log("[DRAG END] Camera drag ended");
     setStagePos({
       x: e.target.x(),
       y: e.target.y(),
@@ -976,40 +1163,48 @@ function MapCanvas({
             x: mapX,
             y: mapY,
             userId: user.uid,
-            userName: userProfile?.username || 'Unknown',
-            color: pingColor // Use custom ping color
+            userName: userProfile?.username || "Unknown",
+            color: pingColor, // Use custom ping color
           });
         } catch (err) {
-          console.error('Error creating ping:', err);
+          console.error("Error creating ping:", err);
         }
         return; // Don't handle other tools if Alt was pressed
       }
 
       // Handle based on active tool
-      if (activeTool === 'arrow') {
+      if (activeTool === "arrow") {
         if (!arrowStart && e.evt.button !== 2) {
           const snappedPoint = maybeSnapPoint({ x: mapX, y: mapY });
           if (isPointInMapBounds(snappedPoint)) {
             setArrowStart(snappedPoint);
           } else {
-            console.log('Cannot start arrow outside map bounds');
+            console.log("Cannot start arrow outside map bounds");
           }
         } else if (arrowStart && e.evt.button !== 2) {
           try {
             const end = maybeSnapPoint({ x: mapX, y: mapY });
             if (isPointInMapBounds(end)) {
-              await drawingService.createArrow(firestore, campaignId, map.id, arrowStart, end, '#ffff00', user.uid);
+              await drawingService.createArrow(
+                firestore,
+                campaignId,
+                map.id,
+                arrowStart,
+                end,
+                "#ffff00",
+                user.uid
+              );
               setArrowStart(null);
             } else {
-              console.log('Cannot end arrow outside map bounds');
+              console.log("Cannot end arrow outside map bounds");
               // Still clear the arrow start to prevent stuck state
               setArrowStart(null);
             }
           } catch (err) {
-            console.error('Error creating arrow:', err);
+            console.error("Error creating arrow:", err);
           }
         }
-      } else if (activeTool === 'ruler') {
+      } else if (activeTool === "ruler") {
         // Only process left-clicks for ruler tool
         if (e.evt.button === 2) {
           return; // Ignore right-clicks
@@ -1040,7 +1235,7 @@ function MapCanvas({
             setRulerStart(startPoint);
             setRulerEnd(startPoint);
           } else {
-            console.log('Cannot start ruler outside map bounds');
+            console.log("Cannot start ruler outside map bounds");
           }
         } else {
           // Complete measurement - check if end point is valid
@@ -1048,71 +1243,73 @@ function MapCanvas({
           if (isPointInMapBounds(endPoint)) {
             if (rulerPersistent) {
               // Pin the measurement
-              setPinnedRulers(prev => [
+              setPinnedRulers((prev) => [
                 ...prev,
                 {
                   id: Date.now(),
                   start: rulerStart,
-                  end: endPoint
-                }
+                  end: endPoint,
+                },
               ]);
             }
           } else {
-            console.log('Cannot end ruler outside map bounds');
+            console.log("Cannot end ruler outside map bounds");
           }
           // Always clear ruler state on second click
           setRulerStart(null);
           setRulerEnd(null);
         }
         return; // Don't deselect tokens when using ruler
-      } else if (activeTool === 'placeLight' && isDM && placingLight) {
+      } else if (activeTool === "placeLight" && isDM && placingLight) {
         // Only process left-clicks for placing lights
         if (e.evt.button === 2) {
           return; // Ignore right-clicks
         }
         // Place the light at clicked position
         const position = smartSnapPoint({ x: mapX, y: mapY });
-        
+
         // Check if position is within map bounds
         if (!isPointInMapBounds(position)) {
-          console.log('Cannot place light outside map bounds');
+          console.log("Cannot place light outside map bounds");
           return;
         }
-        
+
         // Determine light type from preset data
         const lightType = determineLightType(placingLight);
-        
+
         // Generate auto-name for the light
         const lightName = generateLightName(lightType, lights);
-        
+
         console.log(`Placing light: ${lightName} (type: ${lightType})`);
-        
+
         // Create the light with auto-generated name
         createLight({
           ...placingLight,
           position,
           name: lightName,
-          type: lightType
-        }).then(() => {
-          setPlacingLight(null);
-          setLightPreviewPos(null);
-          setActiveTool('pointer');
-        }).catch(error => {
-          console.error('Error placing light:', error);
-        });
+          type: lightType,
+        })
+          .then(() => {
+            setPlacingLight(null);
+            setLightPreviewPos(null);
+            setActiveTool("pointer");
+          })
+          .catch((error) => {
+            console.error("Error placing light:", error);
+          });
         return;
-      } else if (['circle', 'rectangle', 'cone', 'line'].includes(activeTool)) {
+      } else if (["circle", "rectangle", "cone", "line"].includes(activeTool)) {
         if (!shapeStart && e.evt.button !== 2) {
           const snappedPoint = smartSnapPoint({ x: mapX, y: mapY });
           if (isPointInMapBounds(snappedPoint)) {
             setShapeStart(snappedPoint);
           } else {
-            console.log('Cannot start shape outside map bounds');
+            console.log("Cannot start shape outside map bounds");
           }
         } else if (shapeStart && e.evt.button !== 2) {
           const snappedEnd = maybeSnapPoint({ x: mapX, y: mapY });
           if (!isPointInMapBounds(snappedEnd)) {
-            console.log('Cannot end shape outside map bounds');
+            console.log("Cannot end shape outside map bounds");
             // Clear the shape start to prevent stuck state
             setShapeStart(null);
             setShapePreview(null);
@@ -1120,28 +1317,75 @@ function MapCanvas({
           }
           const end = snappedEnd;
           try {
-            if (activeTool === 'circle') {
+            if (activeTool === "circle") {
               const dx = end.x - shapeStart.x;
               const dy = end.y - shapeStart.y;
               const radius = Math.sqrt(dx * dx + dy * dy);
-              await shapeService.createCircle(firestore, campaignId, map.id, shapeStart, radius, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+              await shapeService.createCircle(
+                firestore,
+                campaignId,
+                map.id,
+                shapeStart,
+                radius,
+                shapeColor,
+                shapeOpacity,
+                shapePersistent,
+                shapeVisibility,
+                user?.uid
+              );
               // TODO: Undo/redo for shape creation (future enhancement)
-            } else if (activeTool === 'rectangle') {
-              await shapeService.createRectangle(firestore, campaignId, map.id, shapeStart, end.x - shapeStart.x, end.y - shapeStart.y, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+            } else if (activeTool === "rectangle") {
+              await shapeService.createRectangle(
+                firestore,
+                campaignId,
+                map.id,
+                shapeStart,
+                end.x - shapeStart.x,
+                end.y - shapeStart.y,
+                shapeColor,
+                shapeOpacity,
+                shapePersistent,
+                shapeVisibility,
+                user?.uid
+              );
               // TODO: Undo/redo for shape creation (future enhancement)
-            } else if (activeTool === 'cone') {
+            } else if (activeTool === "cone") {
               const dx = end.x - shapeStart.x;
               const dy = end.y - shapeStart.y;
               const length = Math.sqrt(dx * dx + dy * dy);
               const direction = (Math.atan2(dy, dx) * 180) / Math.PI;
-              await shapeService.createCone(firestore, campaignId, map.id, shapeStart, direction, length, 60, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+              await shapeService.createCone(
+                firestore,
+                campaignId,
+                map.id,
+                shapeStart,
+                direction,
+                length,
+                60,
+                shapeColor,
+                shapeOpacity,
+                shapePersistent,
+                shapeVisibility,
+                user?.uid
+              );
               // TODO: Undo/redo for shape creation (future enhancement)
-            } else if (activeTool === 'line') {
-              await shapeService.createLine(firestore, campaignId, map.id, shapeStart, end, shapeColor, shapeOpacity, shapePersistent, shapeVisibility, user?.uid);
+            } else if (activeTool === "line") {
+              await shapeService.createLine(
+                firestore,
+                campaignId,
+                map.id,
+                shapeStart,
+                end,
+                shapeColor,
+                shapeOpacity,
+                shapePersistent,
+                shapeVisibility,
+                user?.uid
+              );
               // TODO: Undo/redo for shape creation (future enhancement)
             }
           } catch (err) {
-            console.error('Error creating shape:', err);
+            console.error("Error creating shape:", err);
           } finally {
             setShapeStart(null);
             setShapePreview(null);
@@ -1163,44 +1407,141 @@ function MapCanvas({
   };
 
   // Paint fog at pointer position with brush size
-  const paintFogAtPointer = useCallback(async (e) => {
-    if (!map || !fogData) return;
+  const paintFogAtPointer = useCallback(
+    async (e) => {
+      if (!map || !fogData) return;
 
-    const stage = stageRef.current;
-    const pointer = stage.getPointerPosition();
-    const mapX = (pointer.x - stage.x()) / stage.scaleX();
-    const mapY = (pointer.y - stage.y()) / stage.scaleY();
+      const stage = stageRef.current;
+      const pointer = stage.getPointerPosition();
+      const mapX = (pointer.x - stage.x()) / stage.scaleX();
+      const mapY = (pointer.y - stage.y()) / stage.scaleY();
 
-    const gridSize = map.gridSize || 50;
-    const offsetX = map.gridOffsetX || 0;
-    const offsetY = map.gridOffsetY || 0;
+      const gridSize = map.gridSize || 50;
+      const offsetX = map.gridOffsetX || 0;
+      const offsetY = map.gridOffsetY || 0;
 
-    // Calculate grid cell position
-    const adjustedX = mapX - offsetX;
-    const adjustedY = mapY - offsetY;
-    // Add 1 to account for padding cell (fog grid has 1 extra cell on each side)
-    const centerGridX = Math.floor(adjustedX / gridSize) + 1;
-    const centerGridY = Math.floor(adjustedY / gridSize) + 1;
+      // Calculate grid cell position
+      const adjustedX = mapX - offsetX;
+      const adjustedY = mapY - offsetY;
+      // Add 1 to account for padding cell (fog grid has 1 extra cell on each side)
+      const centerGridX = Math.floor(adjustedX / gridSize) + 1;
+      const centerGridY = Math.floor(adjustedY / gridSize) + 1;
 
-    // Skip if we just painted this cell
-    const cellKey = `${centerGridX},${centerGridY}`;
-    if (lastFogCell === cellKey) {
-      return;
-    }
-    setLastFogCell(cellKey);
+      // Skip if we just painted this cell
+      const cellKey = `${centerGridX},${centerGridY}`;
+      if (lastFogCell === cellKey) {
+        return;
+      }
+      setLastFogCell(cellKey);
 
-    console.log('[FOG BRUSH] Painting at grid cell:', centerGridX, centerGridY, 'with brush size:', fogBrushSize, 'mode:', fogBrushMode);
+      console.log(
+        "[FOG BRUSH] Painting at grid cell:",
+        centerGridX,
+        centerGridY,
+        "with brush size:",
+        fogBrushSize,
+        "mode:",
+        fogBrushMode
+      );
 
-    try {
-      const { visibility, gridWidth, gridHeight } = fogData;
-      const newVisibility = visibility.map(row => [...row]);
+      try {
+        const { visibility, gridWidth, gridHeight } = fogData;
+        const newVisibility = visibility.map((row) => [...row]);
 
-      // Determine what value to set based on brush mode
-      const revealValue = fogBrushMode === 'reveal';
+        // Determine what value to set based on brush mode
+        const revealValue = fogBrushMode === "reveal";
+
+        // Paint in circular area based on brush size
+        const radius = Math.floor(fogBrushSize / 2);
+        let cellsChanged = 0;
+
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance <= radius) {
+              const gridX = centerGridX + dx;
+              const gridY = centerGridY + dy;
+
+              // Check bounds
+              if (
+                gridY >= 0 &&
+                gridY < gridHeight &&
+                gridX >= 0 &&
+                gridX < gridWidth
+              ) {
+                if (newVisibility[gridY][gridX] !== revealValue) {
+                  newVisibility[gridY][gridX] = revealValue;
+                  cellsChanged++;
+                }
+              }
+            }
+          }
+        }
+
+        if (cellsChanged > 0) {
+          console.log("[FOG BRUSH] Updated", cellsChanged, "cells");
+          await fogOfWarService.updateFogOfWar(
+            firestore,
+            campaignId,
+            map.id,
+            newVisibility
+          );
+        }
+      } catch (err) {
+        console.error("[FOG BRUSH] Error painting fog:", err);
+      }
+    },
+    [
+      map,
+      fogData,
+      fogBrushSize,
+      fogBrushMode,
+      firestore,
+      campaignId,
+      lastFogCell,
+    ]
+  );
+
+  // Paint boundary at pointer position with brush size
+  const paintBoundaryAtPointer = useCallback(
+    (e) => {
+      if (!map) return;
+
+      const stage = stageRef.current;
+      const pointer = stage.getPointerPosition();
+      const mapX = (pointer.x - stage.x()) / stage.scaleX();
+      const mapY = (pointer.y - stage.y()) / stage.scaleY();
+
+      const gridSize = map.gridSize || 50;
+      const offsetX = map.gridOffsetX || 0;
+      const offsetY = map.gridOffsetY || 0;
+
+      // Calculate grid cell position
+      const adjustedX = mapX - offsetX;
+      const adjustedY = mapY - offsetY;
+      const centerGridX = Math.floor(adjustedX / gridSize);
+      const centerGridY = Math.floor(adjustedY / gridSize);
+
+      // Skip if we just painted this cell
+      const cellKey = `${centerGridX},${centerGridY}`;
+      if (lastBoundaryCell === cellKey) {
+        return;
+      }
+      setLastBoundaryCell(cellKey);
+
+      console.log(
+        "[BOUNDARY] Painting at grid cell:",
+        centerGridX,
+        centerGridY,
+        "with brush size:",
+        boundaryBrushSize,
+        "mode:",
+        boundaryBrushMode
+      );
 
       // Paint in circular area based on brush size
-      const radius = Math.floor(fogBrushSize / 2);
-      let cellsChanged = 0;
+      const radius = Math.floor(boundaryBrushSize / 2);
+      const newCells = [];
 
       for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {
@@ -1209,92 +1550,65 @@ function MapCanvas({
             const gridX = centerGridX + dx;
             const gridY = centerGridY + dy;
 
-            // Check bounds
-            if (gridY >= 0 && gridY < gridHeight && gridX >= 0 && gridX < gridWidth) {
-              if (newVisibility[gridY][gridX] !== revealValue) {
-                newVisibility[gridY][gridX] = revealValue;
-                cellsChanged++;
-              }
+            // Prevent painting outside map bounds
+            const cellX = gridX * gridSize + offsetX;
+            const cellY = gridY * gridSize + offsetY;
+            if (
+              cellX < 0 ||
+              cellY < 0 ||
+              cellX >= map.width ||
+              cellY >= map.height
+            ) {
+              continue;
+            }
+
+            // Add to buffer if not already present
+            const exists = paintedCellsBuffer.some(
+              (c) => c.gridX === gridX && c.gridY === gridY
+            );
+            if (!exists) {
+              newCells.push({ gridX, gridY });
             }
           }
         }
       }
 
-      if (cellsChanged > 0) {
-        console.log('[FOG BRUSH] Updated', cellsChanged, 'cells');
-        await fogOfWarService.updateFogOfWar(firestore, campaignId, map.id, newVisibility);
+      if (newCells.length > 0) {
+        setPaintedCellsBuffer((prev) => [...prev, ...newCells]);
+        console.log("[BOUNDARY] Buffered", newCells.length, "new cells");
       }
-    } catch (err) {
-      console.error('[FOG BRUSH] Error painting fog:', err);
-    }
-  }, [map, fogData, fogBrushSize, fogBrushMode, firestore, campaignId, lastFogCell]);
-
-  // Paint boundary at pointer position with brush size
-  const paintBoundaryAtPointer = useCallback((e) => {
-    if (!map) return;
-
-    const stage = stageRef.current;
-    const pointer = stage.getPointerPosition();
-    const mapX = (pointer.x - stage.x()) / stage.scaleX();
-    const mapY = (pointer.y - stage.y()) / stage.scaleY();
-
-    const gridSize = map.gridSize || 50;
-    const offsetX = map.gridOffsetX || 0;
-    const offsetY = map.gridOffsetY || 0;
-
-    // Calculate grid cell position
-    const adjustedX = mapX - offsetX;
-    const adjustedY = mapY - offsetY;
-    const centerGridX = Math.floor(adjustedX / gridSize);
-    const centerGridY = Math.floor(adjustedY / gridSize);
-
-    // Skip if we just painted this cell
-    const cellKey = `${centerGridX},${centerGridY}`;
-    if (lastBoundaryCell === cellKey) {
-      return;
-    }
-    setLastBoundaryCell(cellKey);
-
-    console.log('[BOUNDARY] Painting at grid cell:', centerGridX, centerGridY, 'with brush size:', boundaryBrushSize, 'mode:', boundaryBrushMode);
-
-    // Paint in circular area based on brush size
-    const radius = Math.floor(boundaryBrushSize / 2);
-    const newCells = [];
-
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance <= radius) {
-          const gridX = centerGridX + dx;
-          const gridY = centerGridY + dy;
-          
-          // Prevent painting outside map bounds
-          const cellX = gridX * gridSize + offsetX;
-          const cellY = gridY * gridSize + offsetY;
-          if (cellX < 0 || cellY < 0 || cellX >= map.width || cellY >= map.height) {
-            continue;
-          }
-
-          // Add to buffer if not already present
-          const exists = paintedCellsBuffer.some(c => c.gridX === gridX && c.gridY === gridY);
-          if (!exists) {
-            newCells.push({ gridX, gridY });
-          }
-        }
-      }
-    }
-
-    if (newCells.length > 0) {
-      setPaintedCellsBuffer(prev => [...prev, ...newCells]);
-      console.log('[BOUNDARY] Buffered', newCells.length, 'new cells');
-    }
-  }, [map, boundaryBrushSize, boundaryBrushMode, lastBoundaryCell, paintedCellsBuffer]);
+    },
+    [
+      map,
+      boundaryBrushSize,
+      boundaryBrushMode,
+      lastBoundaryCell,
+      paintedCellsBuffer,
+    ]
+  );
 
   const handleMouseDown = (e) => {
-    console.log('[MOUSE DOWN DEBUG] Target:', e.target.constructor.name, '| fogBrushActive:', fogBrushActive, '| activeTool:', activeTool, '| boundaryMode:', boundaryMode, '| isFogBrushing:', isFogBrushing);
+    console.log(
+      "[MOUSE DOWN DEBUG] Target:",
+      e.target.constructor.name,
+      "| fogBrushActive:",
+      fogBrushActive,
+      "| activeTool:",
+      activeTool,
+      "| boundaryMode:",
+      boundaryMode,
+      "| isFogBrushing:",
+      isFogBrushing
+    );
     // Fog brush painting
-    if (fogBrushActive && isDM && fogOfWarEnabled && fogData?.enabled && e.target === e.target.getStage()) {
-      console.log('[FOG BRUSH] Mouse down - starting fog brush painting');
+    if (
+      fogBrushActive &&
+      isDM &&
+      fogOfWarEnabled &&
+      fogData?.enabled &&
+      e.target === e.target.getStage()
+    ) {
+      console.log("[FOG BRUSH] Mouse down - starting fog brush painting");
       if (e.evt.button === 2) {
         return; // Ignore right-clicks
       }
@@ -1304,7 +1618,12 @@ function MapCanvas({
     }
 
     // Boundary drawing (DM only, when boundary panel is open)
-    if (isDM && showBoundaryPanel && boundariesEnabled && e.target === e.target.getStage()) {
+    if (
+      isDM &&
+      showBoundaryPanel &&
+      boundariesEnabled &&
+      e.target === e.target.getStage()
+    ) {
       if (e.evt.button === 2) {
         return; // Ignore right-clicks
       }
@@ -1314,7 +1633,7 @@ function MapCanvas({
       let mapX = (pointer.x - stage.x()) / stage.scaleX();
       let mapY = (pointer.y - stage.y()) / stage.scaleY();
 
-      if (boundaryMode === 'line') {
+      if (boundaryMode === "line") {
         // Line boundary drawing
         if (boundarySnapToGrid && gMap?.gridSize) {
           // Snap to grid intersections
@@ -1324,18 +1643,18 @@ function MapCanvas({
           mapX = Math.round((mapX - offsetX) / gridSize) * gridSize + offsetX;
           mapY = Math.round((mapY - offsetY) / gridSize) * gridSize + offsetY;
         }
-        
+
         // Prevent boundaries off map
         if (mapX < 0 || mapY < 0 || mapX > gMap.width || mapY > gMap.height) {
-          console.warn('[BOUNDARY] Cannot place boundary outside map bounds');
+          console.warn("[BOUNDARY] Cannot place boundary outside map bounds");
           return;
         }
         setIsBoundaryDrawing(true);
         setBoundaryStart({ x: mapX, y: mapY });
         setBoundaryPreview({ x: mapX, y: mapY });
-        console.log('[BOUNDARY] Started line boundary at:', mapX, mapY);
+        console.log("[BOUNDARY] Started line boundary at:", mapX, mapY);
         return;
-      } else if (boundaryMode === 'paint') {
+      } else if (boundaryMode === "paint") {
         // Paint boundary mode
         setIsPaintingBoundary(true);
         setPaintedCellsBuffer([]);
@@ -1345,7 +1664,7 @@ function MapCanvas({
       }
     }
 
-    if (activeTool === 'pen' && e.target === e.target.getStage()) {
+    if (activeTool === "pen" && e.target === e.target.getStage()) {
       // Only process left-clicks for pen tool
       if (e.evt.button === 2) {
         return; // Ignore right-clicks
@@ -1360,7 +1679,7 @@ function MapCanvas({
         setIsDrawing(true);
         setCurrentDrawing([mapX, mapY]);
       } else {
-        console.log('Cannot start drawing outside map bounds');
+        console.log("Cannot start drawing outside map bounds");
       }
     }
   };
@@ -1372,13 +1691,19 @@ function MapCanvas({
     const mapY = (pointer.y - stage.y()) / stage.scaleY();
 
     // Fog brush painting while dragging
-    if (isFogBrushing && fogBrushActive && isDM && fogOfWarEnabled && fogData?.enabled) {
+    if (
+      isFogBrushing &&
+      fogBrushActive &&
+      isDM &&
+      fogOfWarEnabled &&
+      fogData?.enabled
+    ) {
       paintFogAtPointer(e);
       return;
     }
 
     // Boundary drawing preview
-    if (isBoundaryDrawing && boundaryMode === 'line' && boundaryStart) {
+    if (isBoundaryDrawing && boundaryMode === "line" && boundaryStart) {
       let endX = mapX;
       let endY = mapY;
 
@@ -1389,7 +1714,7 @@ function MapCanvas({
         endX = Math.round((endX - offsetX) / gridSize) * gridSize + offsetX;
         endY = Math.round((endY - offsetY) / gridSize) * gridSize + offsetY;
       }
-      
+
       // Clamp to map bounds
       endX = Math.max(0, Math.min(endX, gMap.width));
       endY = Math.max(0, Math.min(endY, gMap.height));
@@ -1399,18 +1724,18 @@ function MapCanvas({
     }
 
     // Boundary painting while dragging
-    if (isPaintingBoundary && boundaryMode === 'paint') {
+    if (isPaintingBoundary && boundaryMode === "paint") {
       paintBoundaryAtPointer(e);
       return;
     }
 
-    if (activeTool === 'placeLight' && placingLight) {
+    if (activeTool === "placeLight" && placingLight) {
       // Update light preview position
       const previewPos = maybeSnapPoint({ x: mapX, y: mapY });
       setLightPreviewPos(previewPos);
-    } else if (activeTool === 'pen' && isDrawing) {
-      setCurrentDrawing(prev => [...prev, mapX, mapY]);
-    } else if (activeTool === 'ruler' && rulerStart) {
+    } else if (activeTool === "pen" && isDrawing) {
+      setCurrentDrawing((prev) => [...prev, mapX, mapY]);
+    } else if (activeTool === "ruler" && rulerStart) {
       // Update ruler end point while dragging
       const gridSize = map?.gridSize || 50;
       const offsetX = map?.gridOffsetX || 0;
@@ -1427,7 +1752,10 @@ function MapCanvas({
       }
 
       setRulerEnd({ x: endX, y: endY });
-    } else if (['circle', 'rectangle', 'cone', 'line'].includes(activeTool) && shapeStart) {
+    } else if (
+      ["circle", "rectangle", "cone", "line"].includes(activeTool) &&
+      shapeStart
+    ) {
       const snappedEnd = smartSnapPoint({ x: mapX, y: mapY });
       // Only show preview if end point would be valid
       if (!isPointInMapBounds(snappedEnd)) {
@@ -1437,36 +1765,82 @@ function MapCanvas({
       const end = snappedEnd;
       let preview = null;
 
-      if (activeTool === 'circle') {
+      if (activeTool === "circle") {
         const dx = end.x - shapeStart.x;
         const dy = end.y - shapeStart.y;
         const radius = Math.sqrt(dx * dx + dy * dy);
-        preview = { type: 'circle', geometry: { x: shapeStart.x, y: shapeStart.y, radius }, color: shapeColor, opacity: shapeOpacity * 0.5 };
-      } else if (activeTool === 'rectangle') {
-        preview = { type: 'rectangle', geometry: { x: shapeStart.x, y: shapeStart.y, width: end.x - shapeStart.x, height: end.y - shapeStart.y }, color: shapeColor, opacity: shapeOpacity * 0.5 };
-      } else if (activeTool === 'cone') {
+        preview = {
+          type: "circle",
+          geometry: { x: shapeStart.x, y: shapeStart.y, radius },
+          color: shapeColor,
+          opacity: shapeOpacity * 0.5,
+        };
+      } else if (activeTool === "rectangle") {
+        preview = {
+          type: "rectangle",
+          geometry: {
+            x: shapeStart.x,
+            y: shapeStart.y,
+            width: end.x - shapeStart.x,
+            height: end.y - shapeStart.y,
+          },
+          color: shapeColor,
+          opacity: shapeOpacity * 0.5,
+        };
+      } else if (activeTool === "cone") {
         const dx = end.x - shapeStart.x;
         const dy = end.y - shapeStart.y;
         const length = Math.sqrt(dx * dx + dy * dy);
         const direction = (Math.atan2(dy, dx) * 180) / Math.PI;
-        preview = { type: 'cone', geometry: { x: shapeStart.x, y: shapeStart.y, direction, length, angle: 60 }, color: shapeColor, opacity: shapeOpacity * 0.5 };
-      } else if (activeTool === 'line') {
-        preview = { type: 'line', geometry: { x1: shapeStart.x, y1: shapeStart.y, x2: end.x, y2: end.y }, color: shapeColor, opacity: shapeOpacity * 0.5 };
+        preview = {
+          type: "cone",
+          geometry: {
+            x: shapeStart.x,
+            y: shapeStart.y,
+            direction,
+            length,
+            angle: 60,
+          },
+          color: shapeColor,
+          opacity: shapeOpacity * 0.5,
+        };
+      } else if (activeTool === "line") {
+        preview = {
+          type: "line",
+          geometry: {
+            x1: shapeStart.x,
+            y1: shapeStart.y,
+            x2: end.x,
+            y2: end.y,
+          },
+          color: shapeColor,
+          opacity: shapeOpacity * 0.5,
+        };
       }
 
       if (preview) {
         setShapePreview(preview);
 
         // Broadcast preview to other users
-        if (user?.uid && userProfile?.username && firestore && campaignId && gMap?.id) {
-          shapePreviewService.updateShapePreview(
-            firestore,
-            campaignId,
-            gMap.id,
-            user.uid,
-            userProfile.username,
-            preview
-          ).catch(err => console.debug('Error updating shape preview:', err));
+        if (
+          user?.uid &&
+          userProfile?.username &&
+          firestore &&
+          campaignId &&
+          gMap?.id
+        ) {
+          shapePreviewService
+            .updateShapePreview(
+              firestore,
+              campaignId,
+              gMap.id,
+              user.uid,
+              userProfile.username,
+              preview
+            )
+            .catch((err) =>
+              console.debug("Error updating shape preview:", err)
+            );
         }
       }
     }
@@ -1475,21 +1849,27 @@ function MapCanvas({
   const handleMouseUp = async () => {
     // Stop fog brushing
     if (isFogBrushing) {
-      console.log('[FOG BRUSH] Mouse up - stopping fog brush painting');
+      console.log("[FOG BRUSH] Mouse up - stopping fog brush painting");
       setIsFogBrushing(false);
       setLastFogCell(null);
       return;
     }
 
     // Finish line boundary
-    if (isBoundaryDrawing && boundaryMode === 'line' && boundaryStart && boundaryPreview) {
+    if (
+      isBoundaryDrawing &&
+      boundaryMode === "line" &&
+      boundaryStart &&
+      boundaryPreview
+    ) {
       try {
         // Only create boundary if there's a meaningful distance
         const dx = boundaryPreview.x - boundaryStart.x;
         const dy = boundaryPreview.y - boundaryStart.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance > 5) { // Minimum 5 pixels
+        if (distance > 5) {
+          // Minimum 5 pixels
           await boundaryService.createBoundary(
             firestore,
             campaignId,
@@ -1499,10 +1879,10 @@ function MapCanvas({
             user.uid,
             boundarySnapToGrid
           );
-          console.log('[BOUNDARY] Created line boundary');
+          console.log("[BOUNDARY] Created line boundary");
         }
       } catch (err) {
-        console.error('Error creating line boundary:', err);
+        console.error("Error creating line boundary:", err);
       }
       setIsBoundaryDrawing(false);
       setBoundaryStart(null);
@@ -1511,11 +1891,11 @@ function MapCanvas({
     }
 
     // Finish painting boundary
-    if (isPaintingBoundary && boundaryMode === 'paint') {
+    if (isPaintingBoundary && boundaryMode === "paint") {
       try {
         if (paintedCellsBuffer.length > 0) {
           // Create or update painted boundary
-          if (boundaryBrushMode === 'paint') {
+          if (boundaryBrushMode === "paint") {
             await boundaryService.createPaintedBoundary(
               firestore,
               campaignId,
@@ -1523,14 +1903,22 @@ function MapCanvas({
               paintedCellsBuffer,
               user.uid
             );
-            console.log('[BOUNDARY] Created painted boundary with', paintedCellsBuffer.length, 'cells');
+            console.log(
+              "[BOUNDARY] Created painted boundary with",
+              paintedCellsBuffer.length,
+              "cells"
+            );
           } else {
             // Erase mode - remove cells from existing painted boundaries
             // Find painted boundaries that contain any of these cells and remove them
-            const paintedBoundaries = boundaries.filter(b => b.type === 'painted');
+            const paintedBoundaries = boundaries.filter(
+              (b) => b.type === "painted"
+            );
             for (const boundary of paintedBoundaries) {
-              const cellsToRemove = paintedCellsBuffer.filter(cell =>
-                boundary.cells.some(bc => bc.gridX === cell.gridX && bc.gridY === cell.gridY)
+              const cellsToRemove = paintedCellsBuffer.filter((cell) =>
+                boundary.cells.some(
+                  (bc) => bc.gridX === cell.gridX && bc.gridY === cell.gridY
+                )
               );
               if (cellsToRemove.length > 0) {
                 await boundaryService.removePaintedCells(
@@ -1542,11 +1930,15 @@ function MapCanvas({
                 );
               }
             }
-            console.log('[BOUNDARY] Erased', paintedCellsBuffer.length, 'cells from boundaries');
+            console.log(
+              "[BOUNDARY] Erased",
+              paintedCellsBuffer.length,
+              "cells from boundaries"
+            );
           }
         }
       } catch (err) {
-        console.error('Error finishing painted boundary:', err);
+        console.error("Error finishing painted boundary:", err);
       }
       setIsPaintingBoundary(false);
       setPaintedCellsBuffer([]);
@@ -1554,16 +1946,23 @@ function MapCanvas({
       return;
     }
 
-    if (activeTool === 'pen' && isDrawing && currentDrawing.length > 0) {
+    if (activeTool === "pen" && isDrawing && currentDrawing.length > 0) {
       try {
         // Convert flat array to points array
         const points = [];
         for (let i = 0; i < currentDrawing.length; i += 2) {
           points.push({ x: currentDrawing[i], y: currentDrawing[i + 1] });
         }
-        await drawingService.createPenStroke(firestore, campaignId, map.id, points, penColor, user.uid); // Use custom pen color
+        await drawingService.createPenStroke(
+          firestore,
+          campaignId,
+          map.id,
+          points,
+          penColor,
+          user.uid
+        ); // Use custom pen color
       } catch (err) {
-        console.error('Error creating pen stroke:', err);
+        console.error("Error creating pen stroke:", err);
       }
       setIsDrawing(false);
       setCurrentDrawing([]);
@@ -1571,100 +1970,138 @@ function MapCanvas({
   };
 
   // Handle token drag end
-  const handleTokenDragEnd = useCallback(async (tokenId, newPosition) => {
-    try {
-      const token = tokens.find(t => t.id === tokenId);
-      if (!token) return;
-      
-      const originalPos = token.position;
-      
-      // TODO: Track beforePos for undo/redo (future enhancement)
-      // Apply snap if enabled
-      let finalPos = newPosition;
-      if (snapToGrid && map?.gridSize) {
-        const g = map.gridSize;
-        const offsetX = map.gridOffsetX || 0;
-        const offsetY = map.gridOffsetY || 0;
-        // Adjust for offset, snap to grid, then add offset back
-        const adjustedX = newPosition.x - offsetX;
-        const adjustedY = newPosition.y - offsetY;
-        const cellX = Math.floor(adjustedX / g);
-        const cellY = Math.floor(adjustedY / g);
-        finalPos = { x: cellX * g + g / 2 + offsetX, y: cellY * g + g / 2 + offsetY };
-      }
-      // Clamp to map bounds
-      finalPos = clampTokenCenter(finalPos, token);
-      
-      // Check boundary collisions if boundaries are enabled
-      if (boundariesEnabled && boundaries && boundaries.length > 0) {
-        const gridSize = map?.gridSize || 50;
-        const gridOffset = {
-          x: map?.gridOffsetX || 0,
-          y: map?.gridOffsetY || 0
-        };
-        
-        // Check if the move crosses any boundaries
-        const crossesBoundary = boundaryService.checkBoundaryCrossing(
-          originalPos,
-          finalPos,
-          boundaries,
-          gridSize,
-          gridOffset
-        );
-        
-        if (crossesBoundary) {
-          // Reject the move - keep token at original position
-          console.log(`Token ${tokenId} movement blocked by boundary`);
-          
-          // Visual feedback: Flash the token red briefly
-          setBoundaryCollisionToken(tokenId);
-          setTimeout(() => {
-            setBoundaryCollisionToken(null);
-          }, 300);
-          
-          // Update local state to snap back to original position
-          updateToken(tokenId, { position: originalPos });
-          return; // Don't save the new position to Firestore
-        }
-      }
-      
-      await tokenService.updateTokenPosition(firestore, campaignId, map.id, tokenId, finalPos);
-      updateToken(tokenId, { position: finalPos });
-      // Undo/redo disabled for token moves (future enhancement)
-      if (fogOfWarEnabled && fogData?.enabled && map.gridEnabled) {
-        if (token && token.type === 'pc') {
+  const handleTokenDragEnd = useCallback(
+    async (tokenId, newPosition) => {
+      try {
+        const token = tokens.find((t) => t.id === tokenId);
+        if (!token) return;
+
+        const originalPos = token.position;
+
+        // TODO: Track beforePos for undo/redo (future enhancement)
+        // Apply snap if enabled
+        let finalPos = newPosition;
+        if (snapToGrid && map?.gridSize) {
+          const g = map.gridSize;
           const offsetX = map.gridOffsetX || 0;
           const offsetY = map.gridOffsetY || 0;
-          const adjustedX = finalPos.x - offsetX;
-          const adjustedY = finalPos.y - offsetY;
-          // Add 1 to account for padding cell (fog grid has 1 extra cell on each side)
-          const gridX = Math.floor(adjustedX / map.gridSize) + 1;
-          const gridY = Math.floor(adjustedY / map.gridSize) + 1;
-          await fogOfWarService.revealArea(firestore, campaignId, map.id, gridX, gridY, 3);
+          // Adjust for offset, snap to grid, then add offset back
+          const adjustedX = newPosition.x - offsetX;
+          const adjustedY = newPosition.y - offsetY;
+          const cellX = Math.floor(adjustedX / g);
+          const cellY = Math.floor(adjustedY / g);
+          finalPos = {
+            x: cellX * g + g / 2 + offsetX,
+            y: cellY * g + g / 2 + offsetY,
+          };
         }
+        // Clamp to map bounds
+        finalPos = clampTokenCenter(finalPos, token);
+
+        // Check boundary collisions if boundaries are enabled
+        if (boundariesEnabled && boundaries && boundaries.length > 0) {
+          const gridSize = map?.gridSize || 50;
+          const gridOffset = {
+            x: map?.gridOffsetX || 0,
+            y: map?.gridOffsetY || 0,
+          };
+
+          // Check if the move crosses any boundaries
+          const crossesBoundary = boundaryService.checkBoundaryCrossing(
+            originalPos,
+            finalPos,
+            boundaries,
+            gridSize,
+            gridOffset
+          );
+
+          if (crossesBoundary) {
+            // Reject the move - keep token at original position
+            console.log(`Token ${tokenId} movement blocked by boundary`);
+
+            // Visual feedback: Flash the token red briefly
+            setBoundaryCollisionToken(tokenId);
+            setTimeout(() => {
+              setBoundaryCollisionToken(null);
+            }, 300);
+
+            // Update local state to snap back to original position
+            updateToken(tokenId, { position: originalPos });
+            return; // Don't save the new position to Firestore
+          }
+        }
+
+        await tokenService.updateTokenPosition(
+          firestore,
+          campaignId,
+          map.id,
+          tokenId,
+          finalPos
+        );
+        updateToken(tokenId, { position: finalPos });
+        // Undo/redo disabled for token moves (future enhancement)
+        if (fogOfWarEnabled && fogData?.enabled && map.gridEnabled) {
+          if (token && token.type === "pc") {
+            const offsetX = map.gridOffsetX || 0;
+            const offsetY = map.gridOffsetY || 0;
+            const adjustedX = finalPos.x - offsetX;
+            const adjustedY = finalPos.y - offsetY;
+            // Add 1 to account for padding cell (fog grid has 1 extra cell on each side)
+            const gridX = Math.floor(adjustedX / map.gridSize) + 1;
+            const gridY = Math.floor(adjustedY / map.gridSize) + 1;
+            await fogOfWarService.revealArea(
+              firestore,
+              campaignId,
+              map.id,
+              gridX,
+              gridY,
+              3
+            );
+          }
+        }
+      } catch (err) {
+        console.error("Error updating token position:", err);
       }
-    } catch (err) {
-      console.error('Error updating token position:', err);
-    }
-  }, [tokens, snapToGrid, map?.gridSize, map?.gridOffsetX, map?.gridOffsetY, map?.id, map?.gridEnabled, clampTokenCenter, firestore, campaignId, updateToken, fogOfWarEnabled, fogData?.enabled, boundariesEnabled, boundaries]);
+    },
+    [
+      tokens,
+      snapToGrid,
+      map?.gridSize,
+      map?.gridOffsetX,
+      map?.gridOffsetY,
+      map?.id,
+      map?.gridEnabled,
+      clampTokenCenter,
+      firestore,
+      campaignId,
+      updateToken,
+      fogOfWarEnabled,
+      fogData?.enabled,
+      boundariesEnabled,
+      boundaries,
+    ]
+  );
 
   // Handle token selection
-  const handleTokenClick = useCallback((tokenId, e) => {
-    // Don't select tokens when using drawing tools (ruler, pen, arrow, shapes)
-    if (activeTool !== 'pointer') {
+  const handleTokenClick = useCallback(
+    (tokenId, e) => {
+      // Don't select tokens when using drawing tools (ruler, pen, arrow, shapes)
+      if (activeTool !== "pointer") {
+        if (e && e.cancelBubble !== undefined) {
+          e.cancelBubble = true; // Prevent stage click
+        }
+        return; // Click-through when using tools
+      }
+
       if (e && e.cancelBubble !== undefined) {
         e.cancelBubble = true; // Prevent stage click
       }
-      return; // Click-through when using tools
-    }
-
-    if (e && e.cancelBubble !== undefined) {
-      e.cancelBubble = true; // Prevent stage click
-    }
-    if (onTokenSelect) {
-      onTokenSelect(tokenId);
-    }
-  }, [activeTool, onTokenSelect]);
+      if (onTokenSelect) {
+        onTokenSelect(tokenId);
+      }
+    },
+    [activeTool, onTokenSelect]
+  );
 
   const handleZoomIn = useCallback(() => {
     const newScale = Math.min(stageScale * 1.2, 3);
@@ -1682,104 +2119,127 @@ function MapCanvas({
   }, [setStageScale, setStagePos]);
 
   // Handle camera centering on specific coordinates
-  const handleCenterCamera = useCallback((x, y) => {
-    const stage = stageRef.current;
-    if (!stage) {
-      console.warn('Cannot center camera: stage ref not available');
-      return;
-    }
+  const handleCenterCamera = useCallback(
+    (x, y) => {
+      const stage = stageRef.current;
+      if (!stage) {
+        console.warn("Cannot center camera: stage ref not available");
+        return;
+      }
 
-    // Calculate position to center viewport on (x, y)
-    const newPos = {
-      x: width / 2 - x * stageScale,
-      y: height / 2 - y * stageScale
-    };
+      // Calculate position to center viewport on (x, y)
+      const newPos = {
+        x: width / 2 - x * stageScale,
+        y: height / 2 - y * stageScale,
+      };
 
-    setStagePos(newPos);
-    console.log(`Centered camera on (${Math.round(x)}, ${Math.round(y)})`);
-  }, [width, height, stageScale, setStagePos]);
+      setStagePos(newPos);
+      console.log(`Centered camera on (${Math.round(x)}, ${Math.round(y)})`);
+    },
+    [width, height, stageScale, setStagePos]
+  );
 
   // Expose camera centering to parent if callback provided
   useEffect(() => {
-    if (onCenterCamera && typeof onCenterCamera === 'object' && onCenterCamera.current !== undefined) {
+    if (
+      onCenterCamera &&
+      typeof onCenterCamera === "object" &&
+      onCenterCamera.current !== undefined
+    ) {
       onCenterCamera.current = handleCenterCamera;
-      console.log('Camera center function assigned to ref');
+      console.log("Camera center function assigned to ref");
     }
   }, [onCenterCamera, handleCenterCamera]);
 
   // Handle light selection
-  const handleLightClick = useCallback((lightId) => {
-    console.log('Light clicked:', lightId);
-    setSelectedLightId(prevId => prevId === lightId ? null : lightId);
-    // Deselect token when light is selected
-    if (onTokenSelect) {
-      onTokenSelect(null);
-    }
-  }, [onTokenSelect]);
+  const handleLightClick = useCallback(
+    (lightId) => {
+      console.log("Light clicked:", lightId);
+      setSelectedLightId((prevId) => (prevId === lightId ? null : lightId));
+      // Deselect token when light is selected
+      if (onTokenSelect) {
+        onTokenSelect(null);
+      }
+    },
+    [onTokenSelect]
+  );
 
   // Handle drag-and-drop of tokens from Token Manager onto canvas
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
+    e.dataTransfer.dropEffect = "copy";
   }, []);
 
-  const handleDrop = useCallback(async (e) => {
-    e.preventDefault();
-    if (!isDM) return; // Only DM can create tokens this way
+  const handleDrop = useCallback(
+    async (e) => {
+      e.preventDefault();
+      if (!isDM) return; // Only DM can create tokens this way
 
-    try {
-      const data = JSON.parse(e.dataTransfer.getData('application/json'));
+      try {
+        const data = JSON.parse(e.dataTransfer.getData("application/json"));
 
-      // Check if this is a token type being dragged (not a staged token)
-      if (data.fromTokenType) {
-        // Get drop position relative to canvas
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = (e.clientX - rect.left - stagePos.x) / stageScale;
-        const y = (e.clientY - rect.top - stagePos.y) / stageScale;
+        // Check if this is a token type being dragged (not a staged token)
+        if (data.fromTokenType) {
+          // Get drop position relative to canvas
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = (e.clientX - rect.left - stagePos.x) / stageScale;
+          const y = (e.clientY - rect.top - stagePos.y) / stageScale;
 
-        // Auto-increment token name if multiple of same type exist
-        const existingTokens = tokens.filter(t => t.type === data.type);
-        const number = existingTokens.length + 1;
-        const tokenName = number > 1 ? `${data.name} ${number}` : data.name;
+          // Auto-increment token name if multiple of same type exist
+          const existingTokens = tokens.filter((t) => t.type === data.type);
+          const number = existingTokens.length + 1;
+          const tokenName = number > 1 ? `${data.name} ${number}` : data.name;
 
-        // Create token at drop position
-        const pixelSize = data.size * 50;
-        await tokenService.createToken(firestore, campaignId, map.id, {
-          name: tokenName,
-          type: data.type,
-          color: data.color,
-          size: { width: pixelSize, height: pixelSize },
-          position: { x, y },
-          hp: data.hp,
-          maxHp: data.maxHp,
-          hidden: false,
-          staged: false, // Place directly on map
-          createdBy: user.uid,
-          createdAt: new Date()
-        });
+          // Create token at drop position
+          const pixelSize = data.size * 50;
+          await tokenService.createToken(firestore, campaignId, map.id, {
+            name: tokenName,
+            type: data.type,
+            color: data.color,
+            size: { width: pixelSize, height: pixelSize },
+            position: { x, y },
+            hp: data.hp,
+            maxHp: data.maxHp,
+            hidden: false,
+            staged: false, // Place directly on map
+            createdBy: user.uid,
+            createdAt: new Date(),
+          });
 
-        console.log(`[MapCanvas] Created ${data.type} token: ${tokenName} at (${Math.round(x)}, ${Math.round(y)})`);
-      } else if (data.id || data.tokenId) {
-        // Handle staged token being dragged onto map
-        const tokenId = data.id || data.tokenId;
+          console.log(
+            `[MapCanvas] Created ${data.type} token: ${tokenName} at (${Math.round(x)}, ${Math.round(y)})`
+          );
+        } else if (data.id || data.tokenId) {
+          // Handle staged token being dragged onto map
+          const tokenId = data.id || data.tokenId;
 
-        // Get drop position relative to canvas
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = (e.clientX - rect.left - stagePos.x) / stageScale;
-        const y = (e.clientY - rect.top - stagePos.y) / stageScale;
+          // Get drop position relative to canvas
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = (e.clientX - rect.left - stagePos.x) / stageScale;
+          const y = (e.clientY - rect.top - stagePos.y) / stageScale;
 
-        // Update token position and unstage it
-        await tokenService.updateToken(firestore, campaignId, map.id, tokenId, {
-          position: { x, y },
-          staged: false
-        });
+          // Update token position and unstage it
+          await tokenService.updateToken(
+            firestore,
+            campaignId,
+            map.id,
+            tokenId,
+            {
+              position: { x, y },
+              staged: false,
+            }
+          );
 
-        console.log(`[MapCanvas] Placed staged token ${data.name} at (${Math.round(x)}, ${Math.round(y)})`);
+          console.log(
+            `[MapCanvas] Placed staged token ${data.name} at (${Math.round(x)}, ${Math.round(y)})`
+          );
+        }
+      } catch (err) {
+        console.error("[MapCanvas] Failed to handle token drop:", err);
       }
-    } catch (err) {
-      console.error('[MapCanvas] Failed to handle token drop:', err);
-    }
-  }, [isDM, stagePos, stageScale, tokens, firestore, campaignId, map, user]);
+    },
+    [isDM, stagePos, stageScale, tokens, firestore, campaignId, map, user]
+  );
 
   if (!gMap) {
     return (
@@ -1808,12 +2268,12 @@ function MapCanvas({
         onRulerColorChange={setRulerColor}
         snapToGrid={snapToGrid}
         rulerPersistent={rulerPersistent}
-        onRulerSnapToggle={() => setSnapToGrid(prev => !prev)}
-        onRulerPersistentToggle={() => setRulerPersistent(prev => !prev)}
+        onRulerSnapToggle={() => setSnapToGrid((prev) => !prev)}
+        onRulerPersistentToggle={() => setRulerPersistent((prev) => !prev)}
         onClearPinnedRulers={() => setPinnedRulers([])}
         pinnedRulersCount={pinnedRulers.length}
         tokenSnap={tokenSnap}
-        onTokenSnapToggle={() => setTokenSnap(prev => !prev)}
+        onTokenSnapToggle={() => setTokenSnap((prev) => !prev)}
         onOpenGridConfig={() => setShowGridConfig(true)}
         showKeyboardShortcuts={false}
         shapeColor={shapeColor}
@@ -1823,10 +2283,12 @@ function MapCanvas({
         // Grid configuration props
         map={gMap}
         onGridUpdate={async (updates) => {
-          setMapLive(m => m ? { ...m, ...updates } : m);
+          setMapLive((m) => (m ? { ...m, ...updates } : m));
           try {
             await mapService.updateMap(firestore, campaignId, gMap.id, updates);
-          } catch (e) { console.error('Failed to update grid settings', e); }
+          } catch (e) {
+            console.error("Failed to update grid settings", e);
+          }
         }}
         // Fog-related props
         fogOfWarEnabled={fogOfWarEnabled}
@@ -1872,50 +2334,85 @@ function MapCanvas({
         onClearAllBoundaries={onClearAllBoundaries}
         onShapeColorChange={setShapeColor}
         onShapeOpacityChange={setShapeOpacity}
-        onShapePersistentToggle={() => setShapePersistent(prev => !prev)}
+        onShapePersistentToggle={() => setShapePersistent((prev) => !prev)}
         onShapeVisibilityChange={setShapeVisibility}
         onClearTempShapes={async () => {
           try {
             // snapshot current temporary shapes for undo
-            const temp = shapes.filter(s => !s.persistent).map(s => ({ ...s }));
+            const temp = shapes
+              .filter((s) => !s.persistent)
+              .map((s) => ({ ...s }));
             if (!temp.length) return;
-            await shapeService.clearTemporaryShapes(firestore, campaignId, map.id);
+            await shapeService.clearTemporaryShapes(
+              firestore,
+              campaignId,
+              map.id
+            );
             // setUndoStack(u => [...u, { undo: () => shapeService.restoreShapes(firestore, campaignId, map.id, temp), redo: () => shapeService.clearTemporaryShapes(firestore, campaignId, map.id) }]);
-          } catch (err) { console.error('Error clearing temp shapes:', err); }
+          } catch (err) {
+            console.error("Error clearing temp shapes:", err);
+          }
         }}
         onClearAllShapes={async () => {
-          if (!window.confirm('Clear ALL shapes (including persistent)?')) return;
+          if (!window.confirm("Clear ALL shapes (including persistent)?"))
+            return;
           try {
-            const all = shapes.map(s => ({ ...s }));
+            const all = shapes.map((s) => ({ ...s }));
             if (!all.length) return;
             await shapeService.clearAllShapes(firestore, campaignId, map.id);
             // setUndoStack(u => [...u, { undo: () => shapeService.restoreShapes(firestore, campaignId, map.id, all), redo: () => shapeService.clearAllShapes(firestore, campaignId, map.id) }]);
-          } catch (err) { console.error('Error clearing all shapes:', err); }
+          } catch (err) {
+            console.error("Error clearing all shapes:", err);
+          }
         }}
       />
 
       {/* Canvas Control Buttons Container */}
       {isDM && (
-        <div className="canvas-controls-top" style={{
-          position: 'absolute',
-          top: 20,
-          left: 220,
-          zIndex: 10,
-          display: 'flex',
-          gap: '8px',
-          alignItems: 'center'
-        }}>
+        <div
+          className="canvas-controls-top"
+          style={{
+            position: "absolute",
+            top: 20,
+            left: 220,
+            zIndex: 10,
+            display: "flex",
+            gap: "8px",
+            alignItems: "center",
+          }}
+        >
           <button
             className="canvas-control-btn"
-            style={{ background: '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12 }}
-            onClick={() => setShowLayerManager(v => !v)}
+            style={{
+              background: "#2d2d35",
+              color: "#ddd",
+              border: "1px solid #444",
+              borderRadius: 6,
+              padding: "6px 10px",
+              cursor: "pointer",
+              fontSize: 12,
+            }}
+            onClick={() => setShowLayerManager((v) => !v)}
             title="Toggle Layer Manager"
-          >Layers</button>
+          >
+            Layers
+          </button>
 
           {onShowMaps && (
             <button
               className="canvas-control-btn"
-              style={{ background: '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
+              style={{
+                background: "#2d2d35",
+                color: "#ddd",
+                border: "1px solid #444",
+                borderRadius: 6,
+                padding: "6px 10px",
+                cursor: "pointer",
+                fontSize: 12,
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
               onClick={onShowMaps}
               title="Map Library - Import and manage maps"
             >
@@ -1926,27 +2423,61 @@ function MapCanvas({
           {onShowEncounters && (
             <button
               className="canvas-control-btn"
-              style={{ background: '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12 }}
+              style={{
+                background: "#2d2d35",
+                color: "#ddd",
+                border: "1px solid #444",
+                borderRadius: 6,
+                padding: "6px 10px",
+                cursor: "pointer",
+                fontSize: 12,
+              }}
               onClick={onShowEncounters}
               title="Encounter Builder"
             >
-              <FiSettings size={14} style={{ marginRight: '4px' }} /> Encounters
+              <FiSettings size={14} style={{ marginRight: "4px" }} /> Encounters
             </button>
           )}
 
           <button
             className="canvas-control-btn"
-            style={{ background: localPlayerViewMode ? '#667eea' : '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
-            onClick={() => setLocalPlayerViewMode(v => !v)}
-            title={localPlayerViewMode ? 'Exit Player View (Return to DM View)' : 'Preview Player View (Hide hidden tokens)'}
+            style={{
+              background: localPlayerViewMode ? "#667eea" : "#2d2d35",
+              color: "#ddd",
+              border: "1px solid #444",
+              borderRadius: 6,
+              padding: "6px 10px",
+              cursor: "pointer",
+              fontSize: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+            onClick={() => setLocalPlayerViewMode((v) => !v)}
+            title={
+              localPlayerViewMode
+                ? "Exit Player View (Return to DM View)"
+                : "Preview Player View (Hide hidden tokens)"
+            }
           >
-            👁️ {localPlayerViewMode ? 'DM View' : 'Player View'}
+            👁️ {localPlayerViewMode ? "DM View" : "Player View"}
           </button>
 
           {onToggleTokenManager && (
             <button
               className="canvas-control-btn"
-              style={{ background: showTokenManager ? '#667eea' : '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
+              style={{
+                background: showTokenManager ? "#667eea" : "#2d2d35",
+                color: "#ddd",
+                border: "1px solid #444",
+                borderRadius: 6,
+                padding: "6px 10px",
+                cursor: "pointer",
+                fontSize: 12,
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
               onClick={onToggleTokenManager}
               title="Token Manager"
             >
@@ -1956,124 +2487,162 @@ function MapCanvas({
 
           <button
             className="canvas-control-btn"
-            style={{ background: '#2d2d35', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px' }}
-            onClick={() => setShowFXLibrary(v => !v)}
+            style={{
+              background: "#2d2d35",
+              color: "#ddd",
+              border: "1px solid #444",
+              borderRadius: 6,
+              padding: "6px 10px",
+              cursor: "pointer",
+              fontSize: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+            onClick={() => setShowFXLibrary((v) => !v)}
             title="FX Library - Lighting, Weather, Ambience"
           >
             ✨ FX Library
-            <span style={{ fontSize: 10, marginLeft: 2 }}>{showFXLibrary ? '▲' : '▼'}</span>
+            <span style={{ fontSize: 10, marginLeft: 2 }}>
+              {showFXLibrary ? "▲" : "▼"}
+            </span>
           </button>
         </div>
       )}
       {isDM && showFXLibrary && (
-        <div style={{ position: 'absolute', top: 60, left: 220, zIndex: 999998 }} data-fx-library>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            background: '#2d2d35',
-            border: '1px solid #444',
-            borderRadius: 6,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            minWidth: 180,
-            overflow: 'hidden',
-            zIndex: 140
-          }}>
+        <div
+          style={{ position: "absolute", top: 60, left: 220, zIndex: 999998 }}
+          data-fx-library
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              background: "#2d2d35",
+              border: "1px solid #444",
+              borderRadius: 6,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+              minWidth: 180,
+              overflow: "hidden",
+              zIndex: 140,
+            }}
+          >
             <button
               style={{
-                width: '100%',
-                background: showLightingPanel ? '#3a3a45' : 'transparent',
-                color: '#ddd',
-                border: 'none',
-                padding: '10px 12px',
-                cursor: 'pointer',
+                width: "100%",
+                background: showLightingPanel ? "#3a3a45" : "transparent",
+                color: "#ddd",
+                border: "none",
+                padding: "10px 12px",
+                cursor: "pointer",
                 fontSize: 12,
-                textAlign: 'left',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'background 0.2s'
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                transition: "background 0.2s",
               }}
               onClick={() => {
-                setShowLightingPanel(v => !v);
+                setShowLightingPanel((v) => !v);
                 // Keep dropdown open for multiple selections
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#3a3a45'}
-              onMouseLeave={(e) => e.currentTarget.style.background = showLightingPanel ? '#3a3a45' : 'transparent'}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#3a3a45")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = showLightingPanel
+                  ? "#3a3a45"
+                  : "transparent")
+              }
               title="Dynamic Lighting System"
             >
               <span style={{ fontSize: 14 }}>💡</span>
               <span>Lighting</span>
-              {showLightingPanel && <span style={{ marginLeft: 'auto', fontSize: 10 }}>●</span>}
+              {showLightingPanel && (
+                <span style={{ marginLeft: "auto", fontSize: 10 }}>●</span>
+              )}
             </button>
             <button
               style={{
-                width: '100%',
-                background: showAudio ? '#3a3a45' : 'transparent',
-                color: '#ddd',
-                border: 'none',
-                padding: '10px 12px',
-                cursor: 'pointer',
+                width: "100%",
+                background: showAudio ? "#3a3a45" : "transparent",
+                color: "#ddd",
+                border: "none",
+                padding: "10px 12px",
+                cursor: "pointer",
                 fontSize: 12,
-                textAlign: 'left',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'background 0.2s'
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                transition: "background 0.2s",
               }}
               onClick={() => {
-                setShowAudio(v => !v);
+                setShowAudio((v) => !v);
                 // Keep dropdown open for multiple selections
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#3a3a45'}
-              onMouseLeave={(e) => e.currentTarget.style.background = showAudio ? '#3a3a45' : 'transparent'}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#3a3a45")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = showAudio
+                  ? "#3a3a45"
+                  : "transparent")
+              }
               title="Ambient Audio & Music"
             >
               <span style={{ fontSize: 14 }}>🎵</span>
               <span>Audio</span>
-              {showAudio && <span style={{ marginLeft: 'auto', fontSize: 10 }}>●</span>}
+              {showAudio && (
+                <span style={{ marginLeft: "auto", fontSize: 10 }}>●</span>
+              )}
             </button>
             <button
               style={{
-                width: '100%',
-                background: 'transparent',
-                color: '#888',
-                border: 'none',
-                padding: '10px 12px',
-                cursor: 'not-allowed',
+                width: "100%",
+                background: "transparent",
+                color: "#888",
+                border: "none",
+                padding: "10px 12px",
+                cursor: "not-allowed",
                 fontSize: 12,
-                textAlign: 'left',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
               }}
               disabled
               title="Weather Effects - Coming Soon"
             >
               <span style={{ fontSize: 14 }}>🌧️</span>
               <span>Weather</span>
-              <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.6 }}>Soon</span>
+              <span style={{ marginLeft: "auto", fontSize: 9, opacity: 0.6 }}>
+                Soon
+              </span>
             </button>
             <button
               style={{
-                width: '100%',
-                background: 'transparent',
-                color: '#888',
-                border: 'none',
-                padding: '10px 12px',
-                cursor: 'not-allowed',
+                width: "100%",
+                background: "transparent",
+                color: "#888",
+                border: "none",
+                padding: "10px 12px",
+                cursor: "not-allowed",
                 fontSize: 12,
-                textAlign: 'left',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
               }}
               disabled
               title="Ambience Effects - Coming Soon"
             >
               <span style={{ fontSize: 14 }}>✨</span>
               <span>Ambience</span>
-              <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.6 }}>Soon</span>
+              <span style={{ marginLeft: "auto", fontSize: 9, opacity: 0.6 }}>
+                Soon
+              </span>
             </button>
           </div>
         </div>
@@ -2090,7 +2659,7 @@ function MapCanvas({
         onWheel={handleWheel}
         onDragEnd={handleDragEnd}
         onDragStart={() => {
-          console.log('[DRAG START] Camera drag started');
+          console.log("[DRAG START] Camera drag started");
           setIsDragging(true);
         }}
         onClick={handleStageClick}
@@ -2102,25 +2671,47 @@ function MapCanvas({
           // Only show map context menu if right-clicking on empty space (not on a token)
           const target = e.target;
           // Check if we clicked on the stage itself or background layer elements (not tokens/lights)
-          if (target.constructor.name === 'Stage' || target.nodeType === 'Stage' ||
-            target.className === 'Image' || (target.className === 'Rect' && target.attrs.id !== 'token')) {
+          if (
+            target.constructor.name === "Stage" ||
+            target.nodeType === "Stage" ||
+            target.className === "Image" ||
+            (target.className === "Rect" && target.attrs.id !== "token")
+          ) {
             e.evt.preventDefault();
             const rect = e.currentTarget.container().getBoundingClientRect();
             setMapContextMenu({
               x: e.evt.clientX - rect.left,
-              y: e.evt.clientY - rect.top
+              y: e.evt.clientY - rect.top,
             });
           }
         }}
-        draggable={activeTool === 'pointer' && boundaryMode === null && !isFogBrushing}
+        draggable={
+          activeTool === "pointer" && boundaryMode === null && !isFogBrushing
+        }
         style={{
-          cursor: fogBrushActive ? (fogBrushMode === 'reveal' ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${Math.min(fogBrushSize * 8, 48)}' height='${Math.min(fogBrushSize * 8, 48)}' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10' opacity='0.5'/%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") ${Math.min(fogBrushSize * 4, 24)} ${Math.min(fogBrushSize * 4, 24)}, crosshair` : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${Math.min(fogBrushSize * 8, 48)}' height='${Math.min(fogBrushSize * 8, 48)}' viewBox='0 0 24 24' fill='none' stroke='%2366B3FF' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10' opacity='0.5'/%3E%3Cpath d='M3 3l18 18M21 3L3 21'/%3E%3C/svg%3E") ${Math.min(fogBrushSize * 4, 24)} ${Math.min(fogBrushSize * 4, 24)}, crosshair`) :
-            activeTool === 'pointer' ? (isDragging ? 'grabbing' : 'grab') :
-            activeTool === 'pen' ? 'crosshair' :
-            activeTool === 'arrow' ? (arrowStart ? 'crosshair' : 'cell') :
-            activeTool === 'ruler' ? 'crosshair' :
-            ['circle', 'rectangle', 'cone', 'line'].includes(activeTool) ? 'cell' :
-            isDragging ? 'grabbing' : 'default'
+          cursor: fogBrushActive
+            ? fogBrushMode === "reveal"
+              ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${Math.min(fogBrushSize * 8, 48)}' height='${Math.min(fogBrushSize * 8, 48)}' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10' opacity='0.5'/%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") ${Math.min(fogBrushSize * 4, 24)} ${Math.min(fogBrushSize * 4, 24)}, crosshair`
+              : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${Math.min(fogBrushSize * 8, 48)}' height='${Math.min(fogBrushSize * 8, 48)}' viewBox='0 0 24 24' fill='none' stroke='%2366B3FF' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10' opacity='0.5'/%3E%3Cpath d='M3 3l18 18M21 3L3 21'/%3E%3C/svg%3E") ${Math.min(fogBrushSize * 4, 24)} ${Math.min(fogBrushSize * 4, 24)}, crosshair`
+            : activeTool === "pointer"
+              ? isDragging
+                ? "grabbing"
+                : "grab"
+              : activeTool === "pen"
+                ? "crosshair"
+                : activeTool === "arrow"
+                  ? arrowStart
+                    ? "crosshair"
+                    : "cell"
+                  : activeTool === "ruler"
+                    ? "crosshair"
+                    : ["circle", "rectangle", "cone", "line"].includes(
+                          activeTool
+                        )
+                      ? "cell"
+                      : isDragging
+                        ? "grabbing"
+                        : "default",
         }}
       >
         {/* Background Layer - includes map image and token snap highlight */}
@@ -2135,32 +2726,35 @@ function MapCanvas({
           )}
 
           {/* Token snap highlight (shows target footprint while dragging) */}
-          {gMap.gridEnabled && tokenSnap && tokenSnapHighlight && (() => {
-            // Pulse parameters
-            const periodMs = 900; // full cycle
-            const phase = (tokenSnapPulse % periodMs) / periodMs; // 0..1
-            const sine = Math.sin(phase * Math.PI * 2); // -1..1
-            const intensity = 0.45 + (sine * 0.25); // 0.2 range
-            const strokeWidth = 2 + (sine + 1) * 1.5; // 2..5
-            const glow = 8 + (sine + 1) * 6; // 8..20
-            return (
-              <Rect
-                x={tokenSnapHighlight.x}
-                y={tokenSnapHighlight.y}
-                width={tokenSnapHighlight.w}
-                height={tokenSnapHighlight.h}
-                stroke="#ffffff"
-                strokeWidth={strokeWidth}
-                cornerRadius={4}
-                fill={`rgba(255,255,255,${intensity * 0.35})`}
-                listening={false}
-                shadowColor="#ffffff"
-                shadowBlur={glow}
-                shadowOpacity={0.9}
-                opacity={0.95}
-              />
-            );
-          })()}
+          {gMap.gridEnabled &&
+            tokenSnap &&
+            tokenSnapHighlight &&
+            (() => {
+              // Pulse parameters
+              const periodMs = 900; // full cycle
+              const phase = (tokenSnapPulse % periodMs) / periodMs; // 0..1
+              const sine = Math.sin(phase * Math.PI * 2); // -1..1
+              const intensity = 0.45 + sine * 0.25; // 0.2 range
+              const strokeWidth = 2 + (sine + 1) * 1.5; // 2..5
+              const glow = 8 + (sine + 1) * 6; // 8..20
+              return (
+                <Rect
+                  x={tokenSnapHighlight.x}
+                  y={tokenSnapHighlight.y}
+                  width={tokenSnapHighlight.w}
+                  height={tokenSnapHighlight.h}
+                  stroke="#ffffff"
+                  strokeWidth={strokeWidth}
+                  cornerRadius={4}
+                  fill={`rgba(255,255,255,${intensity * 0.35})`}
+                  listening={false}
+                  shadowColor="#ffffff"
+                  shadowBlur={glow}
+                  shadowOpacity={0.9}
+                  opacity={0.95}
+                />
+              );
+            })()}
         </Layer>
 
         {/* Grid Layer */}
@@ -2181,53 +2775,67 @@ function MapCanvas({
         {isDM && boundariesEnabled && boundariesVisible && (
           <Layer>
             {/* Rendered line boundaries */}
-            {boundaries.filter(b => b.type === 'line').map(boundary => (
-              <Line
-                key={boundary.id}
-                points={[boundary.start.x, boundary.start.y, boundary.end.x, boundary.end.y]}
-                stroke={boundaryLineColor}
-                strokeWidth={3}
-                dash={[10, 5]}
-                opacity={boundaryOpacity}
-                listening={false}
-                shadowColor={boundaryLineColor}
-                shadowBlur={8}
-                shadowOpacity={0.4}
-              />
-            ))}
+            {boundaries
+              .filter((b) => b.type === "line")
+              .map((boundary) => (
+                <Line
+                  key={boundary.id}
+                  points={[
+                    boundary.start.x,
+                    boundary.start.y,
+                    boundary.end.x,
+                    boundary.end.y,
+                  ]}
+                  stroke={boundaryLineColor}
+                  strokeWidth={3}
+                  dash={[10, 5]}
+                  opacity={boundaryOpacity}
+                  listening={false}
+                  shadowColor={boundaryLineColor}
+                  shadowBlur={8}
+                  shadowOpacity={0.4}
+                />
+              ))}
 
             {/* Rendered painted boundaries */}
-            {boundaries.filter(b => b.type === 'painted').map(boundary => {
-              const gridSize = gMap.gridSize || 50;
-              const offsetX = gMap.gridOffsetX || 0;
-              const offsetY = gMap.gridOffsetY || 0;
-              // Convert hex color to rgba for fill
-              const hexToRgba = (hex, alpha) => {
-                const r = parseInt(hex.slice(1, 3), 16);
-                const g = parseInt(hex.slice(3, 5), 16);
-                const b = parseInt(hex.slice(5, 7), 16);
-                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-              };
-              return boundary.cells.map((cell, idx) => (
-                <Rect
-                  key={`${boundary.id}-${idx}`}
-                  x={cell.gridX * gridSize + offsetX}
-                  y={cell.gridY * gridSize + offsetY}
-                  width={gridSize}
-                  height={gridSize}
-                  fill={hexToRgba(boundaryGridColor, 0.2)}
-                  stroke={boundaryGridColor}
-                  strokeWidth={2}
-                  listening={false}
-                  opacity={boundaryOpacity}
-                />
-              ));
-            })}
+            {boundaries
+              .filter((b) => b.type === "painted")
+              .map((boundary) => {
+                const gridSize = gMap.gridSize || 50;
+                const offsetX = gMap.gridOffsetX || 0;
+                const offsetY = gMap.gridOffsetY || 0;
+                // Convert hex color to rgba for fill
+                const hexToRgba = (hex, alpha) => {
+                  const r = parseInt(hex.slice(1, 3), 16);
+                  const g = parseInt(hex.slice(3, 5), 16);
+                  const b = parseInt(hex.slice(5, 7), 16);
+                  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                };
+                return boundary.cells.map((cell, idx) => (
+                  <Rect
+                    key={`${boundary.id}-${idx}`}
+                    x={cell.gridX * gridSize + offsetX}
+                    y={cell.gridY * gridSize + offsetY}
+                    width={gridSize}
+                    height={gridSize}
+                    fill={hexToRgba(boundaryGridColor, 0.2)}
+                    stroke={boundaryGridColor}
+                    strokeWidth={2}
+                    listening={false}
+                    opacity={boundaryOpacity}
+                  />
+                ));
+              })}
 
             {/* Preview line while drawing */}
             {isBoundaryDrawing && boundaryStart && boundaryPreview && (
               <Line
-                points={[boundaryStart.x, boundaryStart.y, boundaryPreview.x, boundaryPreview.y]}
+                points={[
+                  boundaryStart.x,
+                  boundaryStart.y,
+                  boundaryPreview.x,
+                  boundaryPreview.y,
+                ]}
                 stroke={boundaryLineColor}
                 strokeWidth={3}
                 dash={[10, 5]}
@@ -2240,44 +2848,55 @@ function MapCanvas({
             )}
 
             {/* Preview painted cells while painting */}
-            {isPaintingBoundary && paintedCellsBuffer.length > 0 && (() => {
-              const gridSize = gMap.gridSize || 50;
-              const offsetX = gMap.gridOffsetX || 0;
-              const offsetY = gMap.gridOffsetY || 0;
-              // Convert hex color to rgba for preview
-              const hexToRgba = (hex, alpha) => {
-                const r = parseInt(hex.slice(1, 3), 16);
-                const g = parseInt(hex.slice(3, 5), 16);
-                const b = parseInt(hex.slice(5, 7), 16);
-                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-              };
-              return paintedCellsBuffer.map((cell, idx) => (
-                <Rect
-                  key={`preview-${idx}`}
-                  x={cell.gridX * gridSize + offsetX}
-                  y={cell.gridY * gridSize + offsetY}
-                  width={gridSize}
-                  height={gridSize}
-                  fill={boundaryBrushMode === 'paint' ? hexToRgba(boundaryGridColor, 0.4) : "rgba(0, 255, 0, 0.3)"}
-                  stroke={boundaryBrushMode === 'paint' ? boundaryGridColor : "#00FF00"}
-                  strokeWidth={2}
-                  listening={false}
-                  opacity={0.8}
-                />
-              ));
-            })()}
+            {isPaintingBoundary &&
+              paintedCellsBuffer.length > 0 &&
+              (() => {
+                const gridSize = gMap.gridSize || 50;
+                const offsetX = gMap.gridOffsetX || 0;
+                const offsetY = gMap.gridOffsetY || 0;
+                // Convert hex color to rgba for preview
+                const hexToRgba = (hex, alpha) => {
+                  const r = parseInt(hex.slice(1, 3), 16);
+                  const g = parseInt(hex.slice(3, 5), 16);
+                  const b = parseInt(hex.slice(5, 7), 16);
+                  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                };
+                return paintedCellsBuffer.map((cell, idx) => (
+                  <Rect
+                    key={`preview-${idx}`}
+                    x={cell.gridX * gridSize + offsetX}
+                    y={cell.gridY * gridSize + offsetY}
+                    width={gridSize}
+                    height={gridSize}
+                    fill={
+                      boundaryBrushMode === "paint"
+                        ? hexToRgba(boundaryGridColor, 0.4)
+                        : "rgba(0, 255, 0, 0.3)"
+                    }
+                    stroke={
+                      boundaryBrushMode === "paint"
+                        ? boundaryGridColor
+                        : "#00FF00"
+                    }
+                    strokeWidth={2}
+                    listening={false}
+                    opacity={0.8}
+                  />
+                ));
+              })()}
           </Layer>
         )}
 
         {/* Lighting Layer - renders BEFORE tokens so lights don't overlap token ghosts */}
         {lights && globalLighting && (
           <LightingLayer
-            lights={[...lights, ...playerTokenLights].filter(light =>
-              light &&
-              light.position &&
-              typeof light.position.x === 'number' &&
-              typeof light.position.y === 'number' &&
-              typeof light.radius === 'number'
+            lights={[...lights, ...playerTokenLights].filter(
+              (light) =>
+                light &&
+                light.position &&
+                typeof light.position.x === "number" &&
+                typeof light.position.y === "number" &&
+                typeof light.radius === "number"
             )}
             globalLighting={globalLighting}
             mapWidth={gMap?.width || width}
@@ -2289,725 +2908,952 @@ function MapCanvas({
         )}
 
         {/* Token Layer */}
-        {layerVisibility.tokens && <Layer>
-          {tokens && tokens.map(token => {
-            // Skip staged tokens (they're in EncounterBuilder)
-            if (token.staged) {
-              return null;
-            }
-            // Hide tokens marked as hidden from non-DM players
-            // Also hide from DMs when in player view mode
-            if (token.hidden && (!isDM || localPlayerViewMode)) {
-              return null;
-            }
+        {layerVisibility.tokens && (
+          <Layer>
+            {tokens &&
+              tokens.map((token) => {
+                // Skip staged tokens (they're in EncounterBuilder)
+                if (token.staged) {
+                  return null;
+                }
+                // Hide tokens marked as hidden from non-DM players
+                // Also hide from DMs when in player view mode
+                if (token.hidden && (!isDM || localPlayerViewMode)) {
+                  return null;
+                }
 
-            return (
-              <TokenSprite
-                key={token.id}
-                token={token}
-                isSelected={selectedTokenId === token.id}
-                isDraggable={(isDM || token.ownerId === user?.uid || token.createdBy === user?.uid) && activeTool === 'pointer'}
-                onClick={handleTokenClick}
-                onDragEnd={handleTokenDragEnd}
-                tokenSnap={tokenSnap}
-                gridSize={map?.gridSize}
-                gridOffsetX={map?.gridOffsetX || 0}
-                gridOffsetY={map?.gridOffsetY || 0}
-                mapWidth={gMap?.width || width}
-                mapHeight={gMap?.height || height}
-                onDragMovePreview={(data) => setTokenSnapHighlight(data)}
-                listening={activeTool === 'pointer'}
-                showGhost={false}
-                boundaryCollision={boundaryCollisionToken === token.id}
-                boundaries={boundariesEnabled ? boundaries : []}
-                onContextMenu={(evt) => {
-                  evt.cancelBubble = true;
-                  const raw = evt.evt;
-                  setContextMenu({ tokenId: token.id, x: raw.clientX, y: raw.clientY });
-                }}
-              />
-            );
-          })}
+                return (
+                  <TokenSprite
+                    key={token.id}
+                    token={token}
+                    isSelected={selectedTokenId === token.id}
+                    isDraggable={
+                      (isDM ||
+                        token.ownerId === user?.uid ||
+                        token.createdBy === user?.uid) &&
+                      activeTool === "pointer"
+                    }
+                    onClick={handleTokenClick}
+                    onDragEnd={handleTokenDragEnd}
+                    tokenSnap={tokenSnap}
+                    gridSize={map?.gridSize}
+                    gridOffsetX={map?.gridOffsetX || 0}
+                    gridOffsetY={map?.gridOffsetY || 0}
+                    mapWidth={gMap?.width || width}
+                    mapHeight={gMap?.height || height}
+                    onDragMovePreview={(data) => setTokenSnapHighlight(data)}
+                    listening={activeTool === "pointer"}
+                    showGhost={false}
+                    boundaryCollision={boundaryCollisionToken === token.id}
+                    boundaries={boundariesEnabled ? boundaries : []}
+                    onContextMenu={(evt) => {
+                      evt.cancelBubble = true;
+                      const raw = evt.evt;
+                      setContextMenu({
+                        tokenId: token.id,
+                        x: raw.clientX,
+                        y: raw.clientY,
+                      });
+                    }}
+                  />
+                );
+              })}
 
-          {/* player fog moved to be a top-level layer after LightingLayer */}
+            {/* player fog moved to be a top-level layer after LightingLayer */}
 
-          {/* Light Control Markers - visible to all, draggable for DMs */}
-          {globalLighting.enabled && lights.map(light => (
-            <React.Fragment key={`light-control-${light.id}`}>
-              {/* Light center marker */}
-              <Circle
-                x={light.position.x}
-                y={light.position.y}
-                radius={6}
-                fill={light.color || '#FF8800'}
-                stroke="white"
-                strokeWidth={2}
-                opacity={0.9}
-                draggable={isDM && activeTool === 'pointer'}
-                onDragStart={(e) => {
-                  e.cancelBubble = true; // Prevent map from shifting
-                  setDraggingLight({
-                    id: light.id,
-                    light: light,
-                    currentPos: { x: e.target.x(), y: e.target.y() }
-                  });
-                }}
-                onDragMove={(e) => {
-                  e.cancelBubble = true; // Prevent map from shifting
-                  const rawPos = { x: e.target.x(), y: e.target.y() };
-                  const snappedPos = maybeSnapPoint(rawPos);
-                  // Apply snap to visual position during drag
-                  e.target.x(snappedPos.x);
-                  e.target.y(snappedPos.y);
-                  setDraggingLight(prev => prev ? {
-                    ...prev,
-                    currentPos: snappedPos
-                  } : null);
-                }}
-                onDragEnd={(e) => {
-                  e.cancelBubble = true; // Prevent map from shifting
-                  const newPos = maybeSnapPoint({ x: e.target.x(), y: e.target.y() });
-                  // Check if new position is within map bounds
-                  if (!isPointInMapBounds(newPos)) {
-                    console.log('Cannot move light outside map bounds');
-                    // Reset to original position
-                    e.target.x(light.position.x);
-                    e.target.y(light.position.y);
-                  } else {
-                    updateLight(light.id, { position: newPos });
-                  }
-                  setDraggingLight(null);
-                }}
-                onMouseEnter={(e) => {
-                  if (isDM) {
-                    e.target.getStage().container().style.cursor = 'move';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (isDM) {
-                    e.target.getStage().container().style.cursor = 'default';
-                  }
-                }}
-                onClick={(e) => {
-                  if (e.evt.button === 2) { // Right click
-                    e.cancelBubble = true;
-                    e.evt.preventDefault();
-                  }
-                }}
-                onContextMenu={(e) => {
-                  if (!isDM) return; // Only DMs can delete lights
-                  e.cancelBubble = true;
-                  const stage = e.target.getStage();
-                  const pos = stage.getPointerPosition();
+            {/* Light Control Markers - visible to all, draggable for DMs */}
+            {globalLighting.enabled &&
+              lights.map((light) => (
+                <React.Fragment key={`light-control-${light.id}`}>
+                  {/* Light center marker */}
+                  <Circle
+                    x={light.position.x}
+                    y={light.position.y}
+                    radius={6}
+                    fill={light.color || "#FF8800"}
+                    stroke="white"
+                    strokeWidth={2}
+                    opacity={0.9}
+                    draggable={isDM && activeTool === "pointer"}
+                    onDragStart={(e) => {
+                      e.cancelBubble = true; // Prevent map from shifting
+                      setDraggingLight({
+                        id: light.id,
+                        light: light,
+                        currentPos: { x: e.target.x(), y: e.target.y() },
+                      });
+                    }}
+                    onDragMove={(e) => {
+                      e.cancelBubble = true; // Prevent map from shifting
+                      const rawPos = { x: e.target.x(), y: e.target.y() };
+                      const snappedPos = maybeSnapPoint(rawPos);
+                      // Apply snap to visual position during drag
+                      e.target.x(snappedPos.x);
+                      e.target.y(snappedPos.y);
+                      setDraggingLight((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              currentPos: snappedPos,
+                            }
+                          : null
+                      );
+                    }}
+                    onDragEnd={(e) => {
+                      e.cancelBubble = true; // Prevent map from shifting
+                      const newPos = maybeSnapPoint({
+                        x: e.target.x(),
+                        y: e.target.y(),
+                      });
+                      // Check if new position is within map bounds
+                      if (!isPointInMapBounds(newPos)) {
+                        console.log("Cannot move light outside map bounds");
+                        // Reset to original position
+                        e.target.x(light.position.x);
+                        e.target.y(light.position.y);
+                      } else {
+                        updateLight(light.id, { position: newPos });
+                      }
+                      setDraggingLight(null);
+                    }}
+                    onMouseEnter={(e) => {
+                      if (isDM) {
+                        e.target.getStage().container().style.cursor = "move";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (isDM) {
+                        e.target.getStage().container().style.cursor =
+                          "default";
+                      }
+                    }}
+                    onClick={(e) => {
+                      if (e.evt.button === 2) {
+                        // Right click
+                        e.cancelBubble = true;
+                        e.evt.preventDefault();
+                      }
+                    }}
+                    onContextMenu={(e) => {
+                      if (!isDM) return; // Only DMs can delete lights
+                      e.cancelBubble = true;
+                      const stage = e.target.getStage();
+                      const pos = stage.getPointerPosition();
 
-                  // Show custom context menu
-                  const menu = document.createElement('div');
-                  menu.style.position = 'fixed';
-                  menu.style.left = pos.x + 'px';
-                  menu.style.top = pos.y + 'px';
-                  menu.style.background = '#2a2a3e';
-                  menu.style.border = '1px solid #444';
-                  menu.style.borderRadius = '8px';
-                  menu.style.padding = '8px 0';
-                  menu.style.zIndex = '10000';
-                  menu.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-                  menu.style.minWidth = '150px';
-                  menu.innerHTML = `
+                      // Show custom context menu
+                      const menu = document.createElement("div");
+                      menu.style.position = "fixed";
+                      menu.style.left = pos.x + "px";
+                      menu.style.top = pos.y + "px";
+                      menu.style.background = "#2a2a3e";
+                      menu.style.border = "1px solid #444";
+                      menu.style.borderRadius = "8px";
+                      menu.style.padding = "8px 0";
+                      menu.style.zIndex = "10000";
+                      menu.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+                      menu.style.minWidth = "150px";
+                      menu.innerHTML = `
                     <div style="padding: 8px 16px; cursor: pointer; color: #e0e0f0; font-size: 14px;" onmouseover="this.style.background='#3a3a4e'" onmouseout="this.style.background='transparent'" onclick="window.dispatchEvent(new CustomEvent('deleteLight', { detail: '${light.id}' })); this.parentElement.remove();">
                       🗑️ Delete Light
                     </div>
                   `;
-                  document.body.appendChild(menu);
+                      document.body.appendChild(menu);
 
-                  // Remove menu on next click
-                  const removeMenu = () => {
-                    menu.remove();
-                    document.removeEventListener('click', removeMenu);
-                  };
-                  setTimeout(() => document.addEventListener('click', removeMenu), 100);
-                }}
-                shadowColor={light.color || '#FF8800'}
-                shadowBlur={10}
-                shadowOpacity={0.8}
-              />
-              {/* Light icon overlay */}
-              <Circle
-                x={light.position.x}
-                y={light.position.y}
-                radius={3}
-                fill="white"
-                opacity={0.9}
-                listening={false}
-              />
-            </React.Fragment>
-          ))}
-        </Layer>}
+                      // Remove menu on next click
+                      const removeMenu = () => {
+                        menu.remove();
+                        document.removeEventListener("click", removeMenu);
+                      };
+                      setTimeout(
+                        () => document.addEventListener("click", removeMenu),
+                        100
+                      );
+                    }}
+                    shadowColor={light.color || "#FF8800"}
+                    shadowBlur={10}
+                    shadowOpacity={0.8}
+                  />
+                  {/* Light icon overlay */}
+                  <Circle
+                    x={light.position.x}
+                    y={light.position.y}
+                    radius={3}
+                    fill="white"
+                    opacity={0.9}
+                    listening={false}
+                  />
+                </React.Fragment>
+              ))}
+          </Layer>
+        )}
 
         {/* Fog of War Layer for players - rendered after tokens and lighting so it occludes tokens */}
-        {!isDM && fogData?.enabled && layerVisibility.fog && (() => {
-          const offsetX = gMap.gridOffsetX || 0;
-          const offsetY = gMap.gridOffsetY || 0;
-          return (
-            <Layer>
-              {fogData.visibility && fogData.visibility.map((row, y) =>
-                row.map((isVisible, x) => {
-                  // Subtract 1 to account for padding cell (fog grid has 1 extra cell on each side)
-                  const cellX = (x - 1) * gMap.gridSize + offsetX;
-                  const cellY = (y - 1) * gMap.gridSize + offsetY;
-                  if (cellX >= gMap.width || cellY >= gMap.height) return null;
-                  if (!isVisible) {
-                    return (
-                      <Rect
-                        key={`fog-${x}-${y}`}
-                        x={cellX}
-                        y={cellY}
-                        width={gMap.gridSize}
-                        height={gMap.gridSize}
-                        fill="black"
-                        opacity={0.98}
-                        stroke="#0a0a0a"
-                        strokeWidth={0.5}
-                        listening={false}
-                        shadowColor="black"
-                        shadowBlur={5}
-                        shadowOpacity={0.9}
-                      />
-                    );
-                  }
-                  return null;
-                })
-              )}
-            </Layer>
-          );
-        })()}
+        {!isDM &&
+          fogData?.enabled &&
+          layerVisibility.fog &&
+          (() => {
+            const offsetX = gMap.gridOffsetX || 0;
+            const offsetY = gMap.gridOffsetY || 0;
+            return (
+              <Layer>
+                {fogData.visibility &&
+                  fogData.visibility.map((row, y) =>
+                    row.map((isVisible, x) => {
+                      // Subtract 1 to account for padding cell (fog grid has 1 extra cell on each side)
+                      const cellX = (x - 1) * gMap.gridSize + offsetX;
+                      const cellY = (y - 1) * gMap.gridSize + offsetY;
+                      if (cellX >= gMap.width || cellY >= gMap.height)
+                        return null;
+                      if (!isVisible) {
+                        return (
+                          <Rect
+                            key={`fog-${x}-${y}`}
+                            x={cellX}
+                            y={cellY}
+                            width={gMap.gridSize}
+                            height={gMap.gridSize}
+                            fill="black"
+                            opacity={0.98}
+                            stroke="#0a0a0a"
+                            strokeWidth={0.5}
+                            listening={false}
+                            shadowColor="black"
+                            shadowBlur={5}
+                            shadowOpacity={0.9}
+                          />
+                        );
+                      }
+                      return null;
+                    })
+                  )}
+              </Layer>
+            );
+          })()}
 
         {/* Fog of War Layer for DM (above lighting to show explored areas) */}
-        {isDM && !localPlayerViewMode && fogData?.enabled && layerVisibility.fog && (() => {
-          const offsetX = gMap.gridOffsetX || 0;
-          const offsetY = gMap.gridOffsetY || 0;
-          return (
-            <Layer>
-              {fogData.visibility && fogData.visibility.map((row, y) =>
-                row.map((isVisible, x) => {
-                  // Subtract 1 to account for padding cell (fog grid has 1 extra cell on each side)
-                  const cellX = (x - 1) * gMap.gridSize + offsetX;
-                  const cellY = (y - 1) * gMap.gridSize + offsetY;
-                  if (cellX >= gMap.width || cellY >= gMap.height) return null;
-                  if (!isVisible) {
-                    return (
-                      <Rect
-                        key={`fog-dm-${x}-${y}`}
-                        x={cellX}
-                        y={cellY}
-                        width={gMap.gridSize}
-                        height={gMap.gridSize}
-                        fill="black"
-                        opacity={fogOpacity}
-                        stroke={fogGridVisible ? fogGridColor : 'transparent'}
-                        strokeWidth={fogGridVisible ? 1 : 0}
-                        listening={false}
-                        shadowColor={fogGridVisible ? fogGridColor : 'transparent'}
-                        shadowBlur={fogGridVisible ? 2 : 0}
-                        shadowOpacity={fogGridVisible ? 0.5 : 0}
-                      />
-                    );
-                  }
-                  return null;
-                })
-              )}
-              {/* Dimmer pattern when grid disabled: outline faint cells to help DM orient fog */}
-              {!gMap.gridEnabled && fogData.visibility && fogData.visibility.map((row, y) =>
-                row.map((isVisible, x) => {
-                  if (!isVisible) return null; // only outline revealed cells lightly
-                  // Subtract 1 to account for padding cell (fog grid has 1 extra cell on each side)
-                  const cellX = (x - 1) * gMap.gridSize + offsetX;
-                  const cellY = (y - 1) * gMap.gridSize + offsetY;
-                  if (cellX >= gMap.width || cellY >= gMap.height) return null;
+        {isDM &&
+          !localPlayerViewMode &&
+          fogData?.enabled &&
+          layerVisibility.fog &&
+          (() => {
+            const offsetX = gMap.gridOffsetX || 0;
+            const offsetY = gMap.gridOffsetY || 0;
+            return (
+              <Layer>
+                {fogData.visibility &&
+                  fogData.visibility.map((row, y) =>
+                    row.map((isVisible, x) => {
+                      // Subtract 1 to account for padding cell (fog grid has 1 extra cell on each side)
+                      const cellX = (x - 1) * gMap.gridSize + offsetX;
+                      const cellY = (y - 1) * gMap.gridSize + offsetY;
+                      if (cellX >= gMap.width || cellY >= gMap.height)
+                        return null;
+                      if (!isVisible) {
+                        return (
+                          <Rect
+                            key={`fog-dm-${x}-${y}`}
+                            x={cellX}
+                            y={cellY}
+                            width={gMap.gridSize}
+                            height={gMap.gridSize}
+                            fill="black"
+                            opacity={fogOpacity}
+                            stroke={
+                              fogGridVisible ? fogGridColor : "transparent"
+                            }
+                            strokeWidth={fogGridVisible ? 1 : 0}
+                            listening={false}
+                            shadowColor={
+                              fogGridVisible ? fogGridColor : "transparent"
+                            }
+                            shadowBlur={fogGridVisible ? 2 : 0}
+                            shadowOpacity={fogGridVisible ? 0.5 : 0}
+                          />
+                        );
+                      }
+                      return null;
+                    })
+                  )}
+                {/* Dimmer pattern when grid disabled: outline faint cells to help DM orient fog */}
+                {!gMap.gridEnabled &&
+                  fogData.visibility &&
+                  fogData.visibility.map((row, y) =>
+                    row.map((isVisible, x) => {
+                      if (!isVisible) return null; // only outline revealed cells lightly
+                      // Subtract 1 to account for padding cell (fog grid has 1 extra cell on each side)
+                      const cellX = (x - 1) * gMap.gridSize + offsetX;
+                      const cellY = (y - 1) * gMap.gridSize + offsetY;
+                      if (cellX >= gMap.width || cellY >= gMap.height)
+                        return null;
+                      return (
+                        <Rect
+                          key={`fog-dimmer-${x}-${y}`}
+                          x={cellX}
+                          y={cellY}
+                          width={gMap.gridSize}
+                          height={gMap.gridSize}
+                          fill={null}
+                          stroke="#ff6b6b"
+                          strokeWidth={0.4}
+                          opacity={0.15}
+                          listening={false}
+                        />
+                      );
+                    })
+                  )}
+              </Layer>
+            );
+          })()}
+
+        {/* Drawing & Effects Layer - Shapes, Drawings, Rulers, Pings */}
+        {(layerVisibility.shapes || layerVisibility.pings) && (
+          <Layer>
+            {/* Shapes (persisted) with fade-out for non-persistent */}
+            {visibleShapes.map((shape) => {
+              // Calculate fade-out for non-persistent shapes
+              let effectiveOpacity = shape.opacity;
+              if (!shape.persistent) {
+                const createdAt = shape.createdAt?.toDate
+                  ? shape.createdAt.toDate()
+                  : new Date();
+                const age = Date.now() - createdAt.getTime();
+                const fadeStart = 3000; // Start fading at 3 seconds
+                const fadeDuration = 2000; // Complete fade in 2 seconds
+                if (age > fadeStart) {
+                  const fadeProgress = Math.min(
+                    (age - fadeStart) / fadeDuration,
+                    1
+                  );
+                  effectiveOpacity = shape.opacity * (1 - fadeProgress);
+                }
+              }
+
+              if (shape.type === "circle") {
+                return (
+                  <Circle
+                    key={shape.id}
+                    x={shape.geometry.x}
+                    y={shape.geometry.y}
+                    radius={shape.geometry.radius}
+                    fill={shape.color}
+                    opacity={effectiveOpacity}
+                    listening={false}
+                  />
+                );
+              }
+              if (shape.type === "rectangle") {
+                return (
+                  <Rect
+                    key={shape.id}
+                    x={shape.geometry.x}
+                    y={shape.geometry.y}
+                    width={shape.geometry.width}
+                    height={shape.geometry.height}
+                    fill={shape.color}
+                    opacity={effectiveOpacity}
+                    listening={false}
+                  />
+                );
+              }
+              if (shape.type === "line") {
+                return (
+                  <Line
+                    key={shape.id}
+                    points={[
+                      shape.geometry.x1,
+                      shape.geometry.y1,
+                      shape.geometry.x2,
+                      shape.geometry.y2,
+                    ]}
+                    stroke={shape.color}
+                    strokeWidth={4}
+                    opacity={effectiveOpacity}
+                    listening={false}
+                    lineCap="round"
+                  />
+                );
+              }
+              if (shape.type === "cone") {
+                const { x, y, direction, length, angle } = shape.geometry;
+                const half = (angle || 60) / 2;
+                const startAngle = (direction - half) * (Math.PI / 180);
+                const endAngle = (direction + half) * (Math.PI / 180);
+                const x2 = x + Math.cos(startAngle) * length;
+                const y2 = y + Math.sin(startAngle) * length;
+                const x3 = x + Math.cos(endAngle) * length;
+                const y3 = y + Math.sin(endAngle) * length;
+                return (
+                  <Line
+                    key={shape.id}
+                    points={[x, y, x2, y2, x3, y3]}
+                    fill={shape.color}
+                    closed
+                    opacity={effectiveOpacity}
+                    listening={false}
+                  />
+                );
+              }
+              return null;
+            })}
+
+            {/* Shape preview */}
+            {shapePreview &&
+              (() => {
+                const preview = shapePreview;
+                if (preview.type === "circle") {
                   return (
-                    <Rect
-                      key={`fog-dimmer-${x}-${y}`}
-                      x={cellX}
-                      y={cellY}
-                      width={gMap.gridSize}
-                      height={gMap.gridSize}
-                      fill={null}
-                      stroke="#ff6b6b"
-                      strokeWidth={0.4}
-                      opacity={0.15}
+                    <Circle
+                      x={preview.geometry.x}
+                      y={preview.geometry.y}
+                      radius={preview.geometry.radius}
+                      stroke={shapeColor}
+                      strokeWidth={2}
+                      dash={[6, 4]}
+                      opacity={0.8}
                       listening={false}
                     />
                   );
-                })
-              )}
-            </Layer>
-          );
-        })()}
+                }
+                if (preview.type === "rectangle") {
+                  const { x, y, width, height } = preview.geometry;
+                  return (
+                    <Rect
+                      x={x}
+                      y={y}
+                      width={width}
+                      height={height}
+                      stroke={shapeColor}
+                      strokeWidth={2}
+                      dash={[6, 4]}
+                      opacity={0.8}
+                      listening={false}
+                    />
+                  );
+                }
+                if (preview.type === "line") {
+                  const { x1, y1, x2, y2 } = preview.geometry;
+                  return (
+                    <Line
+                      points={[x1, y1, x2, y2]}
+                      stroke={shapeColor}
+                      strokeWidth={3}
+                      dash={[6, 4]}
+                      opacity={0.8}
+                      listening={false}
+                    />
+                  );
+                }
+                if (preview.type === "cone") {
+                  const { x, y, direction, length, angle } = preview.geometry;
+                  const half = (angle || 60) / 2;
+                  const startAngle = (direction - half) * (Math.PI / 180);
+                  const endAngle = (direction + half) * (Math.PI / 180);
+                  const x2 = x + Math.cos(startAngle) * length;
+                  const y2 = y + Math.sin(startAngle) * length;
+                  const x3 = x + Math.cos(endAngle) * length;
+                  const y3 = y + Math.sin(endAngle) * length;
+                  return (
+                    <Line
+                      points={[x, y, x2, y2, x3, y3]}
+                      stroke={shapeColor}
+                      strokeWidth={2}
+                      dash={[6, 4]}
+                      opacity={0.8}
+                      closed
+                      listening={false}
+                    />
+                  );
+                }
+                return null;
+              })()}
 
-        {/* Drawing & Effects Layer - Shapes, Drawings, Rulers, Pings */}
-        {(layerVisibility.shapes || layerVisibility.pings) && <Layer>
-          {/* Shapes (persisted) with fade-out for non-persistent */}
-          {visibleShapes.map(shape => {
-            // Calculate fade-out for non-persistent shapes
-            let effectiveOpacity = shape.opacity;
-            if (!shape.persistent) {
-              const createdAt = shape.createdAt?.toDate ? shape.createdAt.toDate() : new Date();
-              const age = Date.now() - createdAt.getTime();
-              const fadeStart = 3000; // Start fading at 3 seconds
-              const fadeDuration = 2000; // Complete fade in 2 seconds
-              if (age > fadeStart) {
-                const fadeProgress = Math.min((age - fadeStart) / fadeDuration, 1);
-                effectiveOpacity = shape.opacity * (1 - fadeProgress);
+            {/* Other users' shape previews */}
+            {otherUsersPreviews.map((preview) => {
+              if (preview.shapeType === "circle") {
+                return (
+                  <Circle
+                    key={preview.userId}
+                    x={preview.geometry.x}
+                    y={preview.geometry.y}
+                    radius={preview.geometry.radius}
+                    stroke={preview.color}
+                    strokeWidth={2}
+                    dash={[6, 4]}
+                    opacity={preview.opacity * 0.6}
+                    listening={false}
+                  />
+                );
               }
-            }
+              if (preview.shapeType === "rectangle") {
+                const { x, y, width, height } = preview.geometry;
+                return (
+                  <Rect
+                    key={preview.userId}
+                    x={x}
+                    y={y}
+                    width={width}
+                    height={height}
+                    stroke={preview.color}
+                    strokeWidth={2}
+                    dash={[6, 4]}
+                    opacity={preview.opacity * 0.6}
+                    listening={false}
+                  />
+                );
+              }
+              if (preview.shapeType === "line") {
+                const { x1, y1, x2, y2 } = preview.geometry;
+                return (
+                  <Line
+                    key={preview.userId}
+                    points={[x1, y1, x2, y2]}
+                    stroke={preview.color}
+                    strokeWidth={3}
+                    dash={[6, 4]}
+                    opacity={preview.opacity * 0.6}
+                    listening={false}
+                  />
+                );
+              }
+              if (preview.shapeType === "cone") {
+                const { x, y, direction, length, angle } = preview.geometry;
+                const half = (angle || 60) / 2;
+                const startAngle = (direction - half) * (Math.PI / 180);
+                const endAngle = (direction + half) * (Math.PI / 180);
+                const x2 = x + Math.cos(startAngle) * length;
+                const y2 = y + Math.sin(startAngle) * length;
+                const x3 = x + Math.cos(endAngle) * length;
+                const y3 = y + Math.sin(endAngle) * length;
+                return (
+                  <Line
+                    key={preview.userId}
+                    points={[x, y, x2, y2, x3, y3]}
+                    stroke={preview.color}
+                    strokeWidth={2}
+                    dash={[6, 4]}
+                    opacity={preview.opacity * 0.6}
+                    closed
+                    listening={false}
+                  />
+                );
+              }
+              return null;
+            })}
+            {/* Pen strokes with fade */}
+            {drawings
+              .filter((d) => d.type === "pen")
+              .map((drawing) => {
+                const flatPoints = drawing.points.flatMap((p) => [p.x, p.y]);
+                // Calculate opacity based on age - start fading 1 second after creation
+                const createdAt = drawing.createdAt?.toDate
+                  ? drawing.createdAt.toDate()
+                  : new Date();
+                const age = Date.now() - createdAt.getTime();
+                const fadeStart = 1000; // Start fading at 1 second
+                const fadeDuration = 2000; // Fade over 2 seconds
+                let opacity = 0.8;
+                if (age > fadeStart) {
+                  const fadeProgress = Math.min(
+                    1,
+                    (age - fadeStart) / fadeDuration
+                  );
+                  opacity = 0.8 * (1 - fadeProgress);
+                }
+                return (
+                  <Line
+                    key={drawing.id}
+                    points={flatPoints}
+                    stroke={drawing.color}
+                    strokeWidth={3}
+                    tension={0.5}
+                    lineCap="round"
+                    lineJoin="round"
+                    opacity={opacity}
+                    listening={false}
+                  />
+                );
+              })}
 
-            if (shape.type === 'circle') {
-              return <Circle key={shape.id} x={shape.geometry.x} y={shape.geometry.y} radius={shape.geometry.radius} fill={shape.color} opacity={effectiveOpacity} listening={false} />;
-            }
-            if (shape.type === 'rectangle') {
-              return <Rect key={shape.id} x={shape.geometry.x} y={shape.geometry.y} width={shape.geometry.width} height={shape.geometry.height} fill={shape.color} opacity={effectiveOpacity} listening={false} />;
-            }
-            if (shape.type === 'line') {
-              return <Line key={shape.id} points={[shape.geometry.x1, shape.geometry.y1, shape.geometry.x2, shape.geometry.y2]} stroke={shape.color} strokeWidth={4} opacity={effectiveOpacity} listening={false} lineCap="round" />;
-            }
-            if (shape.type === 'cone') {
-              const { x, y, direction, length, angle } = shape.geometry;
-              const half = (angle || 60) / 2;
-              const startAngle = (direction - half) * (Math.PI / 180);
-              const endAngle = (direction + half) * (Math.PI / 180);
-              const x2 = x + Math.cos(startAngle) * length;
-              const y2 = y + Math.sin(startAngle) * length;
-              const x3 = x + Math.cos(endAngle) * length;
-              const y3 = y + Math.sin(endAngle) * length;
-              return <Line key={shape.id} points={[x, y, x2, y2, x3, y3]} fill={shape.color} closed opacity={effectiveOpacity} listening={false} />;
-            }
-            return null;
-          })}
+            {/* Arrows with slow fade */}
+            {drawings
+              .filter((d) => d.type === "arrow")
+              .map((drawing) => {
+                // Calculate opacity based on age (fade from 0.9 to 0 over last 1 second)
+                const createdAt = drawing.createdAt?.toDate
+                  ? drawing.createdAt.toDate()
+                  : new Date();
+                const age = Date.now() - createdAt.getTime();
+                const fadeStart = 2000; // Start fading at 2 seconds
+                const fadeDuration = 1000; // Fade over 1 second
+                let opacity = 0.9;
+                if (age > fadeStart) {
+                  const fadeProgress = Math.min(
+                    1,
+                    (age - fadeStart) / fadeDuration
+                  );
+                  opacity = 0.9 * (1 - fadeProgress);
+                }
+                return (
+                  <Arrow
+                    key={drawing.id}
+                    points={[
+                      drawing.start.x,
+                      drawing.start.y,
+                      drawing.end.x,
+                      drawing.end.y,
+                    ]}
+                    stroke={drawing.color}
+                    fill={drawing.color}
+                    strokeWidth={4}
+                    pointerLength={15}
+                    pointerWidth={15}
+                    opacity={opacity}
+                    listening={false}
+                    shadowColor={drawing.color}
+                    shadowBlur={10}
+                    shadowOpacity={0.6}
+                  />
+                );
+              })}
 
-          {/* Shape preview */}
-          {shapePreview && (() => {
-            const preview = shapePreview;
-            if (preview.type === 'circle') {
-              return <Circle x={preview.geometry.x} y={preview.geometry.y} radius={preview.geometry.radius} stroke={shapeColor} strokeWidth={2} dash={[6, 4]} opacity={0.8} listening={false} />;
-            }
-            if (preview.type === 'rectangle') {
-              const { x, y, width, height } = preview.geometry;
-              return <Rect x={x} y={y} width={width} height={height} stroke={shapeColor} strokeWidth={2} dash={[6, 4]} opacity={0.8} listening={false} />;
-            }
-            if (preview.type === 'line') {
-              const { x1, y1, x2, y2 } = preview.geometry;
-              return <Line points={[x1, y1, x2, y2]} stroke={shapeColor} strokeWidth={3} dash={[6, 4]} opacity={0.8} listening={false} />;
-            }
-            if (preview.type === 'cone') {
-              const { x, y, direction, length, angle } = preview.geometry;
-              const half = (angle || 60) / 2;
-              const startAngle = (direction - half) * (Math.PI / 180);
-              const endAngle = (direction + half) * (Math.PI / 180);
-              const x2 = x + Math.cos(startAngle) * length;
-              const y2 = y + Math.sin(startAngle) * length;
-              const x3 = x + Math.cos(endAngle) * length;
-              const y3 = y + Math.sin(endAngle) * length;
-              return <Line points={[x, y, x2, y2, x3, y3]} stroke={shapeColor} strokeWidth={2} dash={[6, 4]} opacity={0.8} closed listening={false} />;
-            }
-            return null;
-          })()}
-
-          {/* Other users' shape previews */}
-          {otherUsersPreviews.map(preview => {
-            if (preview.shapeType === 'circle') {
-              return <Circle key={preview.userId} x={preview.geometry.x} y={preview.geometry.y} radius={preview.geometry.radius} stroke={preview.color} strokeWidth={2} dash={[6, 4]} opacity={preview.opacity * 0.6} listening={false} />;
-            }
-            if (preview.shapeType === 'rectangle') {
-              const { x, y, width, height } = preview.geometry;
-              return <Rect key={preview.userId} x={x} y={y} width={width} height={height} stroke={preview.color} strokeWidth={2} dash={[6, 4]} opacity={preview.opacity * 0.6} listening={false} />;
-            }
-            if (preview.shapeType === 'line') {
-              const { x1, y1, x2, y2 } = preview.geometry;
-              return <Line key={preview.userId} points={[x1, y1, x2, y2]} stroke={preview.color} strokeWidth={3} dash={[6, 4]} opacity={preview.opacity * 0.6} listening={false} />;
-            }
-            if (preview.shapeType === 'cone') {
-              const { x, y, direction, length, angle } = preview.geometry;
-              const half = (angle || 60) / 2;
-              const startAngle = (direction - half) * (Math.PI / 180);
-              const endAngle = (direction + half) * (Math.PI / 180);
-              const x2 = x + Math.cos(startAngle) * length;
-              const y2 = y + Math.sin(startAngle) * length;
-              const x3 = x + Math.cos(endAngle) * length;
-              const y3 = y + Math.sin(endAngle) * length;
-              return <Line key={preview.userId} points={[x, y, x2, y2, x3, y3]} stroke={preview.color} strokeWidth={2} dash={[6, 4]} opacity={preview.opacity * 0.6} closed listening={false} />;
-            }
-            return null;
-          })}
-          {/* Pen strokes with fade */}
-          {drawings.filter(d => d.type === 'pen').map(drawing => {
-            const flatPoints = drawing.points.flatMap(p => [p.x, p.y]);
-            // Calculate opacity based on age - start fading 1 second after creation
-            const createdAt = drawing.createdAt?.toDate ? drawing.createdAt.toDate() : new Date();
-            const age = Date.now() - createdAt.getTime();
-            const fadeStart = 1000; // Start fading at 1 second
-            const fadeDuration = 2000; // Fade over 2 seconds
-            let opacity = 0.8;
-            if (age > fadeStart) {
-              const fadeProgress = Math.min(1, (age - fadeStart) / fadeDuration);
-              opacity = 0.8 * (1 - fadeProgress);
-            }
-            return (
+            {/* Current drawing in progress */}
+            {isDrawing && currentDrawing.length > 0 && (
               <Line
-                key={drawing.id}
-                points={flatPoints}
-                stroke={drawing.color}
+                points={currentDrawing}
+                stroke={penColor}
                 strokeWidth={3}
                 tension={0.5}
                 lineCap="round"
                 lineJoin="round"
-                opacity={opacity}
+                opacity={0.8}
                 listening={false}
               />
-            );
-          })}
+            )}
 
-          {/* Arrows with slow fade */}
-          {drawings.filter(d => d.type === 'arrow').map(drawing => {
-            // Calculate opacity based on age (fade from 0.9 to 0 over last 1 second)
-            const createdAt = drawing.createdAt?.toDate ? drawing.createdAt.toDate() : new Date();
-            const age = Date.now() - createdAt.getTime();
-            const fadeStart = 2000; // Start fading at 2 seconds
-            const fadeDuration = 1000; // Fade over 1 second
-            let opacity = 0.9;
-            if (age > fadeStart) {
-              const fadeProgress = Math.min(1, (age - fadeStart) / fadeDuration);
-              opacity = 0.9 * (1 - fadeProgress);
-            }
-            return (
-              <Arrow
-                key={drawing.id}
-                points={[drawing.start.x, drawing.start.y, drawing.end.x, drawing.end.y]}
-                stroke={drawing.color}
-                fill={drawing.color}
-                strokeWidth={4}
-                pointerLength={15}
-                pointerWidth={15}
-                opacity={opacity}
-                listening={false}
-                shadowColor={drawing.color}
-                shadowBlur={10}
-                shadowOpacity={0.6}
-              />
-            );
-          })}
+            {/* Pinned Rulers */}
+            {pinnedRulers.map((ruler) => {
+              const dx = ruler.end.x - ruler.start.x;
+              const dy = ruler.end.y - ruler.start.y;
+              const pixelDistance = Math.sqrt(dx * dx + dy * dy);
+              const gridSize = gMap?.gridSize || 50;
+              const gridSquares = (pixelDistance / gridSize).toFixed(1);
+              const feetPerSquare = gMap?.scaleInFeet || 5;
+              const feet = (parseFloat(gridSquares) * feetPerSquare).toFixed(0);
+              const midX = (ruler.start.x + ruler.end.x) / 2;
+              const midY = (ruler.start.y + ruler.end.y) / 2;
 
-          {/* Current drawing in progress */}
-          {isDrawing && currentDrawing.length > 0 && (
-            <Line
-              points={currentDrawing}
-              stroke={penColor}
-              strokeWidth={3}
-              tension={0.5}
-              lineCap="round"
-              lineJoin="round"
-              opacity={0.8}
-              listening={false}
-            />
-          )}
+              return (
+                <Fragment key={ruler.id}>
+                  <Line
+                    points={[
+                      ruler.start.x,
+                      ruler.start.y,
+                      ruler.end.x,
+                      ruler.end.y,
+                    ]}
+                    stroke="#ffaa00"
+                    strokeWidth={2}
+                    dash={[10, 5]}
+                    listening={false}
+                    opacity={0.7}
+                  />
+                  <Circle
+                    x={ruler.start.x}
+                    y={ruler.start.y}
+                    radius={4}
+                    fill="#ffaa00"
+                    listening={false}
+                    opacity={0.7}
+                  />
+                  <Circle
+                    x={ruler.end.x}
+                    y={ruler.end.y}
+                    radius={4}
+                    fill="#ffaa00"
+                    listening={false}
+                    opacity={0.7}
+                  />
+                  <Rect
+                    x={midX - 40}
+                    y={midY - 15}
+                    width={80}
+                    height={30}
+                    fill="rgba(0, 0, 0, 0.6)"
+                    cornerRadius={5}
+                    listening={false}
+                    opacity={0.7}
+                  />
+                  <KonvaText
+                    x={midX - 38}
+                    y={midY - 10}
+                    width={76}
+                    text={`📌 ${gridSquares} sq\n${feet} ft`}
+                    fontSize={11}
+                    fill="#ffaa00"
+                    align="center"
+                    listening={false}
+                    opacity={0.7}
+                  />
+                </Fragment>
+              );
+            })}
 
-          {/* Pinned Rulers */}
-          {pinnedRulers.map((ruler) => {
-            const dx = ruler.end.x - ruler.start.x;
-            const dy = ruler.end.y - ruler.start.y;
-            const pixelDistance = Math.sqrt(dx * dx + dy * dy);
-            const gridSize = gMap?.gridSize || 50;
-            const gridSquares = (pixelDistance / gridSize).toFixed(1);
-            const feetPerSquare = gMap?.scaleInFeet || 5;
-            const feet = (parseFloat(gridSquares) * feetPerSquare).toFixed(0);
-            const midX = (ruler.start.x + ruler.end.x) / 2;
-            const midY = (ruler.start.y + ruler.end.y) / 2;
-
-            return (
-              <Fragment key={ruler.id}>
+            {/* Active Ruler measurement */}
+            {rulerStart && rulerEnd && (
+              <Fragment>
                 <Line
-                  points={[ruler.start.x, ruler.start.y, ruler.end.x, ruler.end.y]}
-                  stroke="#ffaa00"
+                  points={[rulerStart.x, rulerStart.y, rulerEnd.x, rulerEnd.y]}
+                  stroke={rulerColor}
                   strokeWidth={2}
                   dash={[10, 5]}
                   listening={false}
-                  opacity={0.7}
                 />
+                {/* Calculate and display distance */}
+                {(() => {
+                  const dx = rulerEnd.x - rulerStart.x;
+                  const dy = rulerEnd.y - rulerStart.y;
+                  const pixelDistance = Math.sqrt(dx * dx + dy * dy);
+                  const gridSize = gMap?.gridSize || 50;
+                  const gridSquares = (pixelDistance / gridSize).toFixed(1);
+                  const feetPerSquare = gMap?.scaleInFeet || 5;
+                  const feet = (
+                    parseFloat(gridSquares) * feetPerSquare
+                  ).toFixed(0);
+                  const midX = (rulerStart.x + rulerEnd.x) / 2;
+                  const midY = (rulerStart.y + rulerEnd.y) / 2;
+
+                  return (
+                    <Fragment>
+                      {/* Start marker */}
+                      <Circle
+                        x={rulerStart.x}
+                        y={rulerStart.y}
+                        radius={5}
+                        fill={rulerColor}
+                        listening={false}
+                      />
+                      {/* End marker */}
+                      <Circle
+                        x={rulerEnd.x}
+                        y={rulerEnd.y}
+                        radius={5}
+                        fill={rulerColor}
+                        listening={false}
+                      />
+                      {/* Distance label background */}
+                      <Rect
+                        x={midX - 40}
+                        y={midY - 15}
+                        width={80}
+                        height={30}
+                        fill="rgba(0, 0, 0, 0.7)"
+                        cornerRadius={5}
+                        listening={false}
+                      />
+                      {/* Distance label */}
+                      <KonvaText
+                        x={midX - 38}
+                        y={midY - 10}
+                        width={76}
+                        text={`${gridSquares} sq\n${feet} ft`}
+                        fontSize={12}
+                        fill="#00ff00"
+                        align="center"
+                        listening={false}
+                      />
+                    </Fragment>
+                  );
+                })()}
+              </Fragment>
+            )}
+
+            {/* Arrow preview */}
+            {arrowStart && (
+              <Circle
+                x={arrowStart.x}
+                y={arrowStart.y}
+                radius={8}
+                fill="#ffff00"
+                opacity={0.6}
+                listening={false}
+                shadowColor="#ffff00"
+                shadowBlur={10}
+              />
+            )}
+
+            {/* Light placement preview */}
+            {activeTool === "placeLight" && lightPreviewPos && placingLight && (
+              <Fragment>
+                {/* Outer glow ring */}
                 <Circle
-                  x={ruler.start.x}
-                  y={ruler.start.y}
-                  radius={4}
-                  fill="#ffaa00"
+                  x={lightPreviewPos.x}
+                  y={lightPreviewPos.y}
+                  radius={placingLight.radius || 40}
+                  fill={placingLight.color || "#FF8800"}
+                  opacity={0.1}
                   listening={false}
-                  opacity={0.7}
                 />
+                {/* Inner bright center */}
                 <Circle
-                  x={ruler.end.x}
-                  y={ruler.end.y}
-                  radius={4}
-                  fill="#ffaa00"
+                  x={lightPreviewPos.x}
+                  y={lightPreviewPos.y}
+                  radius={8}
+                  fill={placingLight.color || "#FF8800"}
+                  opacity={0.8}
                   listening={false}
-                  opacity={0.7}
+                  shadowColor={placingLight.color || "#FF8800"}
+                  shadowBlur={20}
+                  shadowOpacity={0.8}
                 />
-                <Rect
-                  x={midX - 40}
-                  y={midY - 15}
-                  width={80}
-                  height={30}
-                  fill="rgba(0, 0, 0, 0.6)"
-                  cornerRadius={5}
+                {/* Placement indicator */}
+                <Circle
+                  x={lightPreviewPos.x}
+                  y={lightPreviewPos.y}
+                  radius={placingLight.radius || 40}
+                  stroke={placingLight.color || "#FF8800"}
+                  strokeWidth={2}
+                  dash={[10, 5]}
+                  opacity={0.6}
                   listening={false}
-                  opacity={0.7}
-                />
-                <KonvaText
-                  x={midX - 38}
-                  y={midY - 10}
-                  width={76}
-                  text={`📌 ${gridSquares} sq\n${feet} ft`}
-                  fontSize={11}
-                  fill="#ffaa00"
-                  align="center"
-                  listening={false}
-                  opacity={0.7}
                 />
               </Fragment>
-            );
-          })}
+            )}
 
-          {/* Active Ruler measurement */}
-          {rulerStart && rulerEnd && (
-            <Fragment>
-              <Line
-                points={[rulerStart.x, rulerStart.y, rulerEnd.x, rulerEnd.y]}
-                stroke={rulerColor}
-                strokeWidth={2}
-                dash={[10, 5]}
-                listening={false}
-              />
-              {/* Calculate and display distance */}
-              {(() => {
-                const dx = rulerEnd.x - rulerStart.x;
-                const dy = rulerEnd.y - rulerStart.y;
-                const pixelDistance = Math.sqrt(dx * dx + dy * dy);
-                const gridSize = gMap?.gridSize || 50;
-                const gridSquares = (pixelDistance / gridSize).toFixed(1);
-                const feetPerSquare = gMap?.scaleInFeet || 5;
-                const feet = (parseFloat(gridSquares) * feetPerSquare).toFixed(0);
-                const midX = (rulerStart.x + rulerEnd.x) / 2;
-                const midY = (rulerStart.y + rulerEnd.y) / 2;
+            {/* Light dragging radius indicator */}
+            {draggingLight && (
+              <Fragment>
+                {/* Outer glow ring showing light radius */}
+                <Circle
+                  x={draggingLight.currentPos.x}
+                  y={draggingLight.currentPos.y}
+                  radius={draggingLight.light.radius || 40}
+                  fill={draggingLight.light.color || "#FF8800"}
+                  opacity={0.1}
+                  listening={false}
+                />
+                {/* Dashed radius border */}
+                <Circle
+                  x={draggingLight.currentPos.x}
+                  y={draggingLight.currentPos.y}
+                  radius={draggingLight.light.radius || 40}
+                  stroke={draggingLight.light.color || "#FF8800"}
+                  strokeWidth={2}
+                  dash={[10, 5]}
+                  opacity={0.7}
+                  listening={false}
+                />
+                {/* Center dot indicator */}
+                <Circle
+                  x={draggingLight.currentPos.x}
+                  y={draggingLight.currentPos.y}
+                  radius={10}
+                  fill={draggingLight.light.color || "#FF8800"}
+                  opacity={0.5}
+                  listening={false}
+                  shadowColor={draggingLight.light.color || "#FF8800"}
+                  shadowBlur={15}
+                  shadowOpacity={0.6}
+                />
+              </Fragment>
+            )}
+
+            {/* Pings - X shape with vertical line */}
+            {layerVisibility.pings &&
+              pings.map((ping) => {
+                // Calculate ping animation phases
+                const pingAge =
+                  Date.now() - (ping.createdAt?.toMillis?.() || Date.now());
+                const flashDuration = 200; // 0.2s bright flash
+                const colorTransitionDuration = 300; // 0.3s transition to color
+                const holdDuration = 2000; // 2s hold at full opacity
+                const fadeStart =
+                  flashDuration + colorTransitionDuration + holdDuration; // Start fading at 2.5s
+                const fadeDuration = 1000; // 1s fade out
+
+                let pingColor = ping.color || "#ffff00";
+                let pingOpacity = 1;
+                let shadowIntensity = 1;
+
+                // Phase 1: Bright white flash (0-0.2s)
+                if (pingAge < flashDuration) {
+                  pingColor = "#ffffff";
+                  pingOpacity = 1;
+                  shadowIntensity = 2; // Extra bright shadow
+                }
+                // Phase 2: Transition to custom color (0.2s-0.5s)
+                else if (pingAge < flashDuration + colorTransitionDuration) {
+                  const transitionProgress =
+                    (pingAge - flashDuration) / colorTransitionDuration;
+                  // Interpolate from white to custom color (simplified - just use color)
+                  pingColor = ping.color || "#ffff00";
+                  pingOpacity = 1;
+                  shadowIntensity = 2 - transitionProgress; // Reduce shadow intensity
+                }
+                // Phase 3: Hold at full opacity (0.5s-2.5s)
+                else if (pingAge < fadeStart) {
+                  pingOpacity = 1;
+                  shadowIntensity = 1;
+                }
+                // Phase 4: Fade out (2.5s-3.5s)
+                else {
+                  const fadeProgress = Math.min(
+                    1,
+                    (pingAge - fadeStart) / fadeDuration
+                  );
+                  pingOpacity = 1 - fadeProgress;
+                  shadowIntensity = 1 - fadeProgress;
+                }
 
                 return (
-                  <Fragment>
-                    {/* Start marker */}
-                    <Circle
-                      x={rulerStart.x}
-                      y={rulerStart.y}
-                      radius={5}
-                      fill={rulerColor}
+                  <Fragment key={ping.id}>
+                    {/* Vertical line up from center */}
+                    <Line
+                      points={[ping.x, ping.y, ping.x, ping.y - 24]}
+                      stroke={pingColor}
+                      strokeWidth={3}
+                      opacity={pingOpacity}
                       listening={false}
+                      shadowColor={pingColor}
+                      shadowBlur={8 * shadowIntensity}
+                      shadowOpacity={pingOpacity * 0.75}
                     />
-                    {/* End marker */}
-                    <Circle
-                      x={rulerEnd.x}
-                      y={rulerEnd.y}
-                      radius={5}
-                      fill={rulerColor}
+                    {/* X shape - diagonal 1 */}
+                    <Line
+                      points={[
+                        ping.x - 12,
+                        ping.y - 12,
+                        ping.x + 12,
+                        ping.y + 12,
+                      ]}
+                      stroke={pingColor}
+                      strokeWidth={3}
+                      opacity={pingOpacity}
                       listening={false}
+                      shadowColor={pingColor}
+                      shadowBlur={8 * shadowIntensity}
+                      shadowOpacity={pingOpacity * 0.75}
                     />
-                    {/* Distance label background */}
-                    <Rect
-                      x={midX - 40}
-                      y={midY - 15}
-                      width={80}
-                      height={30}
-                      fill="rgba(0, 0, 0, 0.7)"
-                      cornerRadius={5}
+                    {/* X shape - diagonal 2 */}
+                    <Line
+                      points={[
+                        ping.x - 12,
+                        ping.y + 12,
+                        ping.x + 12,
+                        ping.y - 12,
+                      ]}
+                      stroke={pingColor}
+                      strokeWidth={3}
+                      opacity={pingOpacity}
                       listening={false}
-                    />
-                    {/* Distance label */}
-                    <KonvaText
-                      x={midX - 38}
-                      y={midY - 10}
-                      width={76}
-                      text={`${gridSquares} sq\n${feet} ft`}
-                      fontSize={12}
-                      fill="#00ff00"
-                      align="center"
-                      listening={false}
+                      shadowColor={pingColor}
+                      shadowBlur={8 * shadowIntensity}
+                      shadowOpacity={pingOpacity * 0.75}
                     />
                   </Fragment>
                 );
-              })()}
-            </Fragment>
-          )}
-
-          {/* Arrow preview */}
-          {arrowStart && (
-            <Circle
-              x={arrowStart.x}
-              y={arrowStart.y}
-              radius={8}
-              fill="#ffff00"
-              opacity={0.6}
-              listening={false}
-              shadowColor="#ffff00"
-              shadowBlur={10}
-            />
-          )}
-
-          {/* Light placement preview */}
-          {activeTool === 'placeLight' && lightPreviewPos && placingLight && (
-            <Fragment>
-              {/* Outer glow ring */}
-              <Circle
-                x={lightPreviewPos.x}
-                y={lightPreviewPos.y}
-                radius={placingLight.radius || 40}
-                fill={placingLight.color || '#FF8800'}
-                opacity={0.1}
-                listening={false}
-              />
-              {/* Inner bright center */}
-              <Circle
-                x={lightPreviewPos.x}
-                y={lightPreviewPos.y}
-                radius={8}
-                fill={placingLight.color || '#FF8800'}
-                opacity={0.8}
-                listening={false}
-                shadowColor={placingLight.color || '#FF8800'}
-                shadowBlur={20}
-                shadowOpacity={0.8}
-              />
-              {/* Placement indicator */}
-              <Circle
-                x={lightPreviewPos.x}
-                y={lightPreviewPos.y}
-                radius={placingLight.radius || 40}
-                stroke={placingLight.color || '#FF8800'}
-                strokeWidth={2}
-                dash={[10, 5]}
-                opacity={0.6}
-                listening={false}
-              />
-            </Fragment>
-          )}
-
-          {/* Light dragging radius indicator */}
-          {draggingLight && (
-            <Fragment>
-              {/* Outer glow ring showing light radius */}
-              <Circle
-                x={draggingLight.currentPos.x}
-                y={draggingLight.currentPos.y}
-                radius={draggingLight.light.radius || 40}
-                fill={draggingLight.light.color || '#FF8800'}
-                opacity={0.1}
-                listening={false}
-              />
-              {/* Dashed radius border */}
-              <Circle
-                x={draggingLight.currentPos.x}
-                y={draggingLight.currentPos.y}
-                radius={draggingLight.light.radius || 40}
-                stroke={draggingLight.light.color || '#FF8800'}
-                strokeWidth={2}
-                dash={[10, 5]}
-                opacity={0.7}
-                listening={false}
-              />
-              {/* Center dot indicator */}
-              <Circle
-                x={draggingLight.currentPos.x}
-                y={draggingLight.currentPos.y}
-                radius={10}
-                fill={draggingLight.light.color || '#FF8800'}
-                opacity={0.5}
-                listening={false}
-                shadowColor={draggingLight.light.color || '#FF8800'}
-                shadowBlur={15}
-                shadowOpacity={0.6}
-              />
-            </Fragment>
-          )}
-
-          {/* Pings - X shape with vertical line */}
-          {layerVisibility.pings && pings.map(ping => {
-            // Calculate ping animation phases
-            const pingAge = Date.now() - (ping.createdAt?.toMillis?.() || Date.now());
-            const flashDuration = 200; // 0.2s bright flash
-            const colorTransitionDuration = 300; // 0.3s transition to color
-            const holdDuration = 2000; // 2s hold at full opacity
-            const fadeStart = flashDuration + colorTransitionDuration + holdDuration; // Start fading at 2.5s
-            const fadeDuration = 1000; // 1s fade out
-
-            let pingColor = ping.color || '#ffff00';
-            let pingOpacity = 1;
-            let shadowIntensity = 1;
-
-            // Phase 1: Bright white flash (0-0.2s)
-            if (pingAge < flashDuration) {
-              pingColor = '#ffffff';
-              pingOpacity = 1;
-              shadowIntensity = 2; // Extra bright shadow
-            }
-            // Phase 2: Transition to custom color (0.2s-0.5s)
-            else if (pingAge < flashDuration + colorTransitionDuration) {
-              const transitionProgress = (pingAge - flashDuration) / colorTransitionDuration;
-              // Interpolate from white to custom color (simplified - just use color)
-              pingColor = ping.color || '#ffff00';
-              pingOpacity = 1;
-              shadowIntensity = 2 - transitionProgress; // Reduce shadow intensity
-            }
-            // Phase 3: Hold at full opacity (0.5s-2.5s)
-            else if (pingAge < fadeStart) {
-              pingOpacity = 1;
-              shadowIntensity = 1;
-            }
-            // Phase 4: Fade out (2.5s-3.5s)
-            else {
-              const fadeProgress = Math.min(1, (pingAge - fadeStart) / fadeDuration);
-              pingOpacity = 1 - fadeProgress;
-              shadowIntensity = 1 - fadeProgress;
-            }
-
-            return (
-              <Fragment key={ping.id}>
-                {/* Vertical line up from center */}
-                <Line
-                  points={[ping.x, ping.y, ping.x, ping.y - 24]}
-                  stroke={pingColor}
-                  strokeWidth={3}
-                  opacity={pingOpacity}
-                  listening={false}
-                  shadowColor={pingColor}
-                  shadowBlur={8 * shadowIntensity}
-                  shadowOpacity={pingOpacity * 0.75}
-                />
-                {/* X shape - diagonal 1 */}
-                <Line
-                  points={[ping.x - 12, ping.y - 12, ping.x + 12, ping.y + 12]}
-                  stroke={pingColor}
-                  strokeWidth={3}
-                  opacity={pingOpacity}
-                  listening={false}
-                  shadowColor={pingColor}
-                  shadowBlur={8 * shadowIntensity}
-                  shadowOpacity={pingOpacity * 0.75}
-                />
-                {/* X shape - diagonal 2 */}
-                <Line
-                  points={[ping.x - 12, ping.y + 12, ping.x + 12, ping.y - 12]}
-                  stroke={pingColor}
-                  strokeWidth={3}
-                  opacity={pingOpacity}
-                  listening={false}
-                  shadowColor={pingColor}
-                  shadowBlur={8 * shadowIntensity}
-                  shadowOpacity={pingOpacity * 0.75}
-                />
-              </Fragment>
-            );
-          })}
-        </Layer>}
+              })}
+          </Layer>
+        )}
 
         {/* Additional layers */}
         {children}
@@ -3042,7 +3888,7 @@ function MapCanvas({
       {showKeyboardShortcuts && (
         <div className="keyboard-shortcuts-panel">
           <div className="shortcuts-header">
-            <Keyboard size={25}/>
+            <Keyboard size={25} />
             <h3> Keyboard Shortcuts</h3>
             <button
               className="shortcuts-close-btn"
@@ -3119,13 +3965,20 @@ function MapCanvas({
           map={gMap}
           onUpdate={async (updates) => {
             // TODO: Track before state for undo/redo (future enhancement)
-            setMapLive(m => m ? { ...m, ...updates } : m);
+            setMapLive((m) => (m ? { ...m, ...updates } : m));
             try {
-              await mapService.updateMap(firestore, campaignId, gMap.id, updates);
+              await mapService.updateMap(
+                firestore,
+                campaignId,
+                gMap.id,
+                updates
+              );
               // TODO: Undo/redo for grid updates (future enhancement)
-            } catch (e) { console.error('Failed to update grid settings', e); }
+            } catch (e) {
+              console.error("Failed to update grid settings", e);
+            }
           }}
-        //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
+          //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
         />
       )}
       {/* FogPanel now rendered inside MapToolbar as a flyout */}
@@ -3134,7 +3987,9 @@ function MapCanvas({
           open={showLayerManager}
           onClose={() => setShowLayerManager(false)}
           visibility={layerVisibility}
-          onToggle={(key) => setLayerVisibility(v => ({ ...v, [key]: !v[key] }))}
+          onToggle={(key) =>
+            setLayerVisibility((v) => ({ ...v, [key]: !v[key] }))
+          }
         />
       )}
       {isDM && (
@@ -3144,7 +3999,7 @@ function MapCanvas({
           open={showAudio}
           onClose={() => setShowAudio(false)}
           isDM={isDM}
-        //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
+          //           pushUndo={(entry) => setUndoStack(u => [...u, entry])}
         />
       )}
       {isDM && (
@@ -3157,7 +4012,7 @@ function MapCanvas({
           onUpdateGlobalLighting={updateGlobalLighting}
           onStartPlacingLight={(lightData) => {
             setPlacingLight(lightData);
-            setActiveTool('placeLight');
+            setActiveTool("placeLight");
           }}
           open={showLightingPanel}
           onClose={() => setShowLightingPanel(false)}
@@ -3168,132 +4023,220 @@ function MapCanvas({
               const scale = stage.scaleX();
               const centerX = stage.width() / 2;
               const centerY = stage.height() / 2;
-              
+
               stage.position({
                 x: centerX - x * scale,
-                y: centerY - y * scale
+                y: centerY - y * scale,
               });
               stage.batchDraw();
             }
           }}
         />
       )}
-      {isDM && showTokenEditor && selectedTokenId && (() => {
-        const token = tokens.find(t => t.id === selectedTokenId);
-        if (!token) return null;
-        return (
-          <TokenExtendedEditor
-            token={token}
-            open={showTokenEditor}
-            onClose={() => setShowTokenEditor(false)}
-            onSave={async ({ hp, maxHp, presetStatus }) => {
-              try {
-                // TODO: Track before state for undo/redo (future enhancement)
-                const updates = {};
-                if (typeof maxHp === 'number' && maxHp !== token.maxHp) updates.maxHp = maxHp;
-                if (typeof hp === 'number' && hp !== token.hp) updates.hp = hp;
-                if (presetStatus) {
-                  await tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, presetStatus);
-                  // TODO: Track status for undo/redo (future enhancement)
+      {isDM &&
+        showTokenEditor &&
+        selectedTokenId &&
+        (() => {
+          const token = tokens.find((t) => t.id === selectedTokenId);
+          if (!token) return null;
+          return (
+            <TokenExtendedEditor
+              token={token}
+              open={showTokenEditor}
+              onClose={() => setShowTokenEditor(false)}
+              onSave={async ({ hp, maxHp, presetStatus }) => {
+                try {
+                  // TODO: Track before state for undo/redo (future enhancement)
+                  const updates = {};
+                  if (typeof maxHp === "number" && maxHp !== token.maxHp)
+                    updates.maxHp = maxHp;
+                  if (typeof hp === "number" && hp !== token.hp)
+                    updates.hp = hp;
+                  if (presetStatus) {
+                    await tokenService.addStatusEffect(
+                      firestore,
+                      campaignId,
+                      map.id,
+                      token.id,
+                      presetStatus
+                    );
+                    // TODO: Track status for undo/redo (future enhancement)
+                  }
+                  if (Object.keys(updates).length) {
+                    await tokenService.updateToken(
+                      firestore,
+                      campaignId,
+                      map.id,
+                      token.id,
+                      updates
+                    );
+                  }
+                  // TODO: Undo/redo for token updates (future enhancement)
+                } catch (e) {
+                  console.error("Save token stats failed", e);
                 }
-                if (Object.keys(updates).length) {
-                  await tokenService.updateToken(firestore, campaignId, map.id, token.id, updates);
+              }}
+            />
+          );
+        })()}
+      {contextMenu &&
+        (() => {
+          const token = tokens.find((t) => t.id === contextMenu.tokenId);
+          if (!token) return null;
+          const rect = stageRef.current?.container()?.getBoundingClientRect();
+          const pos = {
+            x: contextMenu.x - (rect?.left || 0),
+            y: contextMenu.y - (rect?.top || 0),
+          };
+          return (
+            <TokenContextMenu
+              token={token}
+              isDM={isDM}
+              position={pos}
+              onClose={() => setContextMenu(null)}
+              onAdjustHP={async (value, isAbsolute) => {
+                try {
+                  // TODO: Track before state for undo/redo (future enhancement)
+                  await tokenService.updateHP(
+                    firestore,
+                    campaignId,
+                    map.id,
+                    token.id,
+                    value,
+                    isAbsolute
+                  );
+                  // TODO: Undo/redo for HP updates (future enhancement)
+                } catch (e) {
+                  console.error("HP update failed", e);
                 }
-                // TODO: Undo/redo for token updates (future enhancement)
-              } catch (e) { console.error('Save token stats failed', e); }
-            }}
-          />
-        );
-      })()}
-      {contextMenu && (() => {
-        const token = tokens.find(t => t.id === contextMenu.tokenId);
-        if (!token) return null;
-        const rect = stageRef.current?.container()?.getBoundingClientRect();
-        const pos = { x: contextMenu.x - (rect?.left || 0), y: contextMenu.y - (rect?.top || 0) };
-        return (
-          <TokenContextMenu
-            token={token}
-            isDM={isDM}
-            position={pos}
-            onClose={() => setContextMenu(null)}
-            onAdjustHP={async (value, isAbsolute) => {
-              try {
-                // TODO: Track before state for undo/redo (future enhancement)
-                await tokenService.updateHP(firestore, campaignId, map.id, token.id, value, isAbsolute);
-                // TODO: Undo/redo for HP updates (future enhancement)
-              } catch (e) { console.error('HP update failed', e); }
-            }}
-            onAddStatus={async (effect) => {
-              try {
-                await tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, effect);
-                // setUndoStack(u => [...u, { undo: () => tokenService.removeStatusEffect(firestore, campaignId, map.id, token.id, effect.name), redo: () => tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, effect) }]);
-              } catch (e) { console.error('Add status failed', e); }
-            }}
-            onRemoveStatus={async (idOrName) => {
-              try {
-                const removed = (token.statusEffects || []).find(se => se.id === idOrName || se.name === idOrName);
-                await tokenService.removeStatusEffect(firestore, campaignId, map.id, token.id, idOrName);
-                if (removed) {
-                  // setUndoStack(u => [...u, { undo: () => tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, removed), redo: () => tokenService.removeStatusEffect(firestore, campaignId, map.id, token.id, idOrName) }]);
+              }}
+              onAddStatus={async (effect) => {
+                try {
+                  await tokenService.addStatusEffect(
+                    firestore,
+                    campaignId,
+                    map.id,
+                    token.id,
+                    effect
+                  );
+                  // setUndoStack(u => [...u, { undo: () => tokenService.removeStatusEffect(firestore, campaignId, map.id, token.id, effect.name), redo: () => tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, effect) }]);
+                } catch (e) {
+                  console.error("Add status failed", e);
                 }
-              } catch (e) { console.error('Remove status failed', e); }
-            }}
-            onToggleHidden={async () => {
-              try { await tokenService.updateToken(firestore, campaignId, map.id, token.id, { hidden: !token.hidden }); } catch (e) { console.error('Toggle hidden failed', e); }
-            }}
-            onDelete={async () => {
-              if (!window.confirm('Delete token?')) return;
-              try { await tokenService.deleteToken(firestore, campaignId, map.id, token.id); setContextMenu(null); } catch (e) { console.error('Delete token failed', e); }
-            }}
-            onAddToInitiative={async () => {
-              try {
-                const combatant = {
-                  id: `token_${token.id}`,
-                  name: token.name || 'Token',
-                  initiative: typeof token.initiative === 'number' ? token.initiative : 0,
-                  maxHp: token.maxHp || null,
-                  hp: token.hp || token.maxHp || null,
-                  type: token.type === 'pc' ? 'character' : (token.type || 'enemy'),
-                  isPlayer: token.type === 'pc',
-                  tokenId: token.id,
-                  addedAt: new Date()
-                };
-                await initiativeService.addCombatant(firestore, campaignId, combatant);
-              } catch (e) {
-                console.error('Failed to add token to initiative', e);
-              }
-            }}
-          />
-        );
-      })()}
-      {mapContextMenu && (() => {
-        const pos = { x: mapContextMenu.x, y: mapContextMenu.y };
-        return (
-          <MapContextMenu
-            isDM={isDM}
-            position={pos}
-            onClose={() => setMapContextMenu(null)}
-            onClearMyShapes={async () => {
-              try {
-                if (!user?.uid) {
-                  console.error('No user ID available');
-                  return;
+              }}
+              onRemoveStatus={async (idOrName) => {
+                try {
+                  const removed = (token.statusEffects || []).find(
+                    (se) => se.id === idOrName || se.name === idOrName
+                  );
+                  await tokenService.removeStatusEffect(
+                    firestore,
+                    campaignId,
+                    map.id,
+                    token.id,
+                    idOrName
+                  );
+                  if (removed) {
+                    // setUndoStack(u => [...u, { undo: () => tokenService.addStatusEffect(firestore, campaignId, map.id, token.id, removed), redo: () => tokenService.removeStatusEffect(firestore, campaignId, map.id, token.id, idOrName) }]);
+                  }
+                } catch (e) {
+                  console.error("Remove status failed", e);
                 }
-                await shapeService.clearUserShapes(firestore, campaignId, map.id, user.uid);
-              } catch (e) {
-                console.error('Clear my shapes failed', e);
-              }
-            }}
-            onClearAllShapes={async () => {
-              try {
-                await shapeService.clearAllShapes(firestore, campaignId, map.id);
-              } catch (e) {
-                console.error('Clear all shapes failed', e);
-              }
-            }}
-          />
-        );
-      })()}
+              }}
+              onToggleHidden={async () => {
+                try {
+                  await tokenService.updateToken(
+                    firestore,
+                    campaignId,
+                    map.id,
+                    token.id,
+                    { hidden: !token.hidden }
+                  );
+                } catch (e) {
+                  console.error("Toggle hidden failed", e);
+                }
+              }}
+              onDelete={async () => {
+                if (!window.confirm("Delete token?")) return;
+                try {
+                  await tokenService.deleteToken(
+                    firestore,
+                    campaignId,
+                    map.id,
+                    token.id
+                  );
+                  setContextMenu(null);
+                } catch (e) {
+                  console.error("Delete token failed", e);
+                }
+              }}
+              onAddToInitiative={async () => {
+                try {
+                  const combatant = {
+                    id: `token_${token.id}`,
+                    name: token.name || "Token",
+                    initiative:
+                      typeof token.initiative === "number"
+                        ? token.initiative
+                        : 0,
+                    maxHp: token.maxHp || null,
+                    hp: token.hp || token.maxHp || null,
+                    type:
+                      token.type === "pc" ? "character" : token.type || "enemy",
+                    isPlayer: token.type === "pc",
+                    tokenId: token.id,
+                    addedAt: new Date(),
+                  };
+                  await initiativeService.addCombatant(
+                    firestore,
+                    campaignId,
+                    combatant
+                  );
+                } catch (e) {
+                  console.error("Failed to add token to initiative", e);
+                }
+              }}
+            />
+          );
+        })()}
+      {mapContextMenu &&
+        (() => {
+          const pos = { x: mapContextMenu.x, y: mapContextMenu.y };
+          return (
+            <MapContextMenu
+              isDM={isDM}
+              position={pos}
+              onClose={() => setMapContextMenu(null)}
+              onClearMyShapes={async () => {
+                try {
+                  if (!user?.uid) {
+                    console.error("No user ID available");
+                    return;
+                  }
+                  await shapeService.clearUserShapes(
+                    firestore,
+                    campaignId,
+                    map.id,
+                    user.uid
+                  );
+                } catch (e) {
+                  console.error("Clear my shapes failed", e);
+                }
+              }}
+              onClearAllShapes={async () => {
+                try {
+                  await shapeService.clearAllShapes(
+                    firestore,
+                    campaignId,
+                    map.id
+                  );
+                } catch (e) {
+                  console.error("Clear all shapes failed", e);
+                }
+              }}
+            />
+          );
+        })()}
     </div>
   );
 }

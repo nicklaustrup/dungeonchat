@@ -19,7 +19,7 @@ export class ConnectionHealthMonitor {
    */
   startMonitoring(callback, interval = 2000) {
     this.onQualityChange = callback;
-    
+
     this.monitoringInterval = setInterval(async () => {
       try {
         const quality = await this.getConnectionQuality();
@@ -27,7 +27,7 @@ export class ConnectionHealthMonitor {
           callback(this.userId, quality);
         }
       } catch (error) {
-        console.error('[ConnectionHealthMonitor] Error getting stats:', error);
+        console.error("[ConnectionHealthMonitor] Error getting stats:", error);
       }
     }, interval);
   }
@@ -49,7 +49,7 @@ export class ConnectionHealthMonitor {
   async getConnectionQuality() {
     const stats = await this.getStats();
     const quality = this.calculateQuality(stats);
-    
+
     return {
       quality: quality.level,
       details: {
@@ -58,8 +58,8 @@ export class ConnectionHealthMonitor {
         lossRate: quality.lossRate,
         jitter: stats.jitter,
         roundTripTime: stats.roundTripTime,
-        bytesReceived: stats.bytesReceived
-      }
+        bytesReceived: stats.bytesReceived,
+      },
     };
   }
 
@@ -75,24 +75,24 @@ export class ConnectionHealthMonitor {
       jitter: 0,
       roundTripTime: 0,
       bytesReceived: 0,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
-    stats.forEach(report => {
+
+    stats.forEach((report) => {
       // Inbound audio stats
-      if (report.type === 'inbound-rtp' && report.kind === 'audio') {
+      if (report.type === "inbound-rtp" && report.kind === "audio") {
         audioStats.packetsLost = report.packetsLost || 0;
         audioStats.packetsReceived = report.packetsReceived || 0;
         audioStats.jitter = report.jitter || 0;
         audioStats.bytesReceived = report.bytesReceived || 0;
       }
-      
+
       // Candidate pair stats for RTT
-      if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+      if (report.type === "candidate-pair" && report.state === "succeeded") {
         audioStats.roundTripTime = report.currentRoundTripTime || 0;
       }
     });
-    
+
     this.lastStats = audioStats;
     return audioStats;
   }
@@ -108,27 +108,27 @@ export class ConnectionHealthMonitor {
     const jitterMs = stats.jitter * 1000; // Convert to milliseconds
     const rttMs = stats.roundTripTime * 1000;
 
-    let level = 'excellent';
+    let level = "excellent";
     let score = 100;
 
     // Packet loss penalties
-    if (lossRate > 0.10) {
-      level = 'poor';
+    if (lossRate > 0.1) {
+      level = "poor";
       score -= 50;
     } else if (lossRate > 0.05) {
-      level = 'fair';
+      level = "fair";
       score -= 30;
     } else if (lossRate > 0.02) {
-      level = 'good';
+      level = "good";
       score -= 15;
     }
 
     // Jitter penalties
     if (jitterMs > 100) {
-      level = 'poor';
+      level = "poor";
       score -= 30;
     } else if (jitterMs > 50) {
-      if (level === 'excellent') level = 'good';
+      if (level === "excellent") level = "good";
       score -= 15;
     } else if (jitterMs > 30) {
       score -= 5;
@@ -136,10 +136,10 @@ export class ConnectionHealthMonitor {
 
     // RTT penalties
     if (rttMs > 300) {
-      level = 'poor';
+      level = "poor";
       score -= 20;
     } else if (rttMs > 200) {
-      if (level === 'excellent') level = 'good';
+      if (level === "excellent") level = "good";
       score -= 10;
     }
 
@@ -148,7 +148,7 @@ export class ConnectionHealthMonitor {
       score: Math.max(0, score),
       lossRate: (lossRate * 100).toFixed(2),
       jitterMs: jitterMs.toFixed(1),
-      rttMs: rttMs.toFixed(1)
+      rttMs: rttMs.toFixed(1),
     };
   }
 
@@ -158,7 +158,7 @@ export class ConnectionHealthMonitor {
    */
   async isHealthy() {
     const quality = await this.getConnectionQuality();
-    return quality.quality !== 'poor';
+    return quality.quality !== "poor";
   }
 
   /**

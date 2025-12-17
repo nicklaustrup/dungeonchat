@@ -205,13 +205,13 @@
     font-size: 0.8rem;
     padding: 0.4rem 0.6rem;
   }
-  
+
   .campaign-dropdown {
     min-width: 280px;
     left: 50%;
     transform: translateX(-50%);
   }
-  
+
   .campaign-item,
   .dropdown-action {
     padding: 0.6rem;

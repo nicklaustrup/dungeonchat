@@ -1,17 +1,17 @@
-import React from 'react';
-import { Eye, EyeOff, Sun, Cloud } from 'lucide-react';
-import './FogPanel.css';
+import React from "react";
+import { Eye, EyeOff, Sun, Cloud } from "lucide-react";
+import "./FogPanel.css";
 
 /**
  * FogPanel
  * DM-only panel for managing fog of war with brush controls
  */
-function FogPanel({ 
-  open, 
-  onClose, 
+function FogPanel({
+  open,
+  onClose,
   fogEnabled,
   onToggleFog,
-  onRevealAll, 
+  onRevealAll,
   onConcealAll,
   brushSize,
   onBrushSizeChange,
@@ -22,7 +22,7 @@ function FogPanel({
   fogGridColor,
   onFogGridColorChange,
   fogOpacity,
-  onFogOpacityChange
+  onFogOpacityChange,
 }) {
   if (!open) return null;
 
@@ -30,7 +30,7 @@ function FogPanel({
     <div className="toolbar-settings-panel fog-panel">
       <div className="panel-header">
         <label>Fog of War Controls</label>
-        <button 
+        <button
           className="panel-close-btn"
           onClick={onClose}
           aria-label="Close fog controls"
@@ -38,15 +38,15 @@ function FogPanel({
           ×
         </button>
       </div>
-      
+
       {/* Fog Enable/Disable Toggle */}
       <div className="setting-group">
         <label>Fog of War</label>
         <div className="checkbox-group">
           <label className="checkbox-label">
-            <input 
-              type="checkbox" 
-              checked={fogEnabled} 
+            <input
+              type="checkbox"
+              checked={fogEnabled}
               onChange={(e) => onToggleFog?.(e.target.checked)}
             />
             <span>Enable Fog of War</span>
@@ -62,9 +62,9 @@ function FogPanel({
             <label>Fog Grid</label>
             <div className="checkbox-group">
               <label className="checkbox-label">
-                <input 
-                  type="checkbox" 
-                  checked={fogGridVisible} 
+                <input
+                  type="checkbox"
+                  checked={fogGridVisible}
                   onChange={(e) => onFogGridVisibleChange?.(e.target.checked)}
                 />
                 <span>Show Fog Grid</span>
@@ -102,7 +102,9 @@ function FogPanel({
                 max={100}
                 step={5}
                 value={Math.round(fogOpacity * 100)}
-                onChange={(e) => onFogOpacityChange?.(parseInt(e.target.value, 10) / 100)}
+                onChange={(e) =>
+                  onFogOpacityChange?.(parseInt(e.target.value, 10) / 100)
+                }
               />
             </div>
           </div>
@@ -113,15 +115,15 @@ function FogPanel({
             <label>Brush Mode</label>
             <div className="fog-brush-modes">
               <button
-                className={`fog-mode-btn ${brushMode === 'reveal' ? 'active' : ''}`}
-                onClick={() => onBrushModeChange?.('reveal')}
+                className={`fog-mode-btn ${brushMode === "reveal" ? "active" : ""}`}
+                onClick={() => onBrushModeChange?.("reveal")}
                 title="Reveal fog (make visible)"
               >
                 <Eye size={16} /> Reveal
               </button>
               <button
-                className={`fog-mode-btn ${brushMode === 'conceal' ? 'active' : ''}`}
-                onClick={() => onBrushModeChange?.('conceal')}
+                className={`fog-mode-btn ${brushMode === "conceal" ? "active" : ""}`}
+                onClick={() => onBrushModeChange?.("conceal")}
                 title="Conceal fog (hide)"
               >
                 <Cloud size={16} /> Conceal
@@ -132,7 +134,9 @@ function FogPanel({
           {/* Brush Size Slider */}
           <div className="setting-divider" />
           <div className="setting-group">
-            <label>Brush Size: {brushSize} cell{brushSize !== 1 ? 's' : ''}</label>
+            <label>
+              Brush Size: {brushSize} cell{brushSize !== 1 ? "s" : ""}
+            </label>
             <div className="opacity-slider">
               <input
                 type="range"
@@ -140,7 +144,9 @@ function FogPanel({
                 max={10}
                 step={1}
                 value={brushSize}
-                onChange={(e) => onBrushSizeChange?.(parseInt(e.target.value, 10))}
+                onChange={(e) =>
+                  onBrushSizeChange?.(parseInt(e.target.value, 10))
+                }
               />
             </div>
           </div>
@@ -171,7 +177,8 @@ function FogPanel({
           <div className="setting-divider" />
           <div className="fog-instructions">
             <small>
-              💡 <strong>Tip:</strong> Click and drag on the map to paint fog with your brush.
+              💡 <strong>Tip:</strong> Click and drag on the map to paint fog
+              with your brush.
             </small>
           </div>
         </>

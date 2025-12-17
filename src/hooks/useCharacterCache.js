@@ -3,8 +3,8 @@
  * Caches character sheet data to prevent repeated Firebase reads
  * Automatically invalidates cache when character is updated
  */
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 
 // Global cache shared across all hook instances
 const characterCache = new Map();
@@ -33,7 +33,7 @@ export function useCharacterCache(firestore, campaignId, userId) {
 
   // Invalidate cache entry
   const invalidateCache = useCallback(() => {
-    console.log('🗑️ useCharacterCache: Invalidating cache for:', cacheKey);
+    console.log("🗑️ useCharacterCache: Invalidating cache for:", cacheKey);
     characterCache.delete(cacheKey);
     cacheTimestamps.delete(cacheKey);
   }, [cacheKey]);
@@ -52,55 +52,74 @@ export function useCharacterCache(firestore, campaignId, userId) {
 
         // Check cache first
         if (isCacheValid()) {
-          console.log('✅ useCharacterCache: Cache hit for:', cacheKey);
+          console.log("✅ useCharacterCache: Cache hit for:", cacheKey);
           const cachedData = characterCache.get(cacheKey);
           setCharacter(cachedData);
           setLoading(false);
           return;
         }
 
-        console.log('📥 useCharacterCache: Cache miss, fetching from Firebase:', cacheKey);
+        console.log(
+          "📥 useCharacterCache: Cache miss, fetching from Firebase:",
+          cacheKey
+        );
 
-        const characterRef = doc(firestore, 'campaigns', campaignId, 'characters', userId);
+        const characterRef = doc(
+          firestore,
+          "campaigns",
+          campaignId,
+          "characters",
+          userId
+        );
         const docSnap = await getDoc(characterRef);
 
         if (docSnap.exists()) {
           const charData = docSnap.data();
-          
+
           // Store in cache
           characterCache.set(cacheKey, charData);
           cacheTimestamps.set(cacheKey, Date.now());
-          console.log('💾 useCharacterCache: Cached character data:', cacheKey);
+          console.log("💾 useCharacterCache: Cached character data:", cacheKey);
 
           setCharacter(charData);
 
           // Set up real-time listener for updates
           if (!cacheListeners.has(cacheKey)) {
-            console.log('👂 useCharacterCache: Setting up real-time listener:', cacheKey);
-            const unsubscribe = onSnapshot(characterRef, (snapshot) => {
-              if (snapshot.exists()) {
-                const updatedData = snapshot.data();
-                console.log('🔄 useCharacterCache: Real-time update received:', cacheKey);
-                
-                // Update cache
-                characterCache.set(cacheKey, updatedData);
-                cacheTimestamps.set(cacheKey, Date.now());
-                
-                // Update all components using this character
-                setCharacter(updatedData);
+            console.log(
+              "👂 useCharacterCache: Setting up real-time listener:",
+              cacheKey
+            );
+            const unsubscribe = onSnapshot(
+              characterRef,
+              (snapshot) => {
+                if (snapshot.exists()) {
+                  const updatedData = snapshot.data();
+                  console.log(
+                    "🔄 useCharacterCache: Real-time update received:",
+                    cacheKey
+                  );
+
+                  // Update cache
+                  characterCache.set(cacheKey, updatedData);
+                  cacheTimestamps.set(cacheKey, Date.now());
+
+                  // Update all components using this character
+                  setCharacter(updatedData);
+                }
+              },
+              (err) => {
+                console.error("❌ useCharacterCache: Listener error:", err);
               }
-            }, (err) => {
-              console.error('❌ useCharacterCache: Listener error:', err);
-            });
+            );
 
             cacheListeners.set(cacheKey, unsubscribe);
             unsubscribeRef.current = unsubscribe;
           }
         } else {
-          setError('Character not found');
+          setError("Character not found");
         }
       } catch (err) {
-        console.error('❌ useCharacterCache: Error loading character:', err);
+        console.error("❌ useCharacterCache: Error loading character:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -117,20 +136,23 @@ export function useCharacterCache(firestore, campaignId, userId) {
   }, [firestore, campaignId, userId, cacheKey, isCacheValid]);
 
   // Update character in cache (for optimistic updates)
-  const updateCharacter = useCallback((updates) => {
-    if (!character) return;
+  const updateCharacter = useCallback(
+    (updates) => {
+      if (!character) return;
 
-    const updatedChar = { ...character, ...updates };
-    
-    // Update local state
-    setCharacter(updatedChar);
-    
-    // Update cache
-    characterCache.set(cacheKey, updatedChar);
-    cacheTimestamps.set(cacheKey, Date.now());
-    
-    console.log('🔄 useCharacterCache: Optimistic update applied:', cacheKey);
-  }, [character, cacheKey]);
+      const updatedChar = { ...character, ...updates };
+
+      // Update local state
+      setCharacter(updatedChar);
+
+      // Update cache
+      characterCache.set(cacheKey, updatedChar);
+      cacheTimestamps.set(cacheKey, Date.now());
+
+      console.log("🔄 useCharacterCache: Optimistic update applied:", cacheKey);
+    },
+    [character, cacheKey]
+  );
 
   return {
     character,
@@ -138,21 +160,21 @@ export function useCharacterCache(firestore, campaignId, userId) {
     error,
     invalidateCache,
     updateCharacter,
-    isCached: isCacheValid()
+    isCached: isCacheValid(),
   };
 }
 
 // Utility to manually clear all cache
 export function clearAllCharacterCache() {
-  console.log('🗑️ useCharacterCache: Clearing all cache');
-  
+  console.log("🗑️ useCharacterCache: Clearing all cache");
+
   // Unsubscribe all listeners
   cacheListeners.forEach((unsubscribe) => {
-    if (typeof unsubscribe === 'function') {
+    if (typeof unsubscribe === "function") {
       unsubscribe();
     }
   });
-  
+
   characterCache.clear();
   cacheTimestamps.clear();
   cacheListeners.clear();
@@ -161,14 +183,14 @@ export function clearAllCharacterCache() {
 // Utility to clear specific character cache
 export function clearCharacterCache(campaignId, userId) {
   const cacheKey = `${campaignId}:${userId}`;
-  console.log('🗑️ useCharacterCache: Clearing cache for:', cacheKey);
-  
+  console.log("🗑️ useCharacterCache: Clearing cache for:", cacheKey);
+
   // Unsubscribe listener
   const unsubscribe = cacheListeners.get(cacheKey);
-  if (unsubscribe && typeof unsubscribe === 'function') {
+  if (unsubscribe && typeof unsubscribe === "function") {
     unsubscribe();
   }
-  
+
   characterCache.delete(cacheKey);
   cacheTimestamps.delete(cacheKey);
   cacheListeners.delete(cacheKey);

@@ -1,15 +1,15 @@
-import { useCallback } from 'react';
-import { collection, query, where, orderBy } from 'firebase/firestore';
-import { useFirebase } from '../FirebaseContext';
-import { useCachedQuery, useCachedDocument } from './useCachedDocument';
-import firestoreCache from './FirestoreCache';
+import { useCallback } from "react";
+import { collection, query, where, orderBy } from "firebase/firestore";
+import { useFirebase } from "../FirebaseContext";
+import { useCachedQuery, useCachedDocument } from "./useCachedDocument";
+import firestoreCache from "./FirestoreCache";
 
 /**
  * Cached Campaigns Hook
- * 
+ *
  * Provides cached access to user's campaigns with real-time updates
  * Automatically handles cache invalidation on campaign changes
- * 
+ *
  * Features:
  * - Automatic caching of campaign lists
  * - Real-time updates via Firestore listeners
@@ -26,11 +26,11 @@ export function useJoinedCampaigns() {
   const queryFn = useCallback(() => {
     if (!user?.uid) return null;
 
-    const campaignsRef = collection(firestore, 'campaigns');
+    const campaignsRef = collection(firestore, "campaigns");
     return query(
       campaignsRef,
-      where('members', 'array-contains', user.uid),
-      orderBy('lastActivity', 'desc')
+      where("members", "array-contains", user.uid),
+      orderBy("lastActivity", "desc")
     );
   }, [firestore, user]);
 
@@ -43,18 +43,18 @@ export function useJoinedCampaigns() {
     {
       ttl: 3 * 60 * 1000, // 3 minutes (campaigns change less frequently)
       realtime: true,
-      disabled: !user?.uid
+      disabled: !user?.uid,
     }
   );
 
   const finalLoading = authLoading || loading;
 
-  console.log('[CAMPAIGNS] Returning:', {
+  console.log("[CAMPAIGNS] Returning:", {
     campaigns: data?.length || 0,
     loading: finalLoading,
     authLoading,
     queryLoading: loading,
-    hasData: data?.length > 0
+    hasData: data?.length > 0,
   });
 
   return {
@@ -63,7 +63,7 @@ export function useJoinedCampaigns() {
     loading: finalLoading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 
@@ -75,12 +75,12 @@ export function useCreatedCampaigns() {
 
   const queryFn = useCallback(() => {
     if (!user?.uid) return null;
-    
-    const campaignsRef = collection(firestore, 'campaigns');
+
+    const campaignsRef = collection(firestore, "campaigns");
     return query(
       campaignsRef,
-      where('createdBy', '==', user.uid),
-      orderBy('createdAt', 'desc')
+      where("createdBy", "==", user.uid),
+      orderBy("createdAt", "desc")
     );
   }, [firestore, user]);
 
@@ -93,7 +93,7 @@ export function useCreatedCampaigns() {
     {
       ttl: 3 * 60 * 1000, // 3 minutes
       realtime: true,
-      disabled: !user?.uid
+      disabled: !user?.uid,
     }
   );
 
@@ -103,7 +103,7 @@ export function useCreatedCampaigns() {
     loading: authLoading || loading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 
@@ -121,20 +121,21 @@ export function useAllUserCampaigns() {
   const campaigns = useCallback(() => {
     const joinedCampaigns = joined.campaigns || [];
     const createdCampaigns = created.campaigns || [];
-    
+
     const campaignMap = new Map();
-    
+
     // Add all campaigns to map (automatically deduplicates by ID)
-    [...joinedCampaigns, ...createdCampaigns].forEach(campaign => {
+    [...joinedCampaigns, ...createdCampaigns].forEach((campaign) => {
       campaignMap.set(campaign.id, campaign);
     });
-    
-    return Array.from(campaignMap.values())
-      .sort((a, b) => {
-        const dateA = a.lastActivityAt?.toDate?.() || a.createdAt?.toDate?.() || new Date(0);
-        const dateB = b.lastActivityAt?.toDate?.() || b.createdAt?.toDate?.() || new Date(0);
-        return dateB - dateA;
-      });
+
+    return Array.from(campaignMap.values()).sort((a, b) => {
+      const dateA =
+        a.lastActivityAt?.toDate?.() || a.createdAt?.toDate?.() || new Date(0);
+      const dateB =
+        b.lastActivityAt?.toDate?.() || b.createdAt?.toDate?.() || new Date(0);
+      return dateB - dateA;
+    });
   }, [joined.campaigns, created.campaigns]);
 
   const refresh = useCallback(() => {
@@ -152,7 +153,7 @@ export function useAllUserCampaigns() {
     loading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 
@@ -164,12 +165,12 @@ export function useCachedCampaign(campaignId) {
 
   const { data, loading, error, refresh, invalidate } = useCachedDocument(
     firestore,
-    'campaigns',
+    "campaigns",
     campaignId,
     {
       ttl: 5 * 60 * 1000, // 5 minutes
       realtime: true,
-      disabled: !campaignId
+      disabled: !campaignId,
     }
   );
 
@@ -178,7 +179,7 @@ export function useCachedCampaign(campaignId) {
     loading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 
@@ -196,7 +197,7 @@ export function invalidateUserCampaigns(userId) {
  * Call this after updating campaign details
  */
 export function invalidateCampaign(campaignId) {
-  firestoreCache.invalidateDocument('campaigns', campaignId);
+  firestoreCache.invalidateDocument("campaigns", campaignId);
 }
 
 /**
@@ -204,7 +205,7 @@ export function invalidateCampaign(campaignId) {
  * Use sparingly - only for major campaign-related changes
  */
 export function invalidateAllCampaigns() {
-  firestoreCache.invalidateCollection('campaigns');
+  firestoreCache.invalidateCollection("campaigns");
 }
 
 // Default export with all campaign cache utilities
@@ -215,7 +216,7 @@ const campaignsCache = {
   useCachedCampaign,
   invalidateUserCampaigns,
   invalidateCampaign,
-  invalidateAllCampaigns
+  invalidateAllCampaigns,
 };
 
 export default campaignsCache;

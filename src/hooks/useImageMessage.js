@@ -1,12 +1,21 @@
-import React from 'react';
-import { compressImage, uploadImage } from '../services/imageUploadService';
-import { createImageMessage } from '../services/messageService';
-import { useToast } from './useToast';
+import React from "react";
+import { compressImage, uploadImage } from "../services/imageUploadService";
+import { createImageMessage } from "../services/messageService";
+import { useToast } from "./useToast";
 
 /**
  * Handles image selection, preview (data URL), compression, upload and message creation.
  */
-export function useImageMessage({ storage, firestore, user, getDisplayName, soundEnabled, playSendSound, campaignId = null, channelId = 'general' }) {
+export function useImageMessage({
+  storage,
+  firestore,
+  user,
+  getDisplayName,
+  soundEnabled,
+  playSendSound,
+  campaignId = null,
+  channelId = "general",
+}) {
   const [selectedImage, setSelectedImage] = React.useState(null);
   const [imagePreview, setImagePreview] = React.useState(null);
   const [uploading, setUploading] = React.useState(false);
@@ -15,7 +24,7 @@ export function useImageMessage({ storage, firestore, user, getDisplayName, soun
   const selectionTokenRef = React.useRef(0);
 
   const handleImageSelect = React.useCallback((file) => {
-    if (!file || !file.type?.startsWith('image/')) return;
+    if (!file || !file.type?.startsWith("image/")) return;
     const token = ++selectionTokenRef.current;
     setSelectedImage(file);
     const reader = new FileReader();
@@ -46,37 +55,54 @@ export function useImageMessage({ storage, firestore, user, getDisplayName, soun
     setError(null);
     try {
       const compressed = await compressImage(selectedImage);
-      const url = await uploadImage({ storage, file: compressed, uid: user.uid });
-      if (!url) throw new Error('Upload failed');
-      await createImageMessage({ 
-        firestore, 
-        imageURL: url, 
-        user, 
+      const url = await uploadImage({
+        storage,
+        file: compressed,
+        uid: user.uid,
+      });
+      if (!url) throw new Error("Upload failed");
+      await createImageMessage({
+        firestore,
+        imageURL: url,
+        user,
         getDisplayName,
         campaignId,
-        channelId
+        channelId,
       });
       clearImage();
       if (soundEnabled && playSendSound) playSendSound();
     } catch (err) {
       // Comment out console logs to reduce test output noise
       // console.error('sendImageMessage error', err);
-      pushToast('Image upload failed: ' + err.message, { type: 'error' });
+      pushToast("Image upload failed: " + err.message, { type: "error" });
       setUploading(false);
       setError(err);
     }
-  }, [selectedImage, uploading, user, storage, firestore, getDisplayName, soundEnabled, playSendSound, clearImage, pushToast, campaignId, channelId]);
+  }, [
+    selectedImage,
+    uploading,
+    user,
+    storage,
+    firestore,
+    getDisplayName,
+    soundEnabled,
+    playSendSound,
+    clearImage,
+    pushToast,
+    campaignId,
+    channelId,
+  ]);
 
   return {
     selectedImage,
     imagePreview,
     uploading,
-  error,
+    error,
     handleImageSelect,
     clearImage,
     sendImageMessage,
     setSelectedImage,
     setImagePreview,
-    setUploading
+    setUploading,
   };
 }

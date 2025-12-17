@@ -1,7 +1,14 @@
-import React from 'react';
+import React from "react";
 
 // Added optional error prop so we only show Retry when an error occurred (upload failed)
-export function ImagePreviewModal({ imagePreview, uploading, error, onSend, onCancel, onRetry }) {
+export function ImagePreviewModal({
+  imagePreview,
+  uploading,
+  error,
+  onSend,
+  onCancel,
+  onRetry,
+}) {
   const dialogRef = React.useRef(null);
   const lastActiveRef = React.useRef(null);
 
@@ -10,7 +17,7 @@ export function ImagePreviewModal({ imagePreview, uploading, error, onSend, onCa
       lastActiveRef.current = document.activeElement;
       // Focus first actionable button after mount
       requestAnimationFrame(() => {
-        const btn = dialogRef.current?.querySelector('.send-image-btn');
+        const btn = dialogRef.current?.querySelector(".send-image-btn");
         if (btn) btn.focus();
       });
     }
@@ -19,15 +26,15 @@ export function ImagePreviewModal({ imagePreview, uploading, error, onSend, onCa
   React.useEffect(() => {
     if (!imagePreview) return;
     const handleKey = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         e.preventDefault();
         onCancel();
-      } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
         // Allow Cmd/Ctrl + Enter to send
         if (!uploading) onSend();
-      } else if (e.key === 'Tab') {
+      } else if (e.key === "Tab") {
         // Basic focus trap
-        const focusables = dialogRef.current?.querySelectorAll('button');
+        const focusables = dialogRef.current?.querySelectorAll("button");
         if (!focusables || focusables.length === 0) return;
         const list = Array.from(focusables);
         const idx = list.indexOf(document.activeElement);
@@ -41,8 +48,8 @@ export function ImagePreviewModal({ imagePreview, uploading, error, onSend, onCa
         list[next].focus();
       }
     };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
   }, [imagePreview, onCancel, onSend, uploading]);
 
   // Track that user already initiated send to disable button immediately (before uploading flips true)
@@ -62,7 +69,15 @@ export function ImagePreviewModal({ imagePreview, uploading, error, onSend, onCa
 
   if (!imagePreview) return null;
   return (
-    <div className="image-preview-container" role="dialog" aria-modal="true" aria-label="Image preview" onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+    <div
+      className="image-preview-container"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Image preview"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}
+    >
       <div className="image-preview" ref={dialogRef}>
         <img src={imagePreview} alt="Preview" />
         <div className="image-preview-actions">
@@ -70,25 +85,25 @@ export function ImagePreviewModal({ imagePreview, uploading, error, onSend, onCa
             onClick={handleSend}
             disabled={uploading || pendingSend}
             aria-disabled={uploading || pendingSend}
-            className={`send-image-btn ${uploading || pendingSend ? 'disabled' : ''}`.trim()}
+            className={`send-image-btn ${uploading || pendingSend ? "disabled" : ""}`.trim()}
           >
-            {uploading ? 'Uploading…' : (pendingSend ? 'Sending…' : 'Send Image')}
+            {uploading ? "Uploading…" : pendingSend ? "Sending…" : "Send Image"}
           </button>
           {false && !uploading && error && onRetry && (
             // Retry button temporarily disabled in UI due to persist visibility issue; retain code for future.
             <button
               type="button"
               disabled={false}
-              onClick={() => { if (onRetry) onRetry(); }}
+              onClick={() => {
+                if (onRetry) onRetry();
+              }}
               className="retry-image-btn"
-            >Retry</button>
+            >
+              Retry
+            </button>
           )}
-          <button
-            onClick={onCancel}
-            className="cancel-image-btn"
-            type="button"
-          >
-            {uploading ? 'Cancel Upload' : 'Cancel'}
+          <button onClick={onCancel} className="cancel-image-btn" type="button">
+            {uploading ? "Cancel Upload" : "Cancel"}
           </button>
         </div>
         <div className="image-preview-hints" aria-hidden="true">

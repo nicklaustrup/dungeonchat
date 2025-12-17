@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 /**
  * useMenuToggle
@@ -11,7 +11,7 @@ export function useMenuToggle({ initialOpen = false } = {}) {
   const menuRef = React.useRef(null);
 
   const close = React.useCallback(() => setOpen(false), []);
-  const toggle = React.useCallback(() => setOpen(o => !o), []);
+  const toggle = React.useCallback(() => setOpen((o) => !o), []);
 
   React.useEffect(() => {
     if (!open) return;
@@ -22,12 +22,14 @@ export function useMenuToggle({ initialOpen = false } = {}) {
       if (menu.contains(e.target) || trigger?.contains(e.target)) return;
       close();
     };
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
-    document.addEventListener('pointerdown', onPointer, true);
-    document.addEventListener('keydown', onKey, true);
+    const onKey = (e) => {
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("pointerdown", onPointer, true);
+    document.addEventListener("keydown", onKey, true);
     return () => {
-      document.removeEventListener('pointerdown', onPointer, true);
-      document.removeEventListener('keydown', onKey, true);
+      document.removeEventListener("pointerdown", onPointer, true);
+      document.removeEventListener("keydown", onKey, true);
     };
   }, [open, close]);
 

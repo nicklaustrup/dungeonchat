@@ -1,86 +1,96 @@
-import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import ChatInput from '../../components/ChatInput/ChatInput';
-import { ChatStateProvider } from '../../contexts/ChatStateContext';
+import React from "react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
+import ChatInput from "../../components/ChatInput/ChatInput";
+import { ChatStateProvider } from "../../contexts/ChatStateContext";
 
 // Mock firebase context hook
-jest.mock('../../services/FirebaseContext', () => ({
+jest.mock("../../services/FirebaseContext", () => ({
   useFirebase: () => ({
-    auth: { currentUser: { uid: 'user1', displayName: 'Alice' } },
+    auth: { currentUser: { uid: "user1", displayName: "Alice" } },
     firestore: {},
     rtdb: {},
-    storage: {}
-  })
+    storage: {},
+  }),
 }));
 
 // Mock sound to avoid audio operations
-jest.mock('../../utils/sound', () => ({
+jest.mock("../../utils/sound", () => ({
   playNotificationSound: jest.fn(), // legacy alias
   playTypingSound: jest.fn(),
   playSendMessageSound: jest.fn(),
   playReceiveMessageSound: jest.fn(),
   playTapSound: jest.fn(),
   beginTypingLoop: jest.fn(),
-  endTypingLoop: jest.fn()
+  endTypingLoop: jest.fn(),
 }));
 
 // Mock image/upload + message service chain
-jest.mock('../../services/imageUploadService', () => ({
+jest.mock("../../services/imageUploadService", () => ({
   compressImage: jest.fn(async (f) => f),
-  uploadImage: jest.fn(async () => 'https://example.com/test.png')
+  uploadImage: jest.fn(async () => "https://example.com/test.png"),
 }));
 
-jest.mock('../../services/messageService', () => ({
+jest.mock("../../services/messageService", () => ({
   createTextMessage: jest.fn(async () => {}),
-  createImageMessage: jest.fn(async () => {})
+  createImageMessage: jest.fn(async () => {}),
 }));
 
-import { compressImage, uploadImage } from '../../services/imageUploadService';
-import { createImageMessage } from '../../services/messageService';
+import { compressImage, uploadImage } from "../../services/imageUploadService";
+import { createImageMessage } from "../../services/messageService";
 
 // Provide deterministic FileReader
 class FRMock {
   readAsDataURL(file) {
-    this.result = 'data:image/png;base64,TESTDATA';
+    this.result = "data:image/png;base64,TESTDATA";
     if (this.onload) this.onload({ target: { result: this.result } });
   }
 }
 
-describe('ChatInput image integration', () => {
+describe("ChatInput image integration", () => {
   let realFR;
-  beforeEach(() => { realFR = global.FileReader; global.FileReader = FRMock; });
-  afterEach(() => { global.FileReader = realFR; jest.clearAllMocks(); });
+  beforeEach(() => {
+    realFR = global.FileReader;
+    global.FileReader = FRMock;
+  });
+  afterEach(() => {
+    global.FileReader = realFR;
+    jest.clearAllMocks();
+  });
 
-  test.skip('selects an image and sends it', async () => {
+  test.skip("selects an image and sends it", async () => {
     const scrollSpy = jest.fn();
-    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => {});
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     render(
       <ChatStateProvider>
-        <ChatInput 
-          getDisplayName={() => 'Alice'} 
-          soundEnabled={false} 
-          forceScrollBottom={scrollSpy} 
+        <ChatInput
+          getDisplayName={() => "Alice"}
+          soundEnabled={false}
+          forceScrollBottom={scrollSpy}
         />
       </ChatStateProvider>
     );
 
     // Hidden file input is triggered by button (with aria-label Upload image)
-    const uploadBtn = screen.getByRole('button', { name: /upload image/i });
-    const fileInput = () => document.getElementById('image-upload');
+    const uploadBtn = screen.getByRole("button", { name: /upload image/i });
+    const fileInput = () => document.getElementById("image-upload");
 
     // Simulate click to ensure input exists
     fireEvent.click(uploadBtn);
-    const file = new File(['abc'], 'photo.png', { type: 'image/png' });
+    const file = new File(["abc"], "photo.png", { type: "image/png" });
     await act(async () => {
       fireEvent.change(fileInput(), { target: { files: [file] } });
     });
 
     // Modal should appear (ImagePreviewModal) with Send Image button
-    const sendImageBtn = await screen.findByRole('button', { name: /send image/i });
+    const sendImageBtn = await screen.findByRole("button", {
+      name: /send image/i,
+    });
     expect(sendImageBtn).toBeEnabled();
 
-    await act(async () => { fireEvent.click(sendImageBtn); });
+    await act(async () => {
+      fireEvent.click(sendImageBtn);
+    });
 
     expect(compressImage).toHaveBeenCalledTimes(1);
     expect(uploadImage).toHaveBeenCalledTimes(1);

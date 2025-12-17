@@ -1,29 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useFirebase } from '../../services/FirebaseContext';
-import { onSnapshot, doc } from 'firebase/firestore';
-import { useCampaignMembers } from '../../hooks/useCampaignMembers';
-import CampaignMemberList from './CampaignMemberList';
-import ChannelSidebar from './ChannelSidebar';
-import CampaignSettings from './CampaignSettings';
-import CampaignRules from './CampaignRules';
-import DiceHistoryPanel from '../DiceRoll/DiceHistoryPanel';
-import InitiativeTracker from '../Session/InitiativeTracker';
-import InitiativeButton from '../Session/InitiativeButton';
-import SessionNotes from '../Session/SessionNotes';
-import Encounters from '../Session/Encounters';
-import CampaignCalendar from '../Session/CampaignCalendar';
-import PartyManagement from '../Session/PartyManagement';
-import VoiceChatPanel from '../Voice/VoiceChatPanel';
-import { CharacterCreationModal } from '../CharacterCreationModal';
-import { CharacterSheet } from '../CharacterSheet';
-import { useCampaignCharacters, invalidateCampaignCharacters, invalidateUserCharacters } from '../../services/cache';
-import { deleteCharacterSheet } from '../../services/characterSheetService';
-import MapLibrary from '../VTT/MapLibrary/MapLibrary';
-import MapEditor from '../VTT/MapEditor/MapEditor';
-import UserProfileModal from '../UserProfileModal/UserProfileModal';
-import './CampaignDashboard.css';
-import SessionQuickNav from '../Session/SessionQuickNav';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useFirebase } from "../../services/FirebaseContext";
+import { onSnapshot, doc } from "firebase/firestore";
+import { useCampaignMembers } from "../../hooks/useCampaignMembers";
+import CampaignMemberList from "./CampaignMemberList";
+import ChannelSidebar from "./ChannelSidebar";
+import CampaignSettings from "./CampaignSettings";
+import CampaignRules from "./CampaignRules";
+import DiceHistoryPanel from "../DiceRoll/DiceHistoryPanel";
+import InitiativeTracker from "../Session/InitiativeTracker";
+import InitiativeButton from "../Session/InitiativeButton";
+import SessionNotes from "../Session/SessionNotes";
+import Encounters from "../Session/Encounters";
+import CampaignCalendar from "../Session/CampaignCalendar";
+import PartyManagement from "../Session/PartyManagement";
+import VoiceChatPanel from "../Voice/VoiceChatPanel";
+import { CharacterCreationModal } from "../CharacterCreationModal";
+import { CharacterSheet } from "../CharacterSheet";
+import {
+  useCampaignCharacters,
+  invalidateCampaignCharacters,
+  invalidateUserCharacters,
+} from "../../services/cache";
+import { deleteCharacterSheet } from "../../services/characterSheetService";
+import MapLibrary from "../VTT/MapLibrary/MapLibrary";
+import MapEditor from "../VTT/MapEditor/MapEditor";
+import UserProfileModal from "../UserProfileModal/UserProfileModal";
+import "./CampaignDashboard.css";
+import SessionQuickNav from "../Session/SessionQuickNav";
 
 function CampaignDashboard() {
   const { campaignId } = useParams();
@@ -33,7 +37,7 @@ function CampaignDashboard() {
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
@@ -43,13 +47,20 @@ function CampaignDashboard() {
   const [selectedUserId, setSelectedUserId] = useState(null);
 
   // Use the custom hook for members with real-time updates
-  const { members, loading: membersLoading, setMembers } = useCampaignMembers(firestore, campaignId);
+  const {
+    members,
+    loading: membersLoading,
+    setMembers,
+  } = useCampaignMembers(firestore, campaignId);
 
   // Character sheet hooks (cached with real-time updates)
-  const { characters: campaignCharacters, refresh: refreshCharacters } = useCampaignCharacters(campaignId);
+  const { characters: campaignCharacters, refresh: refreshCharacters } =
+    useCampaignCharacters(campaignId);
 
   // Check if user has a character (derived from campaignCharacters)
-  const hasCharacter = campaignCharacters.some(char => char.userId === user?.uid || char.uid === user?.uid);
+  const hasCharacter = campaignCharacters.some(
+    (char) => char.userId === user?.uid || char.uid === user?.uid
+  );
 
   useEffect(() => {
     if (!campaignId || !firestore || !user) return;
@@ -57,20 +68,21 @@ function CampaignDashboard() {
     setLoading(true);
 
     // Listen to campaign changes
-    const campaignRef = doc(firestore, 'campaigns', campaignId);
-    const unsubscribeCampaign = onSnapshot(campaignRef,
+    const campaignRef = doc(firestore, "campaigns", campaignId);
+    const unsubscribeCampaign = onSnapshot(
+      campaignRef,
       (doc) => {
         if (doc.exists()) {
           setCampaign({ id: doc.id, ...doc.data() });
           setError(null);
         } else {
-          setError('Campaign not found or you don\'t have access.');
+          setError("Campaign not found or you don't have access.");
         }
         setLoading(false);
       },
       (err) => {
-        console.error('Error listening to campaign:', err);
-        setError('Failed to load campaign updates.');
+        console.error("Error listening to campaign:", err);
+        setError("Failed to load campaign updates.");
         setLoading(false);
       }
     );
@@ -84,11 +96,15 @@ function CampaignDashboard() {
   };
 
   const isUserDM = campaign && user && campaign.dmId === user.uid;
-  const userMember = members.find(member => member.userId === user.uid);
+  const userMember = members.find((member) => member.userId === user.uid);
 
   // Find DM member info
-  const dmMember = members.find(member => member.userId === campaign?.dmId);
-  const dmDisplayName = dmMember?.username || dmMember?.displayName || campaign?.dmName || 'Unknown DM';
+  const dmMember = members.find((member) => member.userId === campaign?.dmId);
+  const dmDisplayName =
+    dmMember?.username ||
+    dmMember?.displayName ||
+    campaign?.dmName ||
+    "Unknown DM";
 
   if (loading || membersLoading) {
     return (
@@ -107,7 +123,10 @@ function CampaignDashboard() {
         <div className="error-container">
           <h2>Error</h2>
           <p>{error}</p>
-          <button onClick={() => navigate('/campaigns')} className="btn btn-primary">
+          <button
+            onClick={() => navigate("/campaigns")}
+            className="btn btn-primary"
+          >
             Back to Campaigns
           </button>
         </div>
@@ -121,7 +140,10 @@ function CampaignDashboard() {
         <div className="error-container">
           <h2>Campaign Not Found</h2>
           <p>This campaign doesn't exist or you don't have access to it.</p>
-          <button onClick={() => navigate('/campaigns')} className="btn btn-primary">
+          <button
+            onClick={() => navigate("/campaigns")}
+            className="btn btn-primary"
+          >
             Back to Campaigns
           </button>
         </div>
@@ -133,7 +155,10 @@ function CampaignDashboard() {
     <div className="campaign-dashboard">
       <div className="campaign-header">
         {campaign.campaignPhoto && (
-          <div className="campaign-header-photo" style={{ backgroundImage: `url(${campaign.campaignPhoto})` }} />
+          <div
+            className="campaign-header-photo"
+            style={{ backgroundImage: `url(${campaign.campaignPhoto})` }}
+          />
         )}
         <div className="campaign-header-content">
           <div className="campaign-info">
@@ -141,15 +166,19 @@ function CampaignDashboard() {
             <p className="campaign-description">{campaign.description}</p>
             <div className="campaign-meta">
               <span className="game-system">{campaign.gameSystem}</span>
-              <span className={`status-badge status-${campaign.status}`}>{campaign.status}</span>
+              <span className={`status-badge status-${campaign.status}`}>
+                {campaign.status}
+              </span>
               <span className="player-count">
                 {campaign.currentPlayers}/{campaign.maxPlayers} players
               </span>
             </div>
             {campaign.tags && campaign.tags.length > 0 && (
               <div className="campaign-tags">
-                {campaign.tags.map(tag => (
-                  <span key={tag} className="tag">{tag}</span>
+                {campaign.tags.map((tag) => (
+                  <span key={tag} className="tag">
+                    {tag}
+                  </span>
                 ))}
               </div>
             )}
@@ -161,86 +190,86 @@ function CampaignDashboard() {
         <div className="campaign-sidebar">
           <nav className="campaign-nav">
             <button
-              className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('overview')}
+              className={`nav-item ${activeTab === "overview" ? "active" : ""}`}
+              onClick={() => setActiveTab("overview")}
             >
               Overview
             </button>
             <button
-              className={`nav-item ${activeTab === 'members' ? 'active' : ''}`}
-              onClick={() => setActiveTab('members')}
+              className={`nav-item ${activeTab === "members" ? "active" : ""}`}
+              onClick={() => setActiveTab("members")}
             >
               Members ({members.length})
             </button>
             <button
-              className={`nav-item ${activeTab === 'channels' ? 'active' : ''}`}
-              onClick={() => setActiveTab('channels')}
+              className={`nav-item ${activeTab === "channels" ? "active" : ""}`}
+              onClick={() => setActiveTab("channels")}
             >
               Channels
             </button>
             <button
-              className={`nav-item ${activeTab === 'characters' ? 'active' : ''}`}
-              onClick={() => setActiveTab('characters')}
+              className={`nav-item ${activeTab === "characters" ? "active" : ""}`}
+              onClick={() => setActiveTab("characters")}
             >
               Characters ({campaignCharacters.length})
             </button>
             <button
-              className={`nav-item ${activeTab === 'dice-history' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dice-history')}
+              className={`nav-item ${activeTab === "dice-history" ? "active" : ""}`}
+              onClick={() => setActiveTab("dice-history")}
             >
               Dice History
             </button>
             <button
-              className={`nav-item ${activeTab === 'initiative' ? 'active' : ''}`}
-              onClick={() => setActiveTab('initiative')}
+              className={`nav-item ${activeTab === "initiative" ? "active" : ""}`}
+              onClick={() => setActiveTab("initiative")}
             >
               Initiative Tracker
             </button>
             <button
-              className={`nav-item ${activeTab === 'session-notes' ? 'active' : ''}`}
-              onClick={() => setActiveTab('session-notes')}
+              className={`nav-item ${activeTab === "session-notes" ? "active" : ""}`}
+              onClick={() => setActiveTab("session-notes")}
             >
               Session Notes
             </button>
             <button
-              className={`nav-item ${activeTab === 'encounters' ? 'active' : ''}`}
-              onClick={() => setActiveTab('encounters')}
+              className={`nav-item ${activeTab === "encounters" ? "active" : ""}`}
+              onClick={() => setActiveTab("encounters")}
             >
               Encounters
             </button>
             <button
-              className={`nav-item ${activeTab === 'calendar' ? 'active' : ''}`}
-              onClick={() => setActiveTab('calendar')}
+              className={`nav-item ${activeTab === "calendar" ? "active" : ""}`}
+              onClick={() => setActiveTab("calendar")}
             >
               Calendar
             </button>
             <button
-              className={`nav-item ${activeTab === 'party' ? 'active' : ''}`}
-              onClick={() => setActiveTab('party')}
+              className={`nav-item ${activeTab === "party" ? "active" : ""}`}
+              onClick={() => setActiveTab("party")}
             >
               Party Management
             </button>
             <button
-              className={`nav-item ${activeTab === 'voice' ? 'active' : ''}`}
-              onClick={() => setActiveTab('voice')}
+              className={`nav-item ${activeTab === "voice" ? "active" : ""}`}
+              onClick={() => setActiveTab("voice")}
             >
               🎙️ Voice Chat
             </button>
             <button
-              className={`nav-item ${activeTab === 'maps' ? 'active' : ''}`}
-              onClick={() => setActiveTab('maps')}
+              className={`nav-item ${activeTab === "maps" ? "active" : ""}`}
+              onClick={() => setActiveTab("maps")}
             >
               🗺️ Maps
             </button>
             <button
-              className={`nav-item ${activeTab === 'rules' ? 'active' : ''}`}
-              onClick={() => setActiveTab('rules')}
+              className={`nav-item ${activeTab === "rules" ? "active" : ""}`}
+              onClick={() => setActiveTab("rules")}
             >
               Rules & Guidelines
             </button>
             <button
-              className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
+              className={`nav-item ${activeTab === "settings" ? "active" : ""}`}
+              onClick={() => setActiveTab("settings")}
             >
               Settings
             </button>
@@ -248,7 +277,7 @@ function CampaignDashboard() {
         </div>
 
         <div className="campaign-main">
-          {activeTab === 'overview' && (
+          {activeTab === "overview" && (
             <div className="overview-tab">
               <div className="overview-section">
                 <h3>Campaign Details</h3>
@@ -268,26 +297,36 @@ function CampaignDashboard() {
                   </div>
                   <div className="detail-item">
                     <label>Status</label>
-                    <span className={`status-badge status-${campaign.status}`}>{campaign.status}</span>
+                    <span className={`status-badge status-${campaign.status}`}>
+                      {campaign.status}
+                    </span>
                   </div>
                   <div className="detail-item">
                     <label>Players</label>
-                    <span>{campaign.currentPlayers}/{campaign.maxPlayers}</span>
+                    <span>
+                      {campaign.currentPlayers}/{campaign.maxPlayers}
+                    </span>
                   </div>
                   <div className="detail-item">
                     <label>Created</label>
-                    <span>{campaign.createdAt?.toDate().toLocaleDateString()}</span>
+                    <span>
+                      {campaign.createdAt?.toDate().toLocaleDateString()}
+                    </span>
                   </div>
                   <div className="detail-item">
                     <label>Last Activity</label>
-                    <span>{campaign.lastActivity?.toDate().toLocaleDateString()}</span>
+                    <span>
+                      {campaign.lastActivity?.toDate().toLocaleDateString()}
+                    </span>
                   </div>
                   <div className="detail-item detail-item-action">
                     <div className="campaign-quick-actions">
                       <button
-                        onClick={() => navigate(`/campaign/${campaignId}/session`)}
+                        onClick={() =>
+                          navigate(`/campaign/${campaignId}/session`)
+                        }
                         className="btn btn-primary btn-vtt-session"
-                        disabled={!userMember || userMember.status !== 'active'}
+                        disabled={!userMember || userMember.status !== "active"}
                         title="Launch Virtual Tabletop Session"
                       >
                         🎲 Go to Session
@@ -295,11 +334,11 @@ function CampaignDashboard() {
                       <button
                         onClick={handleJoinChat}
                         className="btn btn-secondary btn-open-chat"
-                        disabled={!userMember || userMember.status !== 'active'}
+                        disabled={!userMember || userMember.status !== "active"}
                       >
                         Open Chat
                       </button>
-                      <div onClick={() => setActiveTab('initiative')}>
+                      <div onClick={() => setActiveTab("initiative")}>
                         <InitiativeButton
                           campaignId={campaignId}
                           size="medium"
@@ -316,8 +355,12 @@ function CampaignDashboard() {
                   <div className="activity-item">
                     <span className="activity-icon">🎯</span>
                     <div className="activity-content">
-                      <span className="activity-text">Welcome to your campaign!</span>
-                      <span className="activity-time">Start chatting to see recent activity here.</span>
+                      <span className="activity-text">
+                        Welcome to your campaign!
+                      </span>
+                      <span className="activity-time">
+                        Start chatting to see recent activity here.
+                      </span>
                     </div>
                   </div>
                   {campaign?.lastActivity && (
@@ -325,14 +368,19 @@ function CampaignDashboard() {
                       <span className="activity-icon">📅</span>
                       <div className="activity-content">
                         <span className="activity-text">Last activity</span>
-                        <span className="activity-time">{campaign.lastActivity.toDate().toLocaleDateString()}</span>
+                        <span className="activity-time">
+                          {campaign.lastActivity.toDate().toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   )}
                   <div className="activity-item">
                     <span className="activity-icon">👥</span>
                     <div className="activity-content">
-                      <span className="activity-text">{members.length} member{members.length !== 1 ? 's' : ''} in campaign</span>
+                      <span className="activity-text">
+                        {members.length} member{members.length !== 1 ? "s" : ""}{" "}
+                        in campaign
+                      </span>
                       <span className="activity-time">Ready to adventure!</span>
                     </div>
                   </div>
@@ -341,7 +389,7 @@ function CampaignDashboard() {
             </div>
           )}
 
-          {activeTab === 'members' && (
+          {activeTab === "members" && (
             <CampaignMemberList
               campaignId={campaignId}
               members={members}
@@ -350,14 +398,11 @@ function CampaignDashboard() {
             />
           )}
 
-          {activeTab === 'channels' && (
-            <ChannelSidebar
-              campaignId={campaignId}
-              isUserDM={isUserDM}
-            />
+          {activeTab === "channels" && (
+            <ChannelSidebar campaignId={campaignId} isUserDM={isUserDM} />
           )}
 
-          {activeTab === 'characters' && (
+          {activeTab === "characters" && (
             <div className="characters-tab">
               <div className="characters-header">
                 <h2>Campaign Characters</h2>
@@ -397,27 +442,51 @@ function CampaignDashboard() {
                   </div>
                 ) : (
                   <div className="characters-grid">
-                    {campaignCharacters.map(character => {
-                      const member = members.find(m => m.userId === character.userId);
+                    {campaignCharacters.map((character) => {
+                      const member = members.find(
+                        (m) => m.userId === character.userId
+                      );
                       const isOwnCharacter = character.userId === user?.uid;
 
                       return (
-                        <div key={character.id} className={`character-card ${isOwnCharacter ? 'own-character' : ''}`}>
+                        <div
+                          key={character.id}
+                          className={`character-card ${isOwnCharacter ? "own-character" : ""}`}
+                        >
                           <div className="character-card-header">
                             {/* LEFT COLUMN: Title and Badge Stacked */}
-                            <div className="character-info-stack"> {/* <--- NEW CONTAINER */}
+                            <div className="character-info-stack">
+                              {" "}
+                              {/* <--- NEW CONTAINER */}
                               <div className="character-card-title">
                                 <h4>{character.name}</h4>
                               </div>
                               {/* The badge is now a sibling to the title, but still within the info stack */}
-                              {isOwnCharacter && <span className="own-badge">Your Character</span>}
+                              {isOwnCharacter && (
+                                <span className="own-badge">
+                                  Your Character
+                                </span>
+                              )}
                             </div>
                             {/* RIGHT ELEMENT: Token Preview (Moved out of title div) */}
-                            <div className="character-token" style={{ backgroundColor: character.tokenColor || 'var(--player-token-default)' }}>
+                            <div
+                              className="character-token"
+                              style={{
+                                backgroundColor:
+                                  character.tokenColor ||
+                                  "var(--player-token-default)",
+                              }}
+                            >
                               {character.avatarUrl ? (
-                                <img src={character.avatarUrl} alt={character.name} />
+                                <img
+                                  src={character.avatarUrl}
+                                  alt={character.name}
+                                />
                               ) : character.imageUrl ? (
-                                <img src={character.imageUrl} alt={character.name} />
+                                <img
+                                  src={character.imageUrl}
+                                  alt={character.name}
+                                />
                               ) : (
                                 <span>{character.name.charAt(0)}</span>
                               )}
@@ -425,27 +494,50 @@ function CampaignDashboard() {
                           </div>
 
                           <div className="character-card-info">
-                            <div className="character-level">Level {character.level}</div>
+                            <div className="character-level">
+                              Level {character.level}
+                            </div>
                             <div className="character-class-race">
                               {character.race} {character.class}
                             </div>
                             <div className="character-player">
-                              Player: {member?.username || member?.displayName || character.playerName || 'Unknown'}
+                              Player:{" "}
+                              {member?.username ||
+                                member?.displayName ||
+                                character.playerName ||
+                                "Unknown"}
                             </div>
                           </div>
 
                           <div className="character-card-stats">
-                            <div className="stat-item" title="Hit Points - The amount of damage your character can take before falling unconscious">
+                            <div
+                              className="stat-item"
+                              title={
+                                "Hit Points - The amount of damage " +
+                                "your character can take before falling unconscious"
+                              }
+                            >
                               <span>HP:</span>
-                              <span>{character.hp || character.maxHp || 0}/{character.maxHp || 0}</span>
+                              <span>
+                                {character.hp || character.maxHp || 0}/
+                                {character.maxHp || 0}
+                              </span>
                             </div>
-                            <div className="stat-item" title="Armor Class - How difficult your character is to hit in combat">
+                            <div
+                              className="stat-item"
+                              title="Armor Class - How difficult your character is to hit in combat"
+                            >
                               <span>AC:</span>
                               <span>{character.armorClass || 10}</span>
                             </div>
-                            <div className="stat-item" title="Experience Points - Points earned for completing challenges and adventures">
+                            <div
+                              className="stat-item"
+                              title="Experience Points - Points earned for completing challenges and adventures"
+                            >
                               <span>XP:</span>
-                              <span>{(character.experience || 0).toLocaleString()}</span>
+                              <span>
+                                {(character.experience || 0).toLocaleString()}
+                              </span>
                             </div>
                           </div>
 
@@ -463,18 +555,36 @@ function CampaignDashboard() {
                                 </button>
                                 <button
                                   onClick={async () => {
-                                    if (window.confirm(`Are you sure you want to delete ${character.name || 'this character'}?`)) {
+                                    if (
+                                      window.confirm(
+                                        `Are you sure you want to delete ${character.name || "this character"}?`
+                                      )
+                                    ) {
                                       try {
                                         setDeletingCharacter(true);
                                         // Use character.userId (the owner's ID) which is the Firestore document ID
-                                        await deleteCharacterSheet(firestore, campaignId, character.userId);
+                                        await deleteCharacterSheet(
+                                          firestore,
+                                          campaignId,
+                                          character.userId
+                                        );
                                         // Invalidate character caches
-                                        invalidateUserCharacters(character.userId);
-                                        invalidateCampaignCharacters(campaignId);
+                                        invalidateUserCharacters(
+                                          character.userId
+                                        );
+                                        invalidateCampaignCharacters(
+                                          campaignId
+                                        );
                                         // Refresh will happen automatically via real-time listeners
                                       } catch (err) {
-                                        console.error('Error deleting character:', err);
-                                        alert('Failed to delete character: ' + err.message);
+                                        console.error(
+                                          "Error deleting character:",
+                                          err
+                                        );
+                                        alert(
+                                          "Failed to delete character: " +
+                                            err.message
+                                        );
                                       } finally {
                                         setDeletingCharacter(false);
                                       }
@@ -483,7 +593,7 @@ function CampaignDashboard() {
                                   className="btn btn-small btn-danger"
                                   disabled={deletingCharacter}
                                 >
-                                  {deletingCharacter ? 'Deleting...' : 'Delete'}
+                                  {deletingCharacter ? "Deleting..." : "Delete"}
                                 </button>
                               </>
                             )}
@@ -492,17 +602,17 @@ function CampaignDashboard() {
                       );
                     })}
                   </div>
-                )
-                }
+                )}
               </div>
             </div>
           )}
 
-          {activeTab === 'dice-history' && (
+          {activeTab === "dice-history" && (
             <div className="dice-history-tab">
               <h2>Dice Roll History & Statistics</h2>
               <p className="tab-description">
-                View campaign dice roll history, statistics, and player performance across all channels.
+                View campaign dice roll history, statistics, and player
+                performance across all channels.
               </p>
               <DiceHistoryPanel
                 firestore={firestore}
@@ -512,11 +622,12 @@ function CampaignDashboard() {
             </div>
           )}
 
-          {activeTab === 'initiative' && (
+          {activeTab === "initiative" && (
             <div className="initiative-tab">
               <h2>Initiative Tracker</h2>
               <p className="tab-description">
-                Manage combat initiative order, track HP, conditions, and turn progression for encounters.
+                Manage combat initiative order, track HP, conditions, and turn
+                progression for encounters.
               </p>
               <div className="initiative-content">
                 <InitiativeTracker
@@ -527,51 +638,59 @@ function CampaignDashboard() {
             </div>
           )}
 
-          {activeTab === 'session-notes' && (
+          {activeTab === "session-notes" && (
             <div className="session-notes-tab">
               <h2>Session Notes</h2>
               <p className="tab-description">
-                Record session summaries, important events, and track campaign narrative. DMs can keep private notes while sharing key details with players.
+                Record session summaries, important events, and track campaign
+                narrative. DMs can keep private notes while sharing key details
+                with players.
               </p>
               <SessionNotes campaignId={campaignId} />
             </div>
           )}
 
-          {activeTab === 'encounters' && (
+          {activeTab === "encounters" && (
             <div className="encounters-tab">
               <h2>Encounter Management</h2>
               <p className="tab-description">
-                Create and manage encounter templates with monsters, environmental effects, and loot. Scale encounters to your party and start them when ready.
+                Create and manage encounter templates with monsters,
+                environmental effects, and loot. Scale encounters to your party
+                and start them when ready.
               </p>
               <Encounters campaignId={campaignId} />
             </div>
           )}
 
-          {activeTab === 'calendar' && (
+          {activeTab === "calendar" && (
             <div className="calendar-tab">
               <h2>Campaign Calendar</h2>
               <p className="tab-description">
-                Schedule sessions, track availability, manage milestones, and maintain an in-game calendar. Export events to your personal calendar.
+                Schedule sessions, track availability, manage milestones, and
+                maintain an in-game calendar. Export events to your personal
+                calendar.
               </p>
               <CampaignCalendar campaignId={campaignId} />
             </div>
           )}
 
-          {activeTab === 'party' && (
+          {activeTab === "party" && (
             <div className="party-tab">
               <h2>Party Management</h2>
               <p className="tab-description">
-                Track party statistics, distribute XP, manage HP and rest mechanics, analyze party composition, and monitor wealth.
+                Track party statistics, distribute XP, manage HP and rest
+                mechanics, analyze party composition, and monitor wealth.
               </p>
               <PartyManagement campaignId={campaignId} />
             </div>
           )}
 
-          {activeTab === 'voice' && (
+          {activeTab === "voice" && (
             <div className="voice-tab">
               <h2>🎙️ Voice Chat</h2>
               <p className="tab-description">
-                Join voice chat to communicate with your party in real-time. Perfect for sessions, combat encounters, and roleplay.
+                Join voice chat to communicate with your party in real-time.
+                Perfect for sessions, combat encounters, and roleplay.
               </p>
               <div className="voice-content">
                 <VoiceChatPanel
@@ -583,19 +702,23 @@ function CampaignDashboard() {
             </div>
           )}
 
-          {activeTab === 'maps' && (
+          {activeTab === "maps" && (
             <div className="maps-tab">
               {!showMapEditor ? (
                 <>
                   <h2>🗺️ Virtual Tabletop Maps</h2>
                   <p className="tab-description">
-                    Upload battle maps, configure grids, and manage your map library. {isUserDM ? 'As DM, you can create and edit maps.' : 'View maps shared by your DM.'}
+                    Upload battle maps, configure grids, and manage your map
+                    library.{" "}
+                    {isUserDM
+                      ? "As DM, you can create and edit maps."
+                      : "View maps shared by your DM."}
                   </p>
                   <MapLibrary
                     campaignId={campaignId}
                     onSelectMap={(map) => {
                       // TODO: Open map viewer
-                      console.log('Selected map:', map);
+                      console.log("Selected map:", map);
                     }}
                     onEditMap={(map) => {
                       if (isUserDM) {
@@ -604,12 +727,16 @@ function CampaignDashboard() {
                       }
                     }}
                     onDeleteMap={(mapId) => {
-                      console.log('Deleted map:', mapId);
+                      console.log("Deleted map:", mapId);
                     }}
-                    onCreateNew={isUserDM ? () => {
-                      setEditingMap(null);
-                      setShowMapEditor(true);
-                    } : null}
+                    onCreateNew={
+                      isUserDM
+                        ? () => {
+                            setEditingMap(null);
+                            setShowMapEditor(true);
+                          }
+                        : null
+                    }
                   />
                 </>
               ) : (
@@ -617,7 +744,7 @@ function CampaignDashboard() {
                   campaignId={campaignId}
                   existingMap={editingMap}
                   onSave={(savedMap) => {
-                    console.log('Map saved:', savedMap);
+                    console.log("Map saved:", savedMap);
                     setShowMapEditor(false);
                     setEditingMap(null);
                   }}
@@ -630,14 +757,11 @@ function CampaignDashboard() {
             </div>
           )}
 
-          {activeTab === 'rules' && (
-            <CampaignRules
-              campaignId={campaignId}
-              isUserDM={isUserDM}
-            />
+          {activeTab === "rules" && (
+            <CampaignRules campaignId={campaignId} isUserDM={isUserDM} />
           )}
 
-          {activeTab === 'settings' && (
+          {activeTab === "settings" && (
             <CampaignSettings
               campaign={campaign}
               onCampaignUpdate={setCampaign}
@@ -648,7 +772,13 @@ function CampaignDashboard() {
         </div>
       </div>
       {/* Quick navigation bar for session-related tabs */}
-      {['session-notes', 'encounters', 'initiative', 'calendar', 'party'].includes(activeTab) && (
+      {[
+        "session-notes",
+        "encounters",
+        "initiative",
+        "calendar",
+        "party",
+      ].includes(activeTab) && (
         <SessionQuickNav
           activeTab={activeTab}
           onNavigate={setActiveTab}
@@ -674,10 +804,13 @@ function CampaignDashboard() {
 
       {/* Character Sheet Modal */}
       {showCharacterSheet && (
-        <div className="modal-overlay" onClick={() => {
-          setShowCharacterSheet(false);
-          setSelectedCharacter(null);
-        }}>
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            setShowCharacterSheet(false);
+            setSelectedCharacter(null);
+          }}
+        >
           <div onClick={(e) => e.stopPropagation()}>
             <CharacterSheet
               firestore={firestore}
@@ -702,7 +835,6 @@ function CampaignDashboard() {
           onClose={() => setSelectedUserId(null)}
         />
       )}
-
     </div>
   );
 }

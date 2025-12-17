@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { useFirebase } from '../services/FirebaseContext';
+import { useState, useEffect } from "react";
+import { doc, onSnapshot } from "firebase/firestore";
+import { useFirebase } from "../services/FirebaseContext";
 
 /**
  * useCampaign Hook
@@ -19,8 +19,8 @@ export function useCampaign(campaignId) {
     }
 
     setLoading(true);
-    const campaignRef = doc(firestore, 'campaigns', campaignId);
-    
+    const campaignRef = doc(firestore, "campaigns", campaignId);
+
     const unsubscribe = onSnapshot(
       campaignRef,
       (snapshot) => {
@@ -29,12 +29,12 @@ export function useCampaign(campaignId) {
           setError(null);
         } else {
           setCampaign(null);
-          setError('Campaign not found');
+          setError("Campaign not found");
         }
         setLoading(false);
       },
       (err) => {
-        console.error('Error fetching campaign:', err);
+        console.error("Error fetching campaign:", err);
         setError(err.message);
         setLoading(false);
       }
@@ -47,17 +47,18 @@ export function useCampaign(campaignId) {
   const isUserDM = campaign && user && campaign.dmId === user.uid;
 
   // Check if current user is a member
-  const isUserMember = campaign && user && (
-    campaign.dmId === user.uid || 
-    (campaign.members && campaign.members.includes(user.uid))
-  );
+  const isUserMember =
+    campaign &&
+    user &&
+    (campaign.dmId === user.uid ||
+      (campaign.members && campaign.members.includes(user.uid)));
 
   return {
     campaign,
     loading,
     error,
     isUserDM,
-    isUserMember
+    isUserMember,
   };
 }
 

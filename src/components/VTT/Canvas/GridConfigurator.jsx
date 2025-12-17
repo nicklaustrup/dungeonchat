@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import './GridConfigurator.css';
+import React, { useState, useEffect, useRef } from "react";
+import "./GridConfigurator.css";
 
 /**
  * GridConfigurator
@@ -10,10 +10,10 @@ export default function GridConfigurator({
   onClose,
   map,
   onUpdate,
-  pushUndo // optional function to register undo action
+  pushUndo, // optional function to register undo action
 }) {
   const [gridSize, setGridSize] = useState(map?.gridSize || 50);
-  const [gridColor, setGridColor] = useState(map?.gridColor || '#000000');
+  const [gridColor, setGridColor] = useState(map?.gridColor || "#000000");
   const [gridOpacity, setGridOpacity] = useState(map?.gridOpacity ?? 0.3);
   const [gridEnabled, setGridEnabled] = useState(map?.gridEnabled ?? true);
   const [gridOffsetX, setGridOffsetX] = useState(map?.gridOffsetX || 0);
@@ -32,12 +32,20 @@ export default function GridConfigurator({
 
   useEffect(() => {
     setGridSize(map?.gridSize || 50);
-    setGridColor(map?.gridColor || '#000000');
+    setGridColor(map?.gridColor || "#000000");
     setGridOpacity(map?.gridOpacity ?? 0.3);
     setGridEnabled(map?.gridEnabled ?? true);
     setGridOffsetX(map?.gridOffsetX || 0);
     setGridOffsetY(map?.gridOffsetY || 0);
-  }, [map?.id, map?.gridSize, map?.gridColor, map?.gridOpacity, map?.gridEnabled, map?.gridOffsetX, map?.gridOffsetY]);
+  }, [
+    map?.id,
+    map?.gridSize,
+    map?.gridColor,
+    map?.gridOpacity,
+    map?.gridEnabled,
+    map?.gridOffsetX,
+    map?.gridOffsetY,
+  ]);
 
   if (!open) return null;
 
@@ -48,14 +56,21 @@ export default function GridConfigurator({
       gridOpacity: map?.gridOpacity,
       gridEnabled: map?.gridEnabled,
       gridOffsetX: map?.gridOffsetX,
-      gridOffsetY: map?.gridOffsetY
+      gridOffsetY: map?.gridOffsetY,
     };
-    const after = { gridSize, gridColor, gridOpacity, gridEnabled, gridOffsetX, gridOffsetY };
+    const after = {
+      gridSize,
+      gridColor,
+      gridOpacity,
+      gridEnabled,
+      gridOffsetX,
+      gridOffsetY,
+    };
     onUpdate?.(after);
     if (pushUndo && map?.id) {
       pushUndo({
         undo: () => onUpdate?.(before),
-        redo: () => onUpdate?.(after)
+        redo: () => onUpdate?.(after),
       });
     }
   };
@@ -69,23 +84,27 @@ export default function GridConfigurator({
       <div className="gc-body">
         <label className="gc-row">
           <span>Enabled</span>
-          <input type="checkbox" checked={gridEnabled} onChange={e => {
-            const newValue = e.target.checked;
-            setGridEnabled(newValue);
-            debouncedCommit({ gridEnabled: newValue });
-          }} />
+          <input
+            type="checkbox"
+            checked={gridEnabled}
+            onChange={(e) => {
+              const newValue = e.target.checked;
+              setGridEnabled(newValue);
+              debouncedCommit({ gridEnabled: newValue });
+            }}
+          />
         </label>
         <label className="gc-row">
           <span>Grid Size (px)</span>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <input
               type="range"
               min={20}
               max={150}
               step={5}
               value={gridSize}
-              onChange={e => {
-                const v = parseInt(e.target.value,10);
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
                 setGridSize(v);
                 debouncedCommit({ gridSize: v });
               }}
@@ -96,26 +115,33 @@ export default function GridConfigurator({
               min={10}
               max={300}
               value={gridSize}
-              onChange={e => {
-                const v = parseInt(e.target.value,10) || 50;
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10) || 50;
                 setGridSize(v);
                 debouncedCommit({ gridSize: v });
               }}
-              style={{ width: '60px', padding: '4px', background: '#2a2a3e', color: '#fff', border: '1px solid #444', borderRadius: '4px' }}
+              style={{
+                width: "60px",
+                padding: "4px",
+                background: "#2a2a3e",
+                color: "#fff",
+                border: "1px solid #444",
+                borderRadius: "4px",
+              }}
             />
           </div>
         </label>
         <label className="gc-row">
           <span>Grid Offset X</span>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <input
               type="range"
               min={Math.floor(-(gridSize / 2))}
               max={Math.floor(gridSize / 2)}
               step={1}
               value={gridOffsetX}
-              onChange={e => {
-                const v = parseInt(e.target.value,10);
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
                 setGridOffsetX(v);
                 debouncedCommit({ gridOffsetX: v });
               }}
@@ -126,26 +152,39 @@ export default function GridConfigurator({
               min={Math.floor(-(gridSize / 2))}
               max={Math.floor(gridSize / 2)}
               value={gridOffsetX}
-              onChange={e => {
-                const v = Math.max(Math.floor(-(gridSize / 2)), Math.min(Math.floor(gridSize / 2), parseInt(e.target.value,10) || 0));
+              onChange={(e) => {
+                const v = Math.max(
+                  Math.floor(-(gridSize / 2)),
+                  Math.min(
+                    Math.floor(gridSize / 2),
+                    parseInt(e.target.value, 10) || 0
+                  )
+                );
                 setGridOffsetX(v);
                 debouncedCommit({ gridOffsetX: v });
               }}
-              style={{ width: '60px', padding: '4px', background: '#2a2a3e', color: '#fff', border: '1px solid #444', borderRadius: '4px' }}
+              style={{
+                width: "60px",
+                padding: "4px",
+                background: "#2a2a3e",
+                color: "#fff",
+                border: "1px solid #444",
+                borderRadius: "4px",
+              }}
             />
           </div>
         </label>
         <label className="gc-row">
           <span>Grid Offset Y</span>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <input
               type="range"
               min={Math.floor(-(gridSize / 2))}
               max={Math.floor(gridSize / 2)}
               step={1}
               value={gridOffsetY}
-              onChange={e => {
-                const v = parseInt(e.target.value,10);
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
                 setGridOffsetY(v);
                 debouncedCommit({ gridOffsetY: v });
               }}
@@ -156,24 +195,37 @@ export default function GridConfigurator({
               min={Math.floor(-(gridSize / 2))}
               max={Math.floor(gridSize / 2)}
               value={gridOffsetY}
-              onChange={e => {
-                const v = Math.max(Math.floor(-(gridSize / 2)), Math.min(Math.floor(gridSize / 2), parseInt(e.target.value,10) || 0));
+              onChange={(e) => {
+                const v = Math.max(
+                  Math.floor(-(gridSize / 2)),
+                  Math.min(
+                    Math.floor(gridSize / 2),
+                    parseInt(e.target.value, 10) || 0
+                  )
+                );
                 setGridOffsetY(v);
                 debouncedCommit({ gridOffsetY: v });
               }}
-              style={{ width: '60px', padding: '4px', background: '#2a2a3e', color: '#fff', border: '1px solid #444', borderRadius: '4px' }}
+              style={{
+                width: "60px",
+                padding: "4px",
+                background: "#2a2a3e",
+                color: "#fff",
+                border: "1px solid #444",
+                borderRadius: "4px",
+              }}
             />
           </div>
         </label>
         <label className="gc-row">
-          <span>Opacity: {Math.round(gridOpacity*100)}%</span>
+          <span>Opacity: {Math.round(gridOpacity * 100)}%</span>
           <input
             type="range"
             min={0}
             max={1}
             step={0.05}
             value={gridOpacity}
-            onChange={e => {
+            onChange={(e) => {
               const v = parseFloat(e.target.value);
               setGridOpacity(v);
               debouncedCommit({ gridOpacity: v });
@@ -185,7 +237,7 @@ export default function GridConfigurator({
           <input
             type="color"
             value={gridColor}
-            onChange={e => {
+            onChange={(e) => {
               const v = e.target.value;
               setGridColor(v);
               debouncedCommit({ gridColor: v });
@@ -194,7 +246,9 @@ export default function GridConfigurator({
         </label>
       </div>
       <div className="gc-footer">
-        <button onClick={handleApply} className="primary">Commit</button>
+        <button onClick={handleApply} className="primary">
+          Commit
+        </button>
         <button onClick={onClose}>Close</button>
       </div>
     </div>

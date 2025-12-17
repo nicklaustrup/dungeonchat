@@ -14,7 +14,9 @@ class NotificationSounds {
    */
   init() {
     if (!this.audioContext) {
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      this.audioContext = new (
+        window.AudioContext || window.webkitAudioContext
+      )();
     }
   }
 
@@ -38,7 +40,7 @@ class NotificationSounds {
     gainNode.connect(this.audioContext.destination);
 
     oscillator.frequency.value = frequency;
-    oscillator.type = 'sine';
+    oscillator.type = "sine";
 
     gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(
@@ -57,13 +59,13 @@ class NotificationSounds {
     if (!this.enabled || !this.audioContext) return;
 
     const now = this.audioContext.currentTime;
-    
+
     // First tone: C5
     this.playToneAtTime(523.25, 0.15, 0.3, now);
-    
+
     // Second tone: E5
     this.playToneAtTime(659.25, 0.15, 0.3, now + 0.1);
-    
+
     // Third tone: G5
     this.playToneAtTime(783.99, 0.2, 0.3, now + 0.2);
   }
@@ -75,13 +77,13 @@ class NotificationSounds {
     if (!this.enabled || !this.audioContext) return;
 
     const now = this.audioContext.currentTime;
-    
+
     // First tone: G5
     this.playToneAtTime(783.99, 0.15, 0.25, now);
-    
+
     // Second tone: E5
     this.playToneAtTime(659.25, 0.15, 0.25, now + 0.1);
-    
+
     // Third tone: C5
     this.playToneAtTime(523.25, 0.2, 0.25, now + 0.2);
   }
@@ -99,13 +101,10 @@ class NotificationSounds {
     gainNode.connect(this.audioContext.destination);
 
     oscillator.frequency.value = frequency;
-    oscillator.type = 'sine';
+    oscillator.type = "sine";
 
     gainNode.gain.setValueAtTime(volume, startTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      startTime + duration
-    );
+    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
 
     oscillator.start(startTime);
     oscillator.stop(startTime + duration);
@@ -118,7 +117,7 @@ class NotificationSounds {
     if (!this.enabled || !this.audioContext) return;
 
     const now = this.audioContext.currentTime;
-    
+
     // Error tone: low frequency
     this.playToneAtTime(200, 0.3, 0.4, now);
     this.playToneAtTime(150, 0.3, 0.4, now + 0.15);

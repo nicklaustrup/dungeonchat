@@ -1,5 +1,5 @@
-import React from 'react';
-import './PartyView.css';
+import React from "react";
+import "./PartyView.css";
 
 /**
  * PartyView - Quick view of party members and their status
@@ -23,21 +23,21 @@ function PartyView({ campaign, isUserDM }) {
                   <img src={member.photoURL} alt={member.displayName} />
                 ) : (
                   <div className="avatar-placeholder">
-                    {member.displayName?.charAt(0) || '?'}
+                    {member.displayName?.charAt(0) || "?"}
                   </div>
                 )}
                 <div className="online-indicator"></div>
               </div>
               <div className="member-info">
-                <h4>{member.displayName || 'Unknown'}</h4>
+                <h4>{member.displayName || "Unknown"}</h4>
                 <span className="member-role">
-                  {member.uid === campaign.dmId ? '👑 DM' : '🎭 Player'}
+                  {member.uid === campaign.dmId ? "👑 DM" : "🎭 Player"}
                 </span>
               </div>
             </div>
           ))}
         </div>
-        
+
         <div className="party-placeholder">
           <p>Character sheets coming soon!</p>
           <small>Quick view of HP, AC, conditions, and more</small>

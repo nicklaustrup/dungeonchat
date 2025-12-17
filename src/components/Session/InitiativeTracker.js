@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { onSnapshot } from 'firebase/firestore';
-import { useFirebase } from '../../services/FirebaseContext';
-import { useCampaign } from '../../contexts/CampaignContext';
-import { initiativeService } from '../../services/initiativeService';
-import './InitiativeTracker.css';
+import React, { useState, useEffect, useCallback } from "react";
+import { onSnapshot } from "firebase/firestore";
+import { useFirebase } from "../../services/FirebaseContext";
+import { useCampaign } from "../../contexts/CampaignContext";
+import { initiativeService } from "../../services/initiativeService";
+import "./InitiativeTracker.css";
 
 const InitiativeTracker = ({ campaignId, onClose }) => {
   const { firestore, user } = useFirebase();
@@ -17,10 +17,10 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddCombatant, setShowAddCombatant] = useState(false);
-  const [newCombatantName, setNewCombatantName] = useState('');
-  const [newCombatantInitiative, setNewCombatantInitiative] = useState('');
-  const [newCombatantHP, setNewCombatantHP] = useState('');
-  const [newCombatantType, setNewCombatantType] = useState('character');
+  const [newCombatantName, setNewCombatantName] = useState("");
+  const [newCombatantInitiative, setNewCombatantInitiative] = useState("");
+  const [newCombatantHP, setNewCombatantHP] = useState("");
+  const [newCombatantType, setNewCombatantType] = useState("character");
 
   // Check if user is DM
   const isDM = currentCampaign?.dmId === user?.uid;
@@ -30,7 +30,10 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
     if (!campaignId || !firestore) return;
 
     try {
-      const initiativeRef = initiativeService.getInitiativeRef(firestore, campaignId);
+      const initiativeRef = initiativeService.getInitiativeRef(
+        firestore,
+        campaignId
+      );
       const unsubscribe = onSnapshot(
         initiativeRef,
         (snapshot) => {
@@ -51,16 +54,16 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
           setLoading(false);
         },
         (error) => {
-          console.error('Error loading initiative data:', error);
-          setError('Failed to load initiative tracker: ' + error.message);
+          console.error("Error loading initiative data:", error);
+          setError("Failed to load initiative tracker: " + error.message);
           setLoading(false);
         }
       );
 
       return unsubscribe;
     } catch (error) {
-      console.error('Error setting up initiative listener:', error);
-      setError('Failed to initialize initiative tracker: ' + error.message);
+      console.error("Error setting up initiative listener:", error);
+      setError("Failed to initialize initiative tracker: " + error.message);
       setLoading(false);
     }
   }, [campaignId, firestore]);
@@ -74,8 +77,8 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
       // Clear collection phase flag
       setCollectingInitiative(false);
     } catch (error) {
-      console.error('Error starting combat:', error);
-      setError('Failed to start combat');
+      console.error("Error starting combat:", error);
+      setError("Failed to start combat");
     }
   }, [firestore, campaignId, isDM, combatants.length]);
 
@@ -85,8 +88,8 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
     try {
       await initiativeService.initiateInitiativeCheck(firestore, campaignId);
     } catch (error) {
-      console.error('Error initiating initiative check:', error);
-      setError('Failed to initiate initiative collection');
+      console.error("Error initiating initiative check:", error);
+      setError("Failed to initiate initiative collection");
     }
   }, [firestore, campaignId, isDM]);
 
@@ -95,8 +98,8 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
     try {
       await initiativeService.cancelInitiativeCollection(firestore, campaignId);
     } catch (error) {
-      console.error('Error cancelling initiative collection:', error);
-      setError('Failed to cancel initiative collection');
+      console.error("Error cancelling initiative collection:", error);
+      setError("Failed to cancel initiative collection");
     }
   }, [firestore, campaignId, isDM]);
 
@@ -107,8 +110,8 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
     try {
       await initiativeService.endCombat(firestore, campaignId);
     } catch (error) {
-      console.error('Error ending combat:', error);
-      setError('Failed to end combat');
+      console.error("Error ending combat:", error);
+      setError("Failed to end combat");
     }
   }, [firestore, campaignId, isDM]);
 
@@ -119,8 +122,8 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
     try {
       await initiativeService.nextTurn(firestore, campaignId);
     } catch (error) {
-      console.error('Error advancing turn:', error);
-      setError('Failed to advance turn');
+      console.error("Error advancing turn:", error);
+      setError("Failed to advance turn");
     }
   }, [firestore, campaignId, isDM, isActive]);
 
@@ -131,91 +134,133 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
     try {
       await initiativeService.previousTurn(firestore, campaignId);
     } catch (error) {
-      console.error('Error going back turn:', error);
-      setError('Failed to go back turn');
+      console.error("Error going back turn:", error);
+      setError("Failed to go back turn");
     }
   }, [firestore, campaignId, isDM, isActive]);
 
   // Add combatant
-  const handleAddCombatant = useCallback(async (e) => {
-    e.preventDefault();
-    if (!isDM || !newCombatantName || !newCombatantInitiative) return;
+  const handleAddCombatant = useCallback(
+    async (e) => {
+      e.preventDefault();
+      if (!isDM || !newCombatantName || !newCombatantInitiative) return;
 
-    try {
-      const combatant = {
-        id: `cmb_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
-        name: newCombatantName,
-        initiative: parseInt(newCombatantInitiative),
-        type: newCombatantType,
-        conditions: []
-      };
+      try {
+        const combatant = {
+          id: `cmb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          name: newCombatantName,
+          initiative: parseInt(newCombatantInitiative),
+          type: newCombatantType,
+          conditions: [],
+        };
 
-      if (newCombatantHP) {
-        combatant.maxHP = parseInt(newCombatantHP);
-        combatant.currentHP = parseInt(newCombatantHP);
+        if (newCombatantHP) {
+          combatant.maxHP = parseInt(newCombatantHP);
+          combatant.currentHP = parseInt(newCombatantHP);
+        }
+
+        await initiativeService.addCombatant(firestore, campaignId, combatant);
+
+        // Reset form
+        setNewCombatantName("");
+        setNewCombatantInitiative("");
+        setNewCombatantHP("");
+        setNewCombatantType("character");
+        setShowAddCombatant(false);
+      } catch (error) {
+        console.error("Error adding combatant:", error);
+        setError("Failed to add combatant");
       }
-
-      await initiativeService.addCombatant(firestore, campaignId, combatant);
-
-      // Reset form
-      setNewCombatantName('');
-      setNewCombatantInitiative('');
-      setNewCombatantHP('');
-      setNewCombatantType('character');
-      setShowAddCombatant(false);
-    } catch (error) {
-      console.error('Error adding combatant:', error);
-      setError('Failed to add combatant');
-    }
-  }, [firestore, campaignId, isDM, newCombatantName, newCombatantInitiative, newCombatantHP, newCombatantType]);
+    },
+    [
+      firestore,
+      campaignId,
+      isDM,
+      newCombatantName,
+      newCombatantInitiative,
+      newCombatantHP,
+      newCombatantType,
+    ]
+  );
 
   // Remove combatant
-  const handleRemoveCombatant = useCallback(async (combatantId) => {
-    if (!isDM) return;
+  const handleRemoveCombatant = useCallback(
+    async (combatantId) => {
+      if (!isDM) return;
 
-    try {
-      await initiativeService.removeCombatant(firestore, campaignId, combatantId);
-    } catch (error) {
-      console.error('Error removing combatant:', error);
-      setError('Failed to remove combatant');
-    }
-  }, [firestore, campaignId, isDM]);
+      try {
+        await initiativeService.removeCombatant(
+          firestore,
+          campaignId,
+          combatantId
+        );
+      } catch (error) {
+        console.error("Error removing combatant:", error);
+        setError("Failed to remove combatant");
+      }
+    },
+    [firestore, campaignId, isDM]
+  );
 
   // Update HP
-  const handleUpdateHP = useCallback(async (combatantId, newHP) => {
-    if (!isDM) return;
+  const handleUpdateHP = useCallback(
+    async (combatantId, newHP) => {
+      if (!isDM) return;
 
-    try {
-      await initiativeService.updateCombatantHP(firestore, campaignId, combatantId, newHP);
-    } catch (error) {
-      console.error('Error updating HP:', error);
-      setError('Failed to update HP');
-    }
-  }, [firestore, campaignId, isDM]);
+      try {
+        await initiativeService.updateCombatantHP(
+          firestore,
+          campaignId,
+          combatantId,
+          newHP
+        );
+      } catch (error) {
+        console.error("Error updating HP:", error);
+        setError("Failed to update HP");
+      }
+    },
+    [firestore, campaignId, isDM]
+  );
 
   // Add condition
-  const handleAddCondition = useCallback(async (combatantId, condition) => {
-    if (!isDM) return;
+  const handleAddCondition = useCallback(
+    async (combatantId, condition) => {
+      if (!isDM) return;
 
-    try {
-      await initiativeService.addCondition(firestore, campaignId, combatantId, condition);
-    } catch (error) {
-      console.error('Error adding condition:', error);
-      setError('Failed to add condition');
-    }
-  }, [firestore, campaignId, isDM]);
+      try {
+        await initiativeService.addCondition(
+          firestore,
+          campaignId,
+          combatantId,
+          condition
+        );
+      } catch (error) {
+        console.error("Error adding condition:", error);
+        setError("Failed to add condition");
+      }
+    },
+    [firestore, campaignId, isDM]
+  );
 
   // Remove condition
-  const handleRemoveCondition = useCallback(async (combatantId, condition) => {
-    if (!isDM) return;
+  const handleRemoveCondition = useCallback(
+    async (combatantId, condition) => {
+      if (!isDM) return;
 
-    try {
-      await initiativeService.removeCondition(firestore, campaignId, combatantId, condition);
-    } catch (error) {
-      console.error('Error removing condition:', error);
-      setError('Failed to remove condition');
-    }
-  }, [firestore, campaignId, isDM]);
+      try {
+        await initiativeService.removeCondition(
+          firestore,
+          campaignId,
+          combatantId,
+          condition
+        );
+      } catch (error) {
+        console.error("Error removing condition:", error);
+        setError("Failed to remove condition");
+      }
+    },
+    [firestore, campaignId, isDM]
+  );
 
   if (loading) {
     return (
@@ -237,7 +282,9 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
   }
 
   // Sort combatants by initiative (highest first)
-  const sortedCombatants = [...combatants].sort((a, b) => b.initiative - a.initiative);
+  const sortedCombatants = [...combatants].sort(
+    (a, b) => b.initiative - a.initiative
+  );
   const currentCombatant = sortedCombatants[currentTurn];
 
   return (
@@ -251,7 +298,7 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
             </button>
           )}
         </div>
-        
+
         {isActive && (
           <div className="combat-status">
             <div className="round-info">
@@ -280,9 +327,12 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
                   </button>
                 )}
                 {collectingInitiative && (
-                  <button 
+                  <button
                     onClick={handleStartCombat}
-                    disabled={combatants.length === 0 || combatants.every(c => typeof c.initiative !== 'number')}
+                    disabled={
+                      combatants.length === 0 ||
+                      combatants.every((c) => typeof c.initiative !== "number")
+                    }
                     className="start-combat-button"
                   >
                     Start Combat
@@ -296,7 +346,7 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
                     Cancel
                   </button>
                 )}
-                <button 
+                <button
                   onClick={() => setShowAddCombatant(true)}
                   className="add-combatant-button"
                 >
@@ -305,7 +355,10 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
               </div>
             ) : (
               <div className="combat-controls">
-                <button onClick={handlePreviousTurn} className="prev-turn-button">
+                <button
+                  onClick={handlePreviousTurn}
+                  className="prev-turn-button"
+                >
                   ← Previous
                 </button>
                 <button onClick={handleNextTurn} className="next-turn-button">
@@ -324,7 +377,9 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
           <div className="add-combatant-form">
             <form onSubmit={handleAddCombatant}>
               <div className="acf-row acf-row-top">
-                <label htmlFor="acf-name" className="acf-label">Add Combatant</label>
+                <label htmlFor="acf-name" className="acf-label">
+                  Add Combatant
+                </label>
                 <input
                   id="acf-name"
                   type="text"
@@ -367,12 +422,16 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
                 </select>
               </div>
               <div className="acf-row acf-actions">
-                <button type="submit" className="btn-primary">Add</button>
+                <button type="submit" className="btn-primary">
+                  Add
+                </button>
                 <button
                   type="button"
                   onClick={() => setShowAddCombatant(false)}
                   className="btn-secondary"
-                >Cancel</button>
+                >
+                  Cancel
+                </button>
               </div>
             </form>
           </div>
@@ -381,13 +440,19 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
         {/* Empty State Message */}
         {sortedCombatants.length === 0 && (
           <div className="empty-state">
-            <p>No combatants added yet. Click "Add Combatant" to begin setting up initiative order.</p>
+            <p>
+              No combatants added yet. Click "Add Combatant" to begin setting up
+              initiative order.
+            </p>
           </div>
         )}
 
         {collectingInitiative && !isActive && (
           <div className="collection-banner">
-            <p>Waiting for players to roll initiative in chat using <code>/init</code>. Enemies auto-rolled.</p>
+            <p>
+              Waiting for players to roll initiative in chat using{" "}
+              <code>/init</code>. Enemies auto-rolled.
+            </p>
           </div>
         )}
 
@@ -401,8 +466,12 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
               isDM={isDM}
               onRemove={() => handleRemoveCombatant(combatant.id)}
               onUpdateHP={(newHP) => handleUpdateHP(combatant.id, newHP)}
-              onAddCondition={(condition) => handleAddCondition(combatant.id, condition)}
-              onRemoveCondition={(condition) => handleRemoveCondition(combatant.id, condition)}
+              onAddCondition={(condition) =>
+                handleAddCondition(combatant.id, condition)
+              }
+              onRemoveCondition={(condition) =>
+                handleRemoveCondition(combatant.id, condition)
+              }
             />
           ))}
         </div>
@@ -412,19 +481,19 @@ const InitiativeTracker = ({ campaignId, onClose }) => {
 };
 
 // Individual combatant card component
-const CombatantCard = ({ 
-  combatant, 
-  isCurrentTurn, 
-  isDM, 
-  onRemove, 
-  onUpdateHP, 
-  onAddCondition, 
-  onRemoveCondition 
+const CombatantCard = ({
+  combatant,
+  isCurrentTurn,
+  isDM,
+  onRemove,
+  onUpdateHP,
+  onAddCondition,
+  onRemoveCondition,
 }) => {
   const [editingHP, setEditingHP] = useState(false);
-  const [newHP, setNewHP] = useState(combatant.currentHP?.toString() || '');
+  const [newHP, setNewHP] = useState(combatant.currentHP?.toString() || "");
   const [showConditions, setShowConditions] = useState(false);
-  const [newCondition, setNewCondition] = useState('');
+  const [newCondition, setNewCondition] = useState("");
 
   const handleHPSubmit = (e) => {
     e.preventDefault();
@@ -439,29 +508,35 @@ const CombatantCard = ({
     e.preventDefault();
     if (newCondition.trim()) {
       onAddCondition(newCondition.trim());
-      setNewCondition('');
+      setNewCondition("");
     }
   };
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case 'character': return '👤';
-      case 'npc': return '🤝';
-      case 'enemy': return '⚔️';
-      default: return '❓';
+      case "character":
+        return "👤";
+      case "npc":
+        return "🤝";
+      case "enemy":
+        return "⚔️";
+      default:
+        return "❓";
     }
   };
 
   const getHPColor = (current, max) => {
-    if (!current || !max) return '';
+    if (!current || !max) return "";
     const ratio = current / max;
-    if (ratio <= 0.25) return 'critical';
-    if (ratio <= 0.5) return 'warning';
-    return 'healthy';
+    if (ratio <= 0.25) return "critical";
+    if (ratio <= 0.5) return "warning";
+    return "healthy";
   };
 
   return (
-    <div className={`combatant-card ${isCurrentTurn ? 'current-turn' : ''} ${combatant.type}`}>
+    <div
+      className={`combatant-card ${isCurrentTurn ? "current-turn" : ""} ${combatant.type}`}
+    >
       <div className="combatant-header">
         <div className="combatant-info">
           <span className="combatant-icon">{getTypeIcon(combatant.type)}</span>
@@ -488,10 +563,12 @@ const CombatantCard = ({
                 autoFocus
               />
               <button type="submit">✓</button>
-              <button type="button" onClick={() => setEditingHP(false)}>✕</button>
+              <button type="button" onClick={() => setEditingHP(false)}>
+                ✕
+              </button>
             </form>
           ) : (
-            <div 
+            <div
               className={`hp-display ${getHPColor(combatant.currentHP, combatant.maxHP)}`}
               onClick={() => isDM && setEditingHP(true)}
             >
@@ -499,10 +576,10 @@ const CombatantCard = ({
                 {combatant.currentHP}/{combatant.maxHP} HP
               </span>
               <div className="hp-bar">
-                <div 
+                <div
                   className="hp-fill"
-                  style={{ 
-                    width: `${Math.max(0, (combatant.currentHP / combatant.maxHP) * 100)}%` 
+                  style={{
+                    width: `${Math.max(0, (combatant.currentHP / combatant.maxHP) * 100)}%`,
                   }}
                 />
               </div>
@@ -526,11 +603,11 @@ const CombatantCard = ({
 
       {isDM && (
         <div className="combatant-actions">
-          <button 
+          <button
             onClick={() => setShowConditions(!showConditions)}
             className="toggle-conditions"
           >
-            {showConditions ? 'Hide' : 'Add'} Conditions
+            {showConditions ? "Hide" : "Add"} Conditions
           </button>
         </div>
       )}

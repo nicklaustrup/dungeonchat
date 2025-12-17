@@ -1,20 +1,35 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import { ref as databaseRef, onDisconnect as rtdbOnDisconnect, set as rtdbSet, update as rtdbUpdate } from 'firebase/database';
-import { useFirebase } from '../services/FirebaseContext';
-import { useCachedUserProfile } from '../services/cache';
-import { useCampaign } from '../contexts/CampaignContext';
-import { useCampaignChatContext } from '../hooks/useCampaignChatContext';
-import { useChatState, useChatTheme, useChatSound, useChatSearch, useChatReply, useChatImage, useChatScroll } from '../contexts/ChatStateContext';
-import ChatHeader from '../components/ChatHeader/ChatHeader';
-import CampaignChatHeader from '../components/Campaign/CampaignChatHeader';
-import ChatRoom from '../components/ChatRoom/ChatRoom';
-import ChatInput from '../components/ChatInput/ChatInput';
-import SignIn from '../components/SignIn/SignIn';
-import TypingBubble from '../components/TypingBubble/TypingBubble';
-import ScrollToBottomButton from '../components/ChatRoom/ScrollToBottomButton';
+import React from "react";
+import { useParams } from "react-router-dom";
+import {
+  ref as databaseRef,
+  onDisconnect as rtdbOnDisconnect,
+  set as rtdbSet,
+  update as rtdbUpdate,
+} from "firebase/database";
+import { useFirebase } from "../services/FirebaseContext";
+import { useCachedUserProfile } from "../services/cache";
+import { useCampaign } from "../contexts/CampaignContext";
+import { useCampaignChatContext } from "../hooks/useCampaignChatContext";
+import {
+  useChatState,
+  useChatTheme,
+  useChatSound,
+  useChatSearch,
+  useChatReply,
+  useChatImage,
+  useChatScroll,
+} from "../contexts/ChatStateContext";
+import ChatHeader from "../components/ChatHeader/ChatHeader";
+import CampaignChatHeader from "../components/Campaign/CampaignChatHeader";
+import ChatRoom from "../components/ChatRoom/ChatRoom";
+import ChatInput from "../components/ChatInput/ChatInput";
+import SignIn from "../components/SignIn/SignIn";
+import TypingBubble from "../components/TypingBubble/TypingBubble";
+import ScrollToBottomButton from "../components/ChatRoom/ScrollToBottomButton";
 // Lazy load rarely used profile modal for bundle splitting (Phase 2)
-const UserProfileModal = React.lazy(() => import('../components/UserProfileModal/UserProfileModal'));
+const UserProfileModal = React.lazy(
+  () => import("../components/UserProfileModal/UserProfileModal")
+);
 
 function ChatPage({ campaignContext = false, showHeader = true }) {
   const { campaignId, channelId } = useParams();
@@ -22,7 +37,7 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
   const { profile, getDisplayInfo = () => null } = useCachedUserProfile();
   const { currentChannel } = useCampaign();
   const { state, actions } = useChatState();
-  
+
   // Convenient hooks for specific state slices
   const { isDarkTheme, toggleTheme } = useChatTheme();
   const { soundEnabled, toggleSound } = useChatSound();
@@ -33,15 +48,21 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
 
   // Determine current context
   const isInCampaign = campaignContext && campaignId;
-  const activeChannelId = channelId || currentChannel || 'general';
-  
-  // Get campaign data if in campaign context
-  const { campaign, loading: campaignLoading } = useCampaignChatContext(firestore, isInCampaign ? campaignId : null);
+  const activeChannelId = channelId || currentChannel || "general";
 
-  const getDisplayName = React.useCallback((uid, originalName) => {
-    if (uid === user?.uid) return originalName || 'You';
-    return originalName || 'Anonymous';
-  }, [user?.uid]);
+  // Get campaign data if in campaign context
+  const { campaign, loading: campaignLoading } = useCampaignChatContext(
+    firestore,
+    isInCampaign ? campaignId : null
+  );
+
+  const getDisplayName = React.useCallback(
+    (uid, originalName) => {
+      if (uid === user?.uid) return originalName || "You";
+      return originalName || "Anonymous";
+    },
+    [user?.uid]
+  );
 
   // Stable no-op used for disabled callbacks
   const noop = React.useCallback(() => {}, []);
@@ -49,7 +70,7 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
   // Create enhanced user object combining Firebase Auth user with profile data
   const enhancedUser = React.useMemo(() => {
     if (!user) return null;
-    
+
     const displayInfo = getDisplayInfo();
     return {
       ...user,
@@ -59,13 +80,13 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
       // Add profile-specific fields
       username: profile?.username,
       bio: profile?.bio,
-      profileVisibility: profile?.profileVisibility
+      profileVisibility: profile?.profileVisibility,
     };
   }, [user, profile, getDisplayInfo]);
 
   // Persistence for away seconds (moved from App.js)
   React.useEffect(() => {
-    localStorage.setItem('awayAfterSeconds', String(state.awayAfterSeconds));
+    localStorage.setItem("awayAfterSeconds", String(state.awayAfterSeconds));
   }, [state.awayAfterSeconds]);
 
   React.useEffect(() => {
@@ -75,15 +96,15 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
       rtdbUpdate(userPresenceRef, {
         online,
         lastSeen: Date.now(),
-        displayName: enhancedUser.displayName || 'Anonymous',
-        photoURL: enhancedUser.photoURL || null
+        displayName: enhancedUser.displayName || "Anonymous",
+        photoURL: enhancedUser.photoURL || null,
       }).catch(() => {
         // fallback to set if update fails (first write)
         rtdbSet(userPresenceRef, {
           online,
           lastSeen: Date.now(),
-          displayName: enhancedUser.displayName || 'Anonymous',
-          photoURL: enhancedUser.photoURL || null
+          displayName: enhancedUser.displayName || "Anonymous",
+          photoURL: enhancedUser.photoURL || null,
         });
       });
     };
@@ -92,23 +113,25 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
     rtdbOnDisconnect(userPresenceRef).set({
       online: false,
       lastSeen: Date.now(),
-      displayName: enhancedUser.displayName || 'Anonymous',
-      photoURL: enhancedUser.photoURL || null
+      displayName: enhancedUser.displayName || "Anonymous",
+      photoURL: enhancedUser.photoURL || null,
     });
     const heartbeat = setInterval(() => writePresence(true), 45000); // 45s
     const onFocus = () => writePresence(true);
-    const onVisibility = () => { if (document.visibilityState === 'visible') writePresence(true); };
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibility);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") writePresence(true);
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       clearInterval(heartbeat);
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [user, rtdb, enhancedUser]);
 
   React.useEffect(() => {
-    document.body.className = isDarkTheme ? 'dark-theme' : 'light-theme';
+    document.body.className = isDarkTheme ? "dark-theme" : "light-theme";
   }, [isDarkTheme]);
 
   const handleViewProfile = (profileUser) => {
@@ -135,41 +158,41 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
           setAwayAfterSeconds={actions.setAwaySeconds}
         />
       )}
-      
+
       {/* Show campaign header when in campaign but NOT in VTT context */}
       {isInCampaign && campaign && !campaignLoading && !campaignContext && (
-        <CampaignChatHeader 
-          campaign={campaign}
-          channelName={activeChannelId}
-        />
+        <CampaignChatHeader campaign={campaign} channelName={activeChannelId} />
       )}
-      
+
       <section>
         {user ? (
           <>
             <div className="chatroom-shell">
-            <ChatRoom
-              getDisplayName={getDisplayName}
-              searchTerm={searchTerm}
-              onDragStateChange={noop}
-              onImageDrop={handleMultipleImageDrop}
-              onViewProfile={handleViewProfile}
-              onScrollMeta={setScrollMeta}
-              soundEnabled={soundEnabled}
-              campaignId={isInCampaign ? campaignId : null}
-              channelId={activeChannelId}
-            />
-            <div className="chatroom-overlays">
-              <TypingBubble soundEnabled={soundEnabled} />
-              <div className="scroll-btn-wrapper">
-                <ScrollToBottomButton
-                  visible={scrollMeta.visible || scrollMeta.hasNew}
-                  hasNew={scrollMeta.hasNew}
-                  newCount={scrollMeta.newCount}
-                  onClick={() => scrollMeta.scrollToBottom && scrollMeta.scrollToBottom('smooth')}
-                />
+              <ChatRoom
+                getDisplayName={getDisplayName}
+                searchTerm={searchTerm}
+                onDragStateChange={noop}
+                onImageDrop={handleMultipleImageDrop}
+                onViewProfile={handleViewProfile}
+                onScrollMeta={setScrollMeta}
+                soundEnabled={soundEnabled}
+                campaignId={isInCampaign ? campaignId : null}
+                channelId={activeChannelId}
+              />
+              <div className="chatroom-overlays">
+                <TypingBubble soundEnabled={soundEnabled} />
+                <div className="scroll-btn-wrapper">
+                  <ScrollToBottomButton
+                    visible={scrollMeta.visible || scrollMeta.hasNew}
+                    hasNew={scrollMeta.hasNew}
+                    newCount={scrollMeta.newCount}
+                    onClick={() =>
+                      scrollMeta.scrollToBottom &&
+                      scrollMeta.scrollToBottom("smooth")
+                    }
+                  />
+                </div>
               </div>
-            </div>
             </div>
             <ChatInput
               getDisplayName={getDisplayName}
@@ -177,7 +200,9 @@ function ChatPage({ campaignContext = false, showHeader = true }) {
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
               soundEnabled={soundEnabled}
-              forceScrollBottom={() => scrollMeta.scrollToBottom && scrollMeta.scrollToBottom('auto')}
+              forceScrollBottom={() =>
+                scrollMeta.scrollToBottom && scrollMeta.scrollToBottom("auto")
+              }
               campaignId={isInCampaign ? campaignId : null}
               channelId={activeChannelId}
             />

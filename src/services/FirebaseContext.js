@@ -1,13 +1,13 @@
-import React, { createContext, useContext } from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { 
-  auth, 
-  firestore, 
-  rtdb, 
-  storage, 
+import React, { createContext, useContext } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import {
+  auth,
+  firestore,
+  rtdb,
+  storage,
   functions,
-  signInWithPopup, 
-  signOut, 
+  signInWithPopup,
+  signOut,
   GoogleAuthProvider,
   GithubAuthProvider,
   EmailAuthProvider,
@@ -15,8 +15,8 @@ import {
   signInWithEmailAndPassword,
   sendEmailVerification,
   sendPasswordResetEmail,
-  updatePassword
-} from './firebase';
+  updatePassword,
+} from "./firebase";
 
 // Export the context so Storybook/tests can mock via <FirebaseContext.Provider />
 export const FirebaseContext = createContext(null);
@@ -41,7 +41,7 @@ export const FirebaseProvider = ({ children }) => {
     signInWithEmailAndPassword,
     sendEmailVerification,
     sendPasswordResetEmail,
-    updatePassword
+    updatePassword,
   };
 
   return (

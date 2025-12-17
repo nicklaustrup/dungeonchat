@@ -9,6 +9,7 @@
 ### Working with This Codebase
 
 When making changes:
+
 1. Read relevant architecture docs first in /docs/
 2. Check TODO.md for context on planned work
 3. Use caching hooks when available
@@ -18,6 +19,7 @@ When making changes:
 7. Keep documentation concise
 
 ### Essential Commands
+
 ```bash
 npm start              # Start dev server (localhost:3000)
 npm test               # Run tests in watch mode
@@ -35,6 +37,7 @@ firestore deploy       # Deploy Firestore rules
 ### Quick linked project map
 
 **Core Infrastructure:**
+
 - [src/services/firebase.js](./src/services/firebase.js) — Firebase initialization & config
 - [firestore.rules](./firestore.rules) — Firestore security rules
 - [database.rules.json](./database.rules.json) — RTDB security rules
@@ -42,28 +45,32 @@ firestore deploy       # Deploy Firestore rules
 - [functions/](./functions/) — Cloud Functions ([README](./functions/README.md))
 
 **Key Components:**
+
 - [src/components/ChatRoom/ChatRoom.js](./src/components/ChatRoom/ChatRoom.js) — Chat UI entry point
 - [src/components/VTT/](./src/components/VTT/) — Virtual tabletop components
 - [src/components/Campaign/](./src/components/Campaign/) — Campaign management
 
 **Critical Hooks:**
+
 - [src/hooks/useAuth.js](./src/hooks/useAuth.js) — Authentication state
 
 **Services & Utilities:**
+
 - [src/services/](./src/services/) — Service layer (campaign, VTT, cache)
 - [src/utils/](./src/utils/) — Pure utility functions
 - [src/contexts/](./src/contexts/) — React context providers
 
 **Documentation:**
+
 - [TODO.md](./TODO.md) — Planned work and feature roadmap
 - [docs/schemas/](./docs/schemas/) — JSON schemas for campaigns, messages, userProfile
 - [docs/component-registry.md](./docs/component-registry.md) — Component usage and guidelines
 - [docs/dependency-map.json](./docs/dependency-map.json) — Dependency map for key files
 
-
 ### Key Architectural Patterns
 
 **Primary Collections:**
+
 - `/campaigns/{id}` - Campaigns with members, settings ([schema](./docs/schemas/campaign.json))
 - `/userProfiles/{id}` - User profiles ([schema](./docs/schemas/userProfile.json))
 - `/characters/{id}` - Character sheets ([schema](./docs/schemas/character.json))
@@ -71,6 +78,7 @@ firestore deploy       # Deploy Firestore rules
 - `/campaignRequests/{id}` - Campaign join requests ([schema](./docs/schemas/campaignRequest.json))
 
 **Campaign Subcollections:**
+
 - `channels/{id}/messages/{id}` - Channel messages ([schema](./docs/schemas/message.json))
 - `vtt/{mapId}/tokens/{id}` - VTT tokens ([schema](./docs/schemas/token.json))
 - `maps/{id}` - VTT maps ([schema](./docs/schemas/map.json))
@@ -78,11 +86,13 @@ firestore deploy       # Deploy Firestore rules
 - `members/{id}`, `characters/{id}`, `sessions/{id}`, `encounters/{id}`, `schedule/{id}`
 
 **RTDB Paths (Ephemeral):**
+
 - `/presence/{userId}` - User online status ([schema](./docs/schemas/presence.json))
 - `/typing/{uid}` - Typing indicators ([schema](./docs/schemas/typing.json))
 - `/voiceSignaling/{campaignId}/{roomId}` - WebRTC signaling
 
 **Storage Buckets:**
+
 - `/profile-pictures/{userId}/` - Profile photos (5MB limit)
 - `/images/{userId}/` - Chat images (10MB limit)
 - `/campaigns/{id}/maps/` - VTT maps (20MB limit)
@@ -93,11 +103,13 @@ firestore deploy       # Deploy Firestore rules
 ## Data Models & Schemas
 
 Full JSON schemas with validation rules and examples are available in `docs/schemas/`:
+
 - [message.json](./docs/schemas/message.json) - Chat messages with reactions and replies
 - [userProfile.json](./docs/schemas/userProfile.json) - User profiles with friends and blocked users
 - [campaign.json](./docs/schemas/campaign.json) - Campaigns with members and settings
 
 **Quick Reference:**
+
 ```
 Message: { id, text?, imageURL?, createdAt, uid, displayName, photoURL?, reactions?, replyTo? }
 UserProfile: { uid, username, displayName, bio?, photoURL?, friends[], blocked[], createdAt }

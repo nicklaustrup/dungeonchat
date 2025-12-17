@@ -208,25 +208,25 @@
     max-width: 95vw;
     max-height: 95vh;
   }
-  
+
   .bulk-image-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 12px;
     max-height: 50vh;
   }
-  
+
   .bulk-image-actions {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .send-images-btn,
   .retry-images-btn,
   .cancel-images-btn {
     width: 100%;
     min-width: auto;
   }
-  
+
   .bulk-image-hints {
     font-size: 0.8rem;
   }

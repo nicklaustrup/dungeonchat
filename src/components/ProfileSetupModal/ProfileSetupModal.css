@@ -61,7 +61,11 @@
 .setup-header {
   text-align: center;
   padding: 2rem 2rem 1rem 2rem;
-  background: linear-gradient(135deg, var(--primary-color, #007bff), var(--primary-hover, #0056b3));
+  background: linear-gradient(
+    135deg,
+    var(--primary-color, #007bff),
+    var(--primary-hover, #0056b3)
+  );
   color: white;
   border-radius: 16px 16px 0 0;
 }
@@ -83,7 +87,11 @@
 }
 
 @keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
     transform: translateY(0);
   }
   40% {
@@ -225,8 +233,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Skip Confirmation Overlay */
@@ -313,50 +325,50 @@
   .profile-setup-modal-overlay {
     padding: 0.5rem;
   }
-  
+
   .profile-setup-modal {
     max-height: 95vh;
   }
-  
+
   .setup-content {
     max-width: 100%;
   }
-  
+
   .setup-header {
     padding: 1.5rem 1rem 1rem 1rem;
   }
-  
+
   .setup-header h2 {
     font-size: 1.5rem;
   }
-  
+
   .setup-icon {
     font-size: 2.5rem;
   }
-  
+
   .setup-success {
     padding: 2rem 1rem;
   }
-  
+
   .checkmark {
     width: 60px;
     height: 60px;
     line-height: 60px;
     font-size: 1.5rem;
   }
-  
+
   .skip-confirmation-overlay {
     padding: 1rem;
   }
-  
+
   .skip-confirmation {
     padding: 1.5rem;
   }
-  
+
   .skip-actions {
     flex-direction: column;
   }
-  
+
   .skip-actions .button-primary,
   .skip-actions .button-secondary {
     width: 100%;
@@ -367,20 +379,20 @@
   .profile-setup-modal {
     border-radius: 8px;
   }
-  
+
   .setup-header {
     border-radius: 8px 8px 0 0;
     padding: 1rem;
   }
-  
+
   .setup-header h2 {
     font-size: 1.25rem;
   }
-  
+
   .setup-header p {
     font-size: 0.875rem;
   }
-  
+
   .setup-success h2 {
     font-size: 1.25rem;
   }
@@ -391,12 +403,12 @@
   .profile-setup-modal-overlay {
     background: rgba(0, 0, 0, 0.8);
   }
-  
+
   .profile-setup-modal {
     background: var(--bg-secondary, #2c2c2c);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
-  
+
   .skip-confirmation {
     background: var(--bg-secondary, #2c2c2c);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);

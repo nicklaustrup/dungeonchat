@@ -3,41 +3,47 @@
  * Shows available character-aware dice commands for D&D campaigns
  */
 
-import React, { useState } from 'react';
-import { getAvailableAbilities } from '../../services/characterContextService';
-import { SKILL_CHECK_PRESETS } from '../../services/diceService';
-import './CharacterCommandsHelp.css';
+import React, { useState } from "react";
+import { getAvailableAbilities } from "../../services/characterContextService";
+import { SKILL_CHECK_PRESETS } from "../../services/diceService";
+import "./CharacterCommandsHelp.css";
 
-export function CharacterCommandsHelp({ isOpen, onClose, hasCharacter = false }) {
-  const [activeTab, setActiveTab] = useState('commands');
-  
+export function CharacterCommandsHelp({
+  isOpen,
+  onClose,
+  hasCharacter = false,
+}) {
+  const [activeTab, setActiveTab] = useState("commands");
+
   if (!isOpen) return null;
-  
+
   return (
     <div className="commands-help-overlay" onClick={onClose}>
-      <div className="commands-help-modal" onClick={e => e.stopPropagation()}>
+      <div className="commands-help-modal" onClick={(e) => e.stopPropagation()}>
         <div className="commands-help-header">
-          <h2>Character Commands {!hasCharacter && '(Requires Character)'}</h2>
-          <button className="close-button" onClick={onClose}>×</button>
+          <h2>Character Commands {!hasCharacter && "(Requires Character)"}</h2>
+          <button className="close-button" onClick={onClose}>
+            ×
+          </button>
         </div>
-        
+
         <div className="commands-help-tabs">
-          <button 
-            className={`tab-button ${activeTab === 'commands' ? 'active' : ''}`}
-            onClick={() => setActiveTab('commands')}
+          <button
+            className={`tab-button ${activeTab === "commands" ? "active" : ""}`}
+            onClick={() => setActiveTab("commands")}
           >
             Commands
           </button>
-          <button 
-            className={`tab-button ${activeTab === 'context' ? 'active' : ''}`}
-            onClick={() => setActiveTab('context')}
+          <button
+            className={`tab-button ${activeTab === "context" ? "active" : ""}`}
+            onClick={() => setActiveTab("context")}
           >
             Message Types
           </button>
         </div>
-        
+
         <div className="commands-help-content">
-          {activeTab === 'commands' && (
+          {activeTab === "commands" && (
             <div className="commands-section">
               <div className="command-group">
                 <h3>🎲 Dice Rolling Commands</h3>
@@ -52,11 +58,14 @@ export function CharacterCommandsHelp({ isOpen, onClose, hasCharacter = false })
                   </div>
                 </div>
               </div>
-              
+
               {hasCharacter && (
                 <>
                   <div className="command-group">
-                    <h3>🎯 Skill Checks {hasCharacter ? '' : '(Character Required)'}</h3>
+                    <h3>
+                      🎯 Skill Checks{" "}
+                      {hasCharacter ? "" : "(Character Required)"}
+                    </h3>
                     <div className="command-list">
                       <div className="command-item">
                         <code>/check [skill]</code>
@@ -70,20 +79,28 @@ export function CharacterCommandsHelp({ isOpen, onClose, hasCharacter = false })
                     <div className="command-examples">
                       <h4>Popular Skills:</h4>
                       <div className="skill-examples">
-                        {SKILL_CHECK_PRESETS.slice(0, 8).map(skill => (
-                          <span key={skill.label} className="skill-example" title={skill.description}>
+                        {SKILL_CHECK_PRESETS.slice(0, 8).map((skill) => (
+                          <span
+                            key={skill.label}
+                            className="skill-example"
+                            title={skill.description}
+                          >
                             {skill.label.toLowerCase()}
                           </span>
                         ))}
                       </div>
                       <p className="example-text">
-                        Example: <code>/check perception</code> or <code>/skill stealth</code>
+                        Example: <code>/check perception</code> or{" "}
+                        <code>/skill stealth</code>
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="command-group">
-                    <h3>🛡️ Saving Throws {hasCharacter ? '' : '(Character Required)'}</h3>
+                    <h3>
+                      🛡️ Saving Throws{" "}
+                      {hasCharacter ? "" : "(Character Required)"}
+                    </h3>
                     <div className="command-list">
                       <div className="command-item">
                         <code>/save [ability]</code>
@@ -97,24 +114,31 @@ export function CharacterCommandsHelp({ isOpen, onClose, hasCharacter = false })
                     <div className="command-examples">
                       <h4>Abilities:</h4>
                       <div className="ability-examples">
-                        {getAvailableAbilities().map(ability => (
+                        {getAvailableAbilities().map((ability) => (
                           <span key={ability} className="ability-example">
                             {ability.toLowerCase()}
                           </span>
                         ))}
                       </div>
                       <p className="example-text">
-                        Example: <code>/save wisdom</code> or <code>/saving constitution</code>
+                        Example: <code>/save wisdom</code> or{" "}
+                        <code>/saving constitution</code>
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="command-group">
-                    <h3>⚔️ Attack Rolls {hasCharacter ? '' : '(Character Required)'}</h3>
+                    <h3>
+                      ⚔️ Attack Rolls{" "}
+                      {hasCharacter ? "" : "(Character Required)"}
+                    </h3>
                     <div className="command-list">
                       <div className="command-item">
                         <code>/attack</code>
-                        <span>Roll attack with character proficiency and ability bonuses</span>
+                        <span>
+                          Roll attack with character proficiency and ability
+                          bonuses
+                        </span>
                       </div>
                       <div className="command-item">
                         <code>/att</code>
@@ -122,26 +146,35 @@ export function CharacterCommandsHelp({ isOpen, onClose, hasCharacter = false })
                       </div>
                     </div>
                     <p className="example-text">
-                      Example: <code>/attack</code> (uses best of STR/DEX + proficiency)
+                      Example: <code>/attack</code> (uses best of STR/DEX +
+                      proficiency)
                     </p>
                   </div>
                 </>
               )}
-              
+
               {!hasCharacter && (
                 <div className="no-character-notice">
-                  <p>🎭 <strong>Create a character</strong> in this campaign to unlock character-aware commands!</p>
-                  <p>Character commands automatically include your ability modifiers, proficiency bonuses, and skill ranks.</p>
+                  <p>
+                    🎭 <strong>Create a character</strong> in this campaign to
+                    unlock character-aware commands!
+                  </p>
+                  <p>
+                    Character commands automatically include your ability
+                    modifiers, proficiency bonuses, and skill ranks.
+                  </p>
                 </div>
               )}
             </div>
           )}
-          
-          {activeTab === 'context' && (
+
+          {activeTab === "context" && (
             <div className="context-section">
               <div className="context-group">
                 <h3>🎭 In-Character (IC) Messages</h3>
-                <p>Messages that your character speaks or does in the game world.</p>
+                <p>
+                  Messages that your character speaks or does in the game world.
+                </p>
                 <div className="context-examples">
                   <div className="context-example">
                     <code>"Hello there, traveler!"</code>
@@ -161,10 +194,13 @@ export function CharacterCommandsHelp({ isOpen, onClose, hasCharacter = false })
                   </div>
                 </div>
               </div>
-              
+
               <div className="context-group">
                 <h3>💬 Out-of-Character (OOC) Messages</h3>
-                <p>Messages where you as a player are talking, not your character.</p>
+                <p>
+                  Messages where you as a player are talking, not your
+                  character.
+                </p>
                 <div className="context-examples">
                   <div className="context-example">
                     <code>/ooc I need to step away for 5 minutes</code>
@@ -184,7 +220,7 @@ export function CharacterCommandsHelp({ isOpen, onClose, hasCharacter = false })
                   </div>
                 </div>
               </div>
-              
+
               <div className="context-group">
                 <h3>📝 Regular Messages</h3>
                 <p>Normal chat messages without special character context.</p>

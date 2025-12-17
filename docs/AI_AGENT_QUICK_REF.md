@@ -5,6 +5,7 @@ This guide provides fast answers to common questions and tasks for AI coding age
 ## Quick Answers
 
 ### "Where do I find...?"
+
 - **Firebase config**: `src/services/firebase.js`
 - **Security rules**: `firestore.rules`, `database.rules.json`, `storage.rules`
 - **Chat UI**: `src/components/ChatRoom/ChatRoom.js`
@@ -18,6 +19,7 @@ This guide provides fast answers to common questions and tasks for AI coding age
 ### "How do I...?"
 
 #### Add a new message feature
+
 1. Update `docs/schemas/message.json` schema
 2. Modify write logic in `src/components/ChatInput/` or relevant service
 3. Update `firestore.rules` to allow new fields
@@ -26,6 +28,7 @@ This guide provides fast answers to common questions and tasks for AI coding age
 6. Test with emulators: `firebase emulators:start`
 
 #### Add a new campaign feature
+
 1. Create service in `src/services/campaign/`
 2. Add Firestore subcollection under `/campaigns/{id}/`
 3. Update `firestore.rules` with security rules
@@ -35,6 +38,7 @@ This guide provides fast answers to common questions and tasks for AI coding age
 7. Update `TODO.md`
 
 #### Add a new hook
+
 1. Create `src/hooks/use<Name>.js`
 2. Follow patterns in `src/hooks/README.md`
 3. Add cleanup in useEffect return
@@ -42,6 +46,7 @@ This guide provides fast answers to common questions and tasks for AI coding age
 5. Document in `src/hooks/README.md`
 
 #### Add a VTT feature
+
 1. Review `docs/VTT_README.md` (if exists)
 2. Add service in `src/services/vtt/`
 3. Create or modify component in `src/components/VTT/`
@@ -50,12 +55,14 @@ This guide provides fast answers to common questions and tasks for AI coding age
 6. Test multiplayer sync
 
 #### Update security rules
+
 1. Edit `firestore.rules`, `database.rules.json`, or `storage.rules`
 2. Test with emulators: `firebase emulators:start`
 3. Deploy: `firebase deploy --only firestore:rules` (or database, storage)
 4. Validate no users are blocked from legitimate operations
 
 ### "What tests should I run?"
+
 - **After hook changes**: `npm test -- src/hooks/__tests__/`
 - **After chat changes**: `npm test -- src/components/ChatRoom/__tests__/`
 - **After VTT changes**: `npm test -- src/components/VTT/__tests__/`
@@ -64,6 +71,7 @@ This guide provides fast answers to common questions and tasks for AI coding age
 - **Single test file**: `npm test -- <path/to/test.js>`
 
 ### "What's the data model for...?"
+
 - **Full architecture**: `docs/schemas/DATA_ARCHITECTURE.md`
 - **Campaigns**: `docs/schemas/campaign.json`
 - **User profiles**: `docs/schemas/userProfile.json`
@@ -80,6 +88,7 @@ This guide provides fast answers to common questions and tasks for AI coding age
 ## Common Patterns
 
 ### Firestore Write with Transaction
+
 ```javascript
 import { runTransaction, doc } from 'firebase/firestore';
 import { firestore } from 'src/services/firebase';
@@ -88,13 +97,14 @@ await runTransaction(firestore, async (transaction) => {
   const docRef = doc(firestore, 'collection', 'docId');
   const docSnap = await transaction.get(docRef);
   const currentData = docSnap.data();
-  transaction.update(docRef, { 
-    field: [...currentData.field, newItem] 
+  transaction.update(docRef, {
+    field: [...currentData.field, newItem],
   });
 });
 ```
 
 ### Real-time Subscription in Hook
+
 ```javascript
 import { useEffect, useState } from 'react';
 import { onSnapshot, collection } from 'firebase/firestore';
@@ -102,42 +112,43 @@ import { firestore } from 'src/services/firebase';
 
 export function useData(path) {
   const [data, setData] = useState([]);
-  
+
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(firestore, path),
-      (snapshot) => {
-        setData(snapshot.docs.map(doc => ({ 
-          id: doc.id, 
-          ...doc.data() 
-        })));
-      }
-    );
-    
+    const unsubscribe = onSnapshot(collection(firestore, path), (snapshot) => {
+      setData(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+      );
+    });
+
     return () => unsubscribe();
   }, [path]);
-  
+
   return data;
 }
 ```
 
 ### RTDB Presence Pattern
+
 ```javascript
 import { ref, set, onDisconnect } from 'firebase/database';
 import { database } from 'src/services/firebase';
 
 const presenceRef = ref(database, `presence/${uid}`);
-await set(presenceRef, { 
-  online: true, 
-  lastSeen: Date.now() 
+await set(presenceRef, {
+  online: true,
+  lastSeen: Date.now(),
 });
-await onDisconnect(presenceRef).set({ 
-  online: false, 
-  lastSeen: Date.now() 
+await onDisconnect(presenceRef).set({
+  online: false,
+  lastSeen: Date.now(),
 });
 ```
 
 ### Component with Error Boundary
+
 ```javascript
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -179,6 +190,7 @@ rg "TODO|FIXME" src/ -n
 ## Debugging
 
 ### Firebase Emulator Issues
+
 ```bash
 # Clear emulator data
 firebase emulators:start --import=./emulator-data --export-on-exit
@@ -188,6 +200,7 @@ firebase emulators:start --import=./emulator-data --export-on-exit
 ```
 
 ### React DevTools
+
 - Install React DevTools browser extension
 - Use Components tab to inspect state/props
 - Use Profiler tab to find performance issues
@@ -195,22 +208,26 @@ firebase emulators:start --import=./emulator-data --export-on-exit
 ### Common Errors
 
 **"Permission denied" in Firestore**
+
 - Check `firestore.rules` for the collection
 - Ensure user is authenticated
 - Verify document path is correct
 - Test rules with emulator
 
 **"Cannot read property of undefined"**
+
 - Add optional chaining: `data?.field`
 - Add loading state while data fetches
 - Check that Firebase subscription is working
 
 **Infinite re-renders**
+
 - Check useEffect dependencies
 - Ensure callbacks are wrapped in useCallback
 - Verify state updates don't trigger themselves
 
 **Memory leaks**
+
 - Ensure all subscriptions have cleanup (return unsubscribe)
 - Clear timers in useEffect cleanup
 - Remove event listeners in cleanup
@@ -218,6 +235,7 @@ firebase emulators:start --import=./emulator-data --export-on-exit
 ## Safety Checklist
 
 Before committing changes:
+
 - [ ] Updated security rules if data model changed
 - [ ] Added/updated tests for new functionality
 - [ ] No hardcoded secrets or API keys

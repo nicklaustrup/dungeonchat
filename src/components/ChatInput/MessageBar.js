@@ -1,11 +1,6 @@
-import React from 'react';
+import React from "react";
 
-export function MessageBar({
-  text,
-  onChange,
-  onKeyDown,
-  textareaRef
-}) {
+export function MessageBar({ text, onChange, onKeyDown, textareaRef }) {
   return (
     <div className="message-bar" role="group" aria-label="Message input">
       <textarea

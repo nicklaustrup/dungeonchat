@@ -75,7 +75,6 @@
   width: 100%;
 }
 
-
 .settings-section:first-child {
   border-top: none;
 }
@@ -145,7 +144,7 @@
   margin-bottom: 0 !important;
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type='checkbox'] {
   width: auto !important;
   margin: 0 !important;
 }
@@ -370,42 +369,46 @@
 }
 
 /* Dark Mode Support */
-[data-theme="dark"] .success-message {
+[data-theme='dark'] .success-message {
   background: #0f2311;
   border-color: #166534;
 }
 
-[data-theme="dark"] .success-message p {
+[data-theme='dark'] .success-message p {
   color: #bbf7d0;
 }
 
-[data-theme="dark"] .error-message {
+[data-theme='dark'] .error-message {
   background: #2d1b1b;
   border-color: #dc2626;
 }
 
-[data-theme="dark"] .error-message p {
+[data-theme='dark'] .error-message p {
   color: #fecaca;
 }
 
-[data-theme="dark"] .campaign-settings .danger-zone {
+[data-theme='dark'] .campaign-settings .danger-zone {
   background: #2d1b1b;
   border-color: #dc2626;
 }
 
-[data-theme="dark"] .campaign-settings .danger-zone h3 {
+[data-theme='dark'] .campaign-settings .danger-zone h3 {
   color: #fecaca;
   border-bottom-color: #dc2626;
 }
 
-[data-theme="dark"] .danger-zone p {
+[data-theme='dark'] .danger-zone p {
   color: #fca5a5;
 }
 
 /* Animations */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive Design */

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { FirebaseContext } from '../../../services/FirebaseContext';
-import TokenPalette from '../TokenManager/TokenPalette';
-import { tokenService } from '../../../services/vtt/tokenService';
-import './EncounterBuilder.css';
+import React, { useState, useEffect, useContext } from "react";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { FirebaseContext } from "../../../services/FirebaseContext";
+import TokenPalette from "../TokenManager/TokenPalette";
+import { tokenService } from "../../../services/vtt/tokenService";
+import "./EncounterBuilder.css";
 
 /**
  * EncounterBuilder - DM tool for pre-staging encounters
@@ -17,8 +17,15 @@ function EncounterBuilder({ campaignId, mapId }) {
   useEffect(() => {
     if (!firestore || !campaignId || !mapId) return;
 
-    const tokensRef = collection(firestore, 'campaigns', campaignId, 'vtt', mapId, 'tokens');
-    const q = query(tokensRef, where('staged', '==', true));
+    const tokensRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "vtt",
+      mapId,
+      "tokens"
+    );
+    const q = query(tokensRef, where("staged", "==", true));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const tokens = [];
@@ -41,20 +48,25 @@ function EncounterBuilder({ campaignId, mapId }) {
         position: { x: 200, y: 200 },
         staged: true,
       };
-      
-      await tokenService.createToken(firestore, campaignId, mapId, stagingToken);
+
+      await tokenService.createToken(
+        firestore,
+        campaignId,
+        mapId,
+        stagingToken
+      );
     } catch (err) {
-      console.error('Error creating staging token:', err);
+      console.error("Error creating staging token:", err);
     }
   };
 
   const handleRevealToken = async (token) => {
     try {
       await tokenService.updateToken(firestore, campaignId, mapId, token.id, {
-        staged: false
+        staged: false,
       });
     } catch (err) {
-      console.error('Error revealing token:', err);
+      console.error("Error revealing token:", err);
     }
   };
 
@@ -62,7 +74,7 @@ function EncounterBuilder({ campaignId, mapId }) {
     try {
       await tokenService.deleteToken(firestore, campaignId, mapId, tokenId);
     } catch (err) {
-      console.error('Error deleting staged token:', err);
+      console.error("Error deleting staged token:", err);
     }
   };
 
@@ -71,10 +83,12 @@ function EncounterBuilder({ campaignId, mapId }) {
       <div className="panel-header">
         <h3>⚔️ Encounter Builder</h3>
       </div>
-      
+
       <div className="panel-content">
         <div className="encounter-info">
-          <p>Pre-build encounters and stage them before revealing to players.</p>
+          <p>
+            Pre-build encounters and stage them before revealing to players.
+          </p>
         </div>
 
         {!mapId ? (
@@ -94,20 +108,20 @@ function EncounterBuilder({ campaignId, mapId }) {
                 <div className="staged-token-list">
                   {stagingTokens.map((token) => (
                     <div key={token.id} className="staged-token-item">
-                      <div 
-                        className="token-color-preview" 
+                      <div
+                        className="token-color-preview"
                         style={{ backgroundColor: token.color }}
                       />
                       <span className="token-name">{token.name}</span>
                       <span className="token-type">{token.type}</span>
-                      <button 
+                      <button
                         className="reveal-button"
                         onClick={() => handleRevealToken(token)}
                         title="Add to map"
                       >
                         ✓ Add
                       </button>
-                      <button 
+                      <button
                         className="delete-button"
                         onClick={() => handleDeleteStagedToken(token.id)}
                         title="Delete"

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import EncounterLibrary from './EncounterLibrary';
-import EncounterBuilder from './EncounterBuilder';
-import { useFirebase } from '../../services/FirebaseContext';
-import { sessionService } from '../../services/sessionService';
-import './Encounters.css';
+import React, { useState, useEffect } from "react";
+import EncounterLibrary from "./EncounterLibrary";
+import EncounterBuilder from "./EncounterBuilder";
+import { useFirebase } from "../../services/FirebaseContext";
+import { sessionService } from "../../services/sessionService";
+import "./Encounters.css";
 
 /**
  * Encounters Component
@@ -14,7 +14,7 @@ function Encounters({ campaignId }) {
   const [showBuilder, setShowBuilder] = useState(false);
   const [activeEncounter, setActiveEncounter] = useState(null);
   const [sessions, setSessions] = useState([]);
-  const [selectedSessionId, setSelectedSessionId] = useState('');
+  const [selectedSessionId, setSelectedSessionId] = useState("");
   const { firestore } = useFirebase();
 
   // Load recent sessions (limit 10)
@@ -23,14 +23,23 @@ function Encounters({ campaignId }) {
     async function load() {
       if (!firestore || !campaignId) return;
       try {
-        const list = await sessionService.getSessions(firestore, campaignId, 10);
-        if (mounted) setSessions(list.sort((a,b) => (b.sessionNumber||0) - (a.sessionNumber||0)));
+        const list = await sessionService.getSessions(
+          firestore,
+          campaignId,
+          10
+        );
+        if (mounted)
+          setSessions(
+            list.sort((a, b) => (b.sessionNumber || 0) - (a.sessionNumber || 0))
+          );
       } catch (e) {
         // silent
       }
     }
     load();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [firestore, campaignId]);
 
   const handleEditEncounter = (encounter) => {
@@ -60,11 +69,13 @@ function Encounters({ campaignId }) {
           <label>Link to Session:&nbsp;</label>
           <select
             value={selectedSessionId}
-            onChange={e => setSelectedSessionId(e.target.value)}
+            onChange={(e) => setSelectedSessionId(e.target.value)}
           >
             <option value="">(None)</option>
-            {sessions.map(s => (
-              <option key={s.id} value={s.id}>#{s.sessionNumber} {s.title}</option>
+            {sessions.map((s) => (
+              <option key={s.id} value={s.id}>
+                #{s.sessionNumber} {s.title}
+              </option>
             ))}
           </select>
         </div>

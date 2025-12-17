@@ -6,17 +6,8 @@
       "https://superchat-58b43.web.app",
       "https://superchat-58b43.firebaseapp.com"
     ],
-    "method": [
-      "GET",
-      "POST",
-      "PUT",
-      "DELETE",
-      "OPTIONS"
-    ],
-    "responseHeader": [
-      "Content-Type",
-      "Authorization"
-    ],
+    "method": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "responseHeader": ["Content-Type", "Authorization"],
     "maxAgeSeconds": 3600
   }
 ]

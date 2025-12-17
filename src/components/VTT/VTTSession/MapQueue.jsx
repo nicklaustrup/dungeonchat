@@ -1,8 +1,18 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { FirebaseContext } from '../../../services/FirebaseContext';
-import { mapService } from '../../../services/vtt/mapService';
-import { FiPlay, FiEye, FiMap, FiPlus, FiX, FiTrash2, FiChevronUp, FiChevronDown, FiMinusCircle } from 'react-icons/fi';
-import './MapQueue.css';
+import React, { useState, useEffect, useContext } from "react";
+import { FirebaseContext } from "../../../services/FirebaseContext";
+import { mapService } from "../../../services/vtt/mapService";
+import {
+  FiPlay,
+  FiEye,
+  FiMap,
+  FiPlus,
+  FiX,
+  FiTrash2,
+  FiChevronUp,
+  FiChevronDown,
+  FiMinusCircle,
+} from "react-icons/fi";
+import "./MapQueue.css";
 
 /**
  * MapQueue - DM tool for managing and staging maps
@@ -16,11 +26,11 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
   const [showPreviewFlyout, setShowPreviewFlyout] = useState(false);
   const [selectedMapForPreview, setSelectedMapForPreview] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
-  
+
   // Import form state
-  const [importUrl, setImportUrl] = useState('');
-  const [importName, setImportName] = useState('');
-  const [importDescription, setImportDescription] = useState('');
+  const [importUrl, setImportUrl] = useState("");
+  const [importName, setImportName] = useState("");
+  const [importDescription, setImportDescription] = useState("");
   const [importPreview, setImportPreview] = useState(null);
   const [pendingImports, setPendingImports] = useState([]);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
@@ -34,7 +44,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
         const mapList = await mapService.getMaps(firestore, campaignId);
         setMaps(mapList);
       } catch (err) {
-        console.error('Error loading maps:', err);
+        console.error("Error loading maps:", err);
       } finally {
         setLoading(false);
       }
@@ -48,7 +58,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
       await mapService.setActiveMap(firestore, campaignId, mapId);
       onMapSelect(mapId);
     } catch (err) {
-      console.error('Error setting active map:', err);
+      console.error("Error setting active map:", err);
     }
   };
 
@@ -65,18 +75,19 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
     try {
       const dims = await new Promise((resolve, reject) => {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => resolve({ 
-          width: img.naturalWidth, 
-          height: img.naturalHeight,
-          url: url.trim()
-        });
-        img.onerror = () => reject(new Error('Failed to load image'));
+        img.crossOrigin = "anonymous";
+        img.onload = () =>
+          resolve({
+            width: img.naturalWidth,
+            height: img.naturalHeight,
+            url: url.trim(),
+          });
+        img.onerror = () => reject(new Error("Failed to load image"));
         img.src = url.trim();
       });
       setImportPreview(dims);
     } catch (e) {
-      setImportError('Failed to load image. Please check the URL.');
+      setImportError("Failed to load image. Please check the URL.");
       setImportPreview(null);
     } finally {
       setIsLoadingPreview(false);
@@ -89,27 +100,27 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
 
     const newImport = {
       id: Date.now(),
-      name: importName.trim() || 'Imported Map',
+      name: importName.trim() || "Imported Map",
       url: importUrl.trim(),
       description: importDescription.trim(),
       width: importPreview.width,
       height: importPreview.height,
-      preview: importPreview.url
+      preview: importPreview.url,
     };
 
-    setPendingImports(prev => [...prev, newImport]);
-    
+    setPendingImports((prev) => [...prev, newImport]);
+
     // Reset form
-    setImportUrl('');
-    setImportName('');
-    setImportDescription('');
+    setImportUrl("");
+    setImportName("");
+    setImportDescription("");
     setImportPreview(null);
     setImportError(null);
   };
 
   // Remove from pending imports
   const handleRemoveFromPending = (id) => {
-    setPendingImports(prev => prev.filter(item => item.id !== id));
+    setPendingImports((prev) => prev.filter((item) => item.id !== id));
   };
 
   // Bulk add all pending imports to library (append at bottom)
@@ -124,23 +135,27 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
           imageUrl: item.url,
           width: item.width,
           height: item.height,
-          createdBy: 'system'
+          createdBy: "system",
         };
-        const newMap = await mapService.createMap(firestore, campaignId, mapData);
-        setMaps(prev => [...prev, newMap]); // Append at bottom
+        const newMap = await mapService.createMap(
+          firestore,
+          campaignId,
+          mapData
+        );
+        setMaps((prev) => [...prev, newMap]); // Append at bottom
       }
 
       // Clear pending imports and close flyout
       setPendingImports([]);
       setShowImportFlyout(false);
-      setImportUrl('');
-      setImportName('');
-      setImportDescription('');
+      setImportUrl("");
+      setImportName("");
+      setImportDescription("");
       setImportPreview(null);
       setImportError(null);
     } catch (err) {
-      console.error('Error importing maps:', err);
-      setImportError('Failed to import maps: ' + err.message);
+      console.error("Error importing maps:", err);
+      setImportError("Failed to import maps: " + err.message);
     }
   };
 
@@ -163,7 +178,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
   // Drag and drop handlers
   const handleDragStart = (e, index) => {
     setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e, index) => {
@@ -174,7 +189,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
     const draggedItem = newMaps[draggedIndex];
     newMaps.splice(draggedIndex, 1);
     newMaps.splice(index, 0, draggedItem);
-    
+
     setMaps(newMaps);
     setDraggedIndex(index);
   };
@@ -186,7 +201,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
   // Open map preview
   const handleMapClick = (map, e) => {
     // Don't open preview if clicking on action buttons
-    if (e.target.closest('.map-actions') || e.target.closest('.map-reorder')) {
+    if (e.target.closest(".map-actions") || e.target.closest(".map-reorder")) {
       return;
     }
     setSelectedMapForPreview(map);
@@ -195,7 +210,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
 
   // Remove from session (placeholder)
   const handleRemoveFromSession = (mapId) => {
-    console.log('Session Map Queue Feature coming soon');
+    console.log("Session Map Queue Feature coming soon");
   };
 
   return (
@@ -204,7 +219,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
         <h3>Library</h3>
         <div className="header-actions">
           <span className="map-count">{maps.length} maps</span>
-          <button 
+          <button
             className="import-map-btn"
             onClick={() => setShowImportFlyout(!showImportFlyout)}
             title="Import map from URL"
@@ -219,7 +234,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
         <div className="map-import-flyout">
           <div className="import-flyout-header">
             <h4>Import Maps from URL</h4>
-            <button 
+            <button
               className="close-flyout-btn"
               onClick={() => setShowImportFlyout(false)}
               aria-label="Close import flyout"
@@ -275,7 +290,9 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
                 <div className="image-preview">
                   <img src={importPreview.url} alt="Preview" />
                   <div className="preview-info">
-                    <span>{importPreview.width} × {importPreview.height}px</span>
+                    <span>
+                      {importPreview.width} × {importPreview.height}px
+                    </span>
                   </div>
                 </div>
               )}
@@ -283,7 +300,9 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
               <button
                 className="add-to-list-btn"
                 onClick={handleAddToPending}
-                disabled={!importUrl.trim() || !importPreview || isLoadingPreview}
+                disabled={
+                  !importUrl.trim() || !importPreview || isLoadingPreview
+                }
               >
                 <FiPlus /> Add to Import List
               </button>
@@ -302,7 +321,9 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
                       <div className="pending-info">
                         <div className="pending-name">{item.name}</div>
                         {item.description && (
-                          <div className="pending-description">{item.description}</div>
+                          <div className="pending-description">
+                            {item.description}
+                          </div>
                         )}
                         <div className="pending-dimensions">
                           {item.width} × {item.height}px
@@ -330,7 +351,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
           </div>
         </div>
       )}
-      
+
       <div className="panel-content">
         {loading ? (
           <div className="loading-state">Loading maps...</div>
@@ -343,9 +364,9 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
         ) : (
           <div className="map-list">
             {maps.map((map, index) => (
-              <div 
-                key={map.id} 
-                className={`map-queue-item ${map.id === activeMapId ? 'active' : ''} ${draggedIndex === index ? 'dragging' : ''}`}
+              <div
+                key={map.id}
+                className={`map-queue-item ${map.id === activeMapId ? "active" : ""} ${draggedIndex === index ? "dragging" : ""}`}
                 draggable
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragOver={(e) => handleDragOver(e, index)}
@@ -362,22 +383,29 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
                     <div className="active-badge">LIVE</div>
                   )}
                 </div>
-                
+
                 <div className="map-info">
                   <h4 className="map-name-truncate">{map.name}</h4>
-                  <p className="map-description-truncate">{map.description || 'No description'}</p>
+                  <p className="map-description-truncate">
+                    {map.description || "No description"}
+                  </p>
                   <div className="map-meta">
-                    <span>{map.width} × {map.height}px</span>
+                    <span>
+                      {map.width} × {map.height}px
+                    </span>
                   </div>
                 </div>
 
                 <div className="map-actions">
                   {map.id === activeMapId ? (
-                    <button className="action-button action-button-small active" disabled>
+                    <button
+                      className="action-button action-button-small active"
+                      disabled
+                    >
                       <FiEye size={14} /> Active
                     </button>
                   ) : (
-                    <button 
+                    <button
                       className="action-button action-button-small"
                       onClick={() => handleSetActive(map.id)}
                       title="Set as active map"
@@ -429,7 +457,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
         <div className="map-preview-flyout">
           <div className="preview-flyout-header">
             <h4>Map Preview</h4>
-            <button 
+            <button
               className="close-flyout-btn"
               onClick={() => {
                 setShowPreviewFlyout(false);
@@ -444,7 +472,10 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
           <div className="preview-flyout-content">
             <div className="preview-image-large">
               {selectedMapForPreview.imageUrl ? (
-                <img src={selectedMapForPreview.imageUrl} alt={selectedMapForPreview.name} />
+                <img
+                  src={selectedMapForPreview.imageUrl}
+                  alt={selectedMapForPreview.name}
+                />
               ) : (
                 <div className="preview-placeholder-large">📍</div>
               )}
@@ -452,7 +483,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
 
             <div className="preview-details">
               <h3>{selectedMapForPreview.name}</h3>
-              
+
               {selectedMapForPreview.description && (
                 <div className="preview-description">
                   <label>Description</label>
@@ -462,7 +493,10 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
 
               <div className="preview-dimensions">
                 <label>Dimensions</label>
-                <p>{selectedMapForPreview.width} × {selectedMapForPreview.height}px</p>
+                <p>
+                  {selectedMapForPreview.width} × {selectedMapForPreview.height}
+                  px
+                </p>
               </div>
 
               {selectedMapForPreview.gridSize && (
@@ -478,7 +512,7 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
                     <FiEye /> Currently Active
                   </button>
                 ) : (
-                  <button 
+                  <button
                     className="preview-action-button"
                     onClick={() => {
                       handleSetActive(selectedMapForPreview.id);
@@ -492,7 +526,9 @@ function MapQueue({ campaignId, activeMapId, onMapSelect }) {
                 )}
                 <button
                   className="preview-action-button remove-btn"
-                  onClick={() => handleRemoveFromSession(selectedMapForPreview.id)}
+                  onClick={() =>
+                    handleRemoveFromSession(selectedMapForPreview.id)
+                  }
                   title="Remove from session"
                 >
                   <FiMinusCircle /> Remove from Session

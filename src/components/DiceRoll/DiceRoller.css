@@ -203,20 +203,20 @@
   .dice-roller {
     padding: 1rem;
   }
-  
+
   .dice-input-section {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .roll-button {
     padding: 0.75rem;
   }
-  
+
   .quick-rolls {
     justify-content: center;
   }
-  
+
   .quick-roll-button {
     flex: 1;
     min-width: 60px;

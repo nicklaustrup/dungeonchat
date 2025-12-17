@@ -1,25 +1,25 @@
-import React, { useMemo } from 'react';
-import { Layer, Line } from 'react-konva';
+import React, { useMemo } from "react";
+import { Layer, Line } from "react-konva";
 
 /**
  * GridLayer Component
  * Renders a grid overlay on the map with optional offset for precise alignment
  */
-function GridLayer({ 
-  width, 
-  height, 
-  gridSize, 
-  gridColor, 
-  gridOpacity, 
+function GridLayer({
+  width,
+  height,
+  gridSize,
+  gridColor,
+  gridOpacity,
   enabled,
   offsetX = 0,
-  offsetY = 0
+  offsetY = 0,
 }) {
   const lines = useMemo(() => {
     if (!enabled || !gridSize || !width || !height) return [];
 
     const gridLines = [];
-    
+
     // Vertical lines with offset
     for (let x = offsetX; x <= width; x += gridSize) {
       if (x >= 0) {
@@ -42,7 +42,7 @@ function GridLayer({
         opacity: gridOpacity,
       });
     }
-    
+
     // Horizontal lines with offset
     for (let y = offsetY; y <= height; y += gridSize) {
       if (y >= 0) {
@@ -65,9 +65,18 @@ function GridLayer({
         opacity: gridOpacity,
       });
     }
-    
+
     return gridLines;
-  }, [width, height, gridSize, gridColor, gridOpacity, enabled, offsetX, offsetY]);
+  }, [
+    width,
+    height,
+    gridSize,
+    gridColor,
+    gridOpacity,
+    enabled,
+    offsetX,
+    offsetY,
+  ]);
 
   if (!enabled) return null;
 

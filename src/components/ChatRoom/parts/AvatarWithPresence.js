@@ -1,5 +1,5 @@
-import React from 'react';
-import { getFallbackAvatar } from '../../../utils/avatar';
+import React from "react";
+import { getFallbackAvatar } from "../../../utils/avatar";
 
 /**
  * AvatarWithPresence
@@ -10,40 +10,48 @@ export default function AvatarWithPresence({
   uid,
   photoURL,
   displayName,
-  presenceState = 'offline',
-  presenceTitle = '',
+  presenceState = "offline",
+  presenceTitle = "",
   size = 36,
   onClick,
 }) {
-  const fallback = React.useMemo(() => getFallbackAvatar({ uid, displayName, size: size + 4 }), [uid, displayName, size]);
+  const fallback = React.useMemo(
+    () => getFallbackAvatar({ uid, displayName, size: size + 4 }),
+    [uid, displayName, size]
+  );
   const initialSrc = photoURL || fallback;
   const [src, setSrc] = React.useState(initialSrc);
-  
+
   // Update src when photoURL prop changes
   React.useEffect(() => {
     setSrc(photoURL || fallback);
   }, [photoURL, fallback]);
-  
-  const handleError = React.useCallback((e) => {
-    if (e.target.dataset.fallbackApplied === 'true') return;
-    setSrc(fallback);
-    e.target.dataset.fallbackApplied = 'true';
-  }, [fallback]);
+
+  const handleError = React.useCallback(
+    (e) => {
+      if (e.target.dataset.fallbackApplied === "true") return;
+      setSrc(fallback);
+      e.target.dataset.fallbackApplied = "true";
+    },
+    [fallback]
+  );
 
   return (
     <div
       className="avatar-container"
       role="button"
       tabIndex={0}
-      title={`View ${displayName || 'user'}'s profile`}
-      aria-label={`View ${displayName || 'user'}'s profile`}
+      title={`View ${displayName || "user"}'s profile`}
+      aria-label={`View ${displayName || "user"}'s profile`}
       onClick={onClick}
-      onKeyDown={(e) => { if (e.key === 'Enter') onClick && onClick(e); }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") onClick && onClick(e);
+      }}
       data-testid="avatar-with-presence"
     >
       <img
         src={src}
-        alt={displayName ? `${displayName}'s avatar` : 'User avatar'}
+        alt={displayName ? `${displayName}'s avatar` : "User avatar"}
         className="message-avatar"
         style={{ width: size, height: size }}
         loading="lazy"

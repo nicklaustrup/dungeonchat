@@ -3,31 +3,49 @@
  * Main UI for voice chat in campaigns
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useVoiceChat } from '../../hooks/useVoiceChat';
-import { usePushToTalk } from '../../hooks/usePushToTalk';
-import { useFirebase } from '../../services/FirebaseContext';
-import { FaMicrophone, FaMicrophoneSlash, FaPhone, FaPhoneSlash, FaSpinner, FaVolumeUp, FaExpand, FaCog } from 'react-icons/fa';
-import VoiceDMControls from './VoiceDMControls';
-import PTTIndicator from './PTTIndicator';
-import VoiceSettings from './VoiceSettings';
-import UserProfileModal from '../UserProfileModal/UserProfileModal';
-import * as voiceRoomService from '../../services/voice/voiceRoomService';
-import './VoiceChatPanel.css';
+import React, { useState, useRef, useEffect } from "react";
+import { useVoiceChat } from "../../hooks/useVoiceChat";
+import { usePushToTalk } from "../../hooks/usePushToTalk";
+import { useFirebase } from "../../services/FirebaseContext";
+import {
+  FaMicrophone,
+  FaMicrophoneSlash,
+  FaPhone,
+  FaPhoneSlash,
+  FaSpinner,
+  FaVolumeUp,
+  FaExpand,
+  FaCog,
+} from "react-icons/fa";
+import VoiceDMControls from "./VoiceDMControls";
+import PTTIndicator from "./PTTIndicator";
+import VoiceSettings from "./VoiceSettings";
+import UserProfileModal from "../UserProfileModal/UserProfileModal";
+import * as voiceRoomService from "../../services/voice/voiceRoomService";
+import "./VoiceChatPanel.css";
 
-function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloating = false, onNotifyJoin, onNotification, isMinimized = false, onMinimizeChange }) {
+function VoiceChatPanel({
+  campaign,
+  campaignId,
+  roomId = "voice-general",
+  isFloating = false,
+  onNotifyJoin,
+  onNotification,
+  isMinimized = false,
+  onMinimizeChange,
+}) {
   const { user, firestore } = useFirebase();
   const [volume, setVolume] = useState(100);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [voiceSettings, setVoiceSettings] = useState({
-    audioQuality: 'medium',
+    audioQuality: "medium",
     echoCancellation: true,
     noiseSuppression: true,
     autoGainControl: true,
-    audioInputDeviceId: 'default',
-    audioOutputDeviceId: 'default'
+    audioInputDeviceId: "default",
+    audioOutputDeviceId: "default",
   });
   const hasNotifiedJoin = useRef(false);
   const {
@@ -42,26 +60,27 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
     error,
     join,
     leave,
-    toggleMute
+    toggleMute,
   } = useVoiceChat(campaignId, roomId, {
     notificationsEnabled: true,
     soundsEnabled: true,
-    onNotification: onNotification
+    onNotification: onNotification,
   });
-  
+
   // Push-to-Talk functionality
-  const { isPTTEnabled, isPTTActive, isTransmitting, togglePTT } = usePushToTalk({
-    enabled: false,
-    onPTTChange: (active) => {
-      console.log('[VoiceChatPanel] PTT active:', active);
-      // In PTT mode, mute when not transmitting
-      if (isPTTEnabled && isConnected) {
-        // Note: This is handled automatically by the isTransmitting state
-        // The WebRTC manager should respect this state
-      }
-    }
-  });
-  
+  const { isPTTEnabled, isPTTActive, isTransmitting, togglePTT } =
+    usePushToTalk({
+      enabled: false,
+      onPTTChange: (active) => {
+        console.log("[VoiceChatPanel] PTT active:", active);
+        // In PTT mode, mute when not transmitting
+        if (isPTTEnabled && isConnected) {
+          // Note: This is handled automatically by the isTransmitting state
+          // The WebRTC manager should respect this state
+        }
+      },
+    });
+
   // Handle PTT mute state: mute when PTT is enabled but not transmitting
   useEffect(() => {
     if (isConnected && isPTTEnabled) {
@@ -85,7 +104,7 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
         const audioElement = audioRefs.current[userId];
         audioElement.srcObject = stream;
         audioElement.volume = volume / 100;
-        audioElement.play().catch(err => {
+        audioElement.play().catch((err) => {
           console.error(`Failed to play audio for ${userId}:`, err);
         });
       }
@@ -95,7 +114,7 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
   // Notify when user joins
   useEffect(() => {
     if (isConnected && !hasNotifiedJoin.current && onNotifyJoin && user) {
-      const currentUser = participants.find(p => p.userId === user.uid);
+      const currentUser = participants.find((p) => p.userId === user.uid);
       if (currentUser) {
         onNotifyJoin(currentUser);
         hasNotifiedJoin.current = true;
@@ -110,7 +129,7 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
     try {
       await join();
     } catch (err) {
-      console.error('Failed to join voice:', err);
+      console.error("Failed to join voice:", err);
     }
   };
 
@@ -118,47 +137,72 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
     try {
       await leave();
     } catch (err) {
-      console.error('Failed to leave voice:', err);
+      console.error("Failed to leave voice:", err);
     }
   };
 
   const handleMuteUser = async (userId, muted) => {
     try {
-      await voiceRoomService.muteParticipant(firestore, campaignId, roomId, userId, muted);
-      console.log(`[VoiceChatPanel] ${muted ? 'Muted' : 'Unmuted'} user ${userId}`);
+      await voiceRoomService.muteParticipant(
+        firestore,
+        campaignId,
+        roomId,
+        userId,
+        muted
+      );
+      console.log(
+        `[VoiceChatPanel] ${muted ? "Muted" : "Unmuted"} user ${userId}`
+      );
     } catch (err) {
-      console.error('Failed to mute user:', err);
+      console.error("Failed to mute user:", err);
     }
   };
 
   const handleKickUser = async (userId) => {
     try {
-      await voiceRoomService.kickFromVoice(firestore, campaignId, roomId, userId);
+      await voiceRoomService.kickFromVoice(
+        firestore,
+        campaignId,
+        roomId,
+        userId
+      );
       console.log(`[VoiceChatPanel] Kicked user ${userId}`);
     } catch (err) {
-      console.error('Failed to kick user:', err);
+      console.error("Failed to kick user:", err);
     }
   };
 
   const handleSaveSettings = async (newSettings) => {
     setVoiceSettings(newSettings);
-    
+
     // Save to localStorage
     try {
-      localStorage.setItem('voiceChat_settings', JSON.stringify(newSettings));
+      localStorage.setItem("voiceChat_settings", JSON.stringify(newSettings));
     } catch (error) {
-      console.error('[VoiceChatPanel] Failed to save settings to localStorage:', error);
+      console.error(
+        "[VoiceChatPanel] Failed to save settings to localStorage:",
+        error
+      );
     }
-    
+
     // Save to Firestore if user is connected
     if (user && firestore && campaignId) {
       try {
-        await voiceRoomService.updateParticipant(firestore, campaignId, roomId, user.uid, {
-          voiceSettings: newSettings
-        });
-        console.log('[VoiceChatPanel] Settings saved to Firestore');
+        await voiceRoomService.updateParticipant(
+          firestore,
+          campaignId,
+          roomId,
+          user.uid,
+          {
+            voiceSettings: newSettings,
+          }
+        );
+        console.log("[VoiceChatPanel] Settings saved to Firestore");
       } catch (error) {
-        console.error('[VoiceChatPanel] Failed to save settings to Firestore:', error);
+        console.error(
+          "[VoiceChatPanel] Failed to save settings to Firestore:",
+          error
+        );
       }
     }
   };
@@ -166,31 +210,29 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
   // Load settings from localStorage on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('voiceChat_settings');
+      const stored = localStorage.getItem("voiceChat_settings");
       if (stored) {
         setVoiceSettings(JSON.parse(stored));
       }
     } catch (error) {
-      console.error('[VoiceChatPanel] Failed to load settings:', error);
+      console.error("[VoiceChatPanel] Failed to load settings:", error);
     }
   }, []);
 
   return (
-    <div 
-      className={`voice-chat-panel ${isMinimized ? 'minimized' : ''}`}
-    >
+    <div className={`voice-chat-panel ${isMinimized ? "minimized" : ""}`}>
       {isMinimized ? (
         // Minimized bar view
         <div className="voice-minimized-bar">
-          <button 
-            className={`btn-toggle-mute ${isMuted ? 'muted' : ''}`}
+          <button
+            className={`btn-toggle-mute ${isMuted ? "muted" : ""}`}
             onClick={toggleMute}
             disabled={!isConnected}
           >
             {isMuted ? <FaMicrophoneSlash /> : <FaMicrophone />}
           </button>
-          
-          <div 
+
+          <div
             className="volume-control"
             onMouseEnter={() => setShowVolumeSlider(true)}
             onMouseLeave={() => setShowVolumeSlider(false)}
@@ -217,17 +259,14 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
             {participants.length} <FaPhone size={10} />
           </span>
 
-          <button 
+          <button
             className="btn-expand"
             onClick={() => onMinimizeChange?.(false)}
           >
             <FaExpand />
           </button>
 
-          <button 
-            className="btn-leave-voice"
-            onClick={handleLeave}
-          >
+          <button className="btn-leave-voice" onClick={handleLeave}>
             <FaPhoneSlash />
           </button>
         </div>
@@ -238,9 +277,10 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
             <h3>🎙️ Voice Chat</h3>
             <div className="voice-header-actions">
               <span className="participant-count">
-                {participants.length} {participants.length === 1 ? 'person' : 'people'}
+                {participants.length}{" "}
+                {participants.length === 1 ? "person" : "people"}
               </span>
-              <button 
+              <button
                 className="btn-voice-settings"
                 onClick={() => setShowSettings(true)}
                 title="Voice Settings"
@@ -250,39 +290,43 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
             </div>
           </div>
 
-      {error && (
-        <div className="voice-error">
-          <strong>Error:</strong> {error.type === 'microphone_access_denied' 
-            ? 'Microphone access denied. Please allow microphone access in your browser settings.'
-            : 'Failed to connect to voice chat. Please try again.'}
-        </div>
-      )}
+          {error && (
+            <div className="voice-error">
+              <strong>Error:</strong>{" "}
+              {error.type === "microphone_access_denied"
+                ? "Microphone access denied. Please allow microphone access in your browser settings."
+                : "Failed to connect to voice chat. Please try again."}
+            </div>
+          )}
 
           {participants.length > 0 && (
             <div className="voice-participants">
-              {participants.map(participant => {
+              {participants.map((participant) => {
                 const audioLevel = audioLevels[participant.userId] || 0;
                 const connectionState = connectionStates[participant.userId];
-                const isConnecting = connectionState === 'connecting';
-                
+                const isConnecting = connectionState === "connecting";
+
                 // Get character name if available
-                const characterName = participant.characterName || '';
-                const username = participant.username || participant.displayName || 'Anonymous';
-                const displayName = characterName 
+                const characterName = participant.characterName || "";
+                const username =
+                  participant.username ||
+                  participant.displayName ||
+                  "Anonymous";
+                const displayName = characterName
                   ? `${username} (${characterName})`
                   : username;
-                
+
                 return (
-                  <div 
+                  <div
                     key={participant.userId}
-                    className={`participant ${participant.isSpeaking ? 'speaking' : ''}`}
+                    className={`participant ${participant.isSpeaking ? "speaking" : ""}`}
                   >
                     <div className="participant-avatar">
                       {participant.photoURL ? (
                         <img src={participant.photoURL} alt={username} />
                       ) : (
                         <div className="avatar-placeholder">
-                          {username?.charAt(0)?.toUpperCase() || '?'}
+                          {username?.charAt(0)?.toUpperCase() || "?"}
                         </div>
                       )}
                       {participant.isMuted && (
@@ -304,29 +348,37 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
                         {displayName}
                       </span>
                       <div className="audio-level-container">
-                        <div 
+                        <div
                           className="audio-level-bar"
-                          style={{ 
+                          style={{
                             width: `${audioLevel}%`,
-                            backgroundColor: participant.isSpeaking ? '#4caf50' : '#e0e0e0'
+                            backgroundColor: participant.isSpeaking
+                              ? "#4caf50"
+                              : "#e0e0e0",
                           }}
                         />
                       </div>
                       <div className="connection-info">
                         {connectionState && (
-                          <span className={`connection-status status-${connectionState}`}>
+                          <span
+                            className={`connection-status status-${connectionState}`}
+                          >
                             {connectionState}
                           </span>
                         )}
                         {connectionQualities[participant.userId] && (
-                          <span 
+                          <span
                             className={`quality-indicator quality-${connectionQualities[participant.userId].level}`}
                             title={`Packet loss: ${connectionQualities[participant.userId].packetLoss.toFixed(1)}%, Jitter: ${connectionQualities[participant.userId].jitter.toFixed(0)}ms`}
                           >
-                            {connectionQualities[participant.userId].level === 'excellent' && '●'}
-                            {connectionQualities[participant.userId].level === 'good' && '●'}
-                            {connectionQualities[participant.userId].level === 'fair' && '●'}
-                            {connectionQualities[participant.userId].level === 'poor' && '●'}
+                            {connectionQualities[participant.userId].level ===
+                              "excellent" && "●"}
+                            {connectionQualities[participant.userId].level ===
+                              "good" && "●"}
+                            {connectionQualities[participant.userId].level ===
+                              "fair" && "●"}
+                            {connectionQualities[participant.userId].level ===
+                              "poor" && "●"}
                           </span>
                         )}
                       </div>
@@ -345,8 +397,8 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
 
           <div className="voice-controls">
             {!isConnected ? (
-              <button 
-                className="btn-join-voice" 
+              <button
+                className="btn-join-voice"
                 onClick={handleJoin}
                 disabled={isConnecting}
               >
@@ -362,21 +414,27 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
               </button>
             ) : (
               <>
-                <button 
-                  className={`btn-toggle-mute ${isMuted ? 'muted' : ''}`}
+                <button
+                  className={`btn-toggle-mute ${isMuted ? "muted" : ""}`}
                   onClick={toggleMute}
                   disabled={isPTTEnabled}
-                  title={isPTTEnabled ? 'Mute is controlled by Push-to-Talk' : ''}
+                  title={
+                    isPTTEnabled ? "Mute is controlled by Push-to-Talk" : ""
+                  }
                 >
                   {isMuted ? <FaMicrophoneSlash /> : <FaMicrophone />}
-                  {isMuted ? 'Unmute' : 'Mute'}
+                  {isMuted ? "Unmute" : "Mute"}
                 </button>
-                <button 
-                  className={`btn-toggle-ptt ${isPTTEnabled ? 'active' : ''}`}
+                <button
+                  className={`btn-toggle-ptt ${isPTTEnabled ? "active" : ""}`}
                   onClick={togglePTT}
-                  title={isPTTEnabled ? 'Switch to Always-On' : 'Switch to Push-to-Talk'}
+                  title={
+                    isPTTEnabled
+                      ? "Switch to Always-On"
+                      : "Switch to Push-to-Talk"
+                  }
                 >
-                  {isPTTEnabled ? '🎙️ PTT: ON' : '🎙️ PTT: OFF'}
+                  {isPTTEnabled ? "🎙️ PTT: ON" : "🎙️ PTT: OFF"}
                 </button>
                 <button className="btn-leave-voice" onClick={handleLeave}>
                   <FaPhoneSlash /> Leave
@@ -384,7 +442,7 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
               </>
             )}
           </div>
-          
+
           {/* Push-to-Talk Indicator */}
           {isConnected && isPTTEnabled && (
             <PTTIndicator isPTTActive={isPTTActive} keyHint="SPACE" />
@@ -406,12 +464,12 @@ function VoiceChatPanel({ campaign, campaignId, roomId = 'voice-general', isFloa
       {Object.entries(remoteStreams).map(([userId, stream]) => (
         <audio
           key={userId}
-          ref={el => {
+          ref={(el) => {
             if (el) audioRefs.current[userId] = el;
           }}
           autoPlay
           playsInline
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
         />
       ))}
 

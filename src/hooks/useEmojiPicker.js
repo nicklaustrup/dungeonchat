@@ -1,5 +1,5 @@
-import React from 'react';
-import EmojiMenu from '../components/ChatInput/EmojiMenu';
+import React from "react";
+import EmojiMenu from "../components/ChatInput/EmojiMenu";
 
 export function useEmojiPicker() {
   const [open, setOpen] = React.useState(false);
@@ -9,13 +9,15 @@ export function useEmojiPicker() {
 
   const openMenu = React.useCallback(() => {
     if (open) return;
-    const anchorRect = buttonRef.current ? buttonRef.current.getBoundingClientRect() : null;
+    const anchorRect = buttonRef.current
+      ? buttonRef.current.getBoundingClientRect()
+      : null;
     EmojiMenu.open({
       anchorRect,
       onSelect: (emojiData) => {
         if (onSelect.current) onSelect.current(emojiData);
       },
-      onClose: () => setOpen(false)
+      onClose: () => setOpen(false),
     });
     setOpen(true);
   }, [open]);
@@ -27,7 +29,8 @@ export function useEmojiPicker() {
   }, [open]);
 
   const toggle = React.useCallback(() => {
-    if (open) closeMenu(); else openMenu();
+    if (open) closeMenu();
+    else openMenu();
   }, [open, closeMenu, openMenu]);
 
   const setOnSelect = React.useCallback((handler) => {
@@ -38,6 +41,6 @@ export function useEmojiPicker() {
     open,
     toggle,
     buttonRef,
-    setOnSelect
+    setOnSelect,
   };
 }

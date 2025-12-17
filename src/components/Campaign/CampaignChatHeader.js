@@ -1,11 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaHeadphones, FaTimes, FaMinus, FaExpand } from 'react-icons/fa';
-import VoiceChatPanel from '../Voice/VoiceChatPanel';
-import VoiceNotificationContainer, { setNotificationContainer } from '../Voice/VoiceNotificationContainer';
-import './CampaignChatHeader.css';
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaHeadphones, FaTimes, FaMinus, FaExpand } from "react-icons/fa";
+import VoiceChatPanel from "../Voice/VoiceChatPanel";
+import VoiceNotificationContainer, {
+  setNotificationContainer,
+} from "../Voice/VoiceNotificationContainer";
+import "./CampaignChatHeader.css";
 
-function CampaignChatHeader({ campaign, channelName = 'General', onBackToDashboard }) {
+function CampaignChatHeader({
+  campaign,
+  channelName = "General",
+  onBackToDashboard,
+}) {
   const navigate = useNavigate();
   const [showVoicePanel, setShowVoicePanel] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -33,12 +39,12 @@ function CampaignChatHeader({ campaign, channelName = 'General', onBackToDashboa
     const handleMouseMove = (e) => {
       const deltaX = e.clientX - dragStartRef.current.x;
       const deltaY = e.clientY - dragStartRef.current.y;
-      
-      setPosition(prev => ({
+
+      setPosition((prev) => ({
         x: Math.max(0, Math.min(window.innerWidth - 380, prev.x + deltaX)),
-        y: Math.max(0, Math.min(window.innerHeight - 100, prev.y + deltaY))
+        y: Math.max(0, Math.min(window.innerHeight - 100, prev.y + deltaY)),
       }));
-      
+
       dragStartRef.current = { x: e.clientX, y: e.clientY };
     };
 
@@ -46,12 +52,12 @@ function CampaignChatHeader({ campaign, channelName = 'General', onBackToDashboa
       setIsDragging(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging]);
 
@@ -90,9 +96,9 @@ function CampaignChatHeader({ campaign, channelName = 'General', onBackToDashboa
 
           <div className="campaign-meta">
             <button
-              className={`voice-toggle-btn ${showVoicePanel ? 'active' : ''}`}
+              className={`voice-toggle-btn ${showVoicePanel ? "active" : ""}`}
               onClick={() => setShowVoicePanel(!showVoicePanel)}
-              title={showVoicePanel ? 'Close Voice Chat' : 'Open Voice Chat'}
+              title={showVoicePanel ? "Close Voice Chat" : "Open Voice Chat"}
             >
               <FaHeadphones />
               <span className="voice-label">Voice</span>
@@ -106,13 +112,13 @@ function CampaignChatHeader({ campaign, channelName = 'General', onBackToDashboa
 
       {/* Floating voice panel in chat */}
       {showVoicePanel && (
-        <div 
-          className={`floating-voice-panel ${isDragging ? 'dragging' : ''}`}
+        <div
+          className={`floating-voice-panel ${isDragging ? "dragging" : ""}`}
           onMouseDown={handleDragStart}
           style={{
             top: `${position.y}px`,
             left: `${position.x}px`,
-            cursor: isDragging ? 'grabbing' : 'grab'
+            cursor: isDragging ? "grabbing" : "grab",
           }}
         >
           <div className="floating-voice-header">

@@ -8,17 +8,33 @@
 export function classifyMessageDiff(prevMessages, nextMessages) {
   // Handle undefined/null cases to prevent length errors
   if (!prevMessages || !nextMessages) {
-    return { didPrepend: false, prependedCount: 0, didAppend: false, appendedCount: 0, reset: false, prevLength: 0, nextLength: 0 };
+    return {
+      didPrepend: false,
+      prependedCount: 0,
+      didAppend: false,
+      appendedCount: 0,
+      reset: false,
+      prevLength: 0,
+      nextLength: 0,
+    };
   }
-  
+
   const prevLength = prevMessages.length;
   const nextLength = nextMessages.length;
   if (nextLength === 0 && prevLength === 0) {
-    return { didPrepend: false, prependedCount: 0, didAppend: false, appendedCount: 0, reset: false, prevLength, nextLength };
+    return {
+      didPrepend: false,
+      prependedCount: 0,
+      didAppend: false,
+      appendedCount: 0,
+      reset: false,
+      prevLength,
+      nextLength,
+    };
   }
   // Build quick id maps - filter out null/invalid messages
-  const prevIds = prevMessages.filter(m => m && m.id).map(m => m.id);
-  const nextIds = nextMessages.filter(m => m && m.id).map(m => m.id);
+  const prevIds = prevMessages.filter((m) => m && m.id).map((m) => m.id);
+  const nextIds = nextMessages.filter((m) => m && m.id).map((m) => m.id);
   const prevFirst = prevIds[0];
   const prevLast = prevIds[prevIds.length - 1];
   // We only need previous boundary membership to detect reset and compute prepend/append counts.
@@ -29,7 +45,15 @@ export function classifyMessageDiff(prevMessages, nextMessages) {
   const hasPrevFirstInNext = nextIds.includes(prevFirst);
   const reset = prevLength > 0 && !hasPrevLastInNext && !hasPrevFirstInNext;
   if (reset) {
-    return { didPrepend: false, prependedCount: 0, didAppend: false, appendedCount: 0, reset: true, prevLength, nextLength };
+    return {
+      didPrepend: false,
+      prependedCount: 0,
+      didAppend: false,
+      appendedCount: 0,
+      reset: true,
+      prevLength,
+      nextLength,
+    };
   }
 
   let prependedCount = 0;
@@ -43,7 +67,7 @@ export function classifyMessageDiff(prevMessages, nextMessages) {
   let appendedCount = 0;
   if (hasPrevLastInNext) {
     const idxPrevLast = nextIds.indexOf(prevLast);
-    appendedCount = (nextLength - 1) - idxPrevLast;
+    appendedCount = nextLength - 1 - idxPrevLast;
   }
 
   let didPrepend = prependedCount > 0;
@@ -56,7 +80,13 @@ export function classifyMessageDiff(prevMessages, nextMessages) {
   //  - previous last id still present (already guaranteed by hasPrevLastInNext)
   //  - index of previous last id == nextLength - 2 (it moved down exactly one slot)
   //  - prependedCount === 1 and appendedCount === 0
-  if (!didAppend && didPrepend && prependedCount === 1 && (nextLength === prevLength + 1) && hasPrevLastInNext) {
+  if (
+    !didAppend &&
+    didPrepend &&
+    prependedCount === 1 &&
+    nextLength === prevLength + 1 &&
+    hasPrevLastInNext
+  ) {
     const idxPrevLastInNext = nextIds.indexOf(prevLast);
     if (idxPrevLastInNext === nextLength - 2) {
       // Reclassify as a pure append of 1
@@ -67,7 +97,15 @@ export function classifyMessageDiff(prevMessages, nextMessages) {
     }
   }
 
-  return { didPrepend, prependedCount, didAppend, appendedCount, reset, prevLength, nextLength };
+  return {
+    didPrepend,
+    prependedCount,
+    didAppend,
+    appendedCount,
+    reset,
+    prevLength,
+    nextLength,
+  };
 }
 
 export default classifyMessageDiff;

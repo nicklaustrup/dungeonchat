@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useFirebase } from '../../../services/FirebaseContext';
-import { getCampaign } from '../../../services/campaign/campaignService';
-import { updateDoc, doc } from 'firebase/firestore';
-import { FiX, FiSearch } from 'react-icons/fi';
-import './SessionSettings.css';
+import React, { useState, useEffect, useMemo } from "react";
+import { useFirebase } from "../../../services/FirebaseContext";
+import { getCampaign } from "../../../services/campaign/campaignService";
+import { updateDoc, doc } from "firebase/firestore";
+import { FiX, FiSearch } from "react-icons/fi";
+import "./SessionSettings.css";
 
 /**
  * SessionSettings - In-session configuration modal
@@ -16,16 +16,16 @@ const SessionSettings = ({ campaignId, onClose, isDM }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  
+  const [successMessage, setSuccessMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
   const [formData, setFormData] = useState({
     // Progression System
-    progressionSystem: 'xp', // 'xp' or 'milestone'
+    progressionSystem: "xp", // 'xp' or 'milestone'
     // Party Management settings
     canViewGold: false,
     canViewInventory: false,
-    canViewCharacterSheet: false
+    canViewCharacterSheet: false,
   });
 
   useEffect(() => {
@@ -37,22 +37,22 @@ const SessionSettings = ({ campaignId, onClose, isDM }) => {
     try {
       setLoading(true);
       const campaignData = await getCampaign(firestore, campaignId);
-      
+
       if (!campaignData) {
-        setError('Campaign not found');
+        setError("Campaign not found");
         return;
       }
 
       setCampaign(campaignData);
       setFormData({
-        progressionSystem: campaignData.progressionSystem || 'xp',
+        progressionSystem: campaignData.progressionSystem || "xp",
         canViewGold: campaignData.canViewGold ?? false,
         canViewInventory: campaignData.canViewInventory ?? false,
-        canViewCharacterSheet: campaignData.canViewCharacterSheet ?? false
+        canViewCharacterSheet: campaignData.canViewCharacterSheet ?? false,
       });
     } catch (error) {
-      console.error('Error loading session settings:', error);
-      setError('Failed to load session settings');
+      console.error("Error loading session settings:", error);
+      setError("Failed to load session settings");
     } finally {
       setLoading(false);
     }
@@ -60,35 +60,35 @@ const SessionSettings = ({ campaignId, onClose, isDM }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
-    
+
     if (!isDM) {
-      setError('Only the Dungeon Master can modify session settings.');
+      setError("Only the Dungeon Master can modify session settings.");
       return;
     }
-    
+
     try {
       setSaving(true);
       setError(null);
-      
-      const campaignRef = doc(firestore, 'campaigns', campaignId);
+
+      const campaignRef = doc(firestore, "campaigns", campaignId);
       await updateDoc(campaignRef, formData);
-      
-      setSuccessMessage('Settings saved successfully!');
+
+      setSuccessMessage("Settings saved successfully!");
       setTimeout(() => {
-        setSuccessMessage('');
+        setSuccessMessage("");
         onClose(); // Close modal after successful save
       }, 1500);
     } catch (error) {
-      console.error('Error saving session settings:', error);
-      setError('Failed to save settings');
+      console.error("Error saving session settings:", error);
+      setError("Failed to save settings");
     } finally {
       setSaving(false);
     }
@@ -97,22 +97,26 @@ const SessionSettings = ({ campaignId, onClose, isDM }) => {
   // Filter sections based on search query
   const matchesSearch = useMemo(() => {
     if (!searchQuery.trim()) return { progression: true, party: true };
-    
+
     const query = searchQuery.toLowerCase();
-    const progressionMatches = 
-      'progression system advancement xp experience milestone'.includes(query) ||
-      'xp'.includes(query) ||
-      'milestone'.includes(query);
-    
-    const partyMatches = 
-      'party management visibility players gold inventory character sheet'.includes(query) ||
-      'gold'.includes(query) ||
-      'inventory'.includes(query) ||
-      'sheet'.includes(query);
-    
+    const progressionMatches =
+      "progression system advancement xp experience milestone".includes(
+        query
+      ) ||
+      "xp".includes(query) ||
+      "milestone".includes(query);
+
+    const partyMatches =
+      "party management visibility players gold inventory character sheet".includes(
+        query
+      ) ||
+      "gold".includes(query) ||
+      "inventory".includes(query) ||
+      "sheet".includes(query);
+
     return {
       progression: progressionMatches,
-      party: partyMatches
+      party: partyMatches,
     };
   }, [searchQuery]);
 
@@ -121,7 +125,10 @@ const SessionSettings = ({ campaignId, onClose, isDM }) => {
   if (loading) {
     return (
       <div className="session-settings-overlay" onClick={onClose}>
-        <div className="session-settings-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="session-settings-modal"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="loading-container">
             <div className="loading-spinner"></div>
             <p>Loading session settings...</p>
@@ -133,12 +140,15 @@ const SessionSettings = ({ campaignId, onClose, isDM }) => {
 
   return (
     <div className="session-settings-overlay" onClick={onClose}>
-      <div className="session-settings-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="session-settings-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="session-settings-header">
           <div className="header-top">
             <h2>⚙️ Session Settings</h2>
-            <button 
+            <button
               className="close-button"
               onClick={onClose}
               aria-label="Close settings"
@@ -146,7 +156,7 @@ const SessionSettings = ({ campaignId, onClose, isDM }) => {
               <FiX />
             </button>
           </div>
-          
+
           {/* Search Bar */}
           <div className="search-container">
             <FiSearch className="search-icon" />
@@ -161,7 +171,7 @@ const SessionSettings = ({ campaignId, onClose, isDM }) => {
             {searchQuery && (
               <button
                 className="clear-search"
-                onClick={() => setSearchQuery('')}
+                onClick={() => setSearchQuery("")}
                 aria-label="Clear search"
               >
                 <FiX />
@@ -202,7 +212,7 @@ const SessionSettings = ({ campaignId, onClose, isDM }) => {
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => setSearchQuery('')}
+                onClick={() => setSearchQuery("")}
               >
                 Clear Search
               </button>
@@ -211,111 +221,119 @@ const SessionSettings = ({ campaignId, onClose, isDM }) => {
 
           {/* Progression System */}
           {matchesSearch.progression && (
-          <div className="settings-section">
-            <h3>🎯 Progression System</h3>
-            <p className="section-description">
-              How players advance in this campaign.
-            </p>
-            
-            <div className="form-group">
-              <label htmlFor="progressionSystem">Advancement Method</label>
-              <select
-                id="progressionSystem"
-                name="progressionSystem"
-                value={formData.progressionSystem}
-                onChange={handleInputChange}
-                disabled={!isDM}
-              >
-                <option value="xp">Experience Points (XP)</option>
-                <option value="milestone">Milestone</option>
-              </select>
-              <p className="field-description">
-                {formData.progressionSystem === 'xp' 
-                  ? '📊 Players track experience points from encounters'
-                  : '⭐ Players advance when reaching story milestones'}
+            <div className="settings-section">
+              <h3>🎯 Progression System</h3>
+              <p className="section-description">
+                How players advance in this campaign.
               </p>
+
+              <div className="form-group">
+                <label htmlFor="progressionSystem">Advancement Method</label>
+                <select
+                  id="progressionSystem"
+                  name="progressionSystem"
+                  value={formData.progressionSystem}
+                  onChange={handleInputChange}
+                  disabled={!isDM}
+                >
+                  <option value="xp">Experience Points (XP)</option>
+                  <option value="milestone">Milestone</option>
+                </select>
+                <p className="field-description">
+                  {formData.progressionSystem === "xp"
+                    ? "📊 Players track experience points from encounters"
+                    : "⭐ Players advance when reaching story milestones"}
+                </p>
+              </div>
             </div>
-          </div>
           )}
 
           {/* Party Management */}
           {matchesSearch.party && (
-          <div className="settings-section">
-            <h3>👥 Party Management</h3>
-            <p className="section-description">
-              Control what information players can view in the Party Panel.
-            </p>
-            
-            <div className="form-group">
-              <label className="settings-subsection-label">Players can view:</label>
-            </div>
+            <div className="settings-section">
+              <h3>👥 Party Management</h3>
+              <p className="section-description">
+                Control what information players can view in the Party Panel.
+              </p>
 
-            <div className="form-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="canViewGold"
-                  checked={formData.canViewGold}
-                  onChange={handleInputChange}
-                  disabled={!isDM}
-                />
-                <span>💰 Party Gold</span>
-              </label>
-              <p className="field-description">Show total party gold in the party overview.</p>
-            </div>
+              <div className="form-group">
+                <label className="settings-subsection-label">
+                  Players can view:
+                </label>
+              </div>
 
-            <div className="form-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="canViewInventory"
-                  checked={formData.canViewInventory}
-                  onChange={handleInputChange}
-                  disabled={!isDM}
-                />
-                <span>🎒 Character Inventory</span>
-              </label>
-              <p className="field-description">Show inventory items on character cards.</p>
-            </div>
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="canViewGold"
+                    checked={formData.canViewGold}
+                    onChange={handleInputChange}
+                    disabled={!isDM}
+                  />
+                  <span>💰 Party Gold</span>
+                </label>
+                <p className="field-description">
+                  Show total party gold in the party overview.
+                </p>
+              </div>
 
-            <div className="form-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="canViewCharacterSheet"
-                  checked={formData.canViewCharacterSheet}
-                  onChange={handleInputChange}
-                  disabled={!isDM}
-                />
-                <span>📄 Character Sheets</span>
-              </label>
-              <p className="field-description">Allow opening character sheets for other party members.</p>
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="canViewInventory"
+                    checked={formData.canViewInventory}
+                    onChange={handleInputChange}
+                    disabled={!isDM}
+                  />
+                  <span>🎒 Character Inventory</span>
+                </label>
+                <p className="field-description">
+                  Show inventory items on character cards.
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="canViewCharacterSheet"
+                    checked={formData.canViewCharacterSheet}
+                    onChange={handleInputChange}
+                    disabled={!isDM}
+                  />
+                  <span>📄 Character Sheets</span>
+                </label>
+                <p className="field-description">
+                  Allow opening character sheets for other party members.
+                </p>
+              </div>
             </div>
-          </div>
           )}
 
           {/* Action Buttons */}
           <div className="form-actions">
             {isDM ? (
               <>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={onClose}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary" 
+                <button
+                  type="submit"
+                  className="btn btn-primary"
                   disabled={saving}
                 >
-                  {saving ? 'Saving...' : 'Save Settings'}
+                  {saving ? "Saving..." : "Save Settings"}
                 </button>
               </>
             ) : (
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-primary"
                 onClick={onClose}
               >

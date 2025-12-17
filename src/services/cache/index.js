@@ -1,23 +1,23 @@
 /**
  * Firebase Caching System - Central Export
- * 
+ *
  * This file provides a convenient single import for all caching functionality
- * 
+ *
  * Usage Examples:
- * 
+ *
  * // Import individual hooks
  * import { useCachedUserProfile, useJoinedCampaigns } from './services/cache';
- * 
+ *
  * // Import cache utilities
  * import { firestoreCache, invalidateCampaign } from './services/cache';
- * 
+ *
  * // Use in components
  * function MyComponent() {
  *   const { profile, loading } = useCachedUserProfile();
  *   const { campaigns } = useJoinedCampaigns();
  *   // ... component logic
  * }
- * 
+ *
  * // Invalidate after mutations
  * async function updateCampaignDetails(campaignId, updates) {
  *   await updateDoc(doc(firestore, 'campaigns', campaignId), updates);
@@ -26,10 +26,10 @@
  */
 
 // Core cache service and hooks
-import firestoreCacheImport from './FirestoreCache';
-import { useCachedDocument, useCachedQuery } from './useCachedDocument';
-import { useCachedUserProfile } from './useCachedUserProfile';
-import { useCachedUserProfileData } from './useCachedUserProfileData';
+import firestoreCacheImport from "./FirestoreCache";
+import { useCachedDocument, useCachedQuery } from "./useCachedDocument";
+import { useCachedUserProfile } from "./useCachedUserProfile";
+import { useCachedUserProfileData } from "./useCachedUserProfileData";
 import {
   useJoinedCampaigns,
   useCreatedCampaigns,
@@ -37,8 +37,8 @@ import {
   useCachedCampaign,
   invalidateUserCampaigns,
   invalidateCampaign,
-  invalidateAllCampaigns
-} from './useCampaignsCache';
+  invalidateAllCampaigns,
+} from "./useCampaignsCache";
 import {
   useUserCharacters,
   useCampaignCharacters,
@@ -48,24 +48,24 @@ import {
   invalidateUserCharacters,
   invalidateCampaignCharacters,
   invalidateCharacter,
-  invalidateAllCharacters
-} from './useCharactersCache';
+  invalidateAllCharacters,
+} from "./useCharactersCache";
 import {
   useCampaignMaps,
   useCachedMap,
   useActiveMap,
   invalidateCampaignMaps,
   invalidateMap,
-  invalidateAllMaps
-} from './useMapsCache';
+  invalidateAllMaps,
+} from "./useMapsCache";
 
 // Re-export core services
-export { default as firestoreCache } from './FirestoreCache';
-export { useCachedDocument, useCachedQuery } from './useCachedDocument';
+export { default as firestoreCache } from "./FirestoreCache";
+export { useCachedDocument, useCachedQuery } from "./useCachedDocument";
 
 // User profile caching
-export { useCachedUserProfile } from './useCachedUserProfile';
-export { useCachedUserProfileData } from './useCachedUserProfileData';
+export { useCachedUserProfile } from "./useCachedUserProfile";
+export { useCachedUserProfileData } from "./useCachedUserProfileData";
 
 // Campaign caching
 export {
@@ -76,8 +76,8 @@ export {
   invalidateUserCampaigns,
   invalidateCampaign,
   invalidateAllCampaigns,
-  default as campaignsCache
-} from './useCampaignsCache';
+  default as campaignsCache,
+} from "./useCampaignsCache";
 
 // Character caching
 export {
@@ -90,8 +90,8 @@ export {
   invalidateCampaignCharacters,
   invalidateCharacter,
   invalidateAllCharacters,
-  default as charactersCache
-} from './useCharactersCache';
+  default as charactersCache,
+} from "./useCharactersCache";
 
 // Map caching
 export {
@@ -101,15 +101,15 @@ export {
   invalidateCampaignMaps,
   invalidateMap,
   invalidateAllMaps,
-  default as mapsCache
-} from './useMapsCache';
+  default as mapsCache,
+} from "./useMapsCache";
 
 /**
  * Get current cache statistics
  * Useful for monitoring cache performance
  */
 export function getCacheStats() {
-  const cache = require('./FirestoreCache').default;
+  const cache = require("./FirestoreCache").default;
   return cache.getStats();
 }
 
@@ -118,7 +118,7 @@ export function getCacheStats() {
  * Use sparingly - only for logout or major app state changes
  */
 export function clearAllCache() {
-  const cache = require('./FirestoreCache').default;
+  const cache = require("./FirestoreCache").default;
   cache.clear();
 }
 
@@ -127,7 +127,7 @@ export function clearAllCache() {
  * Clears cache and stops background intervals
  */
 export function destroyCache() {
-  const cache = require('./FirestoreCache').default;
+  const cache = require("./FirestoreCache").default;
   cache.destroy();
 }
 
@@ -136,9 +136,9 @@ export function destroyCache() {
  * Useful for debugging cache performance
  */
 export function logCacheStats() {
-  const cache = require('./FirestoreCache').default;
+  const cache = require("./FirestoreCache").default;
   const stats = cache.getStats();
-  console.group('📊 Firebase Cache Statistics');
+  console.group("📊 Firebase Cache Statistics");
   console.log(`Cache Hits: ${stats.hits}`);
   console.log(`Cache Misses: ${stats.misses}`);
   console.log(`Hit Rate: ${stats.hitRate}`);
@@ -209,7 +209,7 @@ const cacheExports = {
   invalidateAllMaps,
   getCacheStats,
   clearAllCache,
-  logCacheStats
+  logCacheStats,
 };
 
 export default cacheExports;

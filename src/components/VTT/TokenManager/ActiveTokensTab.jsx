@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { FirebaseContext } from '../../../services/FirebaseContext';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import ActiveTokenItem from './ActiveTokenItem';
-import ActiveLightItem from './ActiveLightItem';
-import './ActiveTokensTab.css';
+import React, { useState, useEffect, useContext } from "react";
+import { FirebaseContext } from "../../../services/FirebaseContext";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import ActiveTokenItem from "./ActiveTokenItem";
+import ActiveLightItem from "./ActiveLightItem";
+import "./ActiveTokensTab.css";
 
 /**
  * ActiveTokensTab - Shows all tokens currently deployed on the map
@@ -15,7 +15,7 @@ const ActiveTokensTab = ({
   onFocusToken,
   onFocusLight,
   onEditToken,
-  onEditLight
+  onEditLight,
 }) => {
   const { firestore } = useContext(FirebaseContext);
   const [activeTokens, setActiveTokens] = useState([]);
@@ -27,30 +27,40 @@ const ActiveTokensTab = ({
   useEffect(() => {
     if (!firestore || !campaignId || !mapId) return;
 
-    console.log('ActiveTokensTab: Subscribing to active tokens for map:', mapId);
-    const tokensRef = collection(firestore, 'campaigns', campaignId, 'vtt', mapId, 'tokens');
-    const activeQuery = query(tokensRef, where('staged', '==', false));
+    console.log(
+      "ActiveTokensTab: Subscribing to active tokens for map:",
+      mapId
+    );
+    const tokensRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "vtt",
+      mapId,
+      "tokens"
+    );
+    const activeQuery = query(tokensRef, where("staged", "==", false));
 
     const unsubscribe = onSnapshot(
       activeQuery,
       (snapshot) => {
-        const tokens = snapshot.docs.map(doc => ({
+        const tokens = snapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }));
-        console.log('ActiveTokensTab: Active tokens received:', tokens.length);
+        console.log("ActiveTokensTab: Active tokens received:", tokens.length);
         setActiveTokens(tokens);
         setLoading(false);
       },
       (err) => {
-        console.error('Error subscribing to active tokens:', err);
-        setError('Failed to load active tokens: ' + err.message);
+        console.error("Error subscribing to active tokens:", err);
+        setError("Failed to load active tokens: " + err.message);
         setLoading(false);
       }
     );
 
     return () => {
-      console.log('ActiveTokensTab: Unsubscribing from active tokens');
+      console.log("ActiveTokensTab: Unsubscribing from active tokens");
       unsubscribe();
     };
   }, [firestore, campaignId, mapId]);
@@ -59,27 +69,34 @@ const ActiveTokensTab = ({
   useEffect(() => {
     if (!firestore || !campaignId || !mapId) return;
 
-    console.log('ActiveTokensTab: Subscribing to lights for map:', mapId);
-    const lightsRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'lights');
+    console.log("ActiveTokensTab: Subscribing to lights for map:", mapId);
+    const lightsRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "lights"
+    );
 
     const unsubscribe = onSnapshot(
       lightsRef,
       (snapshot) => {
-        const lightsList = snapshot.docs.map(doc => ({
+        const lightsList = snapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }));
-        console.log('ActiveTokensTab: Lights received:', lightsList.length);
+        console.log("ActiveTokensTab: Lights received:", lightsList.length);
         setLights(lightsList);
       },
       (err) => {
-        console.error('Error subscribing to lights:', err);
-        setError('Failed to load lights: ' + err.message);
+        console.error("Error subscribing to lights:", err);
+        setError("Failed to load lights: " + err.message);
       }
     );
 
     return () => {
-      console.log('ActiveTokensTab: Unsubscribing from lights');
+      console.log("ActiveTokensTab: Unsubscribing from lights");
       unsubscribe();
     };
   }, [firestore, campaignId, mapId]);
@@ -115,7 +132,9 @@ const ActiveTokensTab = ({
         <div className="empty-active-tokens">
           <span className="empty-icon">🗺️</span>
           <p>No active tokens or lights</p>
-          <small>Reveal tokens from Staging or add lights to see them here</small>
+          <small>
+            Reveal tokens from Staging or add lights to see them here
+          </small>
         </div>
       ) : (
         <div className="active-items-list">
@@ -128,7 +147,7 @@ const ActiveTokensTab = ({
                 <span className="section-count">{activeTokens.length}</span>
               </div>
               <div className="section-items">
-                {activeTokens.map(token => (
+                {activeTokens.map((token) => (
                   <ActiveTokenItem
                     key={token.id}
                     token={token}
@@ -149,7 +168,7 @@ const ActiveTokensTab = ({
                 <span className="section-count">{lights.length}</span>
               </div>
               <div className="section-items">
-                {lights.map(light => (
+                {lights.map((light) => (
                   <ActiveLightItem
                     key={light.id}
                     light={light}

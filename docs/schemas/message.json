@@ -80,10 +80,7 @@
       }
     }
   },
-  "oneOf": [
-    { "required": ["text"] },
-    { "required": ["imageURL"] }
-  ],
+  "oneOf": [{ "required": ["text"] }, { "required": ["imageURL"] }],
   "firestorePath": "/campaigns/{campaignId}/messages/{messageId}",
   "securityNotes": [
     "Users can only create messages with their own uid",
@@ -92,8 +89,6 @@
     "createdAt must be serverTimestamp()"
   ],
   "indexing": {
-    "required": [
-      { "field": "createdAt", "order": "desc" }
-    ]
+    "required": [{ "field": "createdAt", "order": "desc" }]
   }
 }

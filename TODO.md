@@ -1,10 +1,12 @@
 # SuperChat VTT - Central TODO & Future Enhancements
 
 ## Implementation Date
+
 Started: October 2024
 Last Updated: October 7, 2025
 
 ## Workflow Guidelines
+
 - After each fix or feature implementation, commit changes with brief summary
 - Use descriptive commit messages summarizing what was accomplished
 - No need to create separate summary documentation files
@@ -15,6 +17,7 @@ Last Updated: October 7, 2025
 ## 🔴 Critical Priority
 
 ### Signup & Email Login Flow 📧
+
 **Status**: ❌ Broken / Urgent
 **Priority**: 🔴 Critical
 **Date Found**: October 7, 2025
@@ -23,6 +26,7 @@ Last Updated: October 7, 2025
 **Problem**: Signup flow and email/password login are failing for new users — new accounts aren't being created or cannot log in immediately after signup.
 
 **Symptoms**:
+
 - New users see an error on signup or are redirected but cannot access protected pages.
 - Email login fails for newly created accounts (user not found / invalid credentials immediately after signup).
 - Sometimes account appears in Firebase console but auth state doesn't persist.
@@ -31,6 +35,7 @@ Last Updated: October 7, 2025
 **Immediate Impact**: Blocks new user onboarding — critical for public availability.
 
 **Tasks**:
+
 - [ ] Reproduce the failure locally and collect exact error messages (console/network/auth emulator)
 - [ ] Check Firebase Auth configuration (email/password provider enabled, API keys, auth domain)
 - [ ] Inspect `authService.js` signup/signin flows for missing await, token exchange, or error handling
@@ -44,6 +49,7 @@ Last Updated: October 7, 2025
 **Notes**: Prioritize reproducing with Firebase Auth emulator and add reproduction steps to this doc.
 
 ### Friends List & Social Features 🎮
+
 **Status**: ✅ Complete
 **Priority**: 🟠 High (Major social feature)
 **Date Started**: October 5, 2025
@@ -55,6 +61,7 @@ Last Updated: October 7, 2025
 **Implementation**:
 
 **Friends List Modal**:
+
 1. ✅ Added "Friends List" button to user profile dropdown
 2. ✅ Modal with header, search bar, close button
 3. ✅ Tabs: "Friends", "Pending", and "Blocked"
@@ -64,6 +71,7 @@ Last Updated: October 7, 2025
 7. ✅ Clicking username opens profile modal
 
 **User Profile Modal** (when viewing other users):
+
 1. ✅ Shows user profile picture, username, bio
 2. ✅ "Add Friend" button (if not friends)
 3. ✅ "Block"/"Unblock" button
@@ -71,22 +79,26 @@ Last Updated: October 7, 2025
 5. ✅ Shows friendship status (friends, pending, blocked)
 
 **Friends Tab**:
+
 - ✅ List of accepted friends
 - ✅ Online/offline/away status indicator
 - ✅ Click username to open profile modal
 - ✅ Option to unfriend (with confirmation)
 
 **Pending Tab**:
+
 - ✅ Received friend requests section
 - ✅ Accept/Decline buttons for received requests
 - ✅ Sent friend requests section
 - ✅ View pending status for sent requests
 
 **Blocked Tab**:
+
 - ✅ List of blocked users
 - ✅ "Unblock" button for each user
 
 **Data Model**:
+
 ```
 /friendships/{friendshipId}
   - userId1
@@ -101,6 +113,7 @@ Last Updated: October 7, 2025
 ```
 
 **Tasks Completed**:
+
 - [x] Create `FriendsListModal.js` component
 - [x] Create `UserProfileModal.js` component
 - [x] Add friends list button to user profile dropdown
@@ -116,6 +129,7 @@ Last Updated: October 7, 2025
 - [x] Update Firestore security rules for friendships
 
 **Future Enhancements**:
+
 - [ ] Add friend request notifications (toast/badge)
 - [ ] Add friend online/offline notifications
 - [ ] Add recent activity feed
@@ -125,6 +139,7 @@ Last Updated: October 7, 2025
 ---
 
 ### Campaign Join Waitlist 🎮
+
 **Status**: ✅ Complete
 **Priority**: 🟡 Medium (Nice-to-have social feature)
 **Date Started**: October 5, 2025
@@ -136,12 +151,14 @@ Last Updated: October 7, 2025
 **Implementation**:
 
 **User Features**:
+
 1. ✅ "Request to Join" button for full campaigns
 2. ✅ Request modal with character info and message to DM
 3. ✅ View pending request status on campaign cards
 4. ✅ Ability to cancel pending requests
 
 **DM Features**:
+
 1. ✅ JoinRequestsPanel component for Campaign Dashboard
 2. ✅ View all pending join requests
 3. ✅ Approve requests (automatically adds user to campaign)
@@ -149,6 +166,7 @@ Last Updated: October 7, 2025
 5. ✅ See requester info, character details, and message
 
 **Data Model**:
+
 ```
 /campaignRequests/{requestId}
   - campaignId: string
@@ -164,6 +182,7 @@ Last Updated: October 7, 2025
 ```
 
 **Tasks Completed**:
+
 - [x] Add "Request to Join" button for full campaigns
 - [x] Create `/campaignRequests` Firestore collection
 - [x] Create campaignRequestService.js with CRUD operations
@@ -173,6 +192,7 @@ Last Updated: October 7, 2025
 - [x] Add Firestore security rules for campaignRequests
 
 **Future Enhancements**:
+
 - [ ] Real-time notifications for DM when new requests arrive
 - [ ] Notification to requester when request is approved/denied
 - [ ] Request expiration (auto-deny after X days)
@@ -183,6 +203,7 @@ Last Updated: October 7, 2025
 ---
 
 ### Clickable Usernames 🎮
+
 **Status**: ✅ Complete
 **Priority**: 🟠 High (Major UX improvement)
 **Date Started**: October 5, 2025
@@ -194,6 +215,7 @@ Last Updated: October 7, 2025
 **Implementation**:
 
 **Locations Made Clickable**:
+
 1. ✅ Friends list (all tabs: Friends, Pending, Blocked)
 2. ✅ Campaign browser page (DM names)
 3. ✅ Campaign preview page (DM names)
@@ -202,6 +224,7 @@ Last Updated: October 7, 2025
 6. ✅ Voice chat modal (participant names)
 
 **Styling**:
+
 - ✅ Blue color (#1976d2) for clickable usernames
 - ✅ Darker blue (#0d47a1) on hover
 - ✅ Pointer cursor to indicate clickability
@@ -210,12 +233,14 @@ Last Updated: October 7, 2025
 - ✅ Smooth transition animations
 
 **User Experience**:
+
 - Clicking any username opens UserProfileModal
 - Shows user profile, friendship status, and actions
 - Consistent behavior across entire application
 - Visual cues make it clear usernames are interactive
 
 **Tasks Completed**:
+
 - [x] Create global `clickable-username.css` with reusable styles
 - [x] Add clickable DM names in CampaignBrowser
 - [x] Add clickable DM names in CampaignPreview
@@ -232,12 +257,14 @@ Last Updated: October 7, 2025
 ---
 
 ### Player Firestore Permission Error 🐛
+
 **Status**: ⏳ Monitor (Possibly one-off error)
 **Priority**: 🟡 Medium (Monitor for recurrence)
 **Date Found**: October 5, 2025
 **Files**: useUserProfileData.js, firestore.rules
 
 **Error** (possibly transient):
+
 ```
 useUserProfile.js:31 [2025-10-05T06:34:03.670Z]  @firebase/firestore: Firestore (12.3.0):
 Uncaught Error in snapshot listener: FirebaseError: [code=permission-denied]:
@@ -245,11 +272,13 @@ Missing or insufficient permissions.
 ```
 
 **Analysis**:
+
 - Firestore security rules are correct: `allow read: if request.auth != null;`
 - Likely a one-off error due to temporary network/auth issue
 - Will monitor for recurrence
 
 **If Error Recurs**:
+
 - [ ] Deploy Firestore security rules: `firebase deploy --only firestore:rules`
 - [ ] Test as player in another campaign
 - [ ] Check auth token validity
@@ -259,6 +288,7 @@ Missing or insufficient permissions.
 ---
 
 ### Voice Chat Bug 🐛
+
 **Status**: ⏳ Not Started
 **Priority**: 🔴 Critical (Core feature broken)
 **Date Found**: October 5, 2025
@@ -267,6 +297,7 @@ Missing or insufficient permissions.
 **Description**: Voice chat functionality is experiencing issues that need troubleshooting and fixing.
 
 **Known Issues**:
+
 - [ ] Identify specific voice chat problem
 - [ ] Document error messages/symptoms
 - [ ] Test connection establishment
@@ -276,6 +307,7 @@ Missing or insufficient permissions.
 - [ ] Verify Firestore voice room data
 
 **Debugging Steps**:
+
 - [ ] Check browser console for errors
 - [ ] Verify Agora credentials/configuration
 - [ ] Test with multiple users
@@ -286,6 +318,7 @@ Missing or insufficient permissions.
 - [ ] Review Agora SDK version compatibility
 
 **Potential Issues**:
+
 - [ ] Token generation failures
 - [ ] Microphone permission issues
 - [ ] Network/firewall blocking
@@ -295,6 +328,7 @@ Missing or insufficient permissions.
 - [ ] Audio device conflicts
 
 **Tasks**:
+
 - [ ] Reproduce the bug consistently
 - [ ] Add detailed error logging
 - [ ] Check Agora service status/dashboard
@@ -312,6 +346,7 @@ Missing or insufficient permissions.
 ## 🟠 High Priority
 
 ### Token, Player, and DM Inventory System 🎒
+
 **Status**: ⏳ Not Started
 **Priority**: 🟠 High (Core gameplay feature)
 **Date Started**: TBD
@@ -322,6 +357,7 @@ Missing or insufficient permissions.
 **Features**:
 
 **Token Inventory**:
+
 - [ ] Each token can carry items
 - [ ] Weight/capacity limits based on character stats
 - [ ] Quick access inventory panel on token selection
@@ -330,6 +366,7 @@ Missing or insufficient permissions.
 - [ ] Consumables vs permanent items
 
 **Player Inventory (Character Sheet)**:
+
 - [ ] Full inventory management in character sheet
 - [ ] Item categories (weapons, armor, potions, misc)
 - [ ] Item search and filtering
@@ -339,6 +376,7 @@ Missing or insufficient permissions.
 - [ ] Encumbrance calculation
 
 **DM Inventory Controls**:
+
 - [ ] View all player inventories
 - [ ] Add/remove items from any inventory
 - [ ] Award loot to party or individuals
@@ -347,6 +385,7 @@ Missing or insufficient permissions.
 - [ ] Bulk item operations
 
 **Item Properties**:
+
 - [ ] Name, description, icon/image
 - [ ] Weight, value, rarity
 - [ ] Item type (weapon, armor, consumable, etc.)
@@ -355,6 +394,7 @@ Missing or insufficient permissions.
 - [ ] Attunement requirements
 
 **Data Model**:
+
 ```
 /campaigns/{campaignId}/items/{itemId}
   - name: string
@@ -380,6 +420,7 @@ Missing or insufficient permissions.
 ```
 
 **Tasks**:
+
 - [ ] Design inventory data model
 - [ ] Create InventorySystem.js component
 - [ ] Create ItemManager.js for CRUD operations
@@ -399,6 +440,7 @@ Missing or insufficient permissions.
 ---
 
 ### Admin Dashboard & Quick Admin Tools 🛠️
+
 **Status**: ⏳ Not Started
 **Priority**: 🔴 High (Admin tools & debugging)
 **Date Started**: TBD
@@ -407,12 +449,14 @@ Missing or insufficient permissions.
 **Description**: Add an admin button overlay that appears for admin users and opens a dashboard modal. The dashboard allows admins to inspect the database models that have been loaded for the current page, edit those models and commit changes back to Firestore. It includes a tabbed interface with an "Analytics" tab (contains a section for Firestore cache analytics — most analytics are "coming soon"). Also add a Quick Actions section that contains a toggle to switch the current user's role between DM, Player, and Spectator for campaigns they are a member of. The admin dashboard must not add or rely on any caching layer.
 
 **Implementation notes / suggested approach**:
+
 - Add an `isAdmin` boolean to the user object/profile (server-authenticated field).
 - At the app root wrap with `isAdmin && <AdminContext.Provider>` check, and render a persistent `AdminOverlay` button when `isAdmin` is true.
 - Keep the admin dashboard UI separate from production flows; it should use service-layer functions (`adminService.js`) to perform read/write operations and respect Firestore security rules.
 - Do NOT add caching to admin dashboard operations (always read/write directly to Firestore to reflect live state).
 
 **Admin Dashboard UI**:
+
 - Overlay button (floating) visible only to admins
 - Modal with tabs:
   - Models: shows currently loaded models for the page (component -> model mapping), JSON view + edit form, Save/Commit button
@@ -421,10 +465,12 @@ Missing or insufficient permissions.
   - Audit / Activity (optional placeholder for an audit log)
 
 **Data & Permissions**:
+
 - The admin UI should only surface data the admin is allowed to see; use server-verified `isAdmin` and Firestore rules to guard any admin-only writes.
 - All writes must go through `adminService.js` which enforces validation and records admin actions if an audit log is enabled.
 
 **Tasks**:
+
 - [ ] Create `AdminOverlay.js` floating button component
 - [ ] Create `AdminDashboardModal.js` with tabs: Models, Analytics, Quick Actions, Audit
 - [ ] Create `adminService.js` for privileged read/write operations and commit helpers
@@ -438,9 +484,11 @@ Missing or insufficient permissions.
 - [ ] Add small e2e smoke test for AdminOverlay visibility & basic model commit
 
 **Do NOT implement yet / Explicit constraints**:
+
 - No caching in admin dashboard (always read/write directly to Firestore)
 
 **Suggested helpful additional features**:
+
 - Audit log / action history (who changed what and when) — important for tracing admin edits
 - Undo/preview before commit (schema diff and rollback support)
 - Role-based permission editor (manage campaign membership roles from the dashboard)
@@ -456,6 +504,7 @@ Missing or insufficient permissions.
 ---
 
 ### Item Creation and Player Trade System 🤝
+
 **Status**: ⏳ Not Started
 **Priority**: 🟠 High (Depends on Inventory System)
 **Date Started**: TBD
@@ -464,6 +513,7 @@ Missing or insufficient permissions.
 **Description**: Allow DMs to create custom items and players to trade items with each other.
 
 **Item Creation (DM Only)**:
+
 - [ ] Item creation modal with form
 - [ ] Name, description, icon selection
 - [ ] Type selection (weapon, armor, potion, etc.)
@@ -477,6 +527,7 @@ Missing or insufficient permissions.
 - [ ] Import from D&D 5e SRD items
 
 **Player Trade System**:
+
 - [ ] Initiate trade with another player
 - [ ] Trade request notification
 - [ ] Trade window with both inventories
@@ -489,6 +540,7 @@ Missing or insufficient permissions.
 - [ ] Trade restrictions (cannot trade quest items, etc.)
 
 **Item Templates Library**:
+
 - [ ] Pre-made item templates (D&D 5e SRD)
 - [ ] Custom DM-created templates
 - [ ] Search and filter templates
@@ -497,6 +549,7 @@ Missing or insufficient permissions.
 - [ ] Export/import item sets
 
 **Data Model**:
+
 ```
 /campaigns/{campaignId}/itemTemplates/{templateId}
   - name, description, properties (same as items)
@@ -518,6 +571,7 @@ Missing or insufficient permissions.
 ```
 
 **Tasks**:
+
 - [ ] Create ItemCreator.js component
 - [ ] Add item creation modal for DM
 - [ ] Implement item templates library
@@ -537,6 +591,7 @@ Missing or insufficient permissions.
 ---
 
 ### Firebase Caching System - Component Migration 🗄️
+
 **Status**: ✅ Phase 1, 2 & 3 Complete ✅
 **Priority**: 🟠 High (Performance optimization - ongoing)
 **Date Completed**: October 5, 2025
@@ -545,21 +600,25 @@ Missing or insufficient permissions.
 **Remaining Tasks**:
 
 **Deploy Firestore Configuration**:
+
 - [ ] Deploy rules: `firebase deploy --only firestore:rules`
 - [ ] Deploy indexes: `firebase deploy --only firestore:indexes`
 
 **Add Cache Invalidation to Campaign Mutations**:
+
 - [ ] `campaignService.updateCampaign()` → call `invalidateCampaign(id)`
 - [ ] `campaignService.joinCampaign()` → call `invalidateUserCampaigns(userId)`
 - [ ] `campaignService.leaveCampaign()` → call `invalidateUserCampaigns(userId)`
 - [ ] `campaignService.createCampaign()` → call `invalidateUserCampaigns(userId)`
 
 **Optional Character Components** (migrate as needed):
+
 - [ ] CharacterSheet.js (direct character updates)
 - [ ] PartyManagement.js (character list display)
 - [ ] CharacterSelector components
 
 **Phase 4: Performance Monitoring**
+
 - [ ] Create Developer Performance Dashboard component
 - [ ] Add cache statistics display:
   - [ ] Cache hits/misses chart
@@ -580,6 +639,7 @@ Missing or insufficient permissions.
 - [ ] Position: Floating panel or settings tab
 
 **Phase 5: Additional Services**
+
 - [ ] Token service caching (if needed)
 - [ ] Avatar service caching
 - [ ] Map service caching
@@ -590,6 +650,7 @@ Missing or insufficient permissions.
 ---
 
 ### Notifications System 🔔
+
 **Status**: ⏳ Not Started
 **Priority**: 🟠 High (Important UX feature)
 **Date Started**: TBD
@@ -598,6 +659,7 @@ Missing or insufficient permissions.
 **Description**: Comprehensive notification system to keep users informed of important events.
 
 **Notification Types**:
+
 - [ ] Friend requests (new, accepted, declined)
 - [ ] New messages in campaigns
 - [ ] Campaign invitations
@@ -610,6 +672,7 @@ Missing or insufficient permissions.
 - [ ] System announcements
 
 **UI Components**:
+
 - [ ] Notification bell icon in header (next to user menu)
 - [ ] Badge showing unread count
 - [ ] Dropdown panel with notification list
@@ -620,6 +683,7 @@ Missing or insufficient permissions.
 - [ ] Notification settings link
 
 **Notification Item Display**:
+
 - [ ] Icon based on type
 - [ ] Title and description
 - [ ] Timestamp ("5 minutes ago")
@@ -628,6 +692,7 @@ Missing or insufficient permissions.
 - [ ] Delete individual notification
 
 **Real-time Updates**:
+
 - [ ] Real-time listener for new notifications
 - [ ] Toast notification for urgent items (optional)
 - [ ] Sound notification (optional, user setting)
@@ -635,6 +700,7 @@ Missing or insufficient permissions.
 - [ ] Notification badge updates in real-time
 
 **Data Model**:
+
 ```
 /userProfiles/{userId}/notifications/{notificationId}
   - type: string (friend_request, campaign_message, etc.)
@@ -651,6 +717,7 @@ Missing or insufficient permissions.
 ```
 
 **Tasks**:
+
 - [ ] Create NotificationsDropdown.js component
 - [ ] Add notification bell to header (UserMenu area)
 - [ ] Create NotificationService.js
@@ -672,6 +739,7 @@ Missing or insufficient permissions.
 ---
 
 ### Player Settings Modal ⚙️
+
 **Status**: ⏳ Not Started
 **Priority**: 🟠 High (Important for user privacy and experience)
 **Date Started**: TBD
@@ -682,6 +750,7 @@ Missing or insufficient permissions.
 **Settings Categories**:
 
 **Privacy Settings**:
+
 - [ ] Profile visibility (public, friends only, private)
 - [ ] Show email in profile (toggle)
 - [ ] Show last active status (toggle)
@@ -691,6 +760,7 @@ Missing or insufficient permissions.
 - [ ] Who can send campaign invites (everyone, friends only)
 
 **Notification Settings**:
+
 - [ ] Enable/disable notifications (master toggle)
 - [ ] Friend request notifications (toggle)
 - [ ] Campaign message notifications (toggle)
@@ -703,6 +773,7 @@ Missing or insufficient permissions.
 - [ ] Notification sound selection
 
 **Display Settings**:
+
 - [ ] Theme preference (light, dark, auto)
 - [ ] Chat message size (small, medium, large)
 - [ ] Show dice roll animations (toggle)
@@ -712,6 +783,7 @@ Missing or insufficient permissions.
 - [ ] High contrast mode (accessibility)
 
 **Chat Settings**:
+
 - [ ] Profanity filter enabled (toggle)
 - [ ] Enter to send messages (toggle vs Ctrl+Enter)
 - [ ] Show typing indicators (toggle)
@@ -719,6 +791,7 @@ Missing or insufficient permissions.
 - [ ] Auto-scroll chat (toggle)
 
 **Gameplay Settings**:
+
 - [ ] Default dice roll visibility (public, private, DM only)
 - [ ] Show HP on tokens (toggle)
 - [ ] Token name display preference (character name, username, both)
@@ -726,6 +799,7 @@ Missing or insufficient permissions.
 - [ ] Fog of war visibility (DM only)
 
 **Account Settings**:
+
 - [ ] Change username
 - [ ] Change password
 - [ ] Change email
@@ -733,6 +807,7 @@ Missing or insufficient permissions.
 - [ ] Delete account (with confirmation)
 
 **UI Structure**:
+
 - [ ] Modal with sidebar navigation
 - [ ] Categories in sidebar (Privacy, Notifications, Display, etc.)
 - [ ] Settings panel on right with form inputs
@@ -741,6 +816,7 @@ Missing or insufficient permissions.
 - [ ] Search settings functionality
 
 **Data Model**:
+
 ```
 /userProfiles/{userId}/settings
   - privacy: object
@@ -784,6 +860,7 @@ Missing or insufficient permissions.
 ```
 
 **Tasks**:
+
 - [ ] Create PlayerSettingsModal.js component
 - [ ] Add "Settings" option to user menu dropdown
 - [ ] Design settings categories and layout
@@ -806,6 +883,7 @@ Missing or insufficient permissions.
 ---
 
 ### Encounter Builder - Complete Implementation 🎲
+
 **Status**: ⏳ Not Started
 **Priority**: 🟠 High (Core DM tool)
 **Date Started**: TBD
@@ -814,6 +892,7 @@ Missing or insufficient permissions.
 **Description**: Flesh out and complete the encounter builder with comprehensive features for creating, managing, and running combat encounters.
 
 **Current Status**:
+
 - [x] Basic encounter template creation
 - [ ] Comprehensive monster library
 - [ ] Advanced encounter scaling
@@ -823,6 +902,7 @@ Missing or insufficient permissions.
 - [ ] Encounter analytics
 
 **Monster Library**:
+
 - [ ] Import D&D 5e SRD monsters (complete bestiary)
 - [ ] Monster stat blocks with full details
 - [ ] Search and filter monsters (by CR, type, environment, etc.)
@@ -835,6 +915,7 @@ Missing or insufficient permissions.
 - [ ] Monster images/tokens
 
 **Encounter Builder Interface**:
+
 - [ ] Drag-and-drop monster addition
 - [ ] Quantity adjustment per monster
 - [ ] Encounter difficulty calculator (easy, medium, hard, deadly)
@@ -846,6 +927,7 @@ Missing or insufficient permissions.
 - [ ] Pre-set monster groups (e.g., "Goblin Raiding Party")
 
 **Encounter Scaling**:
+
 - [ ] Auto-scale encounter to party level
 - [ ] Adjust monster CR
 - [ ] Scale monster HP
@@ -854,6 +936,7 @@ Missing or insufficient permissions.
 - [ ] Save scaled versions
 
 **Encounter Templates**:
+
 - [ ] Save encounter as template
 - [ ] Template library (custom and community)
 - [ ] Duplicate encounters
@@ -862,6 +945,7 @@ Missing or insufficient permissions.
 - [ ] Encounter by theme (undead horde, dragon lair, etc.)
 
 **Running Encounters**:
+
 - [ ] Start encounter button (spawns monsters on map)
 - [ ] Auto-add to initiative tracker
 - [ ] Roll initiative for all monsters
@@ -872,6 +956,7 @@ Missing or insufficient permissions.
 - [ ] Encounter timer
 
 **Loot Management**:
+
 - [ ] Assign loot to encounters
 - [ ] Random loot generation by CR
 - [ ] Treasure tables (coins, items, magic items)
@@ -879,6 +964,7 @@ Missing or insufficient permissions.
 - [ ] Track looted encounters
 
 **Encounter Analytics**:
+
 - [ ] Track encounter outcomes (victory, defeat, fled)
 - [ ] Damage dealt statistics
 - [ ] Rounds to complete
@@ -888,6 +974,7 @@ Missing or insufficient permissions.
 - [ ] Encounter history log
 
 **Integration**:
+
 - [ ] Spawn encounter monsters as tokens on map
 - [ ] Link tokens to monster stat blocks
 - [ ] Auto-populate initiative tracker
@@ -896,6 +983,7 @@ Missing or insufficient permissions.
 - [ ] Award XP to party
 
 **Data Model**:
+
 ```
 /campaigns/{campaignId}/encounters/{encounterId}
   - name: string
@@ -941,6 +1029,7 @@ Missing or insufficient permissions.
 ```
 
 **Tasks**:
+
 - [ ] Import complete D&D 5e SRD bestiary
 - [ ] Create MonsterLibrary.js component
 - [ ] Enhance EncounterBuilder.js with all features
@@ -966,6 +1055,7 @@ Missing or insufficient permissions.
 ---
 
 ### Map Builder Feature 🗺️
+
 **Status**: ⏳ Not Started
 **Priority**: 🟠 High (Core DM tool)
 **Date Started**: TBD
@@ -976,6 +1066,7 @@ Missing or insufficient permissions.
 **Core Features**:
 
 **Canvas System**:
+
 - [ ] Multi-layer canvas (background, terrain, objects, lighting, fog)
 - [ ] Grid overlay (square, hex, gridless)
 - [ ] Configurable grid size
@@ -986,6 +1077,7 @@ Missing or insufficient permissions.
 - [ ] Layer locking
 
 **Tileset System**:
+
 - [ ] Tile library (floors, walls, doors, furniture, etc.)
 - [ ] Tile brush tool
 - [ ] Tile palette selection
@@ -996,6 +1088,7 @@ Missing or insufficient permissions.
 - [ ] Tileset manager
 
 **Drawing Tools**:
+
 - [ ] Freehand brush
 - [ ] Line tool
 - [ ] Rectangle tool
@@ -1009,6 +1102,7 @@ Missing or insufficient permissions.
 - [ ] Opacity control
 
 **Asset Placement**:
+
 - [ ] Asset library (props, furniture, nature, creatures)
 - [ ] Drag-and-drop placement
 - [ ] Asset rotation and scaling
@@ -1018,6 +1112,7 @@ Missing or insufficient permissions.
 - [ ] Asset layering (z-index)
 
 **Walls & Obstacles**:
+
 - [ ] Wall drawing tool
 - [ ] Door placement (normal, secret, locked)
 - [ ] Window placement
@@ -1027,6 +1122,7 @@ Missing or insufficient permissions.
 - [ ] Invisible walls (blocking movement only)
 
 **Lighting System**:
+
 - [ ] Light source placement
 - [ ] Light color and intensity
 - [ ] Light radius adjustment
@@ -1036,6 +1132,7 @@ Missing or insufficient permissions.
 - [ ] Torch/candle animations
 
 **Map Properties**:
+
 - [ ] Map name and description
 - [ ] Map dimensions (width, height)
 - [ ] Grid settings (size, offset, color)
@@ -1045,6 +1142,7 @@ Missing or insufficient permissions.
 - [ ] Map notes and annotations
 
 **Templates & Rooms**:
+
 - [ ] Pre-made room templates
 - [ ] Corridor templates
 - [ ] Common room shapes
@@ -1053,6 +1151,7 @@ Missing or insufficient permissions.
 - [ ] Drag-and-drop room placement
 
 **Export & Sharing**:
+
 - [ ] Save map to campaign library
 - [ ] Export as image (PNG, JPEG)
 - [ ] Export with/without grid
@@ -1061,6 +1160,7 @@ Missing or insufficient permissions.
 - [ ] Publish to community library
 
 **UI Components**:
+
 - [ ] Toolbar with all tools
 - [ ] Layer panel
 - [ ] Asset browser panel
@@ -1070,6 +1170,7 @@ Missing or insufficient permissions.
 - [ ] Tutorial/help system
 
 **Data Model**:
+
 ```
 /campaigns/{campaignId}/customMaps/{mapId}
   - name: string
@@ -1095,6 +1196,7 @@ Missing or insufficient permissions.
 ```
 
 **Tasks**:
+
 - [ ] Create MapBuilder.js main component
 - [ ] Implement canvas rendering system
 - [ ] Create drawing tools engine
@@ -1118,6 +1220,7 @@ Missing or insufficient permissions.
 ---
 
 ### Procedural Map Generation 🤖
+
 **Status**: ⏳ Not Started
 **Priority**: 🟡 Medium (Advanced feature, depends on Map Builder)
 **Date Started**: TBD
@@ -1128,6 +1231,7 @@ Missing or insufficient permissions.
 **Generation Methods**:
 
 **1. Template-Based Generation**:
+
 - [ ] Analyze uploaded map structure
 - [ ] Extract patterns (room sizes, corridor widths, etc.)
 - [ ] Generate similar maps using extracted patterns
@@ -1135,6 +1239,7 @@ Missing or insufficient permissions.
 - [ ] Preserve key features (entrance, boss room, etc.)
 
 **2. Algorithm-Based Generation**:
+
 - [ ] Dungeon generation algorithms:
   - [ ] Binary Space Partitioning (BSP)
   - [ ] Cellular automata
@@ -1147,6 +1252,7 @@ Missing or insufficient permissions.
 - [ ] Terrain generation (heightmaps)
 
 **3. Rule-Based Generation**:
+
 - [ ] Define generation rules (min/max rooms, corridor length, etc.)
 - [ ] Architectural style selection
 - [ ] Theme selection (crypt, castle, mine, temple, etc.)
@@ -1155,6 +1261,7 @@ Missing or insufficient permissions.
 - [ ] Encounter density
 
 **4. Material-Based Generation**:
+
 - [ ] Provide tileset/assets
 - [ ] Generate map using only provided materials
 - [ ] Match style of provided materials
@@ -1162,6 +1269,7 @@ Missing or insufficient permissions.
 - [ ] Texture variation
 
 **Generation Parameters**:
+
 - [ ] Map size (width × height)
 - [ ] Room count (min/max)
 - [ ] Room size variation
@@ -1175,6 +1283,7 @@ Missing or insufficient permissions.
 - [ ] Complexity slider
 
 **Post-Generation Editing**:
+
 - [ ] Review generated map
 - [ ] Manual touch-ups in Map Builder
 - [ ] Regenerate specific sections
@@ -1183,6 +1292,7 @@ Missing or insufficient permissions.
 - [ ] Adjust lighting and ambiance
 
 **AI/ML Features** (Advanced):
+
 - [ ] Train on uploaded map collections
 - [ ] Learn DM's style preferences
 - [ ] Generate maps matching specific campaign aesthetic
@@ -1190,6 +1300,7 @@ Missing or insufficient permissions.
 - [ ] Optimize for party size/level
 
 **Generation Types**:
+
 - [ ] **Dungeon**: Rooms, corridors, multiple levels
 - [ ] **Cave**: Organic, irregular shapes
 - [ ] **Forest**: Trees, clearings, paths
@@ -1200,6 +1311,7 @@ Missing or insufficient permissions.
 - [ ] **Arena**: Combat-focused, symmetrical
 
 **Integration**:
+
 - [ ] Generate button in Map Builder
 - [ ] Generate from campaign creation
 - [ ] Batch generation (multiple maps at once)
@@ -1207,6 +1319,7 @@ Missing or insufficient permissions.
 - [ ] Template library of generated maps
 
 **Data Model**:
+
 ```
 /campaigns/{campaignId}/generatedMaps/{mapId}
   - generationType: string (dungeon, cave, etc.)
@@ -1221,6 +1334,7 @@ Missing or insufficient permissions.
 ```
 
 **Tasks**:
+
 - [ ] Research procedural generation algorithms
 - [ ] Implement BSP dungeon generation
 - [ ] Implement cellular automata cave generation
@@ -1242,6 +1356,7 @@ Missing or insufficient permissions.
 ---
 
 ### Token Builder Feature 🎭
+
 **Status**: ⏳ Not Started
 **Priority**: 🟠 High (Important customization tool)
 **Date Started**: TBD
@@ -1252,6 +1367,7 @@ Missing or insufficient permissions.
 **Core Features**:
 
 **Image Upload & Editing**:
+
 - [ ] Upload image (PNG, JPEG, SVG)
 - [ ] Drag-and-drop upload
 - [ ] URL import
@@ -1264,6 +1380,7 @@ Missing or insufficient permissions.
 - [ ] Flip horizontal/vertical
 
 **Token Shapes**:
+
 - [ ] Circle (standard player token)
 - [ ] Square
 - [ ] Rounded square
@@ -1272,6 +1389,7 @@ Missing or insufficient permissions.
 - [ ] Size presets (1x1, 2x2, 3x3, etc.)
 
 **Borders & Frames**:
+
 - [ ] Border thickness adjustment
 - [ ] Border color picker
 - [ ] Gradient borders
@@ -1281,6 +1399,7 @@ Missing or insufficient permissions.
 - [ ] Status ring/arc (HP indicator)
 
 **Text & Labels**:
+
 - [ ] Add text overlay
 - [ ] Token name display
 - [ ] Initiative number
@@ -1291,6 +1410,7 @@ Missing or insufficient permissions.
 - [ ] Text positioning
 
 **Icons & Badges**:
+
 - [ ] Status icons (poisoned, stunned, etc.)
 - [ ] Class icons
 - [ ] Level indicator
@@ -1300,6 +1420,7 @@ Missing or insufficient permissions.
 - [ ] Multiple icon support
 
 **Overlays & Effects**:
+
 - [ ] Aura/glow effects
 - [ ] Shadow effects
 - [ ] Particle effects (fire, ice, etc.)
@@ -1308,6 +1429,7 @@ Missing or insufficient permissions.
 - [ ] Animation frames (for animated tokens)
 
 **Templates & Presets**:
+
 - [ ] Character class templates (wizard, fighter, etc.)
 - [ ] Monster type templates (dragon, goblin, etc.)
 - [ ] NPC templates (merchant, guard, etc.)
@@ -1316,6 +1438,7 @@ Missing or insufficient permissions.
 - [ ] Quick apply presets
 
 **Token Library**:
+
 - [ ] Built-in token assets (monsters, NPCs, players)
 - [ ] Search and filter tokens
 - [ ] Categorization (by type, CR, etc.)
@@ -1324,6 +1447,7 @@ Missing or insufficient permissions.
 - [ ] Token collections/sets
 
 **Batch Creation**:
+
 - [ ] Create multiple variations
 - [ ] Number/letter series (Goblin 1, 2, 3)
 - [ ] Color variations (red dragon, blue dragon)
@@ -1331,6 +1455,7 @@ Missing or insufficient permissions.
 - [ ] Export batch as zip
 
 **Export Options**:
+
 - [ ] Save to campaign token library
 - [ ] Export as PNG (various sizes)
 - [ ] Export with transparency
@@ -1339,6 +1464,7 @@ Missing or insufficient permissions.
 - [ ] Download individual or batch
 
 **Integration**:
+
 - [ ] Use created tokens on map immediately
 - [ ] Assign to characters
 - [ ] Assign to monsters in encounters
@@ -1346,6 +1472,7 @@ Missing or insufficient permissions.
 - [ ] Share tokens with campaign members
 
 **Advanced Features**:
+
 - [ ] Multi-state tokens (different images per HP level)
 - [ ] Animated tokens (GIF support)
 - [ ] Token sets (facing directions)
@@ -1353,6 +1480,7 @@ Missing or insufficient permissions.
 - [ ] Furniture/object tokens
 
 **UI Components**:
+
 - [ ] Canvas preview (real-time)
 - [ ] Tool palette (left sidebar)
 - [ ] Layer panel
@@ -1363,6 +1491,7 @@ Missing or insufficient permissions.
 - [ ] History (undo/redo)
 
 **Data Model**:
+
 ```
 /campaigns/{campaignId}/customTokens/{tokenId}
   - name: string
@@ -1382,6 +1511,7 @@ Missing or insufficient permissions.
 ```
 
 **Tasks**:
+
 - [ ] Create TokenBuilder.js component
 - [ ] Implement image upload and processing
 - [ ] Build canvas-based editor
@@ -1406,10 +1536,12 @@ Missing or insufficient permissions.
 ## 🟡 Medium Priority
 
 ### Tooltips System ⏳
+
 **Status**: Partially Implemented (Party Panel done)
 **Files**: VTTSession.jsx, MapCanvas.jsx, MapToolbar.jsx
 
 **Pattern**:
+
 ```jsx
 <button
   data-tooltip="Tooltip text"
@@ -1418,6 +1550,7 @@ Missing or insufficient permissions.
 ```
 
 **VTT Toolbar Buttons** (VTTSession.jsx):
+
 - [ ] Maps button
 - [ ] Edit Token button
 - [ ] Player View button
@@ -1429,6 +1562,7 @@ Missing or insufficient permissions.
 - [ ] Exit button
 
 **Canvas Controls** (MapCanvas.jsx):
+
 - [ ] Zoom in button
 - [ ] Zoom out button
 - [ ] Fit to screen button
@@ -1436,6 +1570,7 @@ Missing or insufficient permissions.
 - [ ] Selection mode button
 
 **Map Toolbar** (MapToolbar.jsx):
+
 - [ ] Layer controls
 - [ ] Drawing tools
 - [ ] Measurement tools
@@ -1447,6 +1582,7 @@ Missing or insufficient permissions.
 ## 🟢 Low Priority / Future Enhancements
 
 ### Milestone Mode Enhancements ⏳
+
 **Status**: Core Complete, Enhancements Pending
 **Files**: PartyManagement.js, CampaignSettings.js
 
@@ -1458,6 +1594,7 @@ Missing or insufficient permissions.
 - [ ] Notification system for level-ups
 
 ### Inventory System Re-implementation ⏳
+
 **Status**: Removed, Awaiting Redesign
 **Files**: PartyManagement.js, CharacterSheet.js
 
@@ -1470,6 +1607,7 @@ Missing or insufficient permissions.
 - [ ] Add inventory to Party Panel (conditional)
 
 ### Per-Character Progression Override ⏳
+
 **Status**: Future Feature
 **Files**: CharacterSheet.js, CampaignSettings.js
 
@@ -1479,6 +1617,7 @@ Missing or insufficient permissions.
 - [ ] Track per-character progression type
 
 ### Custom Token Colors Per Campaign ⏳
+
 **Status**: CSS Variables Implemented, Customization Pending
 **Files**: CampaignSettings.js, App.css
 
@@ -1490,27 +1629,32 @@ Missing or insufficient permissions.
 - [ ] Reset to defaults button
 
 ### Advanced Combat Features ⏳
+
 **Status**: Not Started
 
 **Initiative Tracker**:
+
 - [ ] Add initiative rolls
 - [ ] Track turn order
 - [ ] Highlight active character
 - [ ] Auto-advance turns
 
 **Conditions & Status Effects**:
+
 - [ ] Apply conditions to tokens
 - [ ] Visual indicators on map
 - [ ] Track duration
 - [ ] Auto-remove expired conditions
 
 **Death Saves**:
+
 - [ ] Track death save successes/failures
 - [ ] Auto-stabilize at 3 successes
 - [ ] Auto-death at 3 failures
 - [ ] Reset on healing
 
 ### Fog of War Enhancements ⏳
+
 **Status**: Basic Implementation Complete
 
 - [x] Basic fog brush
@@ -1523,6 +1667,7 @@ Missing or insufficient permissions.
 - [ ] Revealed areas persist
 
 ### Map Library & Queue ⏳
+
 **Status**: Implemented, Enhancements Pending
 
 - [x] Map upload system
@@ -1535,6 +1680,7 @@ Missing or insufficient permissions.
 - [ ] Pre-configured lighting per map
 
 ### Audio & Ambience ⏳
+
 **Status**: Not Started
 
 - [ ] Background music player
@@ -1545,6 +1691,7 @@ Missing or insufficient permissions.
 - [ ] Audio sync for all players
 
 ### Dice Roller Integration ⏳
+
 **Status**: Not Started
 
 - [ ] In-session dice roller
@@ -1559,6 +1706,7 @@ Missing or insufficient permissions.
 ## 🔵 Technical Debt & Refactoring
 
 ### Complete Project Audit & Refactoring 🔍
+
 **Status**: ⏳ Not Started
 **Priority**: 🔵 Technical (High Impact)
 **Date Started**: TBD
@@ -1569,6 +1717,7 @@ Missing or insufficient permissions.
 **Audit Categories**:
 
 **1. Duplicate Code Detection**:
+
 - [ ] Identify duplicate logic across components
 - [ ] Extract common patterns into reusable hooks
 - [ ] Create shared utility functions
@@ -1577,6 +1726,7 @@ Missing or insufficient permissions.
 - [ ] Document common patterns
 
 **2. Firebase Cache Implementation Opportunities**:
+
 - [ ] Audit all Firestore queries
 - [ ] Identify uncached real-time listeners
 - [ ] Add caching to remaining components
@@ -1586,6 +1736,7 @@ Missing or insufficient permissions.
 - [ ] Add cache invalidation strategies
 
 **3. Remove Backwards Compatibility Hacks**:
+
 - [ ] Identify temporary fixes and workarounds
 - [ ] Remove deprecated code paths
 - [ ] Clean up migration code
@@ -1595,6 +1746,7 @@ Missing or insufficient permissions.
 - [ ] Document breaking changes
 
 **4. Data Model Streamlining**:
+
 - [ ] Audit Firestore collection structure
 - [ ] Identify redundant fields
 - [ ] Normalize data where appropriate
@@ -1605,6 +1757,7 @@ Missing or insufficient permissions.
 - [ ] Create migration plan for schema changes
 
 **5. Documentation Cleanup**:
+
 - [ ] Remove outdated documentation files
 - [ ] Consolidate similar docs
 - [ ] Update README with current features
@@ -1615,6 +1768,7 @@ Missing or insufficient permissions.
 - [ ] Archive old implementation notes
 
 **6. Code Quality Improvements**:
+
 - [ ] Remove unused imports
 - [ ] Remove dead code (unreachable)
 - [ ] Fix ESLint warnings
@@ -1625,6 +1779,7 @@ Missing or insufficient permissions.
 - [ ] Extract magic numbers to constants
 
 **7. Performance Optimizations**:
+
 - [ ] Identify expensive re-renders
 - [ ] Add React.memo where appropriate
 - [ ] Optimize expensive computations
@@ -1634,6 +1789,7 @@ Missing or insufficient permissions.
 - [ ] Remove unused dependencies
 
 **8. Architectural Improvements**:
+
 - [ ] Separate business logic from UI
 - [ ] Create consistent service layer
 - [ ] Standardize state management patterns
@@ -1643,6 +1799,7 @@ Missing or insufficient permissions.
 - [ ] Improve error boundaries
 
 **9. Testing Infrastructure**:
+
 - [ ] Add unit tests for critical paths
 - [ ] Test all service functions
 - [ ] Test custom hooks
@@ -1651,6 +1808,7 @@ Missing or insufficient permissions.
 - [ ] Improve test coverage reporting
 
 **10. Security Audit**:
+
 - [ ] Review Firestore security rules
 - [ ] Check for exposed secrets
 - [ ] Validate all user inputs
@@ -1660,6 +1818,7 @@ Missing or insufficient permissions.
 - [ ] Audit third-party dependencies
 
 **Tools to Use**:
+
 - [ ] ESLint for code quality
 - [ ] SonarQube for code analysis (optional)
 - [ ] Bundle analyzer for size optimization
@@ -1668,6 +1827,7 @@ Missing or insufficient permissions.
 - [ ] Lighthouse for overall performance
 
 **Deliverables**:
+
 - [ ] Audit report with findings
 - [ ] Prioritized refactoring task list
 - [ ] Updated documentation
@@ -1680,6 +1840,7 @@ Missing or insufficient permissions.
 ---
 
 ### Folder Structure & Organization Audit 🗂️
+
 **Status**: ⏳ Not Started
 **Priority**: 🔵 Technical (High Impact)
 **Date Started**: TBD
@@ -1690,6 +1851,7 @@ Missing or insufficient permissions.
 **Audit Areas**:
 
 **1. Folder Structure Analysis**:
+
 - [ ] Map current folder hierarchy
 - [ ] Identify redundant or confusing folder names
 - [ ] Check for inconsistent nesting levels
@@ -1698,6 +1860,7 @@ Missing or insufficient permissions.
 - [ ] Check for orphaned or unused folders
 
 **2. File Organization**:
+
 - [ ] Group related components together
 - [ ] Separate UI components from business logic
 - [ ] Organize by feature vs by type (decide on convention)
@@ -1706,6 +1869,7 @@ Missing or insufficient permissions.
 - [ ] Review service file organization
 
 **3. Import Path Analysis**:
+
 - [ ] Audit all import statements
 - [ ] Identify broken imports
 - [ ] Find circular dependencies
@@ -1714,6 +1878,7 @@ Missing or insufficient permissions.
 - [ ] Document import conventions
 
 **4. Consolidation Opportunities**:
+
 - [ ] Merge similar/related folders
 - [ ] Create feature-based folder structure
 - [ ] Consolidate utility functions
@@ -1722,6 +1887,7 @@ Missing or insufficient permissions.
 - [ ] Consolidate component folders
 
 **5. Naming Conventions**:
+
 - [ ] Standardize folder naming (camelCase vs PascalCase vs kebab-case)
 - [ ] Ensure consistent file naming
 - [ ] Review component naming conventions
@@ -1729,6 +1895,7 @@ Missing or insufficient permissions.
 - [ ] Check for naming conflicts
 
 **6. Module Organization**:
+
 - [ ] Create clear boundaries between modules
 - [ ] Separate concerns (UI, logic, data)
 - [ ] Group by domain (auth, campaigns, characters, etc.)
@@ -1736,6 +1903,7 @@ Missing or insufficient permissions.
 - [ ] Organize constants and types
 
 **Proposed Structure** (to be refined during audit):
+
 ```
 src/
 ├── components/
@@ -1755,6 +1923,7 @@ src/
 ```
 
 **Tasks**:
+
 - [ ] Create folder structure diagram (current state)
 - [ ] Identify all broken imports
 - [ ] Fix broken imports
@@ -1767,18 +1936,21 @@ src/
 - [ ] Create import path guide
 
 **Breaking Changes**:
+
 - [ ] Document all file moves
 - [ ] Update any external references
 - [ ] Check for hardcoded paths
 - [ ] Update build configuration if needed
 
 **Tools to Use**:
+
 - [ ] ESLint for unused imports
 - [ ] Madge for circular dependency detection
 - [ ] VS Code search for import analysis
 - [ ] Git for safe refactoring (track moves)
 
 **Deliverables**:
+
 - [ ] Current structure documentation
 - [ ] Proposed structure documentation
 - [ ] Migration guide
@@ -1790,6 +1962,7 @@ src/
 ---
 
 ### Component Architecture ⏳
+
 **Status**: Ongoing
 
 - [ ] Extract large components into smaller modules
@@ -1799,6 +1972,7 @@ src/
 - [ ] Loading states standardization
 
 ### Performance Optimization ⏳
+
 **Status**: As Needed
 
 - [ ] Memoize expensive computations
@@ -1809,6 +1983,7 @@ src/
 - [ ] Image optimization/compression
 
 ### Testing ⏳
+
 **Status**: Not Started
 
 - [ ] Unit tests for critical functions
@@ -1819,6 +1994,7 @@ src/
 - [ ] Test token operations
 
 ### Accessibility ⏳
+
 **Status**: Partial
 
 - [ ] Keyboard navigation
@@ -1833,14 +2009,17 @@ src/
 ## 🟣 Known Issues & Bugs
 
 ### High Priority Bugs 🐛
+
 - [ ] Chat message Options button not working
 
 ### Medium Priority Bugs 🐛
+
 - [ ] Portrait fallback image error handling (partially fixed)
 - [ ] Long usernames truncation on mobile
 - [ ] Modal scroll on mobile devices
 
 ### Low Priority Bugs 🐛
+
 - [ ] Tooltip positioning edge cases
 - [ ] Theme switching flash
 
@@ -1849,12 +2028,14 @@ src/
 ## 📝 Documentation Needs
 
 ### User Documentation ⏳
+
 - [ ] DM Guide (campaign setup, session management)
 - [ ] Player Guide (character creation, party panel)
 - [ ] Quick Start Guide
 - [ ] Video tutorials
 
 ### Developer Documentation ⏳
+
 - [ ] Component API reference
 - [ ] Firebase schema documentation
 - [ ] Service layer documentation
@@ -1865,6 +2046,7 @@ src/
 ## 🎨 UI/UX Improvements
 
 ### Design System ⏳
+
 - [ ] Consistent spacing system
 - [ ] Typography scale
 - [ ] Color palette documentation
@@ -1872,6 +2054,7 @@ src/
 - [ ] Icon system
 
 ### Mobile Responsiveness ⏳
+
 **Status**: Partially Complete
 
 - [x] Header responsive
@@ -1886,6 +2069,7 @@ src/
 ## 🔒 Security & Privacy
 
 ### Authentication & Authorization ⏳
+
 **Status**: Basic Implementation
 
 - [x] Firebase Auth
@@ -1896,6 +2080,7 @@ src/
 - [ ] CSRF protection
 
 ### Data Privacy ⏳
+
 - [ ] Privacy policy
 - [ ] Data export feature
 - [ ] Account deletion
@@ -1907,12 +2092,14 @@ src/
 ## 🚀 Deployment & Infrastructure
 
 ### CI/CD ⏳
+
 - [ ] Automated testing pipeline
 - [ ] Automated deployment
 - [ ] Environment management (dev/staging/prod)
 - [ ] Rollback strategy
 
 ### Monitoring ⏳
+
 - [ ] Error tracking (Sentry?)
 - [ ] Analytics (user behavior)
 - [ ] Performance monitoring
@@ -1923,7 +2110,8 @@ src/
 ## 💡 Feature Requests (Community/User)
 
 ### Requested Features
-*Track user-requested features here*
+
+_Track user-requested features here_
 
 - [ ] Character import from D&D Beyond
 - [ ] PDF character sheet export
@@ -1938,12 +2126,14 @@ src/
 ## 📊 Metrics & Analytics Goals
 
 ### User Engagement
+
 - [ ] Track active campaigns
 - [ ] Track session duration
 - [ ] Track feature usage
 - [ ] User retention metrics
 
 ### Performance
+
 - [ ] Page load time < 2s
 - [ ] Time to interactive < 3s
 - [ ] Lighthouse score > 90
@@ -1953,11 +2143,13 @@ src/
 ## 🔄 Migration & Backwards Compatibility
 
 ### Data Migrations Needed
+
 - [ ] Character sheet schema updates (if HP sync changes structure)
 - [ ] Token document schema updates (add characterId)
 - [ ] Campaign settings migration (add defaults)
 
 ### Backwards Compatibility Checks
+
 - [x] Progression system defaults to 'xp'
 - [x] Party management settings default to false
 - [x] Token colors fallback to hardcoded values
@@ -1968,9 +2160,11 @@ src/
 ## 📅 Release Planning
 
 ### Version 1.0 Goals
+
 **Target**: TBD
 
 **Must Have**:
+
 - [x] Basic VTT functionality
 - [x] Character sheets
 - [x] Party management
@@ -1981,12 +2175,14 @@ src/
 - [ ] Stable token system
 
 **Nice to Have**:
+
 - [ ] Token HP sync
 - [ ] Complete tooltip system
 - [ ] Initiative tracker
 - [ ] Audio system
 
 ### Version 1.1 Goals
+
 **Target**: TBD
 
 - [ ] Advanced fog of war
@@ -1999,7 +2195,9 @@ src/
 ## 🎯 Success Criteria
 
 ### Definition of Done
+
 For each feature to be considered complete:
+
 - [ ] Code implemented and tested
 - [ ] User-facing documentation created
 - [ ] Summary document written
@@ -2018,6 +2216,7 @@ When adding a new feature to this TODO:
 
 ```markdown
 ### Feature Name ⏳
+
 **Status**: Not Started
 **Priority**: High/Medium/Low
 **Files**: List relevant files
@@ -2026,6 +2225,7 @@ When adding a new feature to this TODO:
 **Description**: Brief description of feature
 
 **Tasks**:
+
 - [ ] Task 1
 - [ ] Task 2
 - [ ] Task 3
@@ -2060,6 +2260,7 @@ When adding a new feature to this TODO:
 ---
 
 ## Status Legend
+
 - ⏳ Not Started / Pending
 - 🔄 In Progress
 - ✅ Complete

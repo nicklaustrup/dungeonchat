@@ -20,9 +20,9 @@
  * ```
  */
 
-import { useCachedQuery, useCachedDocument } from './useCachedDocument';
-import { useFirebase } from '../FirebaseContext';
-import firestoreCache from './FirestoreCache';
+import { useCachedQuery, useCachedDocument } from "./useCachedDocument";
+import { useFirebase } from "../FirebaseContext";
+import firestoreCache from "./FirestoreCache";
 
 /**
  * Get all maps for a campaign (cached with real-time updates)
@@ -37,14 +37,15 @@ export function useCampaignMaps(campaignId, options = {}) {
   const queryFn = async () => {
     if (!campaignId) return [];
 
-    const { collection, query, orderBy, getDocs } = await import('firebase/firestore');
-    const mapsRef = collection(firestore, 'campaigns', campaignId, 'maps');
-    const q = query(mapsRef, orderBy('createdAt', 'desc'));
+    const { collection, query, orderBy, getDocs } =
+      await import("firebase/firestore");
+    const mapsRef = collection(firestore, "campaigns", campaignId, "maps");
+    const q = query(mapsRef, orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
   };
 
@@ -53,18 +54,13 @@ export function useCampaignMaps(campaignId, options = {}) {
     loading,
     error,
     refresh,
-    invalidate
-  } = useCachedQuery(
-    firestore,
-    queryFn,
-    `maps/campaign/${campaignId}`,
-    {
-      ttl: 10 * 60 * 1000, // 10 minutes (maps don't change frequently)
-      realtime: true,
-      disabled: !campaignId,
-      ...options
-    }
-  );
+    invalidate,
+  } = useCachedQuery(firestore, queryFn, `maps/campaign/${campaignId}`, {
+    ttl: 10 * 60 * 1000, // 10 minutes (maps don't change frequently)
+    realtime: true,
+    disabled: !campaignId,
+    ...options,
+  });
 
   return { maps, loading, error, refresh, invalidate };
 }
@@ -85,19 +81,14 @@ export function useCachedMap(campaignId, mapId, options = {}) {
     loading,
     error,
     refresh,
-    invalidate
-  } = useCachedDocument(
-    firestore,
-    'maps',
-    mapId,
-    {
-      ttl: 10 * 60 * 1000, // 10 minutes
-      realtime: true,
-      disabled: !campaignId || !mapId,
-      collectionPath: `campaigns/${campaignId}/maps`,
-      ...options
-    }
-  );
+    invalidate,
+  } = useCachedDocument(firestore, "maps", mapId, {
+    ttl: 10 * 60 * 1000, // 10 minutes
+    realtime: true,
+    disabled: !campaignId || !mapId,
+    collectionPath: `campaigns/${campaignId}/maps`,
+    ...options,
+  });
 
   return { map, loading, error, refresh, invalidate };
 }
@@ -116,9 +107,10 @@ export function useActiveMap(campaignId, options = {}) {
   const queryFn = async () => {
     if (!campaignId) return null;
 
-    const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
-    const mapsRef = collection(firestore, 'campaigns', campaignId, 'maps');
-    const q = query(mapsRef, where('isActive', '==', true), limit(1));
+    const { collection, query, where, getDocs, limit } =
+      await import("firebase/firestore");
+    const mapsRef = collection(firestore, "campaigns", campaignId, "maps");
+    const q = query(mapsRef, where("isActive", "==", true), limit(1));
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) return null;
@@ -126,7 +118,7 @@ export function useActiveMap(campaignId, options = {}) {
     const doc = snapshot.docs[0];
     return {
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     };
   };
 
@@ -135,18 +127,13 @@ export function useActiveMap(campaignId, options = {}) {
     loading,
     error,
     refresh,
-    invalidate
-  } = useCachedQuery(
-    firestore,
-    queryFn,
-    `maps/active/${campaignId}`,
-    {
-      ttl: 5 * 60 * 1000, // 5 minutes (active map changes more frequently)
-      realtime: true,
-      disabled: !campaignId,
-      ...options
-    }
-  );
+    invalidate,
+  } = useCachedQuery(firestore, queryFn, `maps/active/${campaignId}`, {
+    ttl: 5 * 60 * 1000, // 5 minutes (active map changes more frequently)
+    realtime: true,
+    disabled: !campaignId,
+    ...options,
+  });
 
   return { map, loading, error, refresh, invalidate };
 }
@@ -165,8 +152,8 @@ export function invalidateCampaignMaps(campaignId) {
   if (!campaignId) return;
 
   console.warn(
-    '%c[CACHE] 🗑️ INVALIDATE',
-    'background: #f59e0b; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+    "%c[CACHE] 🗑️ INVALIDATE",
+    "background: #f59e0b; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold",
     `maps/campaign/${campaignId}`
   );
 
@@ -185,8 +172,8 @@ export function invalidateMap(mapId, campaignId = null) {
   if (!mapId) return;
 
   console.warn(
-    '%c[CACHE] 🗑️ INVALIDATE',
-    'background: #f59e0b; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
+    "%c[CACHE] 🗑️ INVALIDATE",
+    "background: #f59e0b; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold",
     `maps/${mapId}`
   );
 
@@ -205,12 +192,12 @@ export function invalidateMap(mapId, campaignId = null) {
  */
 export function invalidateAllMaps() {
   console.warn(
-    '%c[CACHE] 🗑️ INVALIDATE ALL',
-    'background: #f59e0b; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold',
-    'maps/*'
+    "%c[CACHE] 🗑️ INVALIDATE ALL",
+    "background: #f59e0b; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold",
+    "maps/*"
   );
 
-  firestoreCache.invalidatePattern('maps/');
+  firestoreCache.invalidatePattern("maps/");
 }
 
 /**
@@ -222,7 +209,7 @@ const mapsCache = {
   useActiveMap,
   invalidateCampaignMaps,
   invalidateMap,
-  invalidateAllMaps
+  invalidateAllMaps,
 };
 
 export default mapsCache;

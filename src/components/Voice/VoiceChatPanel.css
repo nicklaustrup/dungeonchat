@@ -182,7 +182,9 @@
 .audio-level-bar {
   height: 100%;
   border-radius: 2px;
-  transition: width 0.1s ease, background-color 0.3s ease;
+  transition:
+    width 0.1s ease,
+    background-color 0.3s ease;
 }
 
 .connection-info {
@@ -320,7 +322,11 @@
 }
 
 .btn-toggle-ptt.active {
-  background: linear-gradient(135deg, rgba(46, 213, 115, 0.3) 0%, rgba(0, 184, 148, 0.3) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(46, 213, 115, 0.3) 0%,
+    rgba(0, 184, 148, 0.3) 100%
+  );
   border-color: #2ed573;
   color: #2ed573;
   font-weight: 700;
@@ -332,7 +338,11 @@
 }
 
 .btn-toggle-ptt.active:hover {
-  background: linear-gradient(135deg, rgba(46, 213, 115, 0.4) 0%, rgba(0, 184, 148, 0.4) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(46, 213, 115, 0.4) 0%,
+    rgba(0, 184, 148, 0.4) 100%
+  );
 }
 
 .btn-leave-voice {
@@ -556,14 +566,14 @@
     width: 40px;
     height: 40px;
   }
-  
+
   .voice-controls button {
     min-width: 100px;
     max-width: none;
     font-size: 12px;
     padding: 10px 12px;
   }
-  
+
   .voice-controls {
     flex-direction: column;
   }

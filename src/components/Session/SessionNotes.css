@@ -518,20 +518,20 @@
   .session-notes-content {
     grid-template-columns: 1fr;
   }
-  
+
   .session-list {
     max-height: 300px;
   }
-  
+
   .session-editor {
     max-height: none;
   }
-  
+
   .modal-content {
     min-width: 320px;
     margin: 1rem;
   }
-  
+
   .session-info {
     flex-direction: column;
     gap: 0.5rem;

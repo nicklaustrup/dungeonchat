@@ -53,7 +53,11 @@
   font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-color) 0%,
+    var(--primary-dark) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -295,7 +299,11 @@
 
 .auth-submit-button {
   padding: 16px 24px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-color) 0%,
+    var(--primary-dark) 100%
+  );
   color: white;
   border: none;
   border-radius: 12px;
@@ -441,7 +449,7 @@
     align-items: flex-start;
     padding-top: 40px;
   }
-  
+
   .theme-toggle-btn {
     top: 16px;
     right: 16px;
@@ -449,20 +457,20 @@
     height: 44px;
     font-size: 18px;
   }
-  
+
   .sign-in-card {
     /* padding: 32px 24px; */
     border-radius: 12px;
   }
-  
+
   .sign-in-header h1 {
     font-size: 24px;
   }
-  
+
   .oauth-buttons {
     grid-template-columns: 1fr;
   }
-  
+
   .auth-oauth-button {
     padding: 14px 16px;
   }

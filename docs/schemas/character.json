@@ -3,7 +3,15 @@
   "title": "Character",
   "description": "D&D 5e character sheet",
   "type": "object",
-  "required": ["id", "name", "userId", "campaignId", "class", "level", "createdAt"],
+  "required": [
+    "id",
+    "name",
+    "userId",
+    "campaignId",
+    "class",
+    "level",
+    "createdAt"
+  ],
   "properties": {
     "id": {
       "type": "string",
@@ -25,7 +33,20 @@
     },
     "class": {
       "type": "string",
-      "enum": ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard"],
+      "enum": [
+        "Barbarian",
+        "Bard",
+        "Cleric",
+        "Druid",
+        "Fighter",
+        "Monk",
+        "Paladin",
+        "Ranger",
+        "Rogue",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
       "description": "Character class"
     },
     "level": {
@@ -57,7 +78,14 @@
         "wisdom": { "type": "number", "minimum": 1, "maximum": 30 },
         "charisma": { "type": "number", "minimum": 1, "maximum": 30 }
       },
-      "required": ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]
+      "required": [
+        "strength",
+        "dexterity",
+        "constitution",
+        "intelligence",
+        "wisdom",
+        "charisma"
+      ]
     },
     "hitPoints": {
       "type": "object",
@@ -130,7 +158,10 @@
         "properties": {
           "name": { "type": "string" },
           "description": { "type": "string" },
-          "source": { "type": "string", "description": "Class, race, or feat source" }
+          "source": {
+            "type": "string",
+            "description": "Class, race, or feat source"
+          }
         }
       }
     },

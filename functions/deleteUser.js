@@ -57,7 +57,8 @@ exports.deleteUser = onCall(async (request) => {
     // 2. Delete username entry
     console.log("Deleting username entry...");
     if (userProfile.exists() && userProfile.data().username) {
-      const usernameRef = db.collection("usernames")
+      const usernameRef = db
+          .collection("usernames")
           .doc(userProfile.data().username);
       batch.delete(usernameRef);
       deletionResults.collections.username = true;
@@ -123,12 +124,14 @@ async function cleanupCampaignData(userId, deletionResults) {
   };
 
   // Get all campaigns where user is DM
-  const ownedCampaignsQuery = db.collection("campaigns")
+  const ownedCampaignsQuery = db
+      .collection("campaigns")
       .where("dmId", "==", userId);
   const ownedCampaigns = await ownedCampaignsQuery.get();
 
   // Get all campaigns where user is a member
-  const memberCampaignsQuery = db.collectionGroup("members")
+  const memberCampaignsQuery = db
+      .collectionGroup("members")
       .where("userId", "==", userId);
   const memberDocs = await memberCampaignsQuery.get();
 
@@ -159,7 +162,8 @@ async function cleanupCampaignData(userId, deletionResults) {
   }
 
   // Delete user's character sheets across all campaigns
-  const charactersQuery = db.collectionGroup("characters")
+  const charactersQuery = db
+      .collectionGroup("characters")
       .where("userId", "==", userId);
   const characters = await charactersQuery.get();
 
@@ -222,7 +226,8 @@ async function removeUserFromCampaign(campaignId, userId) {
   });
 
   // Delete user's tokens in campaign VTT maps
-  const tokensQuery = db.collectionGroup("tokens")
+  const tokensQuery = db
+      .collectionGroup("tokens")
       .where("ownerId", "==", userId);
   const tokens = await tokensQuery.get();
 

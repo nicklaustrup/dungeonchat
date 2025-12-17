@@ -5,22 +5,26 @@ Custom React hooks for DungeonChat. These hooks encapsulate Firebase subscriptio
 ## Categories
 
 ### Authentication & User
+
 - `useAuth.js` - Firebase authentication state
 - `useUserProfile.js` - Current user's profile data
 - `usePresence.js` - Real-time user presence tracking
 
 ### Campaign & Chat
+
 - `useCampaign.js` - Campaign data and operations
 - `useCampaignMembers.js` - Campaign member list with real-time updates
 - `useCampaignChatContext.js` - Chat context for campaign messages
 - `useMessages.js` - Message subscription and pagination
 
 ### Scroll & Pagination
+
 - `useAutoScrollV2.js` - ⭐ Primary scroll behavior for chat
 - `useInfiniteScrollTop.js` - ⭐ Top-loading pagination for messages
 - `scrollDebugUtils.js` - Debug utilities for scroll behavior
 
 ### VTT (Virtual Tabletop)
+
 - `useVTTCanvas.js` - VTT canvas state and operations
 - `useTokens.js` - Token management and real-time sync
 - `useMaps.js` - Map loading and management
@@ -28,11 +32,13 @@ Custom React hooks for DungeonChat. These hooks encapsulate Firebase subscriptio
 - `useLighting.js` - Dynamic lighting calculations
 
 ### Performance & Caching
+
 - `useCampaignCache.js` - Cached campaign data
 - `useDebounce.js` - Debounce values for performance
 - `useThrottle.js` - Throttle function calls
 
 ### UI & Interaction
+
 - `useTypingIndicator.js` - Typing indicator management
 - `useReactions.js` - Message reactions
 - `useDiceRoller.js` - Dice rolling logic
@@ -40,17 +46,20 @@ Custom React hooks for DungeonChat. These hooks encapsulate Firebase subscriptio
 ## Critical Hooks
 
 ### `useAutoScrollV2.js`
+
 The primary scroll behavior hook for chat. Handles auto-scroll, scroll-to-bottom, and user scroll detection.
 
 **Usage:**
+
 ```javascript
 const { scrollContainerRef, isAtBottom, scrollToBottom } = useAutoScrollV2({
   messages,
-  shouldScrollOnNewMessage: true
+  shouldScrollOnNewMessage: true,
 });
 ```
 
 **Key behaviors:**
+
 - Auto-scrolls when new messages arrive (if user is at bottom)
 - Detects user scroll and disables auto-scroll
 - Provides scroll-to-bottom function
@@ -59,23 +68,21 @@ const { scrollContainerRef, isAtBottom, scrollToBottom } = useAutoScrollV2({
 **Testing:** See `__tests__/useAutoScrollV2.test.js`
 
 ### `useInfiniteScrollTop.js`
+
 Handles pagination by loading older messages when scrolling to top.
 
 **Usage:**
+
 ```javascript
-const { 
-  messages, 
-  loading, 
-  hasMore, 
-  loadMore,
-  scrollContainerRef 
-} = useInfiniteScrollTop({
-  campaignId,
-  limit: 50
-});
+const { messages, loading, hasMore, loadMore, scrollContainerRef } =
+  useInfiniteScrollTop({
+    campaignId,
+    limit: 50,
+  });
 ```
 
 **Key behaviors:**
+
 - Loads messages in batches
 - Triggers load when scrolling near top
 - Maintains scroll position after load
@@ -84,14 +91,17 @@ const {
 **Testing:** See `__tests__/useInfiniteScrollTop.test.js`
 
 ### `useAuth.js`
+
 Manages Firebase authentication state.
 
 **Usage:**
+
 ```javascript
 const { user, loading, error } = useAuth();
 ```
 
 **Returns:**
+
 - `user` - Firebase user object or null
 - `loading` - True while auth state initializes
 - `error` - Error object if auth fails
@@ -99,6 +109,7 @@ const { user, loading, error } = useAuth();
 ## Hook Patterns
 
 ### Firebase Subscription Pattern
+
 ```javascript
 import { useEffect, useState } from 'react';
 import { onSnapshot, collection } from 'firebase/firestore';
@@ -112,7 +123,7 @@ export function useCollection(collectionPath) {
     const unsubscribe = onSnapshot(
       collection(firestore, collectionPath),
       (snapshot) => {
-        setData(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setData(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
         setLoading(false);
       },
       (err) => {
@@ -129,11 +140,13 @@ export function useCollection(collectionPath) {
 ```
 
 ### Cleanup Pattern
+
 Always cleanup subscriptions and timers:
+
 ```javascript
 useEffect(() => {
   const unsubscribe = subscribeToData();
-  
+
   return () => {
     unsubscribe();
   };
@@ -141,13 +154,15 @@ useEffect(() => {
 ```
 
 ### Debounce Pattern
+
 Use for expensive operations:
+
 ```javascript
 import { useDebounce } from './useDebounce';
 
 export function useSearch(query) {
   const debouncedQuery = useDebounce(query, 500);
-  
+
   useEffect(() => {
     if (debouncedQuery) {
       performSearch(debouncedQuery);
@@ -157,7 +172,9 @@ export function useSearch(query) {
 ```
 
 ### Ref Pattern for Scroll
+
 Use refs to avoid re-renders:
+
 ```javascript
 export function useAutoScroll() {
   const scrollRef = useRef(null);
@@ -166,7 +183,7 @@ export function useAutoScroll() {
   const scrollToBottom = useCallback(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
-      behavior: 'smooth'
+      behavior: 'smooth',
     });
   }, []);
 
@@ -177,7 +194,9 @@ export function useAutoScroll() {
 ## Testing Hooks
 
 ### Unit Testing
+
 Use React Testing Library's `renderHook`:
+
 ```javascript
 import { renderHook } from '@testing-library/react';
 import { useAutoScrollV2 } from '../useAutoScrollV2';
@@ -189,15 +208,18 @@ test('scrolls to bottom on new message', () => {
 ```
 
 ### Mocking Firebase
+
 Mock Firebase in tests:
+
 ```javascript
 jest.mock('../services/firebase', () => ({
   firestore: mockFirestore,
-  auth: mockAuth
+  auth: mockAuth,
 }));
 ```
 
 ### Integration Testing
+
 Test with Firebase emulators for real Firebase behavior.
 
 ## Adding a New Hook
@@ -212,7 +234,9 @@ Test with Firebase emulators for real Firebase behavior.
 ## Common Issues
 
 ### Infinite Loops
+
 Avoid missing dependencies in useEffect:
+
 ```javascript
 // ❌ Bad: missing dependency
 useEffect(() => {
@@ -226,7 +250,9 @@ useEffect(() => {
 ```
 
 ### Memory Leaks
+
 Always cleanup subscriptions:
+
 ```javascript
 // ❌ Bad: no cleanup
 useEffect(() => {
@@ -241,7 +267,9 @@ useEffect(() => {
 ```
 
 ### Stale Closures
+
 Use refs for values that shouldn't trigger re-renders:
+
 ```javascript
 // ❌ Bad: callback has stale values
 const callback = useCallback(() => {

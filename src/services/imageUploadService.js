@@ -1,6 +1,10 @@
 // Image upload & compression service
 // Handles client-side compression and Firebase Storage upload.
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
 
 /**
  * Compress an image file to a JPEG Blob with smart heuristics to preserve visual quality.
@@ -17,7 +21,10 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage
  * @param {number} options.quality - JPEG quality 0..1
  * @returns {Promise<Blob|File>} compressed blob or original file (if skipped)
  */
-export function compressImage(file, { maxWidth = 1600, maxHeight = 1600, quality = 0.9 } = {}) {
+export function compressImage(
+  file,
+  { maxWidth = 1600, maxHeight = 1600, quality = 0.9 } = {}
+) {
   return new Promise((resolve, reject) => {
     try {
       // Heuristic: skip compression for very small files (< 1MB) or already small dimensions.
@@ -25,23 +32,32 @@ export function compressImage(file, { maxWidth = 1600, maxHeight = 1600, quality
         // Return original to preserve animation / avoid needless quality loss.
         return resolve(file);
       }
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
       const img = new Image();
       const objectUrl = URL.createObjectURL(file);
       img.onload = () => {
         try {
-          const scale = Math.min(1, maxWidth / img.width, maxHeight / img.height);
+          const scale = Math.min(
+            1,
+            maxWidth / img.width,
+            maxHeight / img.height
+          );
           canvas.width = Math.round(img.width * scale);
           canvas.height = Math.round(img.height * scale);
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          canvas.toBlob((blob) => {
-            URL.revokeObjectURL(objectUrl);
-            if (blob) resolve(blob); else resolve(file); // fallback to original file if blob null
-          }, 'image/jpeg', quality);
+          canvas.toBlob(
+            (blob) => {
+              URL.revokeObjectURL(objectUrl);
+              if (blob) resolve(blob);
+              else resolve(file); // fallback to original file if blob null
+            },
+            "image/jpeg",
+            quality
+          );
         } catch (err) {
           URL.revokeObjectURL(objectUrl);
-          console.error('compressImage processing error', err);
+          console.error("compressImage processing error", err);
           resolve(file); // fallback silently
         }
       };
@@ -51,7 +67,7 @@ export function compressImage(file, { maxWidth = 1600, maxHeight = 1600, quality
       };
       img.src = objectUrl;
     } catch (outer) {
-      console.error('compressImage setup error', outer);
+      console.error("compressImage setup error", outer);
       resolve(file);
     }
   });
@@ -75,7 +91,7 @@ export async function uploadImage({ storage, file, uid }) {
     const downloadURL = await getDownloadURL(imageStorageRef);
     return downloadURL;
   } catch (error) {
-    console.error('uploadImage error:', error);
+    console.error("uploadImage error:", error);
     return null;
   }
 }

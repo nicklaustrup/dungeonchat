@@ -1,17 +1,17 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import ChatPage from '../pages/ChatPage';
-import LandingPage from '../components/Landing/LandingPage';
-import CampaignBrowser from '../components/Campaign/CampaignBrowser';
-import CampaignDashboard from '../components/Campaign/CampaignDashboard';
-import CampaignCreator from '../components/Campaign/CampaignCreator';
-import CampaignPreview from '../components/Campaign/CampaignPreview';
-import VoiceChatDemo from '../pages/VoiceChatDemo/VoiceChatDemo';
-import MapEditorPage from '../pages/MapEditorPage';
-import VTTSession from '../components/VTT/VTTSession/VTTSession';
-import AppNavigation from '../components/Navigation/AppNavigation';
-import Breadcrumb from '../components/Navigation/Breadcrumb';
-import { useFirebase } from '../services/FirebaseContext';
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import ChatPage from "../pages/ChatPage";
+import LandingPage from "../components/Landing/LandingPage";
+import CampaignBrowser from "../components/Campaign/CampaignBrowser";
+import CampaignDashboard from "../components/Campaign/CampaignDashboard";
+import CampaignCreator from "../components/Campaign/CampaignCreator";
+import CampaignPreview from "../components/Campaign/CampaignPreview";
+import VoiceChatDemo from "../pages/VoiceChatDemo/VoiceChatDemo";
+import MapEditorPage from "../pages/MapEditorPage";
+import VTTSession from "../components/VTT/VTTSession/VTTSession";
+import AppNavigation from "../components/Navigation/AppNavigation";
+import Breadcrumb from "../components/Navigation/Breadcrumb";
+import { useFirebase } from "../services/FirebaseContext";
 
 function AppRouter() {
   const { user } = useFirebase();
@@ -29,40 +29,46 @@ function AppRouter() {
         <Routes>
           {/* Landing page - default route */}
           <Route path="/" element={<LandingPage />} />
-          
+
           {/* Lobby - existing general chat */}
           <Route path="/lobby" element={<ChatPage showHeader={false} />} />
           <Route path="/voice-demo" element={<VoiceChatDemo />} />
-<Route path="/voice-demo/:campaignId" element={<VoiceChatDemo />} />
-          
+          <Route path="/voice-demo/:campaignId" element={<VoiceChatDemo />} />
+
           {/* Campaign routes */}
           <Route path="/campaigns" element={<CampaignBrowser />} />
-          <Route path="/campaigns/:campaignId/preview" element={<CampaignPreview />} />
+          <Route
+            path="/campaigns/:campaignId/preview"
+            element={<CampaignPreview />}
+          />
           <Route path="/create-campaign" element={<CampaignCreator />} />
-          <Route 
-            path="/campaign/:campaignId" 
-            element={<CampaignDashboard />} 
+          <Route path="/campaign/:campaignId" element={<CampaignDashboard />} />
+          <Route
+            path="/campaign/:campaignId/chat"
+            element={<ChatPage campaignContext={true} showHeader={false} />}
           />
-          <Route 
-            path="/campaign/:campaignId/chat" 
-            element={<ChatPage campaignContext={true} showHeader={false} />} 
+          <Route
+            path="/campaign/:campaignId/chat/:channelId"
+            element={<ChatPage campaignContext={true} showHeader={false} />}
           />
-          <Route 
-            path="/campaign/:campaignId/chat/:channelId" 
-            element={<ChatPage campaignContext={true} showHeader={false} />} 
-          />
-          
+
           {/* Voice Chat Demo */}
           <Route path="/voice-demo" element={<VoiceChatDemo />} />
           <Route path="/voice-demo/:campaignId" element={<VoiceChatDemo />} />
-          
+
           {/* VTT Map Editor */}
           <Route path="/map-editor" element={<MapEditorPage />} />
-          <Route path="/campaign/:campaignId/map-editor" element={<MapEditorPage />} />
-          
+          <Route
+            path="/campaign/:campaignId/map-editor"
+            element={<MapEditorPage />}
+          />
+
           {/* VTT Session Room */}
-          <Route path="/campaign/:campaignId/session" element={<VTTSession />} />
-          
+          <Route
+            path="/campaign/:campaignId/session"
+            element={<VTTSession />}
+          />
+
           {/* Fallback to lobby */}
           <Route path="*" element={<Navigate to="/lobby" replace />} />
         </Routes>

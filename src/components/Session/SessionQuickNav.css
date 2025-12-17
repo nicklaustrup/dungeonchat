@@ -39,7 +39,11 @@
   font-size: 0.85rem;
   cursor: pointer;
   position: relative;
-  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
   color: var(--sqn-btn-text);
 }
 
@@ -51,7 +55,9 @@
   background: var(--sqn-btn-active-bg);
   color: var(--sqn-btn-text-active);
   border-color: var(--sqn-btn-active-bg);
-  box-shadow: 0 0 0 1px var(--sqn-btn-active-bg), 0 2px 4px rgba(0,0,0,0.15);
+  box-shadow:
+    0 0 0 1px var(--sqn-btn-active-bg),
+    0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .session-quick-nav .quick-nav-btn:focus-visible {
@@ -108,7 +114,9 @@
   background: var(--sqn-btn-active-bg);
   border-color: var(--sqn-btn-active-bg);
   color: var(--sqn-btn-text-active);
-  box-shadow: 0 0 0 1px var(--sqn-btn-active-bg), 0 2px 4px rgba(0,0,0,0.15);
+  box-shadow:
+    0 0 0 1px var(--sqn-btn-active-bg),
+    0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 /* Accessibility: high contrast focus outline already added */

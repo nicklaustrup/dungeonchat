@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 /**
  * useMessageSearch
@@ -12,7 +12,7 @@ import React from 'react';
 export function useMessageSearch(messages, searchTerm) {
   // Cache search results to avoid re-filtering when messages reference is the same
   const searchCacheRef = React.useRef(new Map());
-  
+
   return React.useMemo(() => {
     if (!messages) return [];
     if (!searchTerm) {
@@ -23,14 +23,14 @@ export function useMessageSearch(messages, searchTerm) {
 
     const term = searchTerm.toLowerCase();
     const cacheKey = `${messages.length}-${term}`;
-    
+
     // Check cache first
     if (searchCacheRef.current.has(cacheKey)) {
       return searchCacheRef.current.get(cacheKey);
     }
 
-    const filtered = messages.filter(msg => {
-      if (!msg.text || typeof msg.text !== 'string') return false;
+    const filtered = messages.filter((msg) => {
+      if (!msg.text || typeof msg.text !== "string") return false;
       return msg.text.toLowerCase().includes(term);
     });
 

@@ -1,31 +1,41 @@
-import React from 'react';
-import { useFirebase } from '../../services/FirebaseContext';
-import { useChatReply } from '../../contexts/ChatStateContext';
-import { playReceiveMessageSound } from '../../utils/sound';
-import { useDragAndDropImages } from '../../hooks/useDragAndDropImages';
+import React from "react";
+import { useFirebase } from "../../services/FirebaseContext";
+import { useChatReply } from "../../contexts/ChatStateContext";
+import { playReceiveMessageSound } from "../../utils/sound";
+import { useDragAndDropImages } from "../../hooks/useDragAndDropImages";
 // import { useTypingUsers } from '../../hooks/useTypingUsers'; // currently unused
-import { useChatMessages } from '../../hooks/useChatMessages';
-import { useUnifiedScrollManager } from '../../hooks/useUnifiedScrollManager';
-import { useInfiniteScrollTop } from '../../hooks/useInfiniteScrollTop';
-import { useMessageSearch } from '../../hooks/useMessageSearch';
-import DragOverlay from './DragOverlay';
-import MessageList from './MessageList';
+import { useChatMessages } from "../../hooks/useChatMessages";
+import { useUnifiedScrollManager } from "../../hooks/useUnifiedScrollManager";
+import { useInfiniteScrollTop } from "../../hooks/useInfiniteScrollTop";
+import { useMessageSearch } from "../../hooks/useMessageSearch";
+import DragOverlay from "./DragOverlay";
+import MessageList from "./MessageList";
 
-function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, onViewProfile, onScrollMeta, soundEnabled = true, campaignId = null, channelId = 'general' }) {
+function ChatRoom({
+  getDisplayName,
+  searchTerm,
+  onDragStateChange,
+  onImageDrop,
+  onViewProfile,
+  onScrollMeta,
+  soundEnabled = true,
+  campaignId = null,
+  channelId = "general",
+}) {
   const { firestore, auth /* rtdb */ } = useFirebase();
   const dummy = React.useRef();
   const mainRef = React.useRef();
-  
+
   // Use centralized reply state instead of prop drilling
   const { replyingTo, setReplyingTo } = useChatReply();
   // Allow deeper history than the previous hard cap of 100. Defaults to 1000 (configurable via env).
   const historyCap = Number(process.env.REACT_APP_CHAT_MAX_HISTORY) || 1000; // can be raised safely; consider virtualization > ~1500
-  const { messages, loadMore, hasMore } = useChatMessages({ 
-    firestore, 
-    campaignId, 
+  const { messages, loadMore, hasMore } = useChatMessages({
+    firestore,
+    campaignId,
     channelId,
-    limitBatchSize: 25, 
-    maxLimit: historyCap 
+    limitBatchSize: 25,
+    maxLimit: historyCap,
   });
 
   // const typingUsers = useTypingUsers({ rtdb, currentUid: auth.currentUser?.uid }); // reserved for future feature
@@ -49,12 +59,12 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
   }, [messages, auth, soundEnabled]);
 
   // Unified scroll management (replaces useAutoScrollV2 + useScrollPrependRestoration)
-  const { 
-    isAtBottom, 
-    hasNewMessages, 
-    newMessagesCount, 
-    scrollToBottom, 
-    captureBeforeLoadMore 
+  const {
+    isAtBottom,
+    hasNewMessages,
+    newMessagesCount,
+    scrollToBottom,
+    captureBeforeLoadMore,
   } = useUnifiedScrollManager({
     containerRef: mainRef,
     anchorRef: dummy,
@@ -64,7 +74,7 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
 
   // Debug logging
   React.useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       // Debug logging removed for performance
     }
   }, [isAtBottom, hasNewMessages, newMessagesCount, sortedMessages.length]);
@@ -91,7 +101,7 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
       debugWithinReadZone: withinReadZone,
       debugIsAtBottom: isAtBottom,
       debugEffectiveAtBottom: effectiveAtBottom,
-      debugThreshold: bottomThreshold
+      debugThreshold: bottomThreshold,
     };
 
     // Shallow compare against last meaningful snapshot to avoid parent updates
@@ -101,14 +111,17 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
       changed = true;
     } else {
       for (const k in nextMeta) {
-        if (nextMeta[k] !== prev[k]) { changed = true; break; }
+        if (nextMeta[k] !== prev[k]) {
+          changed = true;
+          break;
+        }
       }
     }
     if (!changed) return;
     lastMetaRef.current = nextMeta;
     onScrollMeta(nextMeta);
-  // Intentionally exclude onScrollMeta from dependency array to avoid infinite loops
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Intentionally exclude onScrollMeta from dependency array to avoid infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAtBottom, hasNewMessages, newMessagesCount, scrollToBottom]);
 
   const filteredMessages = useMessageSearch(sortedMessages, searchTerm);
@@ -141,10 +154,14 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
     }
   }, [messages, hasMore, wrappedLoadMore]);
 
-  const { isDragActive, imageReady: imageDragReady, bind: dragBind } = useDragAndDropImages({
+  const {
+    isDragActive,
+    imageReady: imageDragReady,
+    bind: dragBind,
+  } = useDragAndDropImages({
     onImage: onImageDrop,
     onImages: onImageDrop, // Use the same handler for both single and multiple
-    onStateChange: onDragStateChange
+    onStateChange: onDragStateChange,
   });
 
   // Manage transient 'scrolling' class so CSS can reveal scrollbar while in motion
@@ -153,23 +170,25 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
     if (!el) return;
     let scrollingTimeout;
     const handleScroll = () => {
-      if (!el.classList.contains('scrolling')) {
-        el.classList.add('scrolling');
+      if (!el.classList.contains("scrolling")) {
+        el.classList.add("scrolling");
       }
       clearTimeout(scrollingTimeout);
       scrollingTimeout = setTimeout(() => {
-        el.classList.remove('scrolling');
+        el.classList.remove("scrolling");
       }, 650); // delay before hiding again after user stops
     };
-    el.addEventListener('scroll', handleScroll, { passive: true });
+    el.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
-      el.removeEventListener('scroll', handleScroll);
+      el.removeEventListener("scroll", handleScroll);
       clearTimeout(scrollingTimeout);
     };
   }, []);
 
   return (
-    <div className={`chatroom-wrapper ${isDragActive ? 'drag-active' : ''} ${imageDragReady ? 'drag-ready' : ''}`.trim()}>
+    <div
+      className={`chatroom-wrapper ${isDragActive ? "drag-active" : ""} ${imageDragReady ? "drag-ready" : ""}`.trim()}
+    >
       <main
         ref={mainRef}
         {...dragBind}
@@ -179,7 +198,6 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
         aria-label="Chat messages"
         tabIndex={-1}
       >
-
         <MessageList
           messages={filteredMessages}
           searchTerm={searchTerm}
@@ -189,42 +207,55 @@ function ChatRoom({ getDisplayName, searchTerm, onDragStateChange, onImageDrop, 
           showTyping={false}
           typingUsers={[]}
           campaignId={campaignId}
-          topSentinel={hasMore ? (
-            <div
-              ref={sentinelRef}
-              className={`load-older-sentinel ${loadingOlder ? 'active' : ''}`}
-              style={{
-                height: loadingOlder ? '36px' : '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative'
-              }}
-            >
-              {loadingOlder && (
-                <>
-                  <span className="loading-older-spinner" aria-hidden="true" />
-                  <span className="loading-older-label" aria-live="polite">Loading older messages…</span>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="history-start-marker" aria-label="Start of conversation">
-              <span className="history-start-line" />
-              <span className="history-start-text">Start of conversation</span>
-              <span className="history-start-line" />
-            </div>
-          )}
+          topSentinel={
+            hasMore ? (
+              <div
+                ref={sentinelRef}
+                className={`load-older-sentinel ${loadingOlder ? "active" : ""}`}
+                style={{
+                  height: loadingOlder ? "36px" : "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                }}
+              >
+                {loadingOlder && (
+                  <>
+                    <span
+                      className="loading-older-spinner"
+                      aria-hidden="true"
+                    />
+                    <span className="loading-older-label" aria-live="polite">
+                      Loading older messages…
+                    </span>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div
+                className="history-start-marker"
+                aria-label="Start of conversation"
+              >
+                <span className="history-start-line" />
+                <span className="history-start-text">
+                  Start of conversation
+                </span>
+                <span className="history-start-line" />
+              </div>
+            )
+          }
           bottomAnchorRef={dummy}
         />
         {/* ScrollToBottomButton lifted to parent overlay */}
         <div className="sr-only" aria-live="polite" aria-atomic="true">
-          {hasNewMessages && `${newMessagesCount} new message${newMessagesCount > 1 ? 's' : ''} available`}
+          {hasNewMessages &&
+            `${newMessagesCount} new message${newMessagesCount > 1 ? "s" : ""} available`}
         </div>
       </main>
       <DragOverlay active={isDragActive} ready={imageDragReady} />
     </div>
-  )
+  );
 }
 
 export default ChatRoom;

@@ -3,27 +3,174 @@
  * Styles specific to the message options menu (context actions & inline quick reaction buttons inside the menu).
  * Separation intent: keep menu positioning / animation & interactive affordances isolated from core message layout.
  */
-.message-menu-wrapper { position: relative; display: inline-block; }
-.message-menu-trigger { font-weight: 600; }
-.message-menu { position: fixed; background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 14px; padding: 10px 14px; min-width: 240px; box-shadow: 0 10px 32px rgba(0,0,0,0.55), 0 4px 10px rgba(0,0,0,0.35); display: flex; flex-direction: column; gap: 4px; z-index: 1200; opacity: 0; transform: translateY(-4px) scale(.96); animation: menuPopDown .28s cubic-bezier(.22,1.2,.42,1) forwards; max-height: calc(100vh - 16px); overflow-y: auto; backdrop-filter: blur(4px) saturate(140%); }
-.message-menu.mode-up { animation-name: menuPopUp; transform-origin: bottom right; }
-.message-menu.mode-down { animation-name: menuPopDown; transform-origin: top right; }
-.message-menu.mode-middle, .message-menu.mode-side { animation-name: menuPopMiddle; transform-origin: center; }
-.message-menu.measuring { visibility: hidden; opacity: 0 !important; }
-.message-menu.ready { visibility: visible; }
-@keyframes menuPopUp { 0% { opacity:0; transform: translateY(6px) scale(.94);} 60% { opacity:1; transform: translateY(-2px) scale(1.02);} 100% { opacity:1; transform: translateY(0) scale(1);} }
-@keyframes menuPopDown { 0% { opacity:0; transform: translateY(-6px) scale(.94);} 60% { opacity:1; transform: translateY(2px) scale(1.02);} 100% { opacity:1; transform: translateY(0) scale(1);} }
-@keyframes menuPopMiddle { 0% { opacity:0; transform: scale(.9);} 60% { opacity:1; transform: scale(1.03);} 100% { opacity:1; transform: scale(1);} }
-.menu-reactions-row { display:flex; gap:8px; flex-wrap:nowrap; }
-.menu-reaction-btn { background: var(--bg-secondary); border:1px solid var(--border-color); width:40px; height:40px; border-radius:8px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: background .18s ease, border-color .18s ease; }
-.menu-reaction-btn:hover { background: var(--primary-color); color:#fff; border-color: var(--primary-color); }
-.menu-divider { height:1px; background: var(--border-color); margin:6px 0; }
-.menu-item { background:transparent; color: var(--text-color); border:none; border-radius:8px; padding:8px 10px; font-size:12px; cursor:pointer; opacity:.85; transition: background .18s ease, color .18s ease, opacity .18s ease; display:flex; align-items:center; justify-content:space-between; gap:16px; }
-.menu-item+.menu-item { border-top:1px solid var(--border-color); }
-.menu-item:hover:not([disabled]) { background: var(--primary-color); color:#fff; opacity:1; }
-.menu-item[disabled] { cursor:not-allowed; opacity:.5; }
-.menu-item.delete-item { color:#ff6b6b; }
-.menu-item.delete-item:hover { background:#ff6b6b; color:#fff; }
-.menu-item-icon { width:18px; display:inline-flex; align-items:center; justify-content:center; color: var(--text-secondary); font-size:14px; }
-.light-theme .menu-item-icon { color:#444; }
-:root:not(.light-theme) .menu-item-icon { color: rgba(255,255,255,0.65); }
+.message-menu-wrapper {
+  position: relative;
+  display: inline-block;
+}
+.message-menu-trigger {
+  font-weight: 600;
+}
+.message-menu {
+  position: fixed;
+  background: var(--bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 10px 14px;
+  min-width: 240px;
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.55),
+    0 4px 10px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1200;
+  opacity: 0;
+  transform: translateY(-4px) scale(0.96);
+  animation: menuPopDown 0.28s cubic-bezier(0.22, 1.2, 0.42, 1) forwards;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  backdrop-filter: blur(4px) saturate(140%);
+}
+.message-menu.mode-up {
+  animation-name: menuPopUp;
+  transform-origin: bottom right;
+}
+.message-menu.mode-down {
+  animation-name: menuPopDown;
+  transform-origin: top right;
+}
+.message-menu.mode-middle,
+.message-menu.mode-side {
+  animation-name: menuPopMiddle;
+  transform-origin: center;
+}
+.message-menu.measuring {
+  visibility: hidden;
+  opacity: 0 !important;
+}
+.message-menu.ready {
+  visibility: visible;
+}
+@keyframes menuPopUp {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.94);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes menuPopDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.94);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes menuPopMiddle {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.menu-reactions-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+.menu-reaction-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+.menu-reaction-btn:hover {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+.menu-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 6px 0;
+}
+.menu-item {
+  background: transparent;
+  color: var(--text-color);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.85;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    opacity 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.menu-item + .menu-item {
+  border-top: 1px solid var(--border-color);
+}
+.menu-item:hover:not([disabled]) {
+  background: var(--primary-color);
+  color: #fff;
+  opacity: 1;
+}
+.menu-item[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.menu-item.delete-item {
+  color: #ff6b6b;
+}
+.menu-item.delete-item:hover {
+  background: #ff6b6b;
+  color: #fff;
+}
+.menu-item-icon {
+  width: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.light-theme .menu-item-icon {
+  color: #444;
+}
+:root:not(.light-theme) .menu-item-icon {
+  color: rgba(255, 255, 255, 0.65);
+}

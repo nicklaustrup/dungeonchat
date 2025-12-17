@@ -5,38 +5,40 @@
  * Streamlined validation focusing on core migration readiness
  */
 
-const { execSync } = require('child_process');
-const fs = require('fs');
+const { execSync } = require("child_process");
+const fs = require("fs");
 
-console.log('🔍 Final Migration Readiness Validation\n');
+console.log("🔍 Final Migration Readiness Validation\n");
 
 async function runCoreValidation() {
   let allPassed = true;
-  
+
   const tests = [
     {
-      name: 'V2 Implementation Tests',
-      command: 'npm test -- src/hooks/__tests__/useAutoScrollV2.test.js --watchAll=false --silent',
-      timeout: 30000
+      name: "V2 Implementation Tests",
+      command:
+        "npm test -- src/hooks/__tests__/useAutoScrollV2.test.js --watchAll=false --silent",
+      timeout: 30000,
     },
     {
-      name: 'A/B Comparison Tests', 
-      command: 'npm test -- src/hooks/__tests__/useAutoScroll.ab-comparison.test.js --watchAll=false --silent',
-      timeout: 30000
+      name: "A/B Comparison Tests",
+      command:
+        "npm test -- src/hooks/__tests__/useAutoScroll.ab-comparison.test.js --watchAll=false --silent",
+      timeout: 30000,
     },
     {
-      name: 'A/B Integration Check',
-      command: 'node scripts/validate-ab-integration.js',
-      timeout: 15000
-    }
+      name: "A/B Integration Check",
+      command: "node scripts/validate-ab-integration.js",
+      timeout: 15000,
+    },
   ];
 
   for (const test of tests) {
     try {
       console.log(`   Running ${test.name}...`);
-      execSync(test.command, { 
-        stdio: 'pipe', 
-        timeout: test.timeout 
+      execSync(test.command, {
+        stdio: "pipe",
+        timeout: test.timeout,
       });
       console.log(`   ✅ ${test.name}: PASSED`);
     } catch (error) {
@@ -50,22 +52,24 @@ async function runCoreValidation() {
 }
 
 function validateFileStructure() {
-  console.log('\n📁 Validating File Structure...\n');
-  
+  console.log("\n📁 Validating File Structure...\n");
+
   const requiredFiles = [
-    'src/hooks/useAutoScrollV2.js',
-    'src/components/ChatRoom/ChatRoom.js',
-    'deployment-configs/.env.production-gradual',
-    'scripts/monitor-migration.js',
-    'scripts/emergency-rollback.js',
-    'docs/phase-3-migration-plan.md'
+    "src/hooks/useAutoScrollV2.js",
+    "src/components/ChatRoom/ChatRoom.js",
+    "deployment-configs/.env.production-gradual",
+    "scripts/monitor-migration.js",
+    "scripts/emergency-rollback.js",
+    "docs/phase-3-migration-plan.md",
   ];
 
   let allExists = true;
-  
-  requiredFiles.forEach(file => {
+
+  requiredFiles.forEach((file) => {
     const exists = fs.existsSync(file);
-    console.log(`   ${exists ? '✅' : '❌'} ${file}: ${exists ? 'EXISTS' : 'MISSING'}`);
+    console.log(
+      `   ${exists ? "✅" : "❌"} ${file}: ${exists ? "EXISTS" : "MISSING"}`
+    );
     if (!exists) allExists = false;
   });
 
@@ -74,31 +78,39 @@ function validateFileStructure() {
 
 async function main() {
   try {
-    console.log('Starting Final Validation for Migration Readiness...\n');
+    console.log("Starting Final Validation for Migration Readiness...\n");
 
     // Core functionality tests
     const testsPass = await runCoreValidation();
-    
+
     // File structure validation
     const filesExist = validateFileStructure();
-    
-    console.log('\n📊 Final Validation Results:');
-    console.log(`   Core Tests: ${testsPass ? 'PASSED ✅' : 'FAILED ❌'}`);
-    console.log(`   File Structure: ${filesExist ? 'COMPLETE ✅' : 'INCOMPLETE ❌'}`);
-    
+
+    console.log("\n📊 Final Validation Results:");
+    console.log(`   Core Tests: ${testsPass ? "PASSED ✅" : "FAILED ❌"}`);
+    console.log(
+      `   File Structure: ${filesExist ? "COMPLETE ✅" : "INCOMPLETE ❌"}`
+    );
+
     const overallReady = testsPass && filesExist;
-    
-    console.log(`\n🎯 Migration Readiness: ${overallReady ? 'READY FOR DEPLOYMENT ✅' : 'NEEDS ATTENTION ❌'}`);
+
+    console.log(
+      `\n🎯 Migration Readiness: ${overallReady ? "READY FOR DEPLOYMENT ✅" : "NEEDS ATTENTION ❌"}`
+    );
 
     if (overallReady) {
-      console.log('\n🚀 ALL SYSTEMS GO!');
-      console.log('\nPhase 3.1 COMPLETE - Ready for Phase 3.2: Gradual Rollout');
-      console.log('\nNext steps:');
-      console.log('1. Copy deployment-configs/.env.production-gradual to production');
-      console.log('2. Deploy with 10% V2 rollout');
-      console.log('3. Monitor with scripts/monitor-migration.js');
-      console.log('4. Gradually increase rollout percentage');
-      
+      console.log("\n🚀 ALL SYSTEMS GO!");
+      console.log(
+        "\nPhase 3.1 COMPLETE - Ready for Phase 3.2: Gradual Rollout"
+      );
+      console.log("\nNext steps:");
+      console.log(
+        "1. Copy deployment-configs/.env.production-gradual to production"
+      );
+      console.log("2. Deploy with 10% V2 rollout");
+      console.log("3. Monitor with scripts/monitor-migration.js");
+      console.log("4. Gradually increase rollout percentage");
+
       // Create final completion marker
       const completionReport = `# Phase 3.1: COMPLETE ✅
 
@@ -136,17 +148,16 @@ node scripts/emergency-rollback.js "reason"
 **Phase 3.1 Migration Planning: SUCCESSFULLY COMPLETED**
 `;
 
-      fs.writeFileSync('docs/phase-3-1-FINAL-COMPLETE.md', completionReport);
-      console.log('\n📄 Completion report: docs/phase-3-1-FINAL-COMPLETE.md');
-      
+      fs.writeFileSync("docs/phase-3-1-FINAL-COMPLETE.md", completionReport);
+      console.log("\n📄 Completion report: docs/phase-3-1-FINAL-COMPLETE.md");
+
       process.exit(0);
     } else {
-      console.log('\n⚠️  Issues found - address before proceeding');
+      console.log("\n⚠️  Issues found - address before proceeding");
       process.exit(1);
     }
-
   } catch (error) {
-    console.error('❌ Validation error:', error.message);
+    console.error("❌ Validation error:", error.message);
     process.exit(1);
   }
 }

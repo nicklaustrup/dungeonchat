@@ -1,5 +1,5 @@
-import { useCachedDocument } from './useCachedDocument';
-import { useFirebase } from '../FirebaseContext';
+import { useCachedDocument } from "./useCachedDocument";
+import { useFirebase } from "../FirebaseContext";
 
 /**
  * Hook to fetch cached profile data for a specific user ID
@@ -17,24 +17,19 @@ export function useCachedUserProfileData(userId) {
     loading,
     error,
     refresh,
-    invalidate
-  } = useCachedDocument(
-    firestore,
-    'userProfiles',
-    userId,
-    {
-      ttl: 5 * 60 * 1000, // 5 minutes
-      realtime: true, // Real-time updates for profile changes
-      disabled: !userId
-    }
-  );
+    invalidate,
+  } = useCachedDocument(firestore, "userProfiles", userId, {
+    ttl: 5 * 60 * 1000, // 5 minutes
+    realtime: true, // Real-time updates for profile changes
+    disabled: !userId,
+  });
 
   return {
     profileData,
     loading,
     error,
     refresh,
-    invalidate
+    invalidate,
   };
 }
 

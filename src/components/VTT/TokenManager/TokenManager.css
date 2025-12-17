@@ -425,11 +425,11 @@
   .token-manager-content {
     padding: 16px;
   }
-  
+
   .staged-token-item {
     flex-wrap: wrap;
   }
-  
+
   .token-info {
     min-width: 150px;
   }

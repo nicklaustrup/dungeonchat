@@ -84,7 +84,7 @@
   margin: 10px 0;
   padding: 10px;
   background: var(--message-bg, #fff);
-  border-left: 3px solid var(--primary-color, #4CAF50);
+  border-left: 3px solid var(--primary-color, #4caf50);
   border-radius: 4px;
 }
 
@@ -122,7 +122,7 @@
 }
 
 .btn-success {
-  background: var(--success-color, #4CAF50);
+  background: var(--success-color, #4caf50);
   color: white;
 }
 

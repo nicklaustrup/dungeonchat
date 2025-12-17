@@ -1,5 +1,5 @@
-import React, { createContext, useContext } from 'react';
-import { useCachedUserProfile } from '../services/cache';
+import React, { createContext, useContext } from "react";
+import { useCachedUserProfile } from "../services/cache";
 
 /**
  * Context for managing profanity filter state across the application
@@ -9,12 +9,13 @@ import { useCachedUserProfile } from '../services/cache';
 const ProfanityFilterContext = createContext(null);
 
 export function ProfanityFilterProvider({ children }) {
-  const { profanityFilterEnabled, toggleProfanityFilter, loading } = useCachedUserProfile();
+  const { profanityFilterEnabled, toggleProfanityFilter, loading } =
+    useCachedUserProfile();
 
   const value = {
     profanityFilterEnabled,
     toggleProfanityFilter,
-    loading
+    loading,
   };
 
   return (
@@ -31,7 +32,9 @@ export function ProfanityFilterProvider({ children }) {
 export function useProfanityFilterContext() {
   const context = useContext(ProfanityFilterContext);
   if (!context) {
-    throw new Error('useProfanityFilterContext must be used within a ProfanityFilterProvider');
+    throw new Error(
+      "useProfanityFilterContext must be used within a ProfanityFilterProvider"
+    );
   }
   return context;
 }

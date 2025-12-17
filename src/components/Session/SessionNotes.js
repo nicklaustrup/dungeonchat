@@ -1,34 +1,34 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useFirebase } from '../../services/FirebaseContext';
-import { useCampaign } from '../../contexts/CampaignContext';
-import { sessionService } from '../../services/sessionService';
-import './SessionNotes.css';
+import React, { useState, useEffect, useCallback } from "react";
+import { useFirebase } from "../../services/FirebaseContext";
+import { useCampaign } from "../../contexts/CampaignContext";
+import { sessionService } from "../../services/sessionService";
+import "./SessionNotes.css";
 
 const SessionNotes = ({ campaignId }) => {
   const { firestore, user } = useFirebase();
   const { currentCampaign } = useCampaign();
-  
+
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showNewSessionForm, setShowNewSessionForm] = useState(false);
-  
+
   // Check if user is DM
   const isDM = currentCampaign?.dmId === user?.uid;
-  
+
   // Load sessions
   useEffect(() => {
     if (!campaignId || !firestore) return;
-    
+
     setLoading(true);
     const unsubscribe = sessionService.subscribeToSessions(
       firestore,
       campaignId,
       (sessionsData, err) => {
         if (err) {
-          setError('Failed to load sessions');
-          console.error('Session subscription error:', err);
+          setError("Failed to load sessions");
+          console.error("Session subscription error:", err);
         } else {
           setSessions(sessionsData);
           // Auto-select most recent session if none selected
@@ -39,39 +39,49 @@ const SessionNotes = ({ campaignId }) => {
         setLoading(false);
       }
     );
-    
+
     return () => unsubscribe();
   }, [campaignId, firestore, selectedSession]);
-  
+
   // Handle create new session
-  const handleCreateSession = useCallback(async (sessionData) => {
-    if (!isDM) return;
-    
-    try {
-      const nextNumber = await sessionService.getNextSessionNumber(firestore, campaignId);
-      
-      const newSession = {
-        sessionNumber: nextNumber,
-        title: sessionData.title || `Session ${nextNumber}`,
-        sessionDate: new Date(),
-        attendees: [],
-        dmNotes: '',
-        sharedNotes: '',
-        highlights: [],
-        tags: [],
-        status: 'planned',
-        createdBy: user.uid
-      };
-      
-      const created = await sessionService.createSession(firestore, campaignId, newSession);
-      setSelectedSession(created);
-      setShowNewSessionForm(false);
-    } catch (error) {
-      console.error('Error creating session:', error);
-      setError('Failed to create session');
-    }
-  }, [firestore, campaignId, user, isDM]);
-  
+  const handleCreateSession = useCallback(
+    async (sessionData) => {
+      if (!isDM) return;
+
+      try {
+        const nextNumber = await sessionService.getNextSessionNumber(
+          firestore,
+          campaignId
+        );
+
+        const newSession = {
+          sessionNumber: nextNumber,
+          title: sessionData.title || `Session ${nextNumber}`,
+          sessionDate: new Date(),
+          attendees: [],
+          dmNotes: "",
+          sharedNotes: "",
+          highlights: [],
+          tags: [],
+          status: "planned",
+          createdBy: user.uid,
+        };
+
+        const created = await sessionService.createSession(
+          firestore,
+          campaignId,
+          newSession
+        );
+        setSelectedSession(created);
+        setShowNewSessionForm(false);
+      } catch (error) {
+        console.error("Error creating session:", error);
+        setError("Failed to create session");
+      }
+    },
+    [firestore, campaignId, user, isDM]
+  );
+
   if (loading) {
     return (
       <div className="session-notes loading">
@@ -79,7 +89,7 @@ const SessionNotes = ({ campaignId }) => {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="session-notes error">
@@ -87,13 +97,13 @@ const SessionNotes = ({ campaignId }) => {
       </div>
     );
   }
-  
+
   return (
     <div className="session-notes">
       <div className="session-notes-header">
         <h2>Session Notes</h2>
         {isDM && (
-          <button 
+          <button
             onClick={() => setShowNewSessionForm(true)}
             className="new-session-button"
           >
@@ -101,7 +111,7 @@ const SessionNotes = ({ campaignId }) => {
           </button>
         )}
       </div>
-      
+
       <div className="session-notes-content">
         {/* Session List Sidebar */}
         <div className="session-list">
@@ -113,17 +123,22 @@ const SessionNotes = ({ campaignId }) => {
             </div>
           ) : (
             <div className="session-items">
-              {sessions.map(session => (
+              {sessions.map((session) => (
                 <div
                   key={session.id}
-                  className={`session-item ${selectedSession?.id === session.id ? 'active' : ''}`}
+                  className={`session-item ${selectedSession?.id === session.id ? "active" : ""}`}
                   onClick={() => setSelectedSession(session)}
                 >
-                  <div className="session-item-number">#{session.sessionNumber}</div>
+                  <div className="session-item-number">
+                    #{session.sessionNumber}
+                  </div>
                   <div className="session-item-details">
                     <div className="session-item-title">{session.title}</div>
                     <div className="session-item-date">
-                      {session.sessionDate && new Date(session.sessionDate.seconds * 1000).toLocaleDateString()}
+                      {session.sessionDate &&
+                        new Date(
+                          session.sessionDate.seconds * 1000
+                        ).toLocaleDateString()}
                     </div>
                   </div>
                   {session.status && (
@@ -136,7 +151,7 @@ const SessionNotes = ({ campaignId }) => {
             </div>
           )}
         </div>
-        
+
         {/* Session Details */}
         {selectedSession ? (
           <SessionEditor
@@ -150,7 +165,7 @@ const SessionNotes = ({ campaignId }) => {
           </div>
         )}
       </div>
-      
+
       {/* New Session Modal */}
       {showNewSessionForm && (
         <NewSessionModal
@@ -165,74 +180,94 @@ const SessionNotes = ({ campaignId }) => {
 // Session Editor Component
 const SessionEditor = ({ session, campaignId, isDM }) => {
   const { firestore } = useFirebase();
-  
-  const [dmNotes, setDmNotes] = useState(session.dmNotes || '');
-  const [sharedNotes, setSharedNotes] = useState(session.sharedNotes || '');
+
+  const [dmNotes, setDmNotes] = useState(session.dmNotes || "");
+  const [sharedNotes, setSharedNotes] = useState(session.sharedNotes || "");
   const [saving, setSaving] = useState(false);
-  const [newHighlight, setNewHighlight] = useState('');
-  
+  const [newHighlight, setNewHighlight] = useState("");
+
   // Update local state when session changes
   useEffect(() => {
-    setDmNotes(session.dmNotes || '');
-    setSharedNotes(session.sharedNotes || '');
+    setDmNotes(session.dmNotes || "");
+    setSharedNotes(session.sharedNotes || "");
   }, [session]);
-  
+
   // Auto-save with debounce
   useEffect(() => {
     if (!isDM) return;
-    
+
     const timer = setTimeout(async () => {
-      if (dmNotes !== (session.dmNotes || '')) {
+      if (dmNotes !== (session.dmNotes || "")) {
         setSaving(true);
         try {
-          await sessionService.updateDMNotes(firestore, campaignId, session.id, dmNotes);
+          await sessionService.updateDMNotes(
+            firestore,
+            campaignId,
+            session.id,
+            dmNotes
+          );
         } catch (error) {
-          console.error('Error saving DM notes:', error);
+          console.error("Error saving DM notes:", error);
         }
         setSaving(false);
       }
     }, 1000);
-    
+
     return () => clearTimeout(timer);
   }, [dmNotes, firestore, campaignId, session, isDM]);
-  
+
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (sharedNotes !== (session.sharedNotes || '')) {
+      if (sharedNotes !== (session.sharedNotes || "")) {
         setSaving(true);
         try {
-          await sessionService.updateSharedNotes(firestore, campaignId, session.id, sharedNotes);
+          await sessionService.updateSharedNotes(
+            firestore,
+            campaignId,
+            session.id,
+            sharedNotes
+          );
         } catch (error) {
-          console.error('Error saving shared notes:', error);
+          console.error("Error saving shared notes:", error);
         }
         setSaving(false);
       }
     }, 1000);
-    
+
     return () => clearTimeout(timer);
   }, [sharedNotes, firestore, campaignId, session]);
-  
+
   const handleAddHighlight = async () => {
     if (!newHighlight.trim() || !isDM) return;
-    
+
     try {
-      await sessionService.addHighlight(firestore, campaignId, session.id, newHighlight.trim());
-      setNewHighlight('');
+      await sessionService.addHighlight(
+        firestore,
+        campaignId,
+        session.id,
+        newHighlight.trim()
+      );
+      setNewHighlight("");
     } catch (error) {
-      console.error('Error adding highlight:', error);
+      console.error("Error adding highlight:", error);
     }
   };
-  
+
   const handleRemoveHighlight = async (index) => {
     if (!isDM) return;
-    
+
     try {
-      await sessionService.removeHighlight(firestore, campaignId, session.id, index);
+      await sessionService.removeHighlight(
+        firestore,
+        campaignId,
+        session.id,
+        index
+      );
     } catch (error) {
-      console.error('Error removing highlight:', error);
+      console.error("Error removing highlight:", error);
     }
   };
-  
+
   return (
     <div className="session-editor">
       <div className="session-editor-header">
@@ -243,25 +278,34 @@ const SessionEditor = ({ session, campaignId, isDM }) => {
         <div className="active-encounters-panel">
           <h4>Active Encounters</h4>
           <ul className="active-encounters-list">
-            {session.activeEncounters.map(e => (
+            {session.activeEncounters.map((e) => (
               <li key={e.encounterId} className="active-encounter-item">
                 <span className="encounter-name">{e.name}</span>
-                {e.difficulty && <span className={`encounter-diff diff-${e.difficulty}`}>{e.difficulty}</span>}
-                {!e.completedAt && <span className="encounter-status ongoing">ongoing</span>}
-                {e.completedAt && <span className="encounter-status completed">completed</span>}
+                {e.difficulty && (
+                  <span className={`encounter-diff diff-${e.difficulty}`}>
+                    {e.difficulty}
+                  </span>
+                )}
+                {!e.completedAt && (
+                  <span className="encounter-status ongoing">ongoing</span>
+                )}
+                {e.completedAt && (
+                  <span className="encounter-status completed">completed</span>
+                )}
               </li>
             ))}
           </ul>
         </div>
       )}
-      
+
       {/* Session Info */}
       <div className="session-info">
         <div className="info-item">
           <strong>Session #{session.sessionNumber}</strong>
         </div>
         <div className="info-item">
-          {session.sessionDate && new Date(session.sessionDate.seconds * 1000).toLocaleDateString()}
+          {session.sessionDate &&
+            new Date(session.sessionDate.seconds * 1000).toLocaleDateString()}
         </div>
         {session.attendees && session.attendees.length > 0 && (
           <div className="info-item">
@@ -269,7 +313,7 @@ const SessionEditor = ({ session, campaignId, isDM }) => {
           </div>
         )}
       </div>
-      
+
       {/* Highlights */}
       <div className="session-highlights">
         <h4>Session Highlights</h4>
@@ -292,7 +336,7 @@ const SessionEditor = ({ session, campaignId, isDM }) => {
         ) : (
           <p className="empty-highlights">No highlights yet</p>
         )}
-        
+
         {isDM && (
           <div className="add-highlight">
             <input
@@ -300,13 +344,13 @@ const SessionEditor = ({ session, campaignId, isDM }) => {
               placeholder="Add a highlight..."
               value={newHighlight}
               onChange={(e) => setNewHighlight(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddHighlight()}
+              onKeyPress={(e) => e.key === "Enter" && handleAddHighlight()}
             />
             <button onClick={handleAddHighlight}>Add</button>
           </div>
         )}
       </div>
-      
+
       {/* DM Notes (Private) */}
       {isDM && (
         <div className="notes-section dm-notes">
@@ -319,7 +363,7 @@ const SessionEditor = ({ session, campaignId, isDM }) => {
           />
         </div>
       )}
-      
+
       {/* Shared Notes */}
       <div className="notes-section shared-notes">
         <h4>📝 Shared Notes</h4>
@@ -332,7 +376,7 @@ const SessionEditor = ({ session, campaignId, isDM }) => {
           />
         ) : (
           <div className="notes-readonly">
-            {sharedNotes || 'No shared notes yet'}
+            {sharedNotes || "No shared notes yet"}
           </div>
         )}
       </div>
@@ -342,21 +386,23 @@ const SessionEditor = ({ session, campaignId, isDM }) => {
 
 // New Session Modal Component
 const NewSessionModal = ({ onClose, onCreate }) => {
-  const [title, setTitle] = useState('');
-  
+  const [title, setTitle] = useState("");
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onCreate({ title });
   };
-  
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>New Session</h3>
-          <button onClick={onClose} className="close-button">✕</button>
+          <button onClick={onClose} className="close-button">
+            ✕
+          </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="new-session-form">
           <div className="form-group">
             <label htmlFor="session-title">Session Title</label>
@@ -369,7 +415,7 @@ const NewSessionModal = ({ onClose, onCreate }) => {
               required
             />
           </div>
-          
+
           <div className="form-actions">
             <button type="button" onClick={onClose} className="btn-secondary">
               Cancel

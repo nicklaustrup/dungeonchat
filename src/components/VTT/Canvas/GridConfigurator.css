@@ -1,12 +1,73 @@
-.grid-configurator { position: absolute; top: 90px; left: 20px; width: 260px; background: #1e1e24; color: #fff; border: 1px solid #333; border-radius: 8px; box-shadow: 0 4px 18px rgba(0,0,0,0.6); font-family: system-ui, sans-serif; z-index: 110; }
-.gc-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #2a2a31; border-bottom: 1px solid #333; font-weight: 600; }
-.gc-header button { background: transparent; color: #aaa; border: none; font-size: 18px; cursor: pointer; }
-.gc-header button:hover { color: #fff; }
-.gc-body { padding: 10px 14px; display: flex; flex-direction: column; gap: 12px; }
-.gc-row { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
-.gc-row input[type=range] { width: 100%; }
-.gc-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 12px 12px; }
-.gc-footer button { background: #333; color: #eee; border: 1px solid #444; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-.gc-footer button.primary { background: #3d6df2; border-color: #3d6df2; color: #fff; }
-.gc-footer button.primary:hover { background: #335ad0; }
-.gc-footer button:hover { background: #444; }
+.grid-configurator {
+  position: absolute;
+  top: 90px;
+  left: 20px;
+  width: 260px;
+  background: #1e1e24;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+  font-family: system-ui, sans-serif;
+  z-index: 110;
+}
+.gc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #2a2a31;
+  border-bottom: 1px solid #333;
+  font-weight: 600;
+}
+.gc-header button {
+  background: transparent;
+  color: #aaa;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+.gc-header button:hover {
+  color: #fff;
+}
+.gc-body {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gc-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.gc-row input[type='range'] {
+  width: 100%;
+}
+.gc-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 12px 12px;
+}
+.gc-footer button {
+  background: #333;
+  color: #eee;
+  border: 1px solid #444;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.gc-footer button.primary {
+  background: #3d6df2;
+  border-color: #3d6df2;
+  color: #fff;
+}
+.gc-footer button.primary:hover {
+  background: #335ad0;
+}
+.gc-footer button:hover {
+  background: #444;
+}

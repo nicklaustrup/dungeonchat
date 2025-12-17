@@ -5,13 +5,7 @@
   "coreInfrastructure": {
     "src/services/firebase.js": {
       "description": "Firebase initialization - imported by almost everything",
-      "exportedBy": [
-        "auth",
-        "firestore", 
-        "storage",
-        "database",
-        "analytics"
-      ],
+      "exportedBy": ["auth", "firestore", "storage", "database", "analytics"],
       "importedBy": [
         "src/hooks/*.js (most hooks)",
         "src/services/**/*.js (all services)",
@@ -36,9 +30,7 @@
   "scrollSystem": {
     "src/hooks/useAutoScrollV2.js": {
       "description": "Primary scroll behavior hook",
-      "usedBy": [
-        "src/components/ChatRoom/ChatRoom.js"
-      ],
+      "usedBy": ["src/components/ChatRoom/ChatRoom.js"],
       "dependencies": [
         "React (useRef, useEffect, useCallback)",
         "IntersectionObserver API"
@@ -49,9 +41,7 @@
     },
     "src/hooks/useInfiniteScrollTop.js": {
       "description": "Pagination hook for loading older messages",
-      "usedBy": [
-        "src/components/ChatRoom/ChatRoom.js"
-      ],
+      "usedBy": ["src/components/ChatRoom/ChatRoom.js"],
       "dependencies": [
         "src/services/firebase.js",
         "firestore (query, limit, orderBy, startAfter)"
@@ -63,9 +53,7 @@
   "chatSystem": {
     "src/components/ChatRoom/ChatRoom.js": {
       "description": "Main chat UI component",
-      "usedBy": [
-        "src/components/Campaign/CampaignDashboard.js"
-      ],
+      "usedBy": ["src/components/Campaign/CampaignDashboard.js"],
       "dependencies": [
         "src/hooks/useAutoScrollV2.js",
         "src/hooks/useInfiniteScrollTop.js",
@@ -80,9 +68,7 @@
     },
     "src/components/ChatRoom/Message.js": {
       "description": "Individual message component",
-      "usedBy": [
-        "src/components/ChatRoom/ChatRoom.js"
-      ],
+      "usedBy": ["src/components/ChatRoom/ChatRoom.js"],
       "dependencies": [
         "src/hooks/useReactions.js",
         "docs/schemas/message.json (data shape)"
@@ -91,9 +77,7 @@
     },
     "src/components/ChatInput/ChatInput.js": {
       "description": "Message input with image upload",
-      "usedBy": [
-        "src/components/ChatRoom/ChatRoom.js"
-      ],
+      "usedBy": ["src/components/ChatRoom/ChatRoom.js"],
       "dependencies": [
         "src/hooks/useAuth.js",
         "src/hooks/useTypingIndicator.js",
@@ -105,9 +89,7 @@
   "vttSystem": {
     "src/components/VTT/VTTCanvas.js": {
       "description": "Main VTT canvas component",
-      "usedBy": [
-        "src/components/Campaign/CampaignDashboard.js"
-      ],
+      "usedBy": ["src/components/Campaign/CampaignDashboard.js"],
       "dependencies": [
         "src/hooks/useVTTCanvas.js",
         "src/hooks/useTokens.js",
@@ -143,9 +125,7 @@
   "campaignSystem": {
     "src/components/Campaign/CampaignDashboard.js": {
       "description": "Main campaign view orchestrator",
-      "usedBy": [
-        "src/components/AppRouter.js"
-      ],
+      "usedBy": ["src/components/AppRouter.js"],
       "dependencies": [
         "src/hooks/useCampaign.js",
         "src/hooks/useCampaignMembers.js",
@@ -178,20 +158,14 @@
         "src/App.js",
         "src/components/**/* (many components need auth)"
       ],
-      "dependencies": [
-        "src/services/firebase.js (auth)"
-      ],
+      "dependencies": ["src/services/firebase.js (auth)"],
       "impactLevel": "CRITICAL",
       "changeRisk": "HIGH - affects entire app"
     },
     "src/components/SignIn/SignIn.js": {
       "description": "Sign-in component",
-      "usedBy": [
-        "src/pages/Landing.js"
-      ],
-      "dependencies": [
-        "src/hooks/useAuth.js"
-      ],
+      "usedBy": ["src/pages/Landing.js"],
+      "dependencies": ["src/hooks/useAuth.js"],
       "impactLevel": "HIGH"
     }
   },

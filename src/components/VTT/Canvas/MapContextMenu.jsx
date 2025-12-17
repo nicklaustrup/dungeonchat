@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import './MapContextMenu.css';
+import React, { useEffect, useRef } from "react";
+import "./MapContextMenu.css";
 
 /**
  * MapContextMenu
@@ -11,7 +11,7 @@ export default function MapContextMenu({
   position, // {x,y} absolute (within relative container)
   onClose,
   onClearMyShapes,
-  onClearAllShapes
+  onClearAllShapes,
 }) {
   const ref = useRef(null);
 
@@ -21,18 +21,22 @@ export default function MapContextMenu({
         onClose?.();
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
 
   return (
-    <div ref={ref} className="map-context-menu" style={{ left: position.x, top: position.y }}>
+    <div
+      ref={ref}
+      className="map-context-menu"
+      style={{ left: position.x, top: position.y }}
+    >
       <div className="mcm-header">
         <strong>Map Actions</strong>
         <button onClick={onClose}>×</button>
       </div>
       <div className="mcm-section">
-        <button 
+        <button
           className="mcm-action-button"
           onClick={() => {
             onClearMyShapes?.();
@@ -44,10 +48,14 @@ export default function MapContextMenu({
           <span>Clear My Shapes</span>
         </button>
         {isDM && (
-          <button 
+          <button
             className="mcm-action-button mcm-danger"
             onClick={() => {
-              if (window.confirm('Are you sure you want to clear ALL shapes on the map? This cannot be undone.')) {
+              if (
+                window.confirm(
+                  "Are you sure you want to clear ALL shapes on the map? This cannot be undone."
+                )
+              ) {
                 onClearAllShapes?.();
                 onClose?.();
               }

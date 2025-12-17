@@ -1,6 +1,12 @@
-import React from 'react';
+import React from "react";
 
-export default function EditMessageForm({ value, onChange, onSave, onCancel, onKeyDown }) {
+export default function EditMessageForm({
+  value,
+  onChange,
+  onSave,
+  onCancel,
+  onKeyDown,
+}) {
   return (
     <div className="edit-container" data-testid="edit-message-form">
       <textarea
@@ -11,8 +17,20 @@ export default function EditMessageForm({ value, onChange, onSave, onCancel, onK
         autoFocus
       />
       <div className="edit-actions">
-        <button onClick={onSave} aria-label="Save edit" className="save-edit-btn">Save</button>
-        <button onClick={onCancel} aria-label="Cancel edit" className="cancel-edit-btn">Cancel</button>
+        <button
+          onClick={onSave}
+          aria-label="Save edit"
+          className="save-edit-btn"
+        >
+          Save
+        </button>
+        <button
+          onClick={onCancel}
+          aria-label="Cancel edit"
+          className="cancel-edit-btn"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );

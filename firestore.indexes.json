@@ -100,7 +100,7 @@
     },
     {
       "collectionGroup": "messages",
-      "queryScope": "COLLECTION_GROUP", 
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "type",

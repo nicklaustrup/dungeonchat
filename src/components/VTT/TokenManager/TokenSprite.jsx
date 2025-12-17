@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
-import { Image as KonvaImage, Group, Circle, Rect, Text, Line } from 'react-konva';
-import useImage from 'use-image';
+import React, { useState } from "react";
+import {
+  Image as KonvaImage,
+  Group,
+  Circle,
+  Rect,
+  Text,
+  Line,
+} from "react-konva";
+import useImage from "use-image";
 
 /**
  * TokenSprite Component
@@ -25,9 +32,9 @@ function TokenSprite({
   onContextMenu,
   showGhost = false, // Show ghost at original position during drag
   boundaryCollision = false, // Visual feedback when token hits a boundary
-  boundaries = [] // Array of boundaries for collision detection
+  boundaries = [], // Array of boundaries for collision detection
 }) {
-  const [image] = useImage(token.imageUrl || '', 'anonymous');
+  const [image] = useImage(token.imageUrl || "", "anonymous");
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState(null);
   const [currentDragPos, setCurrentDragPos] = useState(null);
@@ -38,22 +45,33 @@ function TokenSprite({
     if (!boundaries || boundaries.length === 0) return false;
 
     for (const boundary of boundaries) {
-      if (boundary.type === 'line') {
+      if (boundary.type === "line") {
         // Check line-line intersection
-        if (linesIntersect(
-          from.x, from.y, to.x, to.y,
-          boundary.start.x, boundary.start.y, boundary.end.x, boundary.end.y
-        )) {
+        if (
+          linesIntersect(
+            from.x,
+            from.y,
+            to.x,
+            to.y,
+            boundary.start.x,
+            boundary.start.y,
+            boundary.end.x,
+            boundary.end.y
+          )
+        ) {
           return true;
         }
-      } else if (boundary.type === 'painted') {
+      } else if (boundary.type === "painted") {
         // Check if destination point is in a painted boundary cell
         const gridX = Math.floor((to.x - gridOffsetX) / gridSize);
         const gridY = Math.floor((to.y - gridOffsetY) / gridSize);
-        
-        if (boundary.cells && boundary.cells.some(cell => 
-          cell.gridX === gridX && cell.gridY === gridY
-        )) {
+
+        if (
+          boundary.cells &&
+          boundary.cells.some(
+            (cell) => cell.gridX === gridX && cell.gridY === gridY
+          )
+        ) {
           return true;
         }
       }
@@ -65,10 +83,10 @@ function TokenSprite({
   const linesIntersect = (x1, y1, x2, y2, x3, y3, x4, y4) => {
     const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
     if (Math.abs(denom) < 0.0001) return false;
-    
+
     const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
     const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
-    
+
     return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
   };
 
@@ -83,15 +101,15 @@ function TokenSprite({
     // - Negative coordinates (off left/top edge)
     // - Beyond map width/height (off right/bottom edge)
     const tokenRadius = tokenSize / 2;
-    const isOffLimits = (
+    const isOffLimits =
       x < tokenRadius || // Too far left
       y < tokenRadius || // Too far top
       (mapWidth && x > mapWidth - tokenRadius) || // Too far right
-      (mapHeight && y > mapHeight - tokenRadius) // Too far bottom
-    );
+      (mapHeight && y > mapHeight - tokenRadius); // Too far bottom
 
     // Check for boundary collision
-    const crossesBoundary = dragStartPos && checkBoundaryCollision(dragStartPos, { x, y });
+    const crossesBoundary =
+      dragStartPos && checkBoundaryCollision(dragStartPos, { x, y });
 
     if ((isOffLimits || crossesBoundary) && dragStartPos) {
       // Reset to ghost position if dropped in off-limits area or crosses boundary
@@ -156,16 +174,16 @@ function TokenSprite({
     if (token.color) return token.color;
 
     switch (token.type) {
-      case 'player':
-        return '#4a9eff'; // Blue
-      case 'enemy':
-        return '#dc2626'; // Red
-      case 'npc':
-        return '#22c55e'; // Green
-      case 'object':
-        return '#888888'; // Gray
+      case "player":
+        return "#4a9eff"; // Blue
+      case "enemy":
+        return "#dc2626"; // Red
+      case "npc":
+        return "#22c55e"; // Green
+      case "object":
+        return "#888888"; // Gray
       default:
-        return '#ff0000';
+        return "#ff0000";
     }
   };
 
@@ -212,7 +230,7 @@ function TokenSprite({
           x: cellX * gridSize + gridOffsetX,
           y: cellY * gridSize + gridOffsetY,
           w: tokenSize,
-          h: tokenSize
+          h: tokenSize,
         });
       }
     } else {
@@ -229,7 +247,7 @@ function TokenSprite({
           x: cellX * gridSize + gridOffsetX,
           y: cellY * gridSize + gridOffsetY,
           w: tokenSize,
-          h: tokenSize
+          h: tokenSize,
         });
       }
     }
@@ -288,7 +306,7 @@ function TokenSprite({
               dragStartPos.x,
               dragStartPos.y,
               currentDragPos.x,
-              currentDragPos.y
+              currentDragPos.y,
             ]}
             stroke="#22c55e"
             strokeWidth={2}
@@ -297,38 +315,39 @@ function TokenSprite({
             listening={false}
           />
           {/* Distance label */}
-          {gridSize && (() => {
-            const dx = currentDragPos.x - dragStartPos.x;
-            const dy = currentDragPos.y - dragStartPos.y;
-            const distancePixels = Math.sqrt(dx * dx + dy * dy);
-            const distanceFeet = Math.round((distancePixels / gridSize) * 5); // 5ft per square
-            const midX = (dragStartPos.x + currentDragPos.x) / 2;
-            const midY = (dragStartPos.y + currentDragPos.y) / 2;
+          {gridSize &&
+            (() => {
+              const dx = currentDragPos.x - dragStartPos.x;
+              const dy = currentDragPos.y - dragStartPos.y;
+              const distancePixels = Math.sqrt(dx * dx + dy * dy);
+              const distanceFeet = Math.round((distancePixels / gridSize) * 5); // 5ft per square
+              const midX = (dragStartPos.x + currentDragPos.x) / 2;
+              const midY = (dragStartPos.y + currentDragPos.y) / 2;
 
-            return (
-              <Group x={midX} y={midY}>
-                <Rect
-                  offsetX={12}
-                  offsetY={8}
-                  width={25}
-                  height={15}
-                  fill="rgba(0, 0, 0, 0.8)"
-                  cornerRadius={4}
-                />
-                <Text
-                  offsetX={20}
-                  offsetY={8}
-                  width={40}
-                  height={15}
-                  text={`${distanceFeet}ft`}
-                  fontSize={8}
-                  fill="#ffffff"
-                  align="center"
-                  verticalAlign="middle"
-                />
-              </Group>
-            );
-          })()}
+              return (
+                <Group x={midX} y={midY}>
+                  <Rect
+                    offsetX={12}
+                    offsetY={8}
+                    width={25}
+                    height={15}
+                    fill="rgba(0, 0, 0, 0.8)"
+                    cornerRadius={4}
+                  />
+                  <Text
+                    offsetX={20}
+                    offsetY={8}
+                    width={40}
+                    height={15}
+                    text={`${distanceFeet}ft`}
+                    fontSize={8}
+                    fill="#ffffff"
+                    align="center"
+                    verticalAlign="middle"
+                  />
+                </Group>
+              );
+            })()}
         </Group>
       )}
 
@@ -342,7 +361,11 @@ function TokenSprite({
         onDragMove={handleDragMove}
         onClick={handleClick}
         onTap={handleClick}
-        onContextMenu={(e) => { e.evt?.preventDefault(); e.cancelBubble = true; onContextMenu && onContextMenu(e); }}
+        onContextMenu={(e) => {
+          e.evt?.preventDefault();
+          e.cancelBubble = true;
+          onContextMenu && onContextMenu(e);
+        }}
         listening={listening}
       >
         {/* Token background circle */}
@@ -350,13 +373,22 @@ function TokenSprite({
           radius={(tokenSize + 2) / 2}
           fill={tokenColor}
           opacity={token.isHidden ? 0.3 : 0.8}
-          strokeWidth={(boundaryCollision || isOverBoundary) ? 4 : (isSelected ? 1.5 : 1)}
-          stroke={(boundaryCollision || isOverBoundary) ? '#FF0000' : (isSelected ? '#fff' : '#000')}
-          shadowColor={(boundaryCollision || isOverBoundary) ? '#FF0000' : undefined}
-          shadowBlur={(boundaryCollision || isOverBoundary) ? 15 : undefined}
-          shadowOpacity={(boundaryCollision || isOverBoundary) ? 0.8 : undefined}
+          strokeWidth={
+            boundaryCollision || isOverBoundary ? 4 : isSelected ? 1.5 : 1
+          }
+          stroke={
+            boundaryCollision || isOverBoundary
+              ? "#FF0000"
+              : isSelected
+                ? "#fff"
+                : "#000"
+          }
+          shadowColor={
+            boundaryCollision || isOverBoundary ? "#FF0000" : undefined
+          }
+          shadowBlur={boundaryCollision || isOverBoundary ? 15 : undefined}
+          shadowOpacity={boundaryCollision || isOverBoundary ? 0.8 : undefined}
         />
-
 
         {/* Token image (if available) */}
         {image && (
@@ -399,7 +431,10 @@ function TokenSprite({
             <Rect
               x={-tokenSize / 2}
               y={0}
-              width={(Math.log10(1 + token.hp / token.maxHp) / Math.log10(2)) * tokenSize}
+              width={
+                (Math.log10(1 + token.hp / token.maxHp) / Math.log10(2)) *
+                tokenSize
+              }
               height={8}
               fill="#222"
               cornerRadius={3}
@@ -408,9 +443,12 @@ function TokenSprite({
             <Rect
               x={-tokenSize / 2}
               y={0}
-              width={(Math.log10(1 + token.hp / token.maxHp) / Math.log10(2)) * tokenSize}
+              width={
+                (Math.log10(1 + token.hp / token.maxHp) / Math.log10(2)) *
+                tokenSize
+              }
               height={8}
-              fill={token.hp / token.maxHp < 0.35 ? '#ef4444' : '#16a34a'}
+              fill={token.hp / token.maxHp < 0.35 ? "#ef4444" : "#16a34a"}
               cornerRadius={3}
               opacity={0.9}
             />
@@ -427,45 +465,45 @@ function TokenSprite({
         )}
 
         {/* Status Effects Row */}
-        {Array.isArray(token.statusEffects) && token.statusEffects.length > 0 && (
-          <Group y={-tokenSize / 2 - (token.maxHp != null ? 26 : 14)}>
-            {token.statusEffects.slice(0, 6).map((effect, idx) => (
-              <Group key={effect.id || effect.name} x={-tokenSize / 2 + idx * 14}>
-                <Rect
-                  x={0}
-                  y={0}
-                  width={12}
-                  height={12}
-                  fill="#333"
-                  cornerRadius={3}
-                  opacity={0.85}
-                  stroke="#888"
-                  strokeWidth={1}
-                />
-                <Text
-                  text={(effect.icon || effect.name || '?').slice(0, 2)}
-                  fontSize={8}
-                  fill="#fff"
-                  width={12}
-                  height={12}
-                  align="center"
-                  x={0}
-                  y={2}
-                />
-              </Group>
-            ))}
-          </Group>
-        )}
+        {Array.isArray(token.statusEffects) &&
+          token.statusEffects.length > 0 && (
+            <Group y={-tokenSize / 2 - (token.maxHp != null ? 26 : 14)}>
+              {token.statusEffects.slice(0, 6).map((effect, idx) => (
+                <Group
+                  key={effect.id || effect.name}
+                  x={-tokenSize / 2 + idx * 14}
+                >
+                  <Rect
+                    x={0}
+                    y={0}
+                    width={12}
+                    height={12}
+                    fill="#333"
+                    cornerRadius={3}
+                    opacity={0.85}
+                    stroke="#888"
+                    strokeWidth={1}
+                  />
+                  <Text
+                    text={(effect.icon || effect.name || "?").slice(0, 2)}
+                    fontSize={8}
+                    fill="#fff"
+                    width={12}
+                    height={12}
+                    align="center"
+                    x={0}
+                    y={2}
+                  />
+                </Group>
+              ))}
+            </Group>
+          )}
 
         {/* Hidden indicator - Closed eye icon (DM only) */}
         {token.hidden && (
           <Group x={tokenSize / 2 - 16} y={-tokenSize / 2 + 4}>
             {/* Dark background circle */}
-            <Circle
-              radius={12}
-              fill="#000"
-              opacity={0.85}
-            />
+            <Circle radius={12} fill="#000" opacity={0.85} />
             {/* Eye slash icon - closed eye */}
             <Text
               text="👁️‍🗨️"

@@ -3,7 +3,15 @@
  * Handles WebRTC signaling via Firebase Realtime Database
  */
 
-import { ref, set, onValue, remove, push, onChildAdded, off } from 'firebase/database';
+import {
+  ref,
+  set,
+  onValue,
+  remove,
+  push,
+  onChildAdded,
+  off,
+} from "firebase/database";
 
 export class SignalingService {
   constructor(rtdb) {
@@ -19,7 +27,7 @@ export class SignalingService {
     await set(ref(this.rtdb, path), {
       sdp: offer.sdp,
       type: offer.type,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
     console.log(`[Signaling] Sent offer from ${fromUser} to ${toUser}`);
   }
@@ -32,7 +40,7 @@ export class SignalingService {
     await set(ref(this.rtdb, path), {
       sdp: answer.sdp,
       type: answer.type,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
     console.log(`[Signaling] Sent answer from ${fromUser} to ${toUser}`);
   }
@@ -47,7 +55,7 @@ export class SignalingService {
       candidate: candidate.candidate,
       sdpMLineIndex: candidate.sdpMLineIndex,
       sdpMid: candidate.sdpMid,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -58,31 +66,34 @@ export class SignalingService {
     const path = `voiceSignaling/${campaignId}/${roomId}/${userId}/offers`;
     const offersRef = ref(this.rtdb, path);
     const startTime = Date.now();
-    
+
     const listener = onChildAdded(offersRef, (snapshot) => {
       const fromUser = snapshot.key;
       const offer = snapshot.val();
-      
+
       if (offer && offer.sdp) {
         // Ignore offers that existed before we started listening
         // This prevents processing stale signals on reconnection
         if (offer.timestamp && offer.timestamp < startTime) {
           console.log(
             `[Signaling] Ignoring stale offer from ${fromUser} ` +
-            `(age: ${startTime - offer.timestamp}ms)`
+              `(age: ${startTime - offer.timestamp}ms)`
           );
           return;
         }
-        
+
         console.log(`[Signaling] Received offer from ${fromUser}`);
         callback(fromUser, {
           type: offer.type,
-          sdp: offer.sdp
+          sdp: offer.sdp,
         });
-        
+
         // Clean up the offer after processing to prevent re-processing
-        remove(snapshot.ref).catch(err => {
-          console.warn(`[Signaling] Failed to cleanup offer from ${fromUser}:`, err);
+        remove(snapshot.ref).catch((err) => {
+          console.warn(
+            `[Signaling] Failed to cleanup offer from ${fromUser}:`,
+            err
+          );
         });
       }
     });
@@ -98,31 +109,34 @@ export class SignalingService {
     const path = `voiceSignaling/${campaignId}/${roomId}/${userId}/answers`;
     const answersRef = ref(this.rtdb, path);
     const startTime = Date.now();
-    
+
     const listener = onChildAdded(answersRef, (snapshot) => {
       const fromUser = snapshot.key;
       const answer = snapshot.val();
-      
+
       if (answer && answer.sdp) {
         // Ignore answers that existed before we started listening
         // This prevents processing stale signals on reconnection
         if (answer.timestamp && answer.timestamp < startTime) {
           console.log(
             `[Signaling] Ignoring stale answer from ${fromUser} ` +
-            `(age: ${startTime - answer.timestamp}ms)`
+              `(age: ${startTime - answer.timestamp}ms)`
           );
           return;
         }
-        
+
         console.log(`[Signaling] Received answer from ${fromUser}`);
         callback(fromUser, {
           type: answer.type,
-          sdp: answer.sdp
+          sdp: answer.sdp,
         });
-        
+
         // Clean up the answer after processing to prevent re-processing
-        remove(snapshot.ref).catch(err => {
-          console.warn(`[Signaling] Failed to cleanup answer from ${fromUser}:`, err);
+        remove(snapshot.ref).catch((err) => {
+          console.warn(
+            `[Signaling] Failed to cleanup answer from ${fromUser}:`,
+            err
+          );
         });
       }
     });
@@ -137,7 +151,7 @@ export class SignalingService {
   listenForIceCandidates(campaignId, roomId, userId, callback) {
     const path = `voiceSignaling/${campaignId}/${roomId}/${userId}/iceCandidates`;
     const candidatesRef = ref(this.rtdb, path);
-    
+
     const listener = onChildAdded(candidatesRef, (snapshot) => {
       const fromUser = snapshot.key;
       snapshot.forEach((candidateSnapshot) => {
@@ -147,7 +161,7 @@ export class SignalingService {
           callback(fromUser, {
             candidate: candidateData.candidate,
             sdpMLineIndex: candidateData.sdpMLineIndex,
-            sdpMid: candidateData.sdpMid
+            sdpMid: candidateData.sdpMid,
           });
         }
       });
@@ -164,7 +178,7 @@ export class SignalingService {
     const path = `voiceSignaling/${campaignId}/${roomId}/${userId}/presence`;
     await set(ref(this.rtdb, path), {
       status, // 'online', 'offline'
-      lastSeen: Date.now()
+      lastSeen: Date.now(),
     });
   }
 
@@ -174,12 +188,12 @@ export class SignalingService {
   listenForPresence(campaignId, roomId, callback) {
     const path = `voiceSignaling/${campaignId}/${roomId}`;
     const roomRef = ref(this.rtdb, path);
-    
+
     const listener = onValue(roomRef, (snapshot) => {
       const presenceData = {};
       snapshot.forEach((userSnapshot) => {
         const userId = userSnapshot.key;
-        const presence = userSnapshot.child('presence').val();
+        const presence = userSnapshot.child("presence").val();
         if (presence) {
           presenceData[userId] = presence;
         }
@@ -205,10 +219,10 @@ export class SignalingService {
    */
   removeAllListeners() {
     this.listeners.forEach(({ ref: dbRef, listener }) => {
-      off(dbRef, 'child_added', listener);
-      off(dbRef, 'value', listener);
+      off(dbRef, "child_added", listener);
+      off(dbRef, "value", listener);
     });
     this.listeners.clear();
-    console.log('[Signaling] Removed all listeners');
+    console.log("[Signaling] Removed all listeners");
   }
 }

@@ -295,7 +295,7 @@
   font-weight: 400;
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type='checkbox'] {
   width: auto;
   margin: 0;
   transform: scale(1.2);
@@ -375,8 +375,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive Design */
@@ -385,36 +389,36 @@
     margin: 1rem;
     border-radius: 8px;
   }
-  
+
   .profile-editor.compact {
     margin: 0;
   }
-  
+
   .profile-editor-header,
   .profile-editor-content,
   .profile-editor-actions {
     padding: 1rem;
   }
-  
+
   .avatar-container {
     width: 80px;
     height: 80px;
   }
-  
+
   .profile-avatar {
     width: 80px;
     height: 80px;
   }
-  
+
   .avatar-overlay {
     width: 80px;
     height: 80px;
   }
-  
+
   .profile-editor-actions {
     flex-direction: column;
   }
-  
+
   .button-primary,
   .button-secondary {
     width: 100%;
@@ -426,21 +430,21 @@
   .profile-editor-header h2 {
     font-size: 1.25rem;
   }
-  
+
   .form-section h3 {
     font-size: 1.125rem;
   }
-  
+
   .profile-editor .avatar-container {
     width: 80px;
     height: 80px;
   }
-  
+
   .profile-avatar {
     width: 80px;
     height: 80px;
   }
-  
+
   .avatar-overlay {
     width: 80px;
     height: 80px;
@@ -453,16 +457,16 @@
     background: var(--bg-secondary, #2c2c2c);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
-  
+
   .profile-editor-header {
     background: var(--bg-primary, #1a1a1a);
     border-bottom-color: var(--border-color, #404040);
   }
-  
+
   .form-section {
     border-bottom-color: var(--border-color, #404040);
   }
-  
+
   .profile-editor-actions {
     background: var(--bg-primary, #1a1a1a);
     border-top-color: var(--border-color, #404040);

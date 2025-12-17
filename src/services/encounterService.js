@@ -1,17 +1,17 @@
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  setDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
   orderBy,
   onSnapshot,
-  Timestamp
-} from 'firebase/firestore';
+  Timestamp,
+} from "firebase/firestore";
 
 /**
  * Encounter Service
@@ -55,17 +55,17 @@ export function calculateEncounterDifficulty(totalXP, partyLevel, partySize) {
     17: [2000, 3900, 5900, 8800],
     18: [2100, 4200, 6300, 9500],
     19: [2400, 4900, 7300, 10900],
-    20: [2800, 5700, 8500, 12700]
+    20: [2800, 5700, 8500, 12700],
   };
 
   const thresholds = xpThresholds[partyLevel] || xpThresholds[20];
-  const [easy, medium, hard, deadly] = thresholds.map(t => t * partySize);
+  const [easy, medium, hard, deadly] = thresholds.map((t) => t * partySize);
 
-  if (totalXP < easy) return 'trivial';
-  if (totalXP < medium) return 'easy';
-  if (totalXP < hard) return 'medium';
-  if (totalXP < deadly) return 'hard';
-  return 'deadly';
+  if (totalXP < easy) return "trivial";
+  if (totalXP < medium) return "easy";
+  if (totalXP < hard) return "medium";
+  if (totalXP < deadly) return "hard";
+  return "deadly";
 }
 
 /**
@@ -85,18 +85,24 @@ export function applyEncounterMultiplier(monsterCount) {
  */
 export async function createEncounter(firestore, campaignId, encounterData) {
   if (!firestore || !campaignId) {
-    throw new Error('Firestore and campaignId are required');
+    throw new Error("Firestore and campaignId are required");
   }
 
   const encounterId = generateEncounterId();
-  const encounterRef = doc(firestore, 'campaigns', campaignId, 'encounters', encounterId);
+  const encounterRef = doc(
+    firestore,
+    "campaigns",
+    campaignId,
+    "encounters",
+    encounterId
+  );
 
   const encounter = {
     encounterId,
-    name: encounterData.name || 'Untitled Encounter',
-    description: encounterData.description || '',
-    difficulty: encounterData.difficulty || 'medium',
-    environment: encounterData.environment || '',
+    name: encounterData.name || "Untitled Encounter",
+    description: encounterData.description || "",
+    difficulty: encounterData.difficulty || "medium",
+    environment: encounterData.environment || "",
     participants: encounterData.participants || [], // Array of monsters/NPCs
     environmentalEffects: encounterData.environmentalEffects || [],
     loot: encounterData.loot || [],
@@ -104,11 +110,12 @@ export async function createEncounter(firestore, campaignId, encounterData) {
     xpTotal: encounterData.xpTotal || 0,
     suggestedLevel: encounterData.suggestedLevel || 1,
     tags: encounterData.tags || [],
-    isTemplate: encounterData.isTemplate !== undefined ? encounterData.isTemplate : true,
+    isTemplate:
+      encounterData.isTemplate !== undefined ? encounterData.isTemplate : true,
     usageCount: 0,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
-    createdBy: encounterData.createdBy || null
+    createdBy: encounterData.createdBy || null,
   };
 
   await setDoc(encounterRef, encounter);
@@ -120,14 +127,20 @@ export async function createEncounter(firestore, campaignId, encounterData) {
  */
 export async function getEncounter(firestore, campaignId, encounterId) {
   if (!firestore || !campaignId || !encounterId) {
-    throw new Error('Firestore, campaignId, and encounterId are required');
+    throw new Error("Firestore, campaignId, and encounterId are required");
   }
 
-  const encounterRef = doc(firestore, 'campaigns', campaignId, 'encounters', encounterId);
+  const encounterRef = doc(
+    firestore,
+    "campaigns",
+    campaignId,
+    "encounters",
+    encounterId
+  );
   const encounterSnap = await getDoc(encounterRef);
 
   if (!encounterSnap.exists()) {
-    throw new Error('Encounter not found');
+    throw new Error("Encounter not found");
   }
 
   return { id: encounterSnap.id, ...encounterSnap.data() };
@@ -138,34 +151,54 @@ export async function getEncounter(firestore, campaignId, encounterId) {
  */
 export async function getEncounters(firestore, campaignId, filters = {}) {
   if (!firestore || !campaignId) {
-    throw new Error('Firestore and campaignId are required');
+    throw new Error("Firestore and campaignId are required");
   }
 
-  const encountersRef = collection(firestore, 'campaigns', campaignId, 'encounters');
-  let q = query(encountersRef, orderBy('createdAt', 'desc'));
+  const encountersRef = collection(
+    firestore,
+    "campaigns",
+    campaignId,
+    "encounters"
+  );
+  let q = query(encountersRef, orderBy("createdAt", "desc"));
 
   // Apply filters
   if (filters.isTemplate !== undefined) {
-    q = query(encountersRef, where('isTemplate', '==', filters.isTemplate), orderBy('createdAt', 'desc'));
+    q = query(
+      encountersRef,
+      where("isTemplate", "==", filters.isTemplate),
+      orderBy("createdAt", "desc")
+    );
   }
 
   const encountersSnap = await getDocs(q);
-  return encountersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return encountersSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
 /**
  * Update an encounter
  */
-export async function updateEncounter(firestore, campaignId, encounterId, updates) {
+export async function updateEncounter(
+  firestore,
+  campaignId,
+  encounterId,
+  updates
+) {
   if (!firestore || !campaignId || !encounterId) {
-    throw new Error('Firestore, campaignId, and encounterId are required');
+    throw new Error("Firestore, campaignId, and encounterId are required");
   }
 
-  const encounterRef = doc(firestore, 'campaigns', campaignId, 'encounters', encounterId);
-  
+  const encounterRef = doc(
+    firestore,
+    "campaigns",
+    campaignId,
+    "encounters",
+    encounterId
+  );
+
   await updateDoc(encounterRef, {
     ...updates,
-    updatedAt: Timestamp.now()
+    updatedAt: Timestamp.now(),
   });
 }
 
@@ -174,28 +207,39 @@ export async function updateEncounter(firestore, campaignId, encounterId, update
  */
 export async function deleteEncounter(firestore, campaignId, encounterId) {
   if (!firestore || !campaignId || !encounterId) {
-    throw new Error('Firestore, campaignId, and encounterId are required');
+    throw new Error("Firestore, campaignId, and encounterId are required");
   }
 
-  const encounterRef = doc(firestore, 'campaigns', campaignId, 'encounters', encounterId);
+  const encounterRef = doc(
+    firestore,
+    "campaigns",
+    campaignId,
+    "encounters",
+    encounterId
+  );
   await deleteDoc(encounterRef);
 }
 
 /**
  * Add a participant (monster/NPC) to an encounter
  */
-export async function addParticipant(firestore, campaignId, encounterId, participant) {
+export async function addParticipant(
+  firestore,
+  campaignId,
+  encounterId,
+  participant
+) {
   if (!firestore || !campaignId || !encounterId) {
-    throw new Error('Firestore, campaignId, and encounterId are required');
+    throw new Error("Firestore, campaignId, and encounterId are required");
   }
 
   const encounter = await getEncounter(firestore, campaignId, encounterId);
   const participantId = `participant-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
-  
+
   const newParticipant = {
     id: participantId,
-    name: participant.name || 'Unknown Creature',
-    type: participant.type || 'monster', // 'monster', 'npc', 'hazard'
+    name: participant.name || "Unknown Creature",
+    type: participant.type || "monster", // 'monster', 'npc', 'hazard'
     cr: participant.cr || 0,
     xp: participant.xp || 0,
     hp: participant.hp || 1,
@@ -203,17 +247,20 @@ export async function addParticipant(firestore, campaignId, encounterId, partici
     ac: participant.ac || 10,
     initiative: participant.initiative || 0,
     conditions: participant.conditions || [],
-    notes: participant.notes || '',
+    notes: participant.notes || "",
     quantity: participant.quantity || 1,
-    addedAt: Timestamp.now()
+    addedAt: Timestamp.now(),
   };
 
   const updatedParticipants = [...encounter.participants, newParticipant];
-  const totalXP = updatedParticipants.reduce((sum, p) => sum + (p.xp * p.quantity), 0);
+  const totalXP = updatedParticipants.reduce(
+    (sum, p) => sum + p.xp * p.quantity,
+    0
+  );
 
   await updateEncounter(firestore, campaignId, encounterId, {
     participants: updatedParticipants,
-    xpTotal: totalXP
+    xpTotal: totalXP,
   });
 
   return newParticipant;
@@ -222,68 +269,92 @@ export async function addParticipant(firestore, campaignId, encounterId, partici
 /**
  * Update a participant in an encounter
  */
-export async function updateParticipant(firestore, campaignId, encounterId, participantId, updates) {
+export async function updateParticipant(
+  firestore,
+  campaignId,
+  encounterId,
+  participantId,
+  updates
+) {
   if (!firestore || !campaignId || !encounterId || !participantId) {
-    throw new Error('All parameters are required');
+    throw new Error("All parameters are required");
   }
 
   const encounter = await getEncounter(firestore, campaignId, encounterId);
-  const updatedParticipants = encounter.participants.map(p => 
+  const updatedParticipants = encounter.participants.map((p) =>
     p.id === participantId ? { ...p, ...updates } : p
   );
 
-  const totalXP = updatedParticipants.reduce((sum, p) => sum + (p.xp * p.quantity), 0);
+  const totalXP = updatedParticipants.reduce(
+    (sum, p) => sum + p.xp * p.quantity,
+    0
+  );
 
   await updateEncounter(firestore, campaignId, encounterId, {
     participants: updatedParticipants,
-    xpTotal: totalXP
+    xpTotal: totalXP,
   });
 }
 
 /**
  * Remove a participant from an encounter
  */
-export async function removeParticipant(firestore, campaignId, encounterId, participantId) {
+export async function removeParticipant(
+  firestore,
+  campaignId,
+  encounterId,
+  participantId
+) {
   if (!firestore || !campaignId || !encounterId || !participantId) {
-    throw new Error('All parameters are required');
+    throw new Error("All parameters are required");
   }
 
   const encounter = await getEncounter(firestore, campaignId, encounterId);
-  const updatedParticipants = encounter.participants.filter(p => p.id !== participantId);
-  const totalXP = updatedParticipants.reduce((sum, p) => sum + (p.xp * p.quantity), 0);
+  const updatedParticipants = encounter.participants.filter(
+    (p) => p.id !== participantId
+  );
+  const totalXP = updatedParticipants.reduce(
+    (sum, p) => sum + p.xp * p.quantity,
+    0
+  );
 
   await updateEncounter(firestore, campaignId, encounterId, {
     participants: updatedParticipants,
-    xpTotal: totalXP
+    xpTotal: totalXP,
   });
 }
 
 /**
  * Add environmental effect/hazard
  */
-export async function addEnvironmentalEffect(firestore, campaignId, encounterId, effect) {
+export async function addEnvironmentalEffect(
+  firestore,
+  campaignId,
+  encounterId,
+  effect
+) {
   if (!firestore || !campaignId || !encounterId) {
-    throw new Error('Firestore, campaignId, and encounterId are required');
+    throw new Error("Firestore, campaignId, and encounterId are required");
   }
 
   const encounter = await getEncounter(firestore, campaignId, encounterId);
   const effectId = `effect-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
-  
+
   const newEffect = {
     id: effectId,
-    name: effect.name || 'Unknown Effect',
-    description: effect.description || '',
-    type: effect.type || 'hazard', // 'hazard', 'terrain', 'weather', 'magical'
-    damage: effect.damage || '',
+    name: effect.name || "Unknown Effect",
+    description: effect.description || "",
+    type: effect.type || "hazard", // 'hazard', 'terrain', 'weather', 'magical'
+    damage: effect.damage || "",
     saveDC: effect.saveDC || null,
     saveAbility: effect.saveAbility || null,
-    duration: effect.duration || 'permanent',
-    areaOfEffect: effect.areaOfEffect || '',
-    addedAt: Timestamp.now()
+    duration: effect.duration || "permanent",
+    areaOfEffect: effect.areaOfEffect || "",
+    addedAt: Timestamp.now(),
   };
 
   await updateEncounter(firestore, campaignId, encounterId, {
-    environmentalEffects: [...encounter.environmentalEffects, newEffect]
+    environmentalEffects: [...encounter.environmentalEffects, newEffect],
   });
 
   return newEffect;
@@ -292,49 +363,64 @@ export async function addEnvironmentalEffect(firestore, campaignId, encounterId,
 /**
  * Remove environmental effect
  */
-export async function removeEnvironmentalEffect(firestore, campaignId, encounterId, effectId) {
+export async function removeEnvironmentalEffect(
+  firestore,
+  campaignId,
+  encounterId,
+  effectId
+) {
   if (!firestore || !campaignId || !encounterId || !effectId) {
-    throw new Error('All parameters are required');
+    throw new Error("All parameters are required");
   }
 
   const encounter = await getEncounter(firestore, campaignId, encounterId);
-  const updatedEffects = encounter.environmentalEffects.filter(e => e.id !== effectId);
+  const updatedEffects = encounter.environmentalEffects.filter(
+    (e) => e.id !== effectId
+  );
 
   await updateEncounter(firestore, campaignId, encounterId, {
-    environmentalEffects: updatedEffects
+    environmentalEffects: updatedEffects,
   });
 }
 
 /**
  * Add loot item
  */
-export async function addLootItem(firestore, campaignId, encounterId, lootItem) {
+export async function addLootItem(
+  firestore,
+  campaignId,
+  encounterId,
+  lootItem
+) {
   if (!firestore || !campaignId || !encounterId) {
-    throw new Error('Firestore, campaignId, and encounterId are required');
+    throw new Error("Firestore, campaignId, and encounterId are required");
   }
 
   const encounter = await getEncounter(firestore, campaignId, encounterId);
   const lootId = `loot-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
-  
+
   const newLootItem = {
     id: lootId,
-    name: lootItem.name || 'Unknown Item',
-    type: lootItem.type || 'mundane', // 'mundane', 'magic', 'currency', 'art', 'gem'
-    rarity: lootItem.rarity || 'common',
+    name: lootItem.name || "Unknown Item",
+    type: lootItem.type || "mundane", // 'mundane', 'magic', 'currency', 'art', 'gem'
+    rarity: lootItem.rarity || "common",
     value: lootItem.value || 0,
     quantity: lootItem.quantity || 1,
-    description: lootItem.description || '',
+    description: lootItem.description || "",
     identified: lootItem.identified !== undefined ? lootItem.identified : true,
     distributed: false,
-    addedAt: Timestamp.now()
+    addedAt: Timestamp.now(),
   };
 
   const updatedLoot = [...encounter.loot, newLootItem];
-  const totalValue = updatedLoot.reduce((sum, item) => sum + (item.value * item.quantity), 0);
+  const totalValue = updatedLoot.reduce(
+    (sum, item) => sum + item.value * item.quantity,
+    0
+  );
 
   await updateEncounter(firestore, campaignId, encounterId, {
     loot: updatedLoot,
-    treasureValue: totalValue
+    treasureValue: totalValue,
   });
 
   return newLootItem;
@@ -343,64 +429,92 @@ export async function addLootItem(firestore, campaignId, encounterId, lootItem) 
 /**
  * Update loot item
  */
-export async function updateLootItem(firestore, campaignId, encounterId, lootId, updates) {
+export async function updateLootItem(
+  firestore,
+  campaignId,
+  encounterId,
+  lootId,
+  updates
+) {
   if (!firestore || !campaignId || !encounterId || !lootId) {
-    throw new Error('All parameters are required');
+    throw new Error("All parameters are required");
   }
 
   const encounter = await getEncounter(firestore, campaignId, encounterId);
-  const updatedLoot = encounter.loot.map(item => 
+  const updatedLoot = encounter.loot.map((item) =>
     item.id === lootId ? { ...item, ...updates } : item
   );
 
-  const totalValue = updatedLoot.reduce((sum, item) => sum + (item.value * item.quantity), 0);
+  const totalValue = updatedLoot.reduce(
+    (sum, item) => sum + item.value * item.quantity,
+    0
+  );
 
   await updateEncounter(firestore, campaignId, encounterId, {
     loot: updatedLoot,
-    treasureValue: totalValue
+    treasureValue: totalValue,
   });
 }
 
 /**
  * Remove loot item
  */
-export async function removeLootItem(firestore, campaignId, encounterId, lootId) {
+export async function removeLootItem(
+  firestore,
+  campaignId,
+  encounterId,
+  lootId
+) {
   if (!firestore || !campaignId || !encounterId || !lootId) {
-    throw new Error('All parameters are required');
+    throw new Error("All parameters are required");
   }
 
   const encounter = await getEncounter(firestore, campaignId, encounterId);
-  const updatedLoot = encounter.loot.filter(item => item.id !== lootId);
-  const totalValue = updatedLoot.reduce((sum, item) => sum + (item.value * item.quantity), 0);
+  const updatedLoot = encounter.loot.filter((item) => item.id !== lootId);
+  const totalValue = updatedLoot.reduce(
+    (sum, item) => sum + item.value * item.quantity,
+    0
+  );
 
   await updateEncounter(firestore, campaignId, encounterId, {
     loot: updatedLoot,
-    treasureValue: totalValue
+    treasureValue: totalValue,
   });
 }
 
 /**
  * Distribute loot to party
  */
-export async function distributeLoot(firestore, campaignId, encounterId, lootId, distribution) {
+export async function distributeLoot(
+  firestore,
+  campaignId,
+  encounterId,
+  lootId,
+  distribution
+) {
   if (!firestore || !campaignId || !encounterId || !lootId) {
-    throw new Error('All parameters are required');
+    throw new Error("All parameters are required");
   }
 
   await updateLootItem(firestore, campaignId, encounterId, lootId, {
     distributed: true,
     distributedTo: distribution.recipients || [],
     distributedAt: Timestamp.now(),
-    distributedBy: distribution.distributedBy || null
+    distributedBy: distribution.distributedBy || null,
   });
 }
 
 /**
  * Scale encounter for party size and level
  */
-export async function scaleEncounter(firestore, campaignId, encounterId, scaling) {
+export async function scaleEncounter(
+  firestore,
+  campaignId,
+  encounterId,
+  scaling
+) {
   if (!firestore || !campaignId || !encounterId) {
-    throw new Error('Firestore, campaignId, and encounterId are required');
+    throw new Error("Firestore, campaignId, and encounterId are required");
   }
 
   const encounter = await getEncounter(firestore, campaignId, encounterId);
@@ -409,18 +523,27 @@ export async function scaleEncounter(firestore, campaignId, encounterId, scaling
   // Simple scaling: adjust participant quantities
   // More sophisticated scaling would adjust CR and add/remove monsters
   const scaleFactor = partySize / 4; // Baseline is 4 players
-  
-  const scaledParticipants = encounter.participants.map(p => ({
+
+  const scaledParticipants = encounter.participants.map((p) => ({
     ...p,
-    quantity: Math.max(1, Math.round(p.quantity * scaleFactor))
+    quantity: Math.max(1, Math.round(p.quantity * scaleFactor)),
   }));
 
-  const totalXP = scaledParticipants.reduce((sum, p) => sum + (p.xp * p.quantity), 0);
-  const adjustedXP = totalXP * applyEncounterMultiplier(
-    scaledParticipants.reduce((sum, p) => sum + p.quantity, 0)
+  const totalXP = scaledParticipants.reduce(
+    (sum, p) => sum + p.xp * p.quantity,
+    0
   );
+  const adjustedXP =
+    totalXP *
+    applyEncounterMultiplier(
+      scaledParticipants.reduce((sum, p) => sum + p.quantity, 0)
+    );
 
-  const difficulty = calculateEncounterDifficulty(adjustedXP, partyLevel, partySize);
+  const difficulty = calculateEncounterDifficulty(
+    adjustedXP,
+    partyLevel,
+    partySize
+  );
 
   await updateEncounter(firestore, campaignId, encounterId, {
     participants: scaledParticipants,
@@ -430,32 +553,37 @@ export async function scaleEncounter(firestore, campaignId, encounterId, scaling
     scaledFor: {
       partySize,
       partyLevel,
-      scaledAt: Timestamp.now()
-    }
+      scaledAt: Timestamp.now(),
+    },
   });
 
   return {
     xpTotal: totalXP,
     adjustedXP,
-    difficulty
+    difficulty,
   };
 }
 
 /**
  * Duplicate encounter (create a copy)
  */
-export async function duplicateEncounter(firestore, campaignId, encounterId, newName) {
+export async function duplicateEncounter(
+  firestore,
+  campaignId,
+  encounterId,
+  newName
+) {
   if (!firestore || !campaignId || !encounterId) {
-    throw new Error('Firestore, campaignId, and encounterId are required');
+    throw new Error("Firestore, campaignId, and encounterId are required");
   }
 
   const encounter = await getEncounter(firestore, campaignId, encounterId);
-  
+
   const duplicatedEncounter = {
     ...encounter,
     name: newName || `${encounter.name} (Copy)`,
     isTemplate: true,
-    usageCount: 0
+    usageCount: 0,
   };
 
   delete duplicatedEncounter.id;
@@ -467,9 +595,14 @@ export async function duplicateEncounter(firestore, campaignId, encounterId, new
 /**
  * Start encounter (convert template to active encounter)
  */
-export async function startEncounter(firestore, campaignId, encounterId, sessionId) {
+export async function startEncounter(
+  firestore,
+  campaignId,
+  encounterId,
+  sessionId
+) {
   if (!firestore || !campaignId || !encounterId) {
-    throw new Error('Firestore, campaignId, and encounterId are required');
+    throw new Error("Firestore, campaignId, and encounterId are required");
   }
 
   const encounter = await getEncounter(firestore, campaignId, encounterId);
@@ -481,18 +614,22 @@ export async function startEncounter(firestore, campaignId, encounterId, session
     isActive: true,
     sessionId: sessionId || null,
     startedAt: Timestamp.now(),
-    completedAt: null
+    completedAt: null,
   };
 
   delete activeEncounter.id;
   delete activeEncounter.encounterId;
 
-  const newEncounter = await createEncounter(firestore, campaignId, activeEncounter);
+  const newEncounter = await createEncounter(
+    firestore,
+    campaignId,
+    activeEncounter
+  );
 
   // Increment usage count on template
   if (encounter.isTemplate) {
     await updateEncounter(firestore, campaignId, encounterId, {
-      usageCount: (encounter.usageCount || 0) + 1
+      usageCount: (encounter.usageCount || 0) + 1,
     });
   }
 
@@ -502,37 +639,59 @@ export async function startEncounter(firestore, campaignId, encounterId, session
 /**
  * Complete encounter
  */
-export async function completeEncounter(firestore, campaignId, encounterId, summary) {
+export async function completeEncounter(
+  firestore,
+  campaignId,
+  encounterId,
+  summary
+) {
   if (!firestore || !campaignId || !encounterId) {
-    throw new Error('Firestore, campaignId, and encounterId are required');
+    throw new Error("Firestore, campaignId, and encounterId are required");
   }
 
   await updateEncounter(firestore, campaignId, encounterId, {
     isActive: false,
     completedAt: Timestamp.now(),
-    summary: summary || '',
+    summary: summary || "",
     xpAwarded: summary?.xpAwarded || 0,
-    casualties: summary?.casualties || []
+    casualties: summary?.casualties || [],
   });
 }
 
 /**
  * Subscribe to encounters (real-time)
  */
-export function subscribeToEncounters(firestore, campaignId, callback, filters = {}) {
+export function subscribeToEncounters(
+  firestore,
+  campaignId,
+  callback,
+  filters = {}
+) {
   if (!firestore || !campaignId) {
-    throw new Error('Firestore and campaignId are required');
+    throw new Error("Firestore and campaignId are required");
   }
 
-  const encountersRef = collection(firestore, 'campaigns', campaignId, 'encounters');
-  let q = query(encountersRef, orderBy('createdAt', 'desc'));
+  const encountersRef = collection(
+    firestore,
+    "campaigns",
+    campaignId,
+    "encounters"
+  );
+  let q = query(encountersRef, orderBy("createdAt", "desc"));
 
   if (filters.isTemplate !== undefined) {
-    q = query(encountersRef, where('isTemplate', '==', filters.isTemplate), orderBy('createdAt', 'desc'));
+    q = query(
+      encountersRef,
+      where("isTemplate", "==", filters.isTemplate),
+      orderBy("createdAt", "desc")
+    );
   }
 
   return onSnapshot(q, (snapshot) => {
-    const encounters = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const encounters = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
     callback(encounters);
   });
 }
@@ -540,13 +699,24 @@ export function subscribeToEncounters(firestore, campaignId, callback, filters =
 /**
  * Subscribe to a single encounter (real-time)
  */
-export function subscribeToEncounter(firestore, campaignId, encounterId, callback) {
+export function subscribeToEncounter(
+  firestore,
+  campaignId,
+  encounterId,
+  callback
+) {
   if (!firestore || !campaignId || !encounterId) {
-    throw new Error('Firestore, campaignId, and encounterId are required');
+    throw new Error("Firestore, campaignId, and encounterId are required");
   }
 
-  const encounterRef = doc(firestore, 'campaigns', campaignId, 'encounters', encounterId);
-  
+  const encounterRef = doc(
+    firestore,
+    "campaigns",
+    campaignId,
+    "encounters",
+    encounterId
+  );
+
   return onSnapshot(encounterRef, (snapshot) => {
     if (snapshot.exists()) {
       callback({ id: snapshot.id, ...snapshot.data() });
@@ -561,18 +731,23 @@ export function subscribeToEncounter(firestore, campaignId, encounterId, callbac
  */
 export async function getEncountersByTag(firestore, campaignId, tag) {
   if (!firestore || !campaignId || !tag) {
-    throw new Error('Firestore, campaignId, and tag are required');
+    throw new Error("Firestore, campaignId, and tag are required");
   }
 
-  const encountersRef = collection(firestore, 'campaigns', campaignId, 'encounters');
+  const encountersRef = collection(
+    firestore,
+    "campaigns",
+    campaignId,
+    "encounters"
+  );
   const q = query(
-    encountersRef, 
-    where('tags', 'array-contains', tag),
-    orderBy('createdAt', 'desc')
+    encountersRef,
+    where("tags", "array-contains", tag),
+    orderBy("createdAt", "desc")
   );
 
   const encountersSnap = await getDocs(q);
-  return encountersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return encountersSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
 // Default export object
@@ -599,7 +774,7 @@ const encounterService = {
   subscribeToEncounter,
   getEncountersByTag,
   calculateEncounterDifficulty,
-  applyEncounterMultiplier
+  applyEncounterMultiplier,
 };
 
 export default encounterService;

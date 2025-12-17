@@ -1,5 +1,5 @@
-import React from 'react';
-import './SessionNotes.css';
+import React from "react";
+import "./SessionNotes.css";
 
 /**
  * SessionNotes - Shared notes for the session
@@ -16,7 +16,7 @@ function SessionNotes({ campaignId, isUserDM }) {
           <p>Session notes feature coming soon!</p>
           <small>Take collaborative notes during your session</small>
         </div>
-        <textarea 
+        <textarea
           className="notes-editor"
           placeholder="Take notes during the session..."
           disabled

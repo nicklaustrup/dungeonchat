@@ -3,8 +3,8 @@
  * Displays campaign dice roll statistics and analytics
  */
 
-import React from 'react';
-import './DiceStatistics.css';
+import React from "react";
+import "./DiceStatistics.css";
 
 function DiceStatistics({ statistics, loading, campaignId }) {
   if (loading) {
@@ -25,7 +25,9 @@ function DiceStatistics({ statistics, loading, campaignId }) {
         <div className="empty-state">
           <h4>📊 No Dice Statistics Yet</h4>
           <p>Start rolling dice to see statistics and patterns!</p>
-          <small>Use <code>/roll 1d20</code> in chat or the dice roller</small>
+          <small>
+            Use <code>/roll 1d20</code> in chat or the dice roller
+          </small>
         </div>
       </div>
     );
@@ -40,12 +42,14 @@ function DiceStatistics({ statistics, loading, campaignId }) {
     criticalFails,
     mostUsedDie,
     rollsByType,
-    recentActivity
+    recentActivity,
   } = statistics;
 
   // Calculate percentages
-  const critHitPercent = totalRolls > 0 ? ((criticalHits / totalRolls) * 100).toFixed(1) : 0;
-  const critFailPercent = totalRolls > 0 ? ((criticalFails / totalRolls) * 100).toFixed(1) : 0;
+  const critHitPercent =
+    totalRolls > 0 ? ((criticalHits / totalRolls) * 100).toFixed(1) : 0;
+  const critFailPercent =
+    totalRolls > 0 ? ((criticalFails / totalRolls) * 100).toFixed(1) : 0;
 
   return (
     <div className="dice-statistics">
@@ -80,14 +84,16 @@ function DiceStatistics({ statistics, loading, campaignId }) {
         <div className="stat-card critical-hits">
           <div className="stat-label">🎯 Critical Hits</div>
           <div className="stat-value">
-            {criticalHits} <span className="percentage">({critHitPercent}%)</span>
+            {criticalHits}{" "}
+            <span className="percentage">({critHitPercent}%)</span>
           </div>
         </div>
 
         <div className="stat-card critical-fails">
           <div className="stat-label">💥 Critical Fails</div>
           <div className="stat-value">
-            {criticalFails} <span className="percentage">({critFailPercent}%)</span>
+            {criticalFails}{" "}
+            <span className="percentage">({critFailPercent}%)</span>
           </div>
         </div>
       </div>
@@ -97,9 +103,7 @@ function DiceStatistics({ statistics, loading, campaignId }) {
         <div className="most-used-die">
           <div className="stat-label">🎲 Most Used</div>
           <div className="die-notation">{mostUsedDie}</div>
-          <div className="usage-count">
-            {rollsByType[mostUsedDie]} rolls
-          </div>
+          <div className="usage-count">{rollsByType[mostUsedDie]} rolls</div>
         </div>
       )}
 
@@ -109,16 +113,16 @@ function DiceStatistics({ statistics, loading, campaignId }) {
           <div className="stat-label">Roll Distribution</div>
           <div className="roll-types-list">
             {Object.entries(rollsByType)
-              .sort(([,a], [,b]) => b - a)
+              .sort(([, a], [, b]) => b - a)
               .slice(0, 5)
               .map(([notation, count]) => (
                 <div key={notation} className="roll-type-item">
                   <span className="notation">{notation}</span>
                   <span className="count">{count}</span>
-                  <div 
+                  <div
                     className="usage-bar"
-                    style={{ 
-                      width: `${(count / Math.max(...Object.values(rollsByType))) * 100}%` 
+                    style={{
+                      width: `${(count / Math.max(...Object.values(rollsByType))) * 100}%`,
                     }}
                   />
                 </div>

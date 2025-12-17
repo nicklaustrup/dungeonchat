@@ -89,7 +89,7 @@
   font-weight: 500;
 }
 
-.form-group input[type="text"],
+.form-group input[type='text'],
 .form-group textarea {
   width: 100%;
   padding: 10px 12px;
@@ -102,7 +102,7 @@
   transition: border-color 0.2s;
 }
 
-.form-group input[type="text"]:focus,
+.form-group input[type='text']:focus,
 .form-group textarea:focus {
   outline: none;
   border-color: #4a9eff;
@@ -222,11 +222,11 @@
   .editor-content {
     grid-template-columns: 1fr;
   }
-  
+
   .editor-sidebar {
     order: 2;
   }
-  
+
   .editor-main {
     order: 1;
   }

@@ -1,16 +1,16 @@
-import React from 'react';
-import { Group, Line, Circle, Text, Rect } from 'react-konva';
+import React from "react";
+import { Group, Line, Circle, Text, Rect } from "react-konva";
 
 /**
  * MovementRuler Component
  * Displays a ruler line with distance measurement when token is being dragged
  */
-export default function MovementRuler({ 
-  startPos, 
-  endPos, 
-  distance, 
-  color = '#ffff00',
-  showDistance = true 
+export default function MovementRuler({
+  startPos,
+  endPos,
+  distance,
+  color = "#ffff00",
+  showDistance = true,
 }) {
   if (!startPos || !endPos) return null;
 
@@ -73,7 +73,7 @@ export default function MovementRuler({
             stroke={color}
             strokeWidth={1}
           />
-          
+
           {/* Distance text */}
           <Text
             x={midX - textWidth / 2}

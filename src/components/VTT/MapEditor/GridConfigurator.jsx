@@ -1,28 +1,28 @@
-import React from 'react';
-import { HexColorPicker } from 'react-colorful';
-import './GridConfigurator.css';
+import React from "react";
+import { HexColorPicker } from "react-colorful";
+import "./GridConfigurator.css";
 
 /**
  * GridConfigurator Component
  * Panel for adjusting grid settings
  */
-function GridConfigurator({ 
-  gridSize, 
-  gridColor, 
-  gridOpacity, 
+function GridConfigurator({
+  gridSize,
+  gridColor,
+  gridOpacity,
   gridEnabled,
   onGridSizeChange,
   onGridColorChange,
   onGridOpacityChange,
   onGridEnabledChange,
-  disabled = false
+  disabled = false,
 }) {
   const [showColorPicker, setShowColorPicker] = React.useState(false);
 
   return (
-    <div className={`grid-configurator ${disabled ? 'disabled' : ''}`}>
+    <div className={`grid-configurator ${disabled ? "disabled" : ""}`}>
       <h3 className="configurator-title">Grid Settings</h3>
-      
+
       {/* Grid Enable/Disable */}
       <div className="config-group">
         <label className="config-label">
@@ -60,7 +60,8 @@ function GridConfigurator({
       {/* Grid Opacity */}
       <div className="config-group">
         <label className="config-label">
-          Grid Opacity: <span className="value">{Math.round(gridOpacity * 100)}%</span>
+          Grid Opacity:{" "}
+          <span className="value">{Math.round(gridOpacity * 100)}%</span>
         </label>
         <input
           type="range"
@@ -91,17 +92,14 @@ function GridConfigurator({
           />
           <span className="color-value">{gridColor}</span>
         </div>
-        
+
         {showColorPicker && gridEnabled && !disabled && (
           <div className="color-picker-popover">
-            <div 
-              className="color-picker-backdrop" 
+            <div
+              className="color-picker-backdrop"
               onClick={() => setShowColorPicker(false)}
             />
-            <HexColorPicker 
-              color={gridColor} 
-              onChange={onGridColorChange}
-            />
+            <HexColorPicker color={gridColor} onChange={onGridColorChange} />
           </div>
         )}
       </div>
@@ -114,7 +112,7 @@ function GridConfigurator({
             className="preset-button"
             onClick={() => {
               onGridSizeChange(50);
-              onGridColorChange('#000000');
+              onGridColorChange("#000000");
               onGridOpacityChange(0.3);
             }}
             disabled={disabled || !gridEnabled}
@@ -125,7 +123,7 @@ function GridConfigurator({
             className="preset-button"
             onClick={() => {
               onGridSizeChange(50);
-              onGridColorChange('#ffffff');
+              onGridColorChange("#ffffff");
               onGridOpacityChange(0.5);
             }}
             disabled={disabled || !gridEnabled}
@@ -136,7 +134,7 @@ function GridConfigurator({
             className="preset-button"
             onClick={() => {
               onGridSizeChange(50);
-              onGridColorChange('#ff0000');
+              onGridColorChange("#ff0000");
               onGridOpacityChange(0.4);
             }}
             disabled={disabled || !gridEnabled}

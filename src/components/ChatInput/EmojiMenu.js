@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 // Dynamic loader for emoji-picker-react to defer large bundle cost until first open
 let EmojiPickerMod = null;
 async function loadEmojiPicker() {
   if (!EmojiPickerMod) {
-    EmojiPickerMod = await import('emoji-picker-react');
+    EmojiPickerMod = await import("emoji-picker-react");
   }
   return EmojiPickerMod.default || EmojiPickerMod.EmojiPicker || EmojiPickerMod;
 }
@@ -19,9 +19,16 @@ let externalOpen; // will hold the open method after first mount
 let mountNode; // singleton mount node in document.body
 
 function EmojiMenuSingleton() {
-  const [state, setState] = useState({ visible: false, anchorRect: null, onSelect: null, onClose: null });
+  const [state, setState] = useState({
+    visible: false,
+    anchorRect: null,
+    onSelect: null,
+    onClose: null,
+  });
   const stateRef = useRef(state);
-  useEffect(() => { stateRef.current = state; }, [state]);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
   const panelRef = useRef(null);
   const [panelStyle, setPanelStyle] = useState(null);
   // Hooks for dynamic picker module (declared unconditionally to satisfy rules-of-hooks)
@@ -34,25 +41,27 @@ function EmojiMenuSingleton() {
     let active = true;
     setLoadError(null); // Clear any previous errors
     loadEmojiPicker()
-      .then(Mod => { 
-        if (active) { 
-          PickerRef.current = Mod; 
-          setPickerReady(true);
-        } 
-      })
-      .catch(error => {
+      .then((Mod) => {
         if (active) {
-          console.error('Failed to load emoji picker:', error);
+          PickerRef.current = Mod;
+          setPickerReady(true);
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          console.error("Failed to load emoji picker:", error);
           setLoadError(error);
           // Close the menu since we can't display the picker
-          setState(s => ({ ...s, visible: false }));
+          setState((s) => ({ ...s, visible: false }));
         }
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [state.visible]);
 
   const close = useCallback(() => {
-    setState(s => ({ ...s, visible: false }));
+    setState((s) => ({ ...s, visible: false }));
     const latest = stateRef.current;
     if (latest.onClose) latest.onClose();
   }, []);
@@ -62,38 +71,48 @@ function EmojiMenuSingleton() {
       visible: true,
       anchorRect: opts.anchorRect || null,
       onSelect: opts.onSelect || null,
-      onClose: opts.onClose || null
+      onClose: opts.onClose || null,
     });
   }, []);
 
   // Expose globally
-  useEffect(() => { externalOpen = open; }, [open]);
+  useEffect(() => {
+    externalOpen = open;
+  }, [open]);
 
   // Close on escape / outside click
   useEffect(() => {
     if (!state.visible) return;
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    const onKey = (e) => {
+      if (e.key === "Escape") close();
+    };
     const onPointer = (e) => {
       const panel = panelRef.current;
       if (panel && !panel.contains(e.target)) close();
     };
-    document.addEventListener('keydown', onKey, true);
-    document.addEventListener('pointerdown', onPointer, true);
+    document.addEventListener("keydown", onKey, true);
+    document.addEventListener("pointerdown", onPointer, true);
     return () => {
-      document.removeEventListener('keydown', onKey, true);
-      document.removeEventListener('pointerdown', onPointer, true);
+      document.removeEventListener("keydown", onKey, true);
+      document.removeEventListener("pointerdown", onPointer, true);
     };
   }, [state.visible, close]);
 
   // Position calculation after render so we know panel size
   useEffect(() => {
-    if (!state.visible) { setPanelStyle(null); return; }
+    if (!state.visible) {
+      setPanelStyle(null);
+      return;
+    }
     if (!panelRef.current || !state.anchorRect) return;
     const gap = 6;
     const anchor = state.anchorRect;
     const panelRect = panelRef.current.getBoundingClientRect();
     // Determine bounding container (try main chat area or app root)
-    const appContainer = document.querySelector('.App section') || document.querySelector('.App') || document.body;
+    const appContainer =
+      document.querySelector(".App section") ||
+      document.querySelector(".App") ||
+      document.body;
     const bounds = appContainer.getBoundingClientRect();
     // Preferred: above the anchor
     let top = anchor.top - panelRect.height - gap;
@@ -103,7 +122,8 @@ function EmojiMenuSingleton() {
       placeAbove = false;
     }
     let left = anchor.left;
-    if (left + panelRect.width > bounds.right - 4) left = bounds.right - panelRect.width - 4;
+    if (left + panelRect.width > bounds.right - 4)
+      left = bounds.right - panelRect.width - 4;
     if (left < bounds.left + 4) left = bounds.left + 4;
     // Prevent going below container bottom; if so, force above if possible
     if (!placeAbove && top + panelRect.height > bounds.bottom - 4) {
@@ -113,14 +133,22 @@ function EmojiMenuSingleton() {
         placeAbove = true;
       }
     }
-    setPanelStyle({ top: Math.round(top), left: Math.round(left), position: 'fixed', transform: 'none', '--emoji-placement': placeAbove ? 'above' : 'below' });
+    setPanelStyle({
+      top: Math.round(top),
+      left: Math.round(left),
+      position: "fixed",
+      transform: "none",
+      "--emoji-placement": placeAbove ? "above" : "below",
+    });
   }, [state.visible, state.anchorRect]);
 
   // Theme detection
   const theme = (() => {
     // Prefer explicit light-theme class on body or root
-    const isLight = document.body.classList.contains('light-theme') || document.querySelector('.App.light-theme');
-    return isLight ? 'light' : 'dark';
+    const isLight =
+      document.body.classList.contains("light-theme") ||
+      document.querySelector(".App.light-theme");
+    return isLight ? "light" : "dark";
   })();
 
   if (!state.visible) return null;
@@ -130,30 +158,47 @@ function EmojiMenuSingleton() {
   // We place it centered horizontally and 20% from top as a safer default until measured.
   let fallbackStyle;
   if (state.anchorRect) {
-    fallbackStyle = { position: 'fixed', top: Math.min(window.innerHeight - 300, state.anchorRect.bottom + 8), left: state.anchorRect.left, opacity: 0 };
+    fallbackStyle = {
+      position: "fixed",
+      top: Math.min(window.innerHeight - 300, state.anchorRect.bottom + 8),
+      left: state.anchorRect.left,
+      opacity: 0,
+    };
   } else {
-    fallbackStyle = { position: 'fixed', top: Math.round(window.innerHeight * 0.2), left: '50%', transform: 'translateX(-50%)', opacity: 0 };
+    fallbackStyle = {
+      position: "fixed",
+      top: Math.round(window.innerHeight * 0.2),
+      left: "50%",
+      transform: "translateX(-50%)",
+      opacity: 0,
+    };
   }
   const style = panelStyle || fallbackStyle;
 
   const PickerComp = PickerRef.current;
 
   return createPortal(
-    <div ref={panelRef} className="emoji-picker-portal" style={{ zIndex: 1600, ...style }}>
+    <div
+      ref={panelRef}
+      className="emoji-picker-portal"
+      style={{ zIndex: 1600, ...style }}
+    >
       {loadError ? (
-        <div style={{ 
-          padding: '32px 48px', 
-          fontSize: 12, 
-          opacity: 0.8, 
-          textAlign: 'center',
-          backgroundColor: 'var(--bg-secondary, #2a2a2a)',
-          border: '1px solid var(--border-color, #444)',
-          borderRadius: '8px',
-          color: 'var(--text-color, #fff)'
-        }}>
-          <div style={{ marginBottom: '8px' }}>😔</div>
+        <div
+          style={{
+            padding: "32px 48px",
+            fontSize: 12,
+            opacity: 0.8,
+            textAlign: "center",
+            backgroundColor: "var(--bg-secondary, #2a2a2a)",
+            border: "1px solid var(--border-color, #444)",
+            borderRadius: "8px",
+            color: "var(--text-color, #fff)",
+          }}
+        >
+          <div style={{ marginBottom: "8px" }}>😔</div>
           <div>Emoji picker failed to load</div>
-          <button 
+          <button
             onClick={() => {
               setLoadError(null);
               setPickerReady(false);
@@ -164,21 +209,21 @@ function EmojiMenuSingleton() {
                   PickerRef.current = Mod;
                   setPickerReady(true);
                 } catch (error) {
-                  console.error('Retry failed:', error);
+                  console.error("Retry failed:", error);
                   setLoadError(error);
                 }
               };
               retryLoad();
             }}
             style={{
-              marginTop: '12px',
-              padding: '6px 12px',
-              fontSize: '11px',
-              background: 'var(--primary-color, #4a9eff)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
+              marginTop: "12px",
+              padding: "6px 12px",
+              fontSize: "11px",
+              background: "var(--primary-color, #4a9eff)",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
             }}
           >
             Retry
@@ -194,7 +239,16 @@ function EmojiMenuSingleton() {
           theme={theme}
         />
       ) : (
-        <div style={{ padding: '32px 48px', fontSize: 12, opacity: 0.8, textAlign: 'center' }}>Loading emoji…</div>
+        <div
+          style={{
+            padding: "32px 48px",
+            fontSize: 12,
+            opacity: 0.8,
+            textAlign: "center",
+          }}
+        >
+          Loading emoji…
+        </div>
       )}
     </div>,
     mountNode
@@ -204,8 +258,8 @@ function EmojiMenuSingleton() {
 export function EmojiMenuProvider() {
   // Ensure mount node
   if (!mountNode) {
-    mountNode = document.createElement('div');
-    mountNode.id = 'emoji-menu-root';
+    mountNode = document.createElement("div");
+    mountNode.id = "emoji-menu-root";
     document.body.appendChild(mountNode);
   }
   return <EmojiMenuSingleton />;
@@ -221,7 +275,7 @@ EmojiMenuSingleton.open = (options) => {
 };
 
 export const EmojiMenu = {
-  open: (options) => EmojiMenuSingleton.open(options)
+  open: (options) => EmojiMenuSingleton.open(options),
 };
 
 export default EmojiMenu;

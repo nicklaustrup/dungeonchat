@@ -4,7 +4,13 @@
  * Allows players and DMs to see where others are pointing
  */
 
-import { doc, setDoc, onSnapshot, collection, deleteDoc } from 'firebase/firestore';
+import {
+  doc,
+  setDoc,
+  onSnapshot,
+  collection,
+  deleteDoc,
+} from "firebase/firestore";
 
 export const cursorService = {
   /**
@@ -17,18 +23,34 @@ export const cursorService = {
    * @param {Object} position - Cursor position {x, y}
    * @param {string} color - User's cursor color (unique per user)
    */
-  async updateCursorPosition(firestore, campaignId, mapId, userId, username, position, color) {
-    const cursorRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId, 'cursors', userId);
-    
+  async updateCursorPosition(
+    firestore,
+    campaignId,
+    mapId,
+    userId,
+    username,
+    position,
+    color
+  ) {
+    const cursorRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "cursors",
+      userId
+    );
+
     await setDoc(cursorRef, {
       userId,
       username,
       position: {
         x: position.x,
-        y: position.y
+        y: position.y,
       },
       color: color || this.generateUserColor(userId),
-      lastUpdate: Date.now()
+      lastUpdate: Date.now(),
     });
   },
 
@@ -40,7 +62,15 @@ export const cursorService = {
    * @param {string} userId - User ID
    */
   async removeCursor(firestore, campaignId, mapId, userId) {
-    const cursorRef = doc(firestore, 'campaigns', campaignId, 'maps', mapId, 'cursors', userId);
+    const cursorRef = doc(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "cursors",
+      userId
+    );
     await deleteDoc(cursorRef);
   },
 
@@ -53,27 +83,36 @@ export const cursorService = {
    * @returns {Function} - Unsubscribe function
    */
   subscribeToCursors(firestore, campaignId, mapId, callback) {
-    const cursorsRef = collection(firestore, 'campaigns', campaignId, 'maps', mapId, 'cursors');
-    
+    const cursorsRef = collection(
+      firestore,
+      "campaigns",
+      campaignId,
+      "maps",
+      mapId,
+      "cursors"
+    );
+
     return onSnapshot(cursorsRef, (snapshot) => {
       const cursors = [];
       const now = Date.now();
-      
+
       snapshot.forEach((doc) => {
         const data = doc.data();
-        
+
         // Filter out stale cursors (not updated in last 5 seconds)
         if (now - data.lastUpdate < 5000) {
           cursors.push({
             id: doc.id,
-            ...data
+            ...data,
           });
         } else {
           // Auto-cleanup stale cursor
-          deleteDoc(doc.ref).catch(err => console.error('Error deleting stale cursor:', err));
+          deleteDoc(doc.ref).catch((err) =>
+            console.error("Error deleting stale cursor:", err)
+          );
         }
       });
-      
+
       callback(cursors);
     });
   },
@@ -89,12 +128,12 @@ export const cursorService = {
     for (let i = 0; i < userId.length; i++) {
       hash = userId.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
+
     // Generate bright, saturated colors (avoid dark colors)
     const hue = Math.abs(hash % 360);
     const saturation = 70 + (Math.abs(hash >> 8) % 30); // 70-100%
     const lightness = 50 + (Math.abs(hash >> 16) % 20); // 50-70%
-    
+
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-  }
+  },
 };

@@ -273,14 +273,14 @@
   background: var(--hover-bg);
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type='checkbox'] {
   width: 20px;
   height: 20px;
   cursor: pointer;
   accent-color: var(--accent-color);
 }
 
-.checkbox-label input[type="checkbox"]:disabled {
+.checkbox-label input[type='checkbox']:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

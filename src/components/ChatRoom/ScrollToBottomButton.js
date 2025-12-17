@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { LuArrowDownToLine } from 'react-icons/lu';
+import React, { useEffect, useState, useRef } from "react";
+import { LuArrowDownToLine } from "react-icons/lu";
 
 // Adds fade / slide in-out animation. Keeps the button mounted during exit
 // so the disappear animation can play before removal.
@@ -23,7 +23,7 @@ function ScrollToBottomButton({ visible, hasNew, newCount, onClick }) {
   }, [visible, render]);
 
   const handleTransitionEnd = (e) => {
-    if (e.propertyName === 'opacity' && transitioningOut.current && !show) {
+    if (e.propertyName === "opacity" && transitioningOut.current && !show) {
       setRender(false); // unmount after fade-out completes
       transitioningOut.current = false;
     }
@@ -32,7 +32,7 @@ function ScrollToBottomButton({ visible, hasNew, newCount, onClick }) {
   // If we are about to hide and the button is focused, shift focus to the log region to avoid aria-hidden focus conflict
   useEffect(() => {
     if (!visible && document.activeElement === btnRef.current) {
-      const log = document.querySelector('[role="log"]');
+      const log = document.querySelector("[role=\"log\"]");
       if (log) {
         log.focus?.();
       } else {
@@ -44,7 +44,9 @@ function ScrollToBottomButton({ visible, hasNew, newCount, onClick }) {
 
   if (!render) return null;
 
-  const label = hasNew ? `${newCount} new message${newCount > 1 ? 's' : ''}` : 'Scroll to bottom';
+  const label = hasNew
+    ? `${newCount} new message${newCount > 1 ? "s" : ""}`
+    : "Scroll to bottom";
   const handleClick = () => {
     onClick();
     // On mobile devices, blur the button after a short delay to clear focus/active state
@@ -56,10 +58,12 @@ function ScrollToBottomButton({ visible, hasNew, newCount, onClick }) {
   };
 
   const classes = [
-    'scroll-to-bottom-btn',
-    show ? 'is-visible' : 'is-hiding',
-    hasNew && show ? 'new' : ''
-  ].filter(Boolean).join(' ');
+    "scroll-to-bottom-btn",
+    show ? "is-visible" : "is-hiding",
+    hasNew && show ? "new" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <button
@@ -68,11 +72,13 @@ function ScrollToBottomButton({ visible, hasNew, newCount, onClick }) {
       className={classes}
       onClick={handleClick}
       onTransitionEnd={handleTransitionEnd}
-      aria-label={hasNew ? 'Scroll to latest new messages' : 'Scroll to bottom'}
+      aria-label={hasNew ? "Scroll to latest new messages" : "Scroll to bottom"}
       tabIndex={show ? 0 : -1}
     >
-  <span className="scroll-icon-wrapper" aria-hidden="true"><LuArrowDownToLine size={20} /></span>
-  <span className="scroll-label">{label}</span>
+      <span className="scroll-icon-wrapper" aria-hidden="true">
+        <LuArrowDownToLine size={20} />
+      </span>
+      <span className="scroll-label">{label}</span>
     </button>
   );
 }

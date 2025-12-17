@@ -19,7 +19,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-[data-theme="dark"] .campaign-calendar {
+[data-theme='dark'] .campaign-calendar {
   background: var(--bg-dark, #1f2937);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
@@ -45,7 +45,7 @@
   color: var(--text-primary, #1f2937);
 }
 
-[data-theme="dark"] .calendar-title h2 {
+[data-theme='dark'] .calendar-title h2 {
   color: var(--text-light, #f3f4f6);
 }
 
@@ -531,7 +531,7 @@
   font-weight: 500;
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type='checkbox'] {
   width: 1.25rem;
   height: 1.25rem;
   cursor: pointer;
@@ -632,188 +632,188 @@
    =================================== */
 
 /* Calendar controls */
-[data-theme="dark"] .calendar-controls {
+[data-theme='dark'] .calendar-controls {
   background: var(--bg-secondary-dark, #374151);
 }
 
-[data-theme="dark"] .view-mode-selector {
+[data-theme='dark'] .view-mode-selector {
   background: var(--bg-dark, #1f2937);
 }
 
-[data-theme="dark"] .view-mode-selector button {
+[data-theme='dark'] .view-mode-selector button {
   color: var(--text-secondary-light, #9ca3af);
 }
 
-[data-theme="dark"] .view-mode-selector button:hover {
+[data-theme='dark'] .view-mode-selector button:hover {
   background: var(--bg-secondary-dark, #374151);
   color: var(--text-light, #f3f4f6);
 }
 
 /* Calendar navigation */
-[data-theme="dark"] .calendar-navigation button {
+[data-theme='dark'] .calendar-navigation button {
   background: var(--bg-dark, #1f2937);
   color: var(--text-light, #f3f4f6);
   border-color: var(--border-dark, #4b5563);
 }
 
-[data-theme="dark"] .calendar-navigation button:hover {
+[data-theme='dark'] .calendar-navigation button:hover {
   background: var(--bg-secondary-dark, #374151);
   border-color: var(--primary-color, #3b82f6);
 }
 
 /* Calendar actions */
-[data-theme="dark"] .calendar-actions button {
+[data-theme='dark'] .calendar-actions button {
   background: var(--bg-dark, #1f2937);
   color: var(--text-light, #f3f4f6);
   border-color: var(--border-dark, #4b5563);
 }
 
-[data-theme="dark"] .calendar-actions button:hover {
+[data-theme='dark'] .calendar-actions button:hover {
   background: var(--bg-secondary-dark, #374151);
   border-color: var(--primary-color, #3b82f6);
 }
 
 /* Calendar month title */
-[data-theme="dark"] .calendar-month-title {
+[data-theme='dark'] .calendar-month-title {
   color: var(--text-light, #f3f4f6);
 }
 
 /* Calendar grid */
-[data-theme="dark"] .calendar-grid {
+[data-theme='dark'] .calendar-grid {
   background: var(--border-dark, #4b5563);
   border-color: var(--border-dark, #4b5563);
 }
 
 /* Day headers */
-[data-theme="dark"] .calendar-day-header {
+[data-theme='dark'] .calendar-day-header {
   background: var(--bg-secondary-dark, #374151);
   color: var(--text-secondary-light, #9ca3af);
 }
 
 /* Calendar cells */
-[data-theme="dark"] .calendar-cell {
+[data-theme='dark'] .calendar-cell {
   background: var(--bg-dark, #1f2937);
 }
 
-[data-theme="dark"] .calendar-cell:hover {
+[data-theme='dark'] .calendar-cell:hover {
   background: var(--bg-hover-dark, #2d3748);
 }
 
-[data-theme="dark"] .calendar-cell.empty {
+[data-theme='dark'] .calendar-cell.empty {
   background: var(--bg-secondary-dark, #374151);
 }
 
-[data-theme="dark"] .calendar-cell.today {
+[data-theme='dark'] .calendar-cell.today {
   background: #1e3a5f;
   border-color: var(--primary-color, #3b82f6);
 }
 
-[data-theme="dark"] .cell-date {
+[data-theme='dark'] .cell-date {
   color: var(--text-light, #f3f4f6);
 }
 
 /* Event badges in dark mode - maintain readability */
-[data-theme="dark"] .event-badge.session {
+[data-theme='dark'] .event-badge.session {
   background: #1e3a8a;
   color: #93c5fd;
 }
 
-[data-theme="dark"] .event-badge.milestone {
+[data-theme='dark'] .event-badge.milestone {
   background: #78350f;
   color: #fcd34d;
 }
 
-[data-theme="dark"] .event-badge.in-game {
+[data-theme='dark'] .event-badge.in-game {
   background: #312e81;
   color: #c7d2fe;
 }
 
-[data-theme="dark"] .event-badge.reminder {
+[data-theme='dark'] .event-badge.reminder {
   background: #581c87;
   color: #e9d5ff;
 }
 
-[data-theme="dark"] .event-more {
+[data-theme='dark'] .event-more {
   color: var(--text-secondary-light, #9ca3af);
 }
 
 /* Upcoming events sidebar */
-[data-theme="dark"] .upcoming-events-sidebar {
+[data-theme='dark'] .upcoming-events-sidebar {
   background: var(--bg-secondary-dark, #374151);
 }
 
-[data-theme="dark"] .upcoming-events-sidebar h3 {
+[data-theme='dark'] .upcoming-events-sidebar h3 {
   color: var(--text-light, #f3f4f6);
 }
 
-[data-theme="dark"] .no-events {
+[data-theme='dark'] .no-events {
   color: var(--text-secondary-light, #9ca3af);
 }
 
 /* Upcoming events list */
-[data-theme="dark"] .upcoming-event {
+[data-theme='dark'] .upcoming-event {
   background: var(--bg-dark, #1f2937);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-[data-theme="dark"] .event-type-badge {
+[data-theme='dark'] .event-type-badge {
   background: var(--bg-secondary-dark, #374151);
   color: var(--text-secondary-light, #9ca3af);
 }
 
-[data-theme="dark"] .upcoming-event h4 {
+[data-theme='dark'] .upcoming-event h4 {
   color: var(--text-light, #f3f4f6);
 }
 
-[data-theme="dark"] .event-datetime,
-[data-theme="dark"] .event-location,
-[data-theme="dark"] .event-description {
+[data-theme='dark'] .event-datetime,
+[data-theme='dark'] .event-location,
+[data-theme='dark'] .event-description {
   color: var(--text-secondary-light, #9ca3af);
 }
 
-[data-theme="dark"] .event-availability {
+[data-theme='dark'] .event-availability {
   border-top-color: var(--border-dark, #4b5563);
 }
 
-[data-theme="dark"] .availability-percentage {
+[data-theme='dark'] .availability-percentage {
   color: var(--text-secondary-light, #9ca3af);
 }
 
 /* Availability buttons */
-[data-theme="dark"] .availability-btn {
+[data-theme='dark'] .availability-btn {
   background: var(--bg-dark, #1f2937);
   border-color: var(--border-dark, #4b5563);
 }
 
-[data-theme="dark"] .availability-btn:hover {
+[data-theme='dark'] .availability-btn:hover {
   border-color: var(--primary-color, #3b82f6);
 }
 
 /* Event actions */
-[data-theme="dark"] .event-actions {
+[data-theme='dark'] .event-actions {
   border-top-color: var(--border-dark, #4b5563);
 }
 
 /* Calendar modal */
-[data-theme="dark"] .calendar-modal label {
+[data-theme='dark'] .calendar-modal label {
   color: var(--text-light, #f3f4f6);
 }
 
-[data-theme="dark"] .calendar-modal input,
-[data-theme="dark"] .calendar-modal select,
-[data-theme="dark"] .calendar-modal textarea {
+[data-theme='dark'] .calendar-modal input,
+[data-theme='dark'] .calendar-modal select,
+[data-theme='dark'] .calendar-modal textarea {
   background: var(--bg-dark, #1f2937);
   border-color: var(--border-dark, #4b5563);
   color: var(--text-light, #f3f4f6);
 }
 
-[data-theme="dark"] .calendar-modal input:focus,
-[data-theme="dark"] .calendar-modal select:focus,
-[data-theme="dark"] .calendar-modal textarea:focus {
+[data-theme='dark'] .calendar-modal input:focus,
+[data-theme='dark'] .calendar-modal select:focus,
+[data-theme='dark'] .calendar-modal textarea:focus {
   border-color: var(--primary-color, #3b82f6);
 }
 
 /* Loading state */
-[data-theme="dark"] .calendar-loading {
+[data-theme='dark'] .calendar-loading {
   color: var(--text-secondary-light, #9ca3af);
 }
