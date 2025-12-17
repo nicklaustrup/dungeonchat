@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { doc, setDoc, updateDoc, deleteDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
 import { useFirebase } from "../FirebaseContext";
 import { useCachedDocument } from "./useCachedDocument";
 import firestoreCache from "./FirestoreCache";
